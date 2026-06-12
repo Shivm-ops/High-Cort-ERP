@@ -97,3 +97,23 @@ jobs:
         run: |
           cd legalos-website
           npm run build
+
+  # ─── Continuous Deployment to AWS EC2 ───────────────────────────────────────
+  deploy:
+    needs: [backend, frontend, admin-frontend, website]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            cd /home/${{ secrets.EC2_USERNAME }}/High-Cort-ERP
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+
