@@ -9,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_API_URL=http://43.204.229.196:8000/api/v1
       - NEXT_PUBLIC_APP_NAME=LegalOS
     depends_on:
       - backend
@@ -21,6 +21,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://43.204.229.196:8000/api/v1
     depends_on:
       - backend
 
