@@ -23,6 +23,8 @@ const primaryNav = [
   { label: 'Contact', to: '/contact' },
 ];
 
+const ERP_APP_URL = import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
+
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
