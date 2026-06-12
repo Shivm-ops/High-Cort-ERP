@@ -13,6 +13,8 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
+        "http://43.204.229.196",
+        "http://43.204.229.196:3000",
     ]
 
     # Database
