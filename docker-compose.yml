@@ -14,6 +14,24 @@ services:
     depends_on:
       - backend
 
+  # ─── Admin Frontend ────────────────────────────────────────────────────────
+  admin-frontend:
+    build:
+      context: ./admin-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+
+  # ─── Marketing Website ─────────────────────────────────────────────────────
+  website:
+    build:
+      context: ./legalos-website
+      dockerfile: Dockerfile
+    ports:
+      - "3002:80"
+
   # ─── Backend API ───────────────────────────────────────────────────────────
   backend:
     build:
