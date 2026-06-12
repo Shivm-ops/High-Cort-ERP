@@ -31,3 +31,4 @@ googletrans>=4.0.0-rc1
 django>=5.0.6
 djangorestframework>=3.15.1
 pyotp==2.9.0
+SQLAlchemy-Utils>=0.41.2
