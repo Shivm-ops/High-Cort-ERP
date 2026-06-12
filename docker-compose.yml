@@ -13,11 +13,6 @@ services:
       - NEXT_PUBLIC_APP_NAME=LegalOS
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
 
   # ─── Backend API ───────────────────────────────────────────────────────────
   backend:
@@ -37,9 +32,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
 
   # ─── Celery Worker ─────────────────────────────────────────────────────────
   celery_worker:
