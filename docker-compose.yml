@@ -29,6 +29,8 @@ services:
     build:
       context: ./legalos-website
       dockerfile: Dockerfile
+      args:
+        - VITE_ERP_APP_URL=http://43.204.229.196:3000
     ports:
       - "3002:80"
 
