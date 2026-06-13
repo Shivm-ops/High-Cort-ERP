@@ -10,10 +10,10 @@ from app.models.user import User
 from app.models.case import Case, CaseStatus
 from app.models.hearing import Hearing
 from app.models.invoice import Invoice
-from app.models.draft import Draft
+from app.models.draft import Draft, DraftCategory
 from app.models.document import Document, DocumentType
 from app.models.case_advocate import CaseTask, TaskStatus
-from app.models.filing import Filing
+from app.models.filing import Filing, FilingStatus
 from app.models.case_advocate import CaseAdvocate
 from app.models.client import Client
 
@@ -43,7 +43,7 @@ async def get_dashboard_metrics(
 
     urgent_filings_count = db.query(Filing).filter(
         Filing.case_id.in_(firm_case_ids),
-        Filing.status == "defect_raised"
+        Filing.status == FilingStatus.DEFECT_RAISED
     ).count()
 
     pending_notices_count = db.query(Document).filter(
@@ -60,7 +60,7 @@ async def get_dashboard_metrics(
 
     pending_affidavits_count = db.query(Draft).filter(
         Draft.firm_id == current_user.firm_id,
-        Draft.category == "affidavit",
+        Draft.category == DraftCategory.AFFIDAVIT,
         Draft.title.ilike('%pending%')
     ).count()
 
