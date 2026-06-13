@@ -7,12 +7,12 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.permissions import require_firm_member, apply_firm_filter
 from app.models.user import User
-from app.models.case import Case, CaseStatus
+from app.models.case import Case, CaseStatus, CaseStage
 from app.models.hearing import Hearing
 from app.models.invoice import Invoice
 from app.models.draft import Draft, DraftCategory
-from app.models.document import Document, DocumentType
-from app.models.case_advocate import CaseTask, TaskStatus
+from app.models.document import Document, DocumentType, EvidenceStatus
+from app.models.case_advocate import CaseTask, TaskStatus, TaskType
 from app.models.filing import Filing, FilingStatus
 from app.models.case_advocate import CaseAdvocate
 from app.models.client import Client
@@ -49,7 +49,7 @@ async def get_dashboard_metrics(
     pending_notices_count = db.query(Document).filter(
         Document.case_id.in_(firm_case_ids),
         Document.doc_type == DocumentType.NOTICE,
-        Document.evidence_status == "uploaded"
+        Document.evidence_status == EvidenceStatus.UPLOADED
     ).count()
 
     limitation_alerts_count = db.query(Case).filter(
@@ -107,10 +107,10 @@ async def get_dashboard_metrics(
 
     # 4. Matter Status Dashboard
     active = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.status == CaseStatus.ACTIVE).count()
-    drafting = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == "drafting").count()
-    evidence = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == "evidence").count()
-    argument = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == "argument").count()
-    appeal = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == "appeal").count()
+    drafting = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == CaseStage.FILING).count()
+    evidence = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == CaseStage.EVIDENCE).count()
+    argument = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.stage == CaseStage.ARGUMENTS).count()
+    appeal = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.status == CaseStatus.APPEALED).count()
     closed = db.query(Case).filter(Case.id.in_(firm_case_ids), Case.status == CaseStatus.CLOSED).count()
 
     matter_status = {
@@ -153,16 +153,16 @@ async def get_dashboard_metrics(
 
     # 7. Team Work Dashboard — scoped to firm's cases
     drafting_tasks = db.query(CaseTask).filter(
-        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == "drafting"
+        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == TaskType.DRAFTING
     ).count()
     research_tasks = db.query(CaseTask).filter(
-        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == "research"
+        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == TaskType.RESEARCH
     ).count()
     filing_tasks = db.query(CaseTask).filter(
-        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == "filing"
+        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == TaskType.FILING
     ).count()
     hearing_tasks = db.query(CaseTask).filter(
-        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == "hearing"
+        CaseTask.case_id.in_(firm_case_ids), CaseTask.task_type == TaskType.HEARING_PREPARATION
     ).count()
 
     team_work = {
