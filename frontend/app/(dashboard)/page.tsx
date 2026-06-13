@@ -53,7 +53,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-full bg-[#F7F8F6]">
-        <Header title="Legal Operations Dashboard" subtitle={`Welcome back · ${todayLabel}`} />
+        <Header title="Fastcase Operations Dashboard" subtitle={`Welcome back · ${todayLabel}`} />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 rounded-full border-2 border-sidebar border-t-transparent animate-spin"></div>
         </div>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full bg-[#F7F8F6]">
-      <Header title="Legal Operations" subtitle={`Welcome back · ${todayLabel}`} />
+      <Header title="Fastcase Operations" subtitle={`Welcome back · ${todayLabel}`} />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Global Search Hero */}

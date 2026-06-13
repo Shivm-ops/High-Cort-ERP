@@ -239,10 +239,10 @@ export default function Sidebar() {
                 className="flex-1 min-w-0"
               >
                 <div className="text-white font-bold text-[15px] leading-tight tracking-tight">
-                  Legal<span style={{ color: accentColor }}>OS</span>
+                  Fast<span style={{ color: accentColor }}>case</span>
                 </div>
                 <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
-                  Legal Platform
+                  Fastcase Platform
                 </div>
               </motion.div>
             )}
