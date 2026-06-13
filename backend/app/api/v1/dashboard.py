@@ -60,7 +60,7 @@ async def get_dashboard_metrics(
 
     pending_affidavits_count = db.query(Draft).filter(
         Draft.firm_id == current_user.firm_id,
-        Draft.category.ilike('%affidavit%'),
+        Draft.category == "affidavit",
         Draft.title.ilike('%pending%')
     ).count()
 
