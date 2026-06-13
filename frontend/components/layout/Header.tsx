@@ -39,44 +39,7 @@ interface Notification {
   priority: "high" | "medium" | "low";
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    type: "hearing",
-    title: "Hearing Tomorrow",
-    message: "Sharma vs State — Bombay HC at 10:30 AM",
-    time: "2h ago",
-    isRead: false,
-    priority: "high",
-  },
-  {
-    id: "2",
-    type: "limitation",
-    title: "Limitation Alert",
-    message: "Patel vs Union of India — 3 days remaining",
-    time: "4h ago",
-    isRead: false,
-    priority: "high",
-  },
-  {
-    id: "3",
-    type: "payment",
-    title: "Invoice Overdue",
-    message: "INV-2024-089 — ₹45,000 overdue by 7 days",
-    time: "1d ago",
-    isRead: false,
-    priority: "medium",
-  },
-  {
-    id: "4",
-    type: "document",
-    title: "Document Uploaded",
-    message: "Mehta Corporation — Annual report added",
-    time: "2d ago",
-    isRead: true,
-    priority: "low",
-  },
-];
+const MOCK_NOTIFICATIONS: Notification[] = [];
 
 const NOTIFICATION_ICONS = {
   hearing: { icon: Calendar, color: "#3B82F6", bg: "rgba(59, 130, 246, 0.1)" },
@@ -282,12 +245,20 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
                 <div className="p-3 border-b border-gray-50 flex items-center justify-between">
                   <span className="text-[13px] font-semibold text-charcoal">Notifications</span>
                   <div className="flex items-center gap-2">
-                    <span
-                      className="text-[11px] px-2 py-0.5 rounded-full font-medium"
-                      style={{ background: "rgba(239,68,68,0.1)", color: "#DC2626" }}
-                    >
-                      {unreadCount} new
-                    </span>
+                    {unreadCount > 0 ? (
+                      <span
+                        className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: "rgba(239,68,68,0.1)", color: "#DC2626" }}
+                      >
+                        {unreadCount} new
+                      </span>
+                    ) : (
+                      <span
+                        className="text-[11px] px-2 py-0.5 rounded-full font-medium text-gray-500 bg-gray-100"
+                      >
+                        All caught up
+                      </span>
+                    )}
                     <button
                       onClick={() => setShowNotifications(false)}
                       className="text-muted hover:text-charcoal transition-colors"
@@ -297,40 +268,48 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
                   </div>
                 </div>
                 <div className="max-h-72 overflow-y-auto p-2">
-                  {MOCK_NOTIFICATIONS.map((notif) => {
-                    const config = NOTIFICATION_ICONS[notif.type];
-                    const Icon = config.icon;
-                    return (
-                      <div
-                        key={notif.id}
-                        className={cn(
-                          "flex items-start gap-3 p-2.5 rounded-xl cursor-pointer transition-colors mb-1",
-                          notif.isRead ? "hover:bg-gray-50" : "bg-orange-50/40 hover:bg-orange-50/70"
-                        )}
-                      >
+                  {MOCK_NOTIFICATIONS.length > 0 ? (
+                    MOCK_NOTIFICATIONS.map((notif) => {
+                      const config = NOTIFICATION_ICONS[notif.type];
+                      const Icon = config.icon;
+                      return (
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{ background: config.bg }}
+                          key={notif.id}
+                          className={cn(
+                            "flex items-start gap-3 p-2.5 rounded-xl cursor-pointer transition-colors mb-1",
+                            notif.isRead ? "hover:bg-gray-50" : "bg-orange-50/40 hover:bg-orange-50/70"
+                          )}
                         >
-                          <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[12px] font-semibold text-charcoal truncate">
-                              {notif.title}
-                            </span>
-                            {!notif.isRead && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                            )}
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                            style={{ background: config.bg }}
+                          >
+                            <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
                           </div>
-                          <div className="text-[11px] text-muted mt-0.5 leading-relaxed">
-                            {notif.message}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[12px] font-semibold text-charcoal truncate">
+                                {notif.title}
+                              </span>
+                              {!notif.isRead && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+                              )}
+                            </div>
+                            <div className="text-[11px] text-muted mt-0.5 leading-relaxed">
+                              {notif.message}
+                            </div>
+                            <div className="text-[10px] text-muted/70 mt-1">{notif.time}</div>
                           </div>
-                          <div className="text-[10px] text-muted/70 mt-1">{notif.time}</div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <div className="py-8 px-4 flex flex-col items-center justify-center text-center">
+                      <Bell className="w-8 h-8 text-gray-300 mb-2" />
+                      <p className="text-[12px] text-gray-500 font-medium">No new notifications</p>
+                      <p className="text-[10px] text-gray-450 mt-1 max-w-[200px] leading-relaxed">We'll alert you when something needs your attention.</p>
+                    </div>
+                  )}
                 </div>
                 <div className="p-2 border-t border-gray-50">
                   <button className="w-full text-center text-[12px] font-medium text-mint hover:text-mint/80 transition-colors py-1">
