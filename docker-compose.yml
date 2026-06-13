@@ -7,12 +7,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://15.206.205.114:8000/api/v1
+        - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
         - NEXT_PUBLIC_APP_NAME=LegalOS
     ports:
       - "3002:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://15.206.205.114:8000/api/v1
+      - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
       - NEXT_PUBLIC_APP_NAME=LegalOS
     depends_on:
       - backend
@@ -23,11 +23,11 @@ services:
       context: ./admin-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://15.206.205.114:8000/api/v1
+        - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
     ports:
       - "3001:3001"
     environment:
-      - NEXT_PUBLIC_API_URL=http://15.206.205.114:8000/api/v1
+      - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
     depends_on:
       - backend
 
@@ -37,7 +37,7 @@ services:
       context: ./legalos-website
       dockerfile: Dockerfile
       args:
-        - VITE_ERP_APP_URL=http://15.206.205.114:3002
+        - VITE_ERP_APP_URL=http://app.lagalos.com
     ports:
       - "3000:80"
 
@@ -153,8 +153,18 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-    profiles:
-      - storage
+  # ─── Nginx Reverse Proxy ───────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.aws.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - website
+      - frontend
+      - backend
 
 volumes:
   postgres_data:
