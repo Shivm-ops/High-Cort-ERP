@@ -7,12 +7,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
+        - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
         - NEXT_PUBLIC_APP_NAME=Fastcase
     ports:
       - "3002:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
+      - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
       - NEXT_PUBLIC_APP_NAME=Fastcase
     depends_on:
       - backend
@@ -23,11 +23,11 @@ services:
       context: ./admin-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
+        - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
     ports:
       - "3001:3001"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
+      - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
       - PORT=3001
     depends_on:
       - backend
@@ -38,7 +38,7 @@ services:
       context: ./fastcase-website
       dockerfile: Dockerfile
       args:
-        - VITE_ERP_APP_URL=http://app.fastcase.in
+        - VITE_ERP_APP_URL=https://app.fastcase.in
     ports:
       - "3000:80"
 
@@ -160,8 +160,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.aws.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - website
       - frontend
