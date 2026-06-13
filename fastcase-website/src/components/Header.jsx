@@ -66,10 +66,10 @@ export default function Header() {
             </div>
             <div>
               <p className="font-heading font-[800] text-[18px] tracking-[-0.03em] text-ink" style={{ lineHeight: '1.1' }}>
-                Legal<span className="text-primary">OS</span>
+                Fast<span className="text-primary">case</span>
               </p>
               <p className="text-[9px] font-semibold tracking-[0.1em] text-ink/30 uppercase" style={{ lineHeight: '1', marginTop: '2px' }}>
-                Legal Operating System
+                Fastcase Platform
               </p>
             </div>
           </Link>

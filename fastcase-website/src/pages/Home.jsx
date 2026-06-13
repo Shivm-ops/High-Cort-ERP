@@ -161,13 +161,13 @@ export default function Home() {
             <div>
               <div className="inline-flex items-center gap-2 bg-teal/8 border border-teal/15 text-teal text-[12px] font-bold tracking-wide uppercase rounded-full px-3.5 py-1.5 mb-7">
                 <Zap className="w-3 h-3" />
-                India's Legal Operating System
+                India's Advocate Practice Platform
               </div>
 
               <h1 className="display-heading text-[2.75rem] sm:text-5xl lg:text-[3.5rem] mb-6 text-balance">
                 India's Complete<br />
-                <span className="text-primary">Legal Operating</span><br />
-                System.
+                <span className="text-primary">Advocate Practice</span><br />
+                Platform.
               </h1>
 
               <p className="text-[18px] text-ink/55 leading-relaxed mb-4 max-w-lg">

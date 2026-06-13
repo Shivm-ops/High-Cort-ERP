@@ -112,10 +112,10 @@ export default function Footer() {
                 </div>
                 <div>
                   <p className="font-heading font-[800] text-[18px] tracking-[-0.03em] text-white" style={{ lineHeight: '1.1' }}>
-                    Legal<span className="text-[#0EA5A4]">OS</span>
+                    Fast<span className="text-[#0EA5A4]">case</span>
                   </p>
                   <p className="text-[9px] font-semibold tracking-[0.1em] text-white/30 uppercase" style={{ lineHeight: '1', marginTop: '2px' }}>
-                    Legal Operating System
+                    Fastcase Platform
                   </p>
                 </div>
               </Link>
