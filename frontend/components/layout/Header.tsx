@@ -17,7 +17,8 @@ import {
   Sparkles,
   LogOut,
   User,
-  Settings
+  Settings,
+  Menu
 } from "lucide-react";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
@@ -26,6 +27,7 @@ import ClientForm from "@/components/forms/ClientForm";
 import { useThemeStore, PREDEFINED_THEMES } from "@/lib/store/themeStore";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { useSidebarStore } from "@/lib/store/sidebarStore";
 
 interface Notification {
   id: string;
@@ -105,6 +107,9 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  // Mobile sidebar trigger
+  const toggleSidebar = useSidebarStore((state) => state.toggle);
+
   // Read theme
   const { activeThemeId, customColors } = useThemeStore();
   const { t } = useTranslation();
@@ -119,6 +124,14 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
 
   return (
     <header className="h-16 bg-white/90 backdrop-blur-sm border-b border-gray-100 flex items-center px-6 gap-4 sticky top-0 z-30">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={toggleSidebar}
+        className="md:hidden p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-100 active:scale-95 transition-all mr-1 flex-shrink-0"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Page title */}
       <div className="flex-1 min-w-0">
         {title && (

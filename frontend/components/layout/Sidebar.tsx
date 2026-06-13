@@ -37,12 +37,14 @@ import {
   Layers,
   CheckCircle,
   Car,
-  FileText
+  FileText,
+  X
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useThemeStore, PREDEFINED_THEMES } from "@/lib/store/themeStore";
 import { useTranslation } from "react-i18next";
+import { useSidebarStore } from "@/lib/store/sidebarStore";
 
 interface NavItem {
   label: string;
@@ -178,6 +180,10 @@ export default function Sidebar() {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { t } = useTranslation();
 
+  // Mobile drawer state
+  const mobileOpen = useSidebarStore((state) => state.isOpen);
+  const setMobileOpen = useSidebarStore((state) => state.setIsOpen);
+
   // Read theme from store
   const { activeThemeId, customColors } = useThemeStore();
   const currentTheme = activeThemeId === "custom"
@@ -200,119 +206,117 @@ export default function Sidebar() {
     })
   })).filter(group => group.items.length > 0);
 
-  return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 72 : 260 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="relative flex-shrink-0 h-screen flex flex-col overflow-hidden z-40 print:hidden"
-      style={{
-        background: primaryColor === "#FFFFFF"
-          ? "#1F2937"
-          : `linear-gradient(160deg, ${primaryColor} 0%, ${adjustColor(primaryColor, -20)} 100%)`,
-      }}
-    >
-      {/* Ambient background orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-20 -left-20 w-64 h-64 rounded-full opacity-10"
-          style={{ background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)` }}
-        />
-        <div
-          className="absolute bottom-40 -right-10 w-48 h-48 rounded-full opacity-[0.08]"
-          style={{ background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)` }}
-        />
-      </div>
-
-      {/* Logo */}
-      <div className="relative px-4 py-5 flex items-center gap-3 border-b border-white/[0.07]">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}cc 100%)`, boxShadow: `0 4px 16px ${accentColor}55` }}
-        >
-          <Scale className="w-5 h-5" strokeWidth={2.5} style={{ color: accentTextColor }} />
+  const renderSidebarBody = (isMobile: boolean) => {
+    return (
+      <>
+        {/* Ambient background orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div
+            className="absolute -top-20 -left-20 w-64 h-64 rounded-full opacity-10"
+            style={{ background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)` }}
+          />
+          <div
+            className="absolute bottom-40 -right-10 w-48 h-48 rounded-full opacity-[0.08]"
+            style={{ background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)` }}
+          />
         </div>
-        <AnimatePresence mode="wait">
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 min-w-0"
+
+        {/* Logo */}
+        <div className="relative px-4 py-5 flex items-center gap-3 border-b border-white/[0.07]">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}cc 100%)`, boxShadow: `0 4px 16px ${accentColor}55` }}
+          >
+            <Scale className="w-5 h-5" strokeWidth={2.5} style={{ color: accentTextColor }} />
+          </div>
+          <AnimatePresence mode="wait">
+            {(!collapsed || isMobile) && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="flex-1 min-w-0"
+              >
+                <div className="text-white font-bold text-[15px] leading-tight tracking-tight">
+                  Legal<span style={{ color: accentColor }}>OS</span>
+                </div>
+                <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
+                  Legal Platform
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Collapse toggle or close icon */}
+          {isMobile ? (
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-white/45 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 flex-shrink-0"
             >
-              <div className="text-white font-bold text-[15px] leading-tight tracking-tight">
-                Legal<span style={{ color: accentColor }}>OS</span>
-              </div>
-              <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
-                Legal Platform
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 flex-shrink-0"
-        >
-          {collapsed ? (
-            <ChevronRight className="w-3.5 h-3.5" />
+              <X className="w-4 h-4 text-white/60 hover:text-white" />
+            </button>
           ) : (
-            <ChevronLeft className="w-3.5 h-3.5" />
-          )}
-        </button>
-      </div>
-
-
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3 sidebar-scroll">
-        {filteredNavGroups.map((group) => (
-          <div key={group.label} className="mb-1">
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="px-4 py-1.5 mb-0.5"
-                >
-                  <span className="text-white/40 text-[9.5px] font-semibold tracking-[0.12em] uppercase">
-                    {t(SECTION_KEY_MAP[group.label] || group.label)}
-                  </span>
-                </motion.div>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 flex-shrink-0"
+            >
+              {collapsed ? (
+                <ChevronRight className="w-3.5 h-3.5" />
+              ) : (
+                <ChevronLeft className="w-3.5 h-3.5" />
               )}
-            </AnimatePresence>
+            </button>
+          )}
+        </div>
 
-            {group.items.map((item) => {
-              const isActive = pathname === item.href ||
-                (item.href !== "/" && pathname.startsWith(item.href));
-              const Icon = item.icon;
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-3 sidebar-scroll">
+          {filteredNavGroups.map((group) => (
+            <div key={group.label} className="mb-1">
+              <AnimatePresence>
+                {(!collapsed || isMobile) && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="px-4 py-1.5 mb-0.5"
+                  >
+                    <span className="text-white/40 text-[9.5px] font-semibold tracking-[0.12em] uppercase">
+                      {t(SECTION_KEY_MAP[group.label] || group.label)}
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              return (
-                <div key={item.href} className="px-2 mb-0.5">
-                  <Link href={item.href}>
-                    <motion.div
-                      onMouseEnter={() => setHoveredItem(item.href)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                      className={cn(
-                        "relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200",
-                        "group",
-                        isActive ? "nav-active" : "hover:bg-white/[0.05]"
-                      )}
-                    >
-                      {/* Active indicator line */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeIndicator"
-                          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full"
-                          style={{ background: accentColor }}
-                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        />
-                      )}
+              {group.items.map((item) => {
+                const isActive = pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
+                const Icon = item.icon;
 
-                      {/* Icon */}
+                return (
+                  <div key={item.href} className="px-2 mb-0.5">
+                    <Link href={item.href} onClick={() => isMobile && setMobileOpen(false)}>
+                      <motion.div
+                        onMouseEnter={() => setHoveredItem(item.href)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        className={cn(
+                          "relative flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200",
+                          "group",
+                          isActive ? "nav-active" : "hover:bg-white/[0.05]"
+                        )}
+                      >
+                        {/* Active indicator line */}
+                        {isActive && (
+                          <motion.div
+                            layoutId={isMobile ? "mobileActiveIndicator" : "activeIndicator"}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full"
+                            style={{ background: accentColor }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          />
+                        )}
+
+                        {/* Icon */}
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
                           style={{
@@ -334,122 +338,174 @@ export default function Sidebar() {
                           />
                         </div>
 
-                      {/* Label */}
-                      <AnimatePresence>
-                        {!collapsed && (
+                        {/* Label */}
+                        <AnimatePresence>
+                          {(!collapsed || isMobile) && (
+                            <motion.span
+                              initial={{ opacity: 0, x: -6 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -6 }}
+                              transition={{ duration: 0.15 }}
+                              className={cn(
+                                "text-[13px] font-medium leading-none flex-1 truncate",
+                                isActive
+                                  ? "text-white"
+                                  : "text-white/75 group-hover:text-white"
+                              )}
+                            >
+                              {t(NAV_LABEL_KEYS[item.href] || item.label)}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Badge */}
+                        {(!collapsed || isMobile) && item.badge && (
                           <motion.span
-                            initial={{ opacity: 0, x: -6 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -6 }}
-                            transition={{ duration: 0.15 }}
-                          className={cn(
-                              "text-[13px] font-medium leading-none flex-1 truncate",
-                              isActive
-                                ? "text-white"
-                                : "text-white/75 group-hover:text-white"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className={cn(
+                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 min-w-[18px] text-center",
+                              item.badgeColor === "mint" && "bg-mint/20 text-mint",
+                              item.badgeColor === "orange" && "bg-premium-orange/20 text-premium-orange",
+                              item.badgeColor === "coral" && "bg-premium-coral/20 text-premium-coral"
                             )}
                           >
-                            {t(NAV_LABEL_KEYS[item.href] || item.label)}
+                            {item.badge}
                           </motion.span>
                         )}
-                      </AnimatePresence>
 
-                      {/* Badge */}
-                      {!collapsed && item.badge && (
-                        <motion.span
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className={cn(
-                            "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 min-w-[18px] text-center",
-                            item.badgeColor === "mint" &&
-                              "bg-mint/20 text-mint",
-                            item.badgeColor === "orange" &&
-                              "bg-premium-orange/20 text-premium-orange",
-                            item.badgeColor === "coral" &&
-                              "bg-premium-coral/20 text-premium-coral"
-                          )}
-                        >
-                          {item.badge}
-                        </motion.span>
-                      )}
+                        {/* Collapsed tooltip */}
+                        {collapsed && !isMobile && hoveredItem === item.href && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -4 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="absolute left-full ml-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white whitespace-nowrap z-50 pointer-events-none"
+                            style={{
+                              background: primaryColor,
+                              border: `1px solid ${accentColor}35`,
+                              boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                            }}
+                          >
+                            {item.label}
+                            {item.badge && (
+                              <span className="ml-1.5" style={{ color: accentColor }}>{item.badge}</span>
+                            )}
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
 
-                      {/* Collapsed tooltip */}
-                      {collapsed && hoveredItem === item.href && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -4 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="absolute left-full ml-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white whitespace-nowrap z-50 pointer-events-none"
-                          style={{
-                            background: primaryColor,
-                            border: `1px solid ${accentColor}35`,
-                            boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
-                          }}
-                        >
-                          {item.label}
-                          {item.badge && (
-                            <span className="ml-1.5" style={{ color: accentColor }}>{item.badge}</span>
-                          )}
-                        </motion.div>
-                      )}
-                    </motion.div>
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Bottom user profile */}
-      <div className="border-t border-white/[0.07] p-3">
-        <div
-          className={cn(
-            "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-white/[0.06]",
-            collapsed && "justify-center"
-          )}
-        >
-          {/* Avatar */}
+        {/* Bottom user profile */}
+        <div className="border-t border-white/[0.07] p-3">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[11px] font-bold"
-            style={{
-              background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}bb 100%)`,
-              color: accentTextColor,
-            }}
+            className={cn(
+              "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-white/[0.06]",
+              collapsed && !isMobile && "justify-center"
+            )}
           >
-            {getInitials(user?.full_name || "Advocate")}
+            {/* Avatar */}
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[11px] font-bold"
+              style={{
+                background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}bb 100%)`,
+                color: accentTextColor,
+              }}
+            >
+              {getInitials(user?.full_name || "Advocate")}
+            </div>
+
+            <AnimatePresence>
+              {(!collapsed || isMobile) && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  className="flex-1 min-w-0"
+                >
+                  <div className="text-white text-[12px] font-semibold truncate leading-tight">
+                    {user?.full_name || "Advocate"}
+                  </div>
+                  <div className="text-white/35 text-[10px] truncate">{user?.role || "Partner"}</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {(!collapsed || isMobile) && (
+                <motion.button
+                  onClick={() => {
+                    isMobile && setMobileOpen(false);
+                    logout();
+                  }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-white/25 hover:text-white/60 transition-colors p-1 rounded-lg hover:bg-white/[0.06]"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
-
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                className="flex-1 min-w-0"
-              >
-                <div className="text-white text-[12px] font-semibold truncate leading-tight">
-                  {user?.full_name || "Advocate"}
-                </div>
-                <div className="text-white/35 text-[10px] truncate">{user?.role || "Partner"}</div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.button
-                onClick={() => logout()}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-white/25 hover:text-white/60 transition-colors p-1 rounded-lg hover:bg-white/[0.06]"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </motion.button>
-            )}
-          </AnimatePresence>
         </div>
-      </div>
-    </motion.aside>
+      </>
+    );
+  };
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{ width: collapsed ? 72 : 260 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="hidden md:flex relative flex-shrink-0 h-screen flex flex-col overflow-hidden z-40 print:hidden"
+        style={{
+          background: primaryColor === "#FFFFFF"
+            ? "#1F2937"
+            : `linear-gradient(160deg, ${primaryColor} 0%, ${adjustColor(primaryColor, -20)} 100%)`,
+        }}
+      >
+        {renderSidebarBody(false)}
+      </motion.aside>
+
+      {/* Mobile Sidebar Drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="md:hidden fixed inset-0 z-50 flex">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            />
+
+            {/* Sidebar content container */}
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-[260px] h-full flex flex-col overflow-hidden shadow-2xl z-50"
+              style={{
+                background: primaryColor === "#FFFFFF"
+                  ? "#1F2937"
+                  : `linear-gradient(160deg, ${primaryColor} 0%, ${adjustColor(primaryColor, -20)} 100%)`,
+              }}
+            >
+              {renderSidebarBody(true)}
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

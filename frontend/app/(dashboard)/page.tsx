@@ -77,7 +77,7 @@ export default function DashboardPage() {
           style={{ background: "linear-gradient(135deg, #013B36 0%, #014D46 60%, #0B3D2E 100%)", boxShadow: "0 8px 32px rgba(1,59,54,0.25)" }}
         >
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 80% 50%, rgba(110,231,183,0.08) 0%, transparent 70%)" }} />
-          <div className="relative flex items-center gap-4">
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Search className="w-4 h-4 text-emerald-300" />
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               </div>
               <h2 className="text-white/60 text-xs">Search across matters, clients, notices, drafts, and invoices.</h2>
             </div>
-            <div className="flex-1 max-w-2xl ml-auto">
+            <div className="w-full md:w-auto md:flex-1 md:max-w-2xl">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                 <input

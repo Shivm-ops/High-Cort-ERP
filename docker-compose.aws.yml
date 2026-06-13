@@ -1,0 +1,123 @@
+version: "3.9"
+
+# ─── AWS Emergency Deployment (cost-optimised for t3.small) ──────────────────
+# Elasticsearch, ChromaDB, Kibana, MinIO are disabled — use S3 for file storage.
+# Run with: docker compose -f docker-compose.aws.yml up -d --build
+
+services:
+
+  # ─── Marketing Website ─────────────────────────────────────────────────────
+  website:
+    build:
+      context: ./legalos-website
+      dockerfile: Dockerfile
+      args:
+        - VITE_ERP_APP_URL=http://${SERVER_IP}:3000
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  # ─── ERP Frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:8000/api/v1
+      - NEXT_PUBLIC_APP_NAME=LegalOS
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    expose:
+      - "3000"
+
+  # ─── Backend API ───────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.aws
+    environment:
+      - DATABASE_URL=postgresql://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    command: gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+
+  # ─── Celery Worker (reduced concurrency for t3.small) ──────────────────────
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.aws
+    environment:
+      - DATABASE_URL=postgresql://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - postgres
+    command: celery -A app.tasks worker --loglevel=warning --concurrency=2
+
+  # ─── PostgreSQL ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lagalos_db
+      POSTGRES_USER: lagalos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lagalos -d lagalos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── Nginx Reverse Proxy ───────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "3000:3000"
+      - "8000:8000"
+    volumes:
+      - ./nginx/nginx.aws.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - website
+      - frontend
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: lagalos_network
