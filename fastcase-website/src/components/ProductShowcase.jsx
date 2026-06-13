@@ -72,7 +72,7 @@ export default function ProductShowcase() {
         <div className="text-center mb-12">
           <p className="eyebrow mb-4">Product Screenshots</p>
           <h2 className="section-heading text-4xl lg:text-5xl mb-4">
-            See LegalOS in Action
+            See Fastcase in Action
           </h2>
           <p className="text-[17px] text-ink/50 max-w-xl mx-auto">
             A purpose-built legal operating system — explore the platform that advocates and law firms across India use to run their entire practice.
@@ -146,13 +146,13 @@ export default function ProductShowcase() {
                   </div>
                   <div className="flex-1 bg-white border border-line rounded-md px-3 py-1 flex items-center gap-1.5 text-[11px] text-ink/30 max-w-[240px] mx-auto">
                     <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                    app.legalos.in
+                    app.Fastcase.in
                   </div>
                 </div>
                 {/* Screenshot */}
                 <img
                   src={tab.img}
-                  alt={`LegalOS ${tab.label}`}
+                  alt={`Fastcase ${tab.label}`}
                   className="w-full block"
                   style={{ aspectRatio: '16/9', objectFit: 'cover', objectPosition: 'top' }}
                   onError={(e) => {

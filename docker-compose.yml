@@ -7,13 +7,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
-        - NEXT_PUBLIC_APP_NAME=LegalOS
+        - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
+        - NEXT_PUBLIC_APP_NAME=Fastcase
     ports:
       - "3002:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
-      - NEXT_PUBLIC_APP_NAME=LegalOS
+      - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
+      - NEXT_PUBLIC_APP_NAME=Fastcase
     depends_on:
       - backend
 
@@ -23,11 +23,11 @@ services:
       context: ./admin-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
+        - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
     ports:
       - "3001:3001"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api.lagalos.com/api/v1
+      - NEXT_PUBLIC_API_URL=http://api.fastcase.in/api/v1
       - PORT=3001
     depends_on:
       - backend
@@ -35,10 +35,10 @@ services:
   # ─── Marketing Website ─────────────────────────────────────────────────────
   website:
     build:
-      context: ./legalos-website
+      context: ./fastcase-website
       dockerfile: Dockerfile
       args:
-        - VITE_ERP_APP_URL=http://app.lagalos.com
+        - VITE_ERP_APP_URL=http://app.fastcase.in
     ports:
       - "3000:80"
 

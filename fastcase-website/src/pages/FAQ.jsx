@@ -7,20 +7,20 @@ const faqs = [
     category: 'General',
     questions: [
       {
-        q: 'What is LegalOS?',
-        a: 'LegalOS is a comprehensive Advocate Practice Management Software developed by SOSM Services Private Limited. It is a cloud-based platform designed to automate and streamline every aspect of legal practice management for Indian advocates, law firms, legal consultants, and corporate legal departments.',
+        q: 'What is Fastcase?',
+        a: 'Fastcase is a comprehensive Advocate Practice Management Software developed by SOSM Services Private Limited. It is a cloud-based platform designed to automate and streamline every aspect of legal practice management for Indian advocates, law firms, legal consultants, and corporate legal departments.',
       },
       {
-        q: 'Who can use LegalOS?',
-        a: 'LegalOS is designed for individual advocates, law firms of all sizes, legal consultants, litigation teams, and corporate legal departments. Whether you are a solo practitioner in a district court or a senior partner at a major law firm, LegalOS has the tools for you.',
+        q: 'Who can use Fastcase?',
+        a: 'Fastcase is designed for individual advocates, law firms of all sizes, legal consultants, litigation teams, and corporate legal departments. Whether you are a solo practitioner in a district court or a senior partner at a major law firm, Fastcase has the tools for you.',
       },
       {
-        q: 'Is LegalOS a legal advice platform?',
-        a: 'No. LegalOS is a software platform only. It does not provide legal advice, act as an advocate, represent clients before courts, or guarantee any legal outcomes. All legal decisions, drafting, filings, and court submissions remain solely the responsibility of the registered advocate or user.',
+        q: 'Is Fastcase a legal advice platform?',
+        a: 'No. Fastcase is a software platform only. It does not provide legal advice, act as an advocate, represent clients before courts, or guarantee any legal outcomes. All legal decisions, drafting, filings, and court submissions remain solely the responsibility of the registered advocate or user.',
       },
       {
-        q: 'Is LegalOS available across India?',
-        a: 'Yes. LegalOS is a cloud-based platform accessible from anywhere in India. It supports advocates practicing in any court across the country — from district courts to the Supreme Court.',
+        q: 'Is Fastcase available across India?',
+        a: 'Yes. Fastcase is a cloud-based platform accessible from anywhere in India. It supports advocates practicing in any court across the country — from district courts to the Supreme Court.',
       },
     ],
   },
@@ -28,28 +28,28 @@ const faqs = [
     category: 'Features & Functionality',
     questions: [
       {
-        q: 'What languages does LegalOS support?',
-        a: 'LegalOS currently supports English, Marathi, Hindi, and Gujarati. You can draft legal documents, notices, affidavits, and other templates in these four languages. Additional language support is on our product roadmap.',
+        q: 'What languages does Fastcase support?',
+        a: 'Fastcase currently supports English, Marathi, Hindi, and Gujarati. You can draft legal documents, notices, affidavits, and other templates in these four languages. Additional language support is on our product roadmap.',
       },
       {
         q: 'How does the Auto-Populate Drafts feature work?',
-        a: 'When you select a client in LegalOS, the system automatically populates their name, address, mobile number, email, matter details, and opposite party information into the selected document template. This eliminates manual data entry and significantly reduces drafting errors and time.',
+        a: 'When you select a client in Fastcase, the system automatically populates their name, address, mobile number, email, matter details, and opposite party information into the selected document template. This eliminates manual data entry and significantly reduces drafting errors and time.',
       },
       {
-        q: 'Does LegalOS support e-filing with courts?',
-        a: 'LegalOS provides an E-Filing Workspace for preparing, organizing, and packaging filing documents. However, LegalOS does not directly file matters with government court portals unless an official integration is in place. The workspace helps you prepare perfect filing bundles for manual or assisted filing.',
+        q: 'Does Fastcase support e-filing with courts?',
+        a: 'Fastcase provides an E-Filing Workspace for preparing, organizing, and packaging filing documents. However, Fastcase does not directly file matters with government court portals unless an official integration is in place. The workspace helps you prepare perfect filing bundles for manual or assisted filing.',
       },
       {
         q: 'How does the WhatsApp notification feature work?',
-        a: 'LegalOS sends automated WhatsApp notifications for hearing reminders, invoice alerts, compliance deadlines, and case updates. This feature requires WhatsApp Business API integration. Notifications can be sent to advocates, team members, and clients based on configurable rules.',
+        a: 'Fastcase sends automated WhatsApp notifications for hearing reminders, invoice alerts, compliance deadlines, and case updates. This feature requires WhatsApp Business API integration. Notifications can be sent to advocates, team members, and clients based on configurable rules.',
       },
       {
         q: 'Can my clients access their case information?',
-        a: 'Yes. LegalOS includes a Client Portal where clients can view their case status, upcoming hearings, documents, invoices, and upload supporting documents. This reduces the number of status calls you receive and improves client satisfaction.',
+        a: 'Yes. Fastcase includes a Client Portal where clients can view their case status, upcoming hearings, documents, invoices, and upload supporting documents. This reduces the number of status calls you receive and improves client satisfaction.',
       },
       {
-        q: 'Does LegalOS support billing and invoicing?',
-        a: 'Yes. LegalOS includes a complete Billing & Invoice Management module that generates professional GST-compliant invoices, tracks payments, manages outstanding amounts, and generates revenue reports. Invoice alerts can be sent via WhatsApp.',
+        q: 'Does Fastcase support billing and invoicing?',
+        a: 'Yes. Fastcase includes a complete Billing & Invoice Management module that generates professional GST-compliant invoices, tracks payments, manages outstanding amounts, and generates revenue reports. Invoice alerts can be sent via WhatsApp.',
       },
     ],
   },
@@ -57,16 +57,16 @@ const faqs = [
     category: 'Data & Security',
     questions: [
       {
-        q: 'Is my data secure on LegalOS?',
-        a: 'Yes. LegalOS implements enterprise-grade security measures including end-to-end encryption for data in transit and at rest, role-based access control, audit logs, tenant isolation, secure document storage, automated backups, disaster recovery systems, and continuous security monitoring. See our Data Security Policy for full details.',
+        q: 'Is my data secure on Fastcase?',
+        a: 'Yes. Fastcase implements enterprise-grade security measures including end-to-end encryption for data in transit and at rest, role-based access control, audit logs, tenant isolation, secure document storage, automated backups, disaster recovery systems, and continuous security monitoring. See our Data Security Policy for full details.',
       },
       {
-        q: 'Who owns the data I upload to LegalOS?',
-        a: 'You retain complete ownership of all your data, legal documents, and uploaded content. LegalOS does not claim ownership over any user-generated content. Your data is yours — we are merely providing the infrastructure to store and manage it securely.',
+        q: 'Who owns the data I upload to Fastcase?',
+        a: 'You retain complete ownership of all your data, legal documents, and uploaded content. Fastcase does not claim ownership over any user-generated content. Your data is yours — we are merely providing the infrastructure to store and manage it securely.',
       },
       {
-        q: 'Can I export my data from LegalOS?',
-        a: 'Yes. LegalOS supports data export so you can download your client records, case data, documents, and other information at any time. We believe in data portability and do not lock you into the platform.',
+        q: 'Can I export my data from Fastcase?',
+        a: 'Yes. Fastcase supports data export so you can download your client records, case data, documents, and other information at any time. We believe in data portability and do not lock you into the platform.',
       },
       {
         q: 'What happens to my data if I cancel my subscription?',
@@ -79,11 +79,11 @@ const faqs = [
     questions: [
       {
         q: 'Is there a free trial?',
-        a: 'Yes, LegalOS offers a free trial period for new users. No credit card is required to start the trial. Contact us to begin your free trial and explore all features of the platform.',
+        a: 'Yes, Fastcase offers a free trial period for new users. No credit card is required to start the trial. Contact us to begin your free trial and explore all features of the platform.',
       },
       {
         q: 'What subscription plans are available?',
-        a: 'LegalOS offers monthly and annual subscription plans for individual advocates, small firms, and large teams. Annual plans offer a significant discount over monthly billing. Contact our sales team for current pricing information tailored to your practice size.',
+        a: 'Fastcase offers monthly and annual subscription plans for individual advocates, small firms, and large teams. Annual plans offer a significant discount over monthly billing. Contact our sales team for current pricing information tailored to your practice size.',
       },
       {
         q: 'Can I get a refund if I am not satisfied?',
@@ -96,7 +96,7 @@ const faqs = [
     questions: [
       {
         q: 'How do I get support?',
-        a: 'LegalOS provides support via email at support@legalos.in. You can also use the Contact form on our website. Our support team is available during business hours (Monday–Saturday, 9 AM – 6 PM IST) to assist with technical issues, onboarding, and training.',
+        a: 'Fastcase provides support via email at support@Fastcase.in. You can also use the Contact form on our website. Our support team is available during business hours (Monday–Saturday, 9 AM – 6 PM IST) to assist with technical issues, onboarding, and training.',
       },
       {
         q: 'How do I raise a grievance?',
@@ -104,7 +104,7 @@ const faqs = [
       },
       {
         q: 'Is training provided for new users?',
-        a: 'Yes. LegalOS provides onboarding assistance and training resources including documentation, video guides, and live support sessions for new subscribers. Our goal is to ensure every advocate can use the platform effectively from day one.',
+        a: 'Yes. Fastcase provides onboarding assistance and training resources including documentation, video guides, and live support sessions for new subscribers. Our goal is to ensure every advocate can use the platform effectively from day one.',
       },
     ],
   },
@@ -146,7 +146,7 @@ export default function FAQ() {
             Frequently Asked Questions
           </h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            Everything you need to know about LegalOS. Can't find your answer?
+            Everything you need to know about Fastcase. Can't find your answer?
             Contact us and we'll be happy to help.
           </p>
         </div>
@@ -181,8 +181,8 @@ export default function FAQ() {
               <Link to="/contact" className="btn-primary text-sm px-6 py-2.5">
                 Contact Us <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-              <a href="mailto:support@legalos.in" className="btn-secondary text-sm px-6 py-2.5">
-                support@legalos.in
+              <a href="mailto:support@Fastcase.in" className="btn-secondary text-sm px-6 py-2.5">
+                support@Fastcase.in
               </a>
             </div>
           </div>

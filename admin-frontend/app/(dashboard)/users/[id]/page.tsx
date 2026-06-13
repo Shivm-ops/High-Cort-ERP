@@ -75,7 +75,7 @@ export default function UserProfilePage() {
         toast.success("User forcefully logged out from all devices");
       } else if (action === "reset_password") {
         await api.post(`/admin/users/${params.id}/reset-password`, { new_password: customPassword || null });
-        toast.success(customPassword ? "Password changed successfully. Sessions revoked." : "Password reset to LegalOS@2025. Sessions revoked.");
+        toast.success(customPassword ? "Password changed successfully. Sessions revoked." : "Password reset to Fastcase@2025. Sessions revoked.");
         setCustomPassword("");
       } else if (action === "suspend") {
         await api.put(`/admin/users/${params.id}/status?active=false`);

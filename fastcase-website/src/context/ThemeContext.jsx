@@ -5,7 +5,7 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     try {
-      const stored = localStorage.getItem('legalos-theme');
+      const stored = localStorage.getItem('Fastcase-theme');
       if (stored) return stored;
     } catch {}
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -19,7 +19,7 @@ export function ThemeProvider({ children }) {
       root.classList.remove('dark');
     }
     try {
-      localStorage.setItem('legalos-theme', theme);
+      localStorage.setItem('Fastcase-theme', theme);
     } catch {}
   }, [theme]);
 

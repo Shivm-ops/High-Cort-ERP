@@ -81,7 +81,7 @@ const plans = [
 const faqs = [
   { q: 'Is there a free trial?', a: 'Yes — all paid plans include a 14-day free trial with no credit card required. You get full access to every feature during the trial.' },
   { q: 'Can I upgrade or downgrade at any time?', a: 'Absolutely. You can upgrade immediately (prorated) or downgrade at the next billing cycle through your account settings.' },
-  { q: 'Are GST invoices provided?', a: 'Yes. LegalOS generates proper GST tax invoices for all subscription payments, suitable for business expense claims.' },
+  { q: 'Are GST invoices provided?', a: 'Yes. Fastcase generates proper GST tax invoices for all subscription payments, suitable for business expense claims.' },
   { q: 'What happens to my data if I cancel?', a: 'Your data is retained for 90 days after cancellation in read-only mode, giving you full time to export everything. After 90 days it is securely deleted.' },
   { q: 'Do you offer discounts for annual plans?', a: 'Yes — annual subscriptions receive up to 20% off compared to monthly billing. Contact us for annual pricing.' },
 ];

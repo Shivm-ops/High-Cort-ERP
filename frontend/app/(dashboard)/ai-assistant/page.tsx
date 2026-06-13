@@ -56,7 +56,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: "welcome",
     role: "assistant",
-    content: `I am your LegalOS Case Assistant. Select a client and matter above to load context. I can help execute specific legal workflows like drafting replies, finding case laws, or calculating limitation periods.`,
+    content: `I am your Fastcase Case Assistant. Select a client and matter above to load context. I can help execute specific legal workflows like drafting replies, finding case laws, or calculating limitation periods.`,
     timestamp: new Date(),
   },
 ];

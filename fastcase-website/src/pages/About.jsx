@@ -7,14 +7,14 @@ const team = [
     name: 'Abhijit Patil',
     role: 'Founder',
     badges: ['SEBI Registered Research Analyst', 'Member of ACFE (USA)'],
-    bio: 'Abhijit founded LegalOS with a clear vision: to give Indian legal professionals the same operational intelligence that large enterprises take for granted. With a background in financial research and forensic accounting, he brings both analytical rigour and deep market understanding to the platform.',
+    bio: 'Abhijit founded Fastcase with a clear vision: to give Indian legal professionals the same operational intelligence that large enterprises take for granted. With a background in financial research and forensic accounting, he brings both analytical rigour and deep market understanding to the platform.',
   },
   {
     initials: 'P',
     name: 'Priyankka',
     role: 'Management Team',
     badges: ['Strategic Planning', 'Operations & Growth'],
-    bio: "Priyankka is an integral part of the Management Team at LegalOS, where she plays a key role in strategic planning, operational oversight, and long-term organisational development. Her leadership ensures that every product decision and business process is aligned with the company's mission.",
+    bio: "Priyankka is an integral part of the Management Team at Fastcase, where she plays a key role in strategic planning, operational oversight, and long-term organisational development. Her leadership ensures that every product decision and business process is aligned with the company's mission.",
   },
   {
     initials: 'BP',
@@ -22,14 +22,14 @@ const team = [
     role: 'Director',
     company: 'SOSM Services Pvt Ltd',
     badges: ['Director'],
-    bio: "As Director of SOSM Services Pvt Ltd, Bhupal brings strong leadership and strategic vision to LegalOS, guiding the company's growth, business development, and market expansion across key verticals.",
+    bio: "As Director of SOSM Services Pvt Ltd, Bhupal brings strong leadership and strategic vision to Fastcase, guiding the company's growth, business development, and market expansion across key verticals.",
   },
   {
     initials: 'SP',
     name: 'Shivam Patil',
     role: 'DevOps Engineer',
     badges: ['DevOps Engineer'],
-    bio: 'Shivam contributes as DevOps Engineer, managing deployments, infrastructure reliability, and ensuring the LegalOS platform remains secure, scalable, and always available.',
+    bio: 'Shivam contributes as DevOps Engineer, managing deployments, infrastructure reliability, and ensuring the Fastcase platform remains secure, scalable, and always available.',
   },
 ];
 
@@ -74,7 +74,7 @@ export default function About() {
             <Scale className="w-8 h-8 text-white" />
           </div>
           <h1 className="font-heading font-[900] text-4xl md:text-5xl tracking-tight text-white mb-5">
-            About LegalOS
+            About Fastcase
           </h1>
           <p className="text-lg text-white/70 leading-relaxed max-w-2xl mx-auto">
             We are building India's most comprehensive Advocate Practice Management Software —
@@ -94,7 +94,7 @@ export default function About() {
               </h2>
               <div className="space-y-4 text-[15px] text-ink/60 leading-relaxed">
                 <p>
-                  LegalOS was created by <strong className="text-ink font-semibold">SOSM Services Private Limited</strong>,
+                  Fastcase was created by <strong className="text-ink font-semibold">SOSM Services Private Limited</strong>,
                   a technology company headquartered in Kolhapur, Maharashtra, India.
                   We saw firsthand the challenges Indian advocates face: managing hundreds of clients,
                   juggling court dates, drafting documents in multiple languages, handling billing,
@@ -106,7 +106,7 @@ export default function About() {
                   Advocates were relying on spreadsheets, paper registers, and disconnected tools.
                 </p>
                 <p>
-                  We built LegalOS to change that — a single, unified platform that handles
+                  We built Fastcase to change that — a single, unified platform that handles
                   every aspect of legal practice management, designed specifically for Indian
                   advocates, in the languages they speak, with the workflows they follow.
                 </p>
@@ -165,7 +165,7 @@ export default function About() {
             <p className="eyebrow mb-3">Who We Serve</p>
             <h2 className="section-heading text-3xl mb-3">Built For Every Legal Professional</h2>
             <p className="text-ink/50 max-w-xl mx-auto">
-              LegalOS serves the full spectrum of legal professionals across India.
+              Fastcase serves the full spectrum of legal professionals across India.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
@@ -190,7 +190,7 @@ export default function About() {
         <div className="section-container">
           <div className="text-center mb-14">
             <p className="eyebrow mb-3">Our Team</p>
-            <h2 className="section-heading text-3xl mb-3">The People Behind LegalOS</h2>
+            <h2 className="section-heading text-3xl mb-3">The People Behind Fastcase</h2>
             <p className="text-ink/50 max-w-xl mx-auto">
               A dedicated team of legal technology professionals, engineers, and domain experts
               working to transform how India practises law.
@@ -306,10 +306,10 @@ export default function About() {
       <section className="section-padding-sm" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
         <div className="section-container text-center">
           <h2 className="font-heading font-[800] text-3xl tracking-tight text-white mb-4">
-            Experience LegalOS Today
+            Experience Fastcase Today
           </h2>
           <p className="text-white/60 mb-8">
-            Start your free trial and discover how LegalOS can transform your legal practice.
+            Start your free trial and discover how Fastcase can transform your legal practice.
           </p>
           <Link to="/contact"
             className="inline-flex items-center gap-2 bg-white text-[#0F4C81] font-[600] text-[15px] px-7 py-3.5 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-lg"

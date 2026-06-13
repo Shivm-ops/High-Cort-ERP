@@ -11,7 +11,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
             <Scale className="w-4 h-4 text-blue-600" />
           </div>
-          <span className="font-bold text-gray-900 text-lg">LegalOS <span className="text-blue-600 font-normal">Client Portal</span></span>
+          <span className="font-bold text-gray-900 text-lg">Fastcase <span className="text-blue-600 font-normal">Client Portal</span></span>
         </div>
         
         <div className="flex items-center gap-4">

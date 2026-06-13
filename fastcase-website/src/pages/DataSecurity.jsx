@@ -14,7 +14,7 @@ export default function DataSecurity() {
   return (
     <LegalPageLayout
       title="Data Security Policy"
-      subtitle="How LegalOS protects your legal data and client information with enterprise-grade security."
+      subtitle="How Fastcase protects your legal data and client information with enterprise-grade security."
       lastUpdated="June 1, 2025"
     >
       {/* Security Pillars */}
@@ -39,7 +39,7 @@ export default function DataSecurity() {
       <h2>2. Encryption</h2>
       <h3>2.1 Encryption at Rest</h3>
       <ul>
-        <li>All data stored on LegalOS servers is encrypted using AES-256 (Advanced Encryption Standard with 256-bit keys)</li>
+        <li>All data stored on Fastcase servers is encrypted using AES-256 (Advanced Encryption Standard with 256-bit keys)</li>
         <li>Documents, attachments, and evidence files are encrypted individually</li>
         <li>Database fields containing sensitive information (Aadhaar, PAN, etc.) use field-level encryption</li>
         <li>Encryption keys are managed through a secure key management service and are rotated periodically</li>
@@ -47,14 +47,14 @@ export default function DataSecurity() {
 
       <h3>2.2 Encryption in Transit</h3>
       <ul>
-        <li>All data transmitted between your browser/app and LegalOS servers uses TLS 1.2 or higher</li>
+        <li>All data transmitted between your browser/app and Fastcase servers uses TLS 1.2 or higher</li>
         <li>HTTP Strict Transport Security (HSTS) is enforced to prevent downgrade attacks</li>
         <li>SSL/TLS certificates are from trusted Certificate Authorities and are renewed automatically</li>
         <li>Internal service-to-service communication is also encrypted</li>
       </ul>
 
       <h2>3. Role-Based Access Control (RBAC)</h2>
-      <p>LegalOS implements granular role-based access control to ensure each user can only access data relevant to their role:</p>
+      <p>Fastcase implements granular role-based access control to ensure each user can only access data relevant to their role:</p>
       <ul>
         <li><strong>Super Admin / Account Owner:</strong> Full access to all data and settings within the account</li>
         <li><strong>Senior Advocate:</strong> Access to all matters, clients, and team management</li>
@@ -75,7 +75,7 @@ export default function DataSecurity() {
 
       <h2>5. Tenant Isolation</h2>
       <ul>
-        <li>Each LegalOS account operates in an isolated data environment (tenant isolation)</li>
+        <li>Each Fastcase account operates in an isolated data environment (tenant isolation)</li>
         <li>Data from one account cannot be accessed by another account under any circumstances</li>
         <li>Database queries are scoped to the authenticated tenant's data only</li>
         <li>Storage buckets and document repositories are segregated by tenant</li>
@@ -102,7 +102,7 @@ export default function DataSecurity() {
 
       <h2>8. Disaster Recovery</h2>
       <ul>
-        <li>LegalOS maintains a comprehensive Disaster Recovery Plan (DRP)</li>
+        <li>Fastcase maintains a comprehensive Disaster Recovery Plan (DRP)</li>
         <li>Recovery Time Objective (RTO): 4 hours for major incidents</li>
         <li>Recovery Point Objective (RPO): Maximum 6 hours of data loss in a catastrophic failure scenario</li>
         <li>Failover procedures are tested at least twice per year</li>
@@ -130,7 +130,7 @@ export default function DataSecurity() {
 
       <h2>11. Physical Security</h2>
       <ul>
-        <li>LegalOS infrastructure is hosted on enterprise cloud providers with SOC 2 Type II certification</li>
+        <li>Fastcase infrastructure is hosted on enterprise cloud providers with SOC 2 Type II certification</li>
         <li>Data centers have 24/7 physical security, biometric access, CCTV surveillance</li>
         <li>Hosting infrastructure is located in India-based data centers where possible</li>
         <li>Our internal team has controlled access to production systems with mandatory MFA</li>
@@ -147,21 +147,21 @@ export default function DataSecurity() {
       </ol>
 
       <h2>13. Your Security Responsibilities</h2>
-      <p>Users also play a role in keeping LegalOS secure:</p>
+      <p>Users also play a role in keeping Fastcase secure:</p>
       <ul>
-        <li>Use strong, unique passwords for your LegalOS account</li>
+        <li>Use strong, unique passwords for your Fastcase account</li>
         <li>Enable two-factor authentication (2FA) if available</li>
         <li>Do not share your login credentials with unauthorized persons</li>
         <li>Log out of your account when using shared or public devices</li>
-        <li>Report any suspicious activity immediately to <a href="mailto:security@legalos.in">security@legalos.in</a></li>
+        <li>Report any suspicious activity immediately to <a href="mailto:security@Fastcase.in">security@Fastcase.in</a></li>
         <li>Keep your contact email and recovery information up to date</li>
       </ul>
 
       <h2>14. Contact Our Security Team</h2>
       <p>To report a security vulnerability or incident:</p>
       <ul>
-        <li><strong>Email:</strong> <a href="mailto:security@legalos.in">security@legalos.in</a></li>
-        <li><strong>Subject:</strong> "Security Vulnerability Report – LegalOS"</li>
+        <li><strong>Email:</strong> <a href="mailto:security@Fastcase.in">security@Fastcase.in</a></li>
+        <li><strong>Subject:</strong> "Security Vulnerability Report – Fastcase"</li>
         <li>We acknowledge security reports within 24 hours and provide updates as the issue is investigated</li>
       </ul>
     </LegalPageLayout>

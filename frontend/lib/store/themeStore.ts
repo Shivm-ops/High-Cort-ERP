@@ -47,7 +47,7 @@ export const useThemeStore = create<ThemeState>()(
       setTypography: (settings) => set((state) => ({ typography: { ...state.typography, ...settings } })),
     }),
     {
-      name: 'lagalos-theme-storage',
+      name: 'fastcase-theme-storage',
     }
   )
 );

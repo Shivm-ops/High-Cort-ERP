@@ -76,7 +76,7 @@ export default function SuperAdminDashboard() {
       {/* Welcome Section */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Platform Overview</h1>
-        <p className="text-sm text-gray-500 mt-1">Real-time metrics and system health for LegalOS SaaS network.</p>
+        <p className="text-sm text-gray-500 mt-1">Real-time metrics and system health for Fastcase SaaS network.</p>
       </div>
 
       {/* KPIs Grid */}
@@ -129,7 +129,7 @@ export default function SuperAdminDashboard() {
           <div className="space-y-6">
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span className="font-medium text-gray-700">API Server (api.lagalos.in)</span>
+                <span className="font-medium text-gray-700">API Server (api.fastcase.in)</span>
                 <span className={`font-bold ${health?.api_server?.health === 'excellent' ? 'text-emerald-600' : 'text-amber-600'}`}>
                   {health?.api_server?.status || 'Unknown'}
                 </span>

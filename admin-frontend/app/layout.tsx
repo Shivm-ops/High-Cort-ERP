@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "LegalOS | Admin Control Center",
-  description: "Secure Admin Portal for LegalOS SaaS platform",
+  title: "Fastcase | Admin Control Center",
+  description: "Secure Admin Portal for Fastcase SaaS platform",
 };
 
 export default function RootLayout({

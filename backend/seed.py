@@ -51,9 +51,9 @@ print("  ✓ Tables ready")
 # ── 2. Seed default admin ─────────────────────────────────────────────────────
 db = SessionLocal()
 
-DEFAULT_EMAIL    = "admin@lagalos.in"
+DEFAULT_EMAIL    = "admin@fastcase.in"
 DEFAULT_PASSWORD = "lagalos@2025"
-DEFAULT_NAME     = "LegalOS System Admin"
+DEFAULT_NAME     = "Fastcase System Admin"
 
 try:
     existing = db.query(User).filter(User.email == DEFAULT_EMAIL).first()
@@ -107,9 +107,9 @@ I/We, [CLIENT_NAME], do hereby appoint and retain [ADVOCATE_NAME] to act and app
     from app.models.setting import SystemSetting
     if db.query(SystemSetting).count() == 0:
         settings = [
-            SystemSetting(key="platform_name", value="LegalOS Admin", description="Global Platform Name", is_public=True),
-            SystemSetting(key="support_email", value="support@lagalos.in", description="Support Contact Email", is_public=True),
-            SystemSetting(key="support_phone", value="+91-800-LegalOS-AI", description="Support Contact Phone", is_public=True),
+            SystemSetting(key="platform_name", value="Fastcase Admin", description="Global Platform Name", is_public=True),
+            SystemSetting(key="support_email", value="support@fastcase.in", description="Support Contact Email", is_public=True),
+            SystemSetting(key="support_phone", value="+91-800-Fastcase-AI", description="Support Contact Phone", is_public=True),
             SystemSetting(key="maintenance_mode", value="false", description="Toggle Global Maintenance Mode", is_public=True),
             SystemSetting(key="max_upload_size_mb", value="50", description="Max file upload size in MB", is_public=False)
         ]

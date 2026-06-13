@@ -28,7 +28,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/features" element={<Features />} />
-          <Route path="/why-legalos" element={<WhyChoose />} />
+          <Route path="/why-Fastcase" element={<WhyChoose />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/practice-areas" element={<PracticeAreas />} />

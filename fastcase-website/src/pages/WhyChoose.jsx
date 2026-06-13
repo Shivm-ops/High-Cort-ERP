@@ -5,25 +5,25 @@ import {
 } from 'lucide-react';
 
 const comparisons = [
-  { feature: 'Built for Indian Legal System', legalos: true, others: false },
-  { feature: 'Multi-Language Support (Marathi, Hindi, Gujarati)', legalos: true, others: false },
-  { feature: 'GST-Compliant Billing', legalos: true, others: false },
-  { feature: 'WhatsApp Notification Integration', legalos: true, others: false },
-  { feature: 'Auto-Populate Drafts from Client Data', legalos: true, others: false },
-  { feature: 'OCR-Powered Notice Processing', legalos: true, others: false },
-  { feature: 'Client Self-Service Portal', legalos: true, others: 'partial' },
-  { feature: 'Mobile Responsive Design', legalos: true, others: 'partial' },
-  { feature: 'Role-Based Team Access', legalos: true, others: 'partial' },
-  { feature: 'Legal Research Workspace', legalos: true, others: 'partial' },
-  { feature: 'Evidence Management with Version History', legalos: true, others: false },
-  { feature: 'Case Law & Citation Management', legalos: true, others: 'partial' },
+  { feature: 'Built for Indian Legal System', Fastcase: true, others: false },
+  { feature: 'Multi-Language Support (Marathi, Hindi, Gujarati)', Fastcase: true, others: false },
+  { feature: 'GST-Compliant Billing', Fastcase: true, others: false },
+  { feature: 'WhatsApp Notification Integration', Fastcase: true, others: false },
+  { feature: 'Auto-Populate Drafts from Client Data', Fastcase: true, others: false },
+  { feature: 'OCR-Powered Notice Processing', Fastcase: true, others: false },
+  { feature: 'Client Self-Service Portal', Fastcase: true, others: 'partial' },
+  { feature: 'Mobile Responsive Design', Fastcase: true, others: 'partial' },
+  { feature: 'Role-Based Team Access', Fastcase: true, others: 'partial' },
+  { feature: 'Legal Research Workspace', Fastcase: true, others: 'partial' },
+  { feature: 'Evidence Management with Version History', Fastcase: true, others: false },
+  { feature: 'Case Law & Citation Management', Fastcase: true, others: 'partial' },
 ];
 
 const reasons = [
   {
     icon: Globe,
     title: 'Designed for India',
-    desc: 'LegalOS is built from scratch for the Indian legal system — Indian courts, Indian languages, Indian GST, and Indian advocacy workflows. Not a foreign product adapted for India.',
+    desc: 'Fastcase is built from scratch for the Indian legal system — Indian courts, Indian languages, Indian GST, and Indian advocacy workflows. Not a foreign product adapted for India.',
     color: 'text-blue-600',
     bg: 'bg-blue-50 dark:bg-blue-900/20',
   },
@@ -58,7 +58,7 @@ const reasons = [
   {
     icon: Scale,
     title: 'Scales with Your Practice',
-    desc: 'Whether you are a solo advocate or managing a 50-person firm, LegalOS grows with you. Add users, features, and capacity as your practice expands.',
+    desc: 'Whether you are a solo advocate or managing a 50-person firm, Fastcase grows with you. Add users, features, and capacity as your practice expands.',
     color: 'text-primary',
     bg: 'bg-primary/5 dark:bg-primary/20',
   },
@@ -85,10 +85,10 @@ export default function WhyChoose() {
       <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
-            Why Choose LegalOS?
+            Why Choose Fastcase?
           </h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            See why advocates and law firms across India choose LegalOS over
+            See why advocates and law firms across India choose Fastcase over
             generic software, spreadsheets, and foreign legal platforms.
           </p>
         </div>
@@ -98,7 +98,7 @@ export default function WhyChoose() {
       <section className="section-padding bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="section-heading text-3xl mb-4">8 Reasons to Choose LegalOS</h2>
+            <h2 className="section-heading text-3xl mb-4">8 Reasons to Choose Fastcase</h2>
             <p className="text-[16px] text-ink/50 max-w-2xl mx-auto">
               Purpose-built technology for the unique needs of Indian legal professionals.
             </p>
@@ -128,13 +128,13 @@ export default function WhyChoose() {
       <section className="section-padding border-t border-line" style={{ backgroundColor: '#EEF2F7' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="section-heading text-3xl mb-4">LegalOS vs. Other Solutions</h2>
-            <p className="text-[16px] text-ink/50 max-w-2xl mx-auto">See how LegalOS compares to generic software and foreign legal platforms.</p>
+            <h2 className="section-heading text-3xl mb-4">Fastcase vs. Other Solutions</h2>
+            <p className="text-[16px] text-ink/50 max-w-2xl mx-auto">See how Fastcase compares to generic software and foreign legal platforms.</p>
           </div>
           <div className="card overflow-hidden">
             <div className="grid grid-cols-3 bg-primary text-white">
               <div className="p-4 text-sm font-semibold">Feature</div>
-              <div className="p-4 text-sm font-semibold text-center bg-accent">LegalOS</div>
+              <div className="p-4 text-sm font-semibold text-center bg-accent">Fastcase</div>
               <div className="p-4 text-sm font-semibold text-center text-blue-200">Others</div>
             </div>
             {comparisons.map((c, i) => (
@@ -176,7 +176,7 @@ export default function WhyChoose() {
               <div>
                 <Shield className="w-14 h-14 text-blue-200 mb-5" />
                 <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">
-                  Your Data is Safe with LegalOS
+                  Your Data is Safe with Fastcase
                 </h2>
                 <p className="text-blue-100 leading-relaxed mb-6">
                   We implement enterprise-grade security across every layer of the platform.
@@ -215,7 +215,7 @@ export default function WhyChoose() {
       <section className="section-padding-sm border-t border-line" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading font-[800] text-3xl tracking-tight text-white mb-4">
-            Make the Switch to LegalOS
+            Make the Switch to Fastcase
           </h2>
           <p className="text-white/60 mb-8 max-w-xl mx-auto">
             Join advocates who have already modernized their practice. Start your free trial today.

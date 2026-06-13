@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>()(
       setUser: (user: AuthUser) => set({ user }),
     }),
     {
-      name: "lagalos-auth",
+      name: "fastcase-auth",
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

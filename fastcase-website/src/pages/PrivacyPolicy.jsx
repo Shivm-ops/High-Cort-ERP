@@ -5,20 +5,20 @@ export default function PrivacyPolicy() {
   return (
     <LegalPageLayout
       title="Privacy Policy"
-      subtitle="How LegalOS collects, uses, and protects your personal and legal data."
+      subtitle="How Fastcase collects, uses, and protects your personal and legal data."
       lastUpdated="June 1, 2025"
     >
       <h2>1. Introduction</h2>
       <p>
-        SOSM Services Private Limited ("Company", "we", "us", or "our") operates the LegalOS platform ("LegalOS", "Platform", "Service"). This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use LegalOS.
+        SOSM Services Private Limited ("Company", "we", "us", or "our") operates the Fastcase platform ("Fastcase", "Platform", "Service"). This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use Fastcase.
       </p>
       <p>
-        By accessing or using LegalOS, you acknowledge that you have read, understood, and agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please discontinue use of the platform.
+        By accessing or using Fastcase, you acknowledge that you have read, understood, and agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please discontinue use of the platform.
       </p>
 
       <h2>2. Information We Collect</h2>
       <h3>2.1 Account & Registration Information</h3>
-      <p>When you register on LegalOS, we collect:</p>
+      <p>When you register on Fastcase, we collect:</p>
       <ul>
         <li>Full name and professional designation (e.g., Advocate, Senior Advocate)</li>
         <li>Bar Council enrollment number</li>
@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
         <li>Business details (for corporate clients)</li>
         <li>Family and relationship information (as relevant to the matter)</li>
       </ul>
-      <p>You, as the advocate/user, are the data controller for your clients' information. LegalOS processes this data on your behalf as a data processor.</p>
+      <p>You, as the advocate/user, are the data controller for your clients' information. Fastcase processes this data on your behalf as a data processor.</p>
 
       <h3>2.3 Case & Matter Information</h3>
       <ul>
@@ -87,7 +87,7 @@ export default function PrivacyPolicy() {
       <h2>3. How We Use Your Information</h2>
       <p>We use the collected information for the following purposes:</p>
       <ul>
-        <li>To provide, operate, and maintain the LegalOS platform</li>
+        <li>To provide, operate, and maintain the Fastcase platform</li>
         <li>To authenticate users and maintain session security</li>
         <li>To enable auto-populate features for draft generation</li>
         <li>To send WhatsApp notifications (hearings, invoices, reminders)</li>
@@ -101,10 +101,10 @@ export default function PrivacyPolicy() {
 
       <h2>4. Data Ownership</h2>
       <p>
-        <strong>Users retain complete ownership of their legal documents, client data, and all uploaded content.</strong> LegalOS does not claim any ownership rights over user-generated content, legal drafts, client information, case records, or any documents uploaded or created on the platform.
+        <strong>Users retain complete ownership of their legal documents, client data, and all uploaded content.</strong> Fastcase does not claim any ownership rights over user-generated content, legal drafts, client information, case records, or any documents uploaded or created on the platform.
       </p>
       <p>
-        LegalOS is a data processor acting on your instructions as the data controller. We will not use your clients' data for any purpose other than providing the contracted services to you.
+        Fastcase is a data processor acting on your instructions as the data controller. We will not use your clients' data for any purpose other than providing the contracted services to you.
       </p>
 
       <h2>5. Data Sharing & Disclosure</h2>
@@ -119,7 +119,7 @@ export default function PrivacyPolicy() {
 
       <h2>6. Third-Party Integrations</h2>
       <h3>6.1 WhatsApp Business API</h3>
-      <p>LegalOS integrates with WhatsApp Business API for sending notifications. Message content for notifications passes through Meta's (WhatsApp's) servers. Usage of this feature is subject to WhatsApp's Terms of Service and Privacy Policy.</p>
+      <p>Fastcase integrates with WhatsApp Business API for sending notifications. Message content for notifications passes through Meta's (WhatsApp's) servers. Usage of this feature is subject to WhatsApp's Terms of Service and Privacy Policy.</p>
 
       <h3>6.2 E-Sign Integration</h3>
       <p>If e-signature functionality is available and used, the relevant document content is transmitted to the integrated e-sign service provider. We ensure our e-sign partners maintain appropriate data protection standards.</p>
@@ -148,7 +148,7 @@ export default function PrivacyPolicy() {
       </ul>
 
       <h2>9. Your Rights</h2>
-      <p>As a user of LegalOS, you have the following rights regarding your data:</p>
+      <p>As a user of Fastcase, you have the following rights regarding your data:</p>
       <ul>
         <li><strong>Access:</strong> Request a copy of your personal data we hold</li>
         <li><strong>Correction:</strong> Request correction of inaccurate or incomplete data</li>
@@ -157,12 +157,12 @@ export default function PrivacyPolicy() {
         <li><strong>Objection:</strong> Object to specific processing of your data</li>
         <li><strong>Complaint:</strong> Lodge a complaint with our Grievance Officer</li>
       </ul>
-      <p>To exercise these rights, contact us at <a href="mailto:privacy@legalos.in">privacy@legalos.in</a> or use our <Link to="/contact">Contact form</Link>.</p>
+      <p>To exercise these rights, contact us at <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a> or use our <Link to="/contact">Contact form</Link>.</p>
 
       <h2>10. Data Deletion Requests</h2>
       <p>To request deletion of your account and all associated data:</p>
       <ol>
-        <li>Send an email to <a href="mailto:privacy@legalos.in">privacy@legalos.in</a> with the subject "Data Deletion Request"</li>
+        <li>Send an email to <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a> with the subject "Data Deletion Request"</li>
         <li>Include your registered email address and account details</li>
         <li>We will verify your identity and process the request within 30 days</li>
         <li>You will receive a confirmation once deletion is complete</li>
@@ -170,7 +170,7 @@ export default function PrivacyPolicy() {
       <p>Note: Certain data may be retained for legal compliance purposes (e.g., billing records for tax compliance) even after an account deletion request.</p>
 
       <h2>11. Children's Privacy</h2>
-      <p>LegalOS is not intended for users under 18 years of age. We do not knowingly collect personal information from minors. If you become aware that a minor has provided us with personal information, please contact us immediately.</p>
+      <p>Fastcase is not intended for users under 18 years of age. We do not knowingly collect personal information from minors. If you become aware that a minor has provided us with personal information, please contact us immediately.</p>
 
       <h2>12. Changes to This Policy</h2>
       <p>We may update this Privacy Policy from time to time. We will notify registered users of material changes via email and/or an in-platform notification. Continued use of the platform after changes constitutes acceptance of the updated policy.</p>
@@ -178,7 +178,7 @@ export default function PrivacyPolicy() {
       <h2>13. Contact Us</h2>
       <p>For privacy-related queries or to exercise your rights:</p>
       <ul>
-        <li><strong>Email:</strong> <a href="mailto:privacy@legalos.in">privacy@legalos.in</a></li>
+        <li><strong>Email:</strong> <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a></li>
         <li><strong>Postal Address:</strong> SOSM Services Private Limited, B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra, India</li>
         <li><strong>Grievance Officer:</strong> <Link to="/grievance-officer">Click here</Link> for our Grievance Redressal page</li>
       </ul>

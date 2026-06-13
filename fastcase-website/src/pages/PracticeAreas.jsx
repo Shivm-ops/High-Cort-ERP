@@ -142,7 +142,7 @@ export default function PracticeAreas() {
             Built for Every Area of<br />Indian Legal Practice
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto">
-            LegalOS provides specialized workflows, automation tools, document management, billing,
+            Fastcase provides specialized workflows, automation tools, document management, billing,
             hearing tracking, and case management capabilities tailored for advocates, law firms,
             and legal professionals across diverse areas of practice.
           </p>
@@ -197,7 +197,7 @@ export default function PracticeAreas() {
             <h2 className="section-heading text-4xl mb-4">One Platform. Every Legal Workflow.</h2>
             <p className="text-[16px] text-ink/50 max-w-2xl mx-auto">
               Whether you are a solo advocate, growing law firm, senior counsel, or corporate legal department,
-              LegalOS helps streamline legal operations through:
+              Fastcase helps streamline legal operations through:
             </p>
           </div>
 
@@ -218,17 +218,17 @@ export default function PracticeAreas() {
         </div>
       </section>
 
-      {/* Why LegalOS */}
+      {/* Why Fastcase */}
       <section className="section-padding bg-white border-t border-line">
         <div className="section-container">
           <div className="grid lg:grid-cols-2 gap-14 items-center">
             <div>
-              <p className="eyebrow mb-4">Why LegalOS</p>
+              <p className="eyebrow mb-4">Why Fastcase</p>
               <h2 className="section-heading text-3xl mb-5">
                 Built for the modern Indian legal profession.
               </h2>
               <p className="text-[15px] text-ink/60 leading-relaxed mb-5">
-                LegalOS is designed specifically for Indian advocates and law firms to reduce administrative work,
+                Fastcase is designed specifically for Indian advocates and law firms to reduce administrative work,
                 improve case organization, automate documentation, and provide complete visibility into legal
                 operations from client onboarding to matter closure.
               </p>
@@ -270,7 +270,7 @@ export default function PracticeAreas() {
             Ready to streamline your practice?
           </h2>
           <p className="text-white/60 mb-8 max-w-xl mx-auto">
-            Start your free trial and experience LegalOS across your practice area — no credit card required.
+            Start your free trial and experience Fastcase across your practice area — no credit card required.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/contact"

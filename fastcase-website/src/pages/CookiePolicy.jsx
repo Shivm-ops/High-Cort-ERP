@@ -43,7 +43,7 @@ export default function CookiePolicy() {
   return (
     <LegalPageLayout
       title="Cookie Policy"
-      subtitle="How LegalOS uses cookies and similar tracking technologies."
+      subtitle="How Fastcase uses cookies and similar tracking technologies."
       lastUpdated="June 1, 2025"
     >
       <h2>1. What Are Cookies?</h2>
@@ -51,11 +51,11 @@ export default function CookiePolicy() {
         Cookies are small text files stored on your device (computer, tablet, or mobile phone) when you visit a website or use a web application. They are widely used to make websites work efficiently, remember your preferences, and provide analytics information.
       </p>
       <p>
-        LegalOS uses cookies and similar technologies (such as local storage and session storage) to provide a better user experience, maintain your login session, remember your preferences, and understand how the platform is used.
+        Fastcase uses cookies and similar technologies (such as local storage and session storage) to provide a better user experience, maintain your login session, remember your preferences, and understand how the platform is used.
       </p>
 
       <h2>2. Types of Cookies We Use</h2>
-      <p>We use the following categories of cookies on the LegalOS platform:</p>
+      <p>We use the following categories of cookies on the Fastcase platform:</p>
 
       <div className="not-prose space-y-5 my-6">
         {cookieTypes.map((c) => (
@@ -89,7 +89,7 @@ export default function CookiePolicy() {
       <h2>3. How We Use Cookie Information</h2>
       <p>Information collected through cookies is used to:</p>
       <ul>
-        <li>Keep you logged in to your LegalOS account securely</li>
+        <li>Keep you logged in to your Fastcase account securely</li>
         <li>Remember your preferences such as dark/light mode and language settings</li>
         <li>Prevent Cross-Site Request Forgery (CSRF) attacks</li>
         <li>Analyze how different features are used to improve the platform</li>
@@ -98,7 +98,7 @@ export default function CookiePolicy() {
       </ul>
 
       <h2>4. Third-Party Cookies</h2>
-      <p>Some cookies on LegalOS may be set by third-party services we use:</p>
+      <p>Some cookies on Fastcase may be set by third-party services we use:</p>
       <ul>
         <li><strong>Analytics Providers:</strong> We may use analytics tools to understand platform usage patterns. These tools may set their own cookies. Data collected is anonymized and aggregated.</li>
         <li><strong>Payment Gateways:</strong> When you make payments, the payment gateway may set cookies for fraud prevention and transaction processing.</li>
@@ -119,34 +119,34 @@ export default function CookiePolicy() {
 
       <h3>5.2 Impact of Disabling Cookies</h3>
       <p>
-        <strong>Essential and session cookies cannot be disabled</strong> without severely impacting platform functionality. Disabling essential cookies may prevent you from logging in or using core features of LegalOS.
+        <strong>Essential and session cookies cannot be disabled</strong> without severely impacting platform functionality. Disabling essential cookies may prevent you from logging in or using core features of Fastcase.
       </p>
       <p>
         Disabling optional (analytics and preference) cookies will not affect your ability to use the platform but may result in reduced personalization.
       </p>
 
-      <h3>5.3 Cookie Settings in LegalOS</h3>
-      <p>Where technically feasible, LegalOS will provide in-platform cookie preference controls. Look for the cookie settings option in your account preferences.</p>
+      <h3>5.3 Cookie Settings in Fastcase</h3>
+      <p>Where technically feasible, Fastcase will provide in-platform cookie preference controls. Look for the cookie settings option in your account preferences.</p>
 
       <h2>6. Local Storage & Session Storage</h2>
       <p>
-        In addition to cookies, LegalOS may use browser local storage and session storage to store application state, cached data, and user preferences. These are similar to cookies but are stored differently in your browser. You can clear local/session storage through your browser's developer tools or privacy settings.
+        In addition to cookies, Fastcase may use browser local storage and session storage to store application state, cached data, and user preferences. These are similar to cookies but are stored differently in your browser. You can clear local/session storage through your browser's developer tools or privacy settings.
       </p>
 
       <h2>7. Do Not Track</h2>
       <p>
-        Some browsers support a "Do Not Track" (DNT) setting. Currently, there is no industry standard for how platforms should respond to DNT signals. LegalOS does not currently respond to DNT signals from browsers, but we honor opt-out preferences through our own cookie preference controls.
+        Some browsers support a "Do Not Track" (DNT) setting. Currently, there is no industry standard for how platforms should respond to DNT signals. Fastcase does not currently respond to DNT signals from browsers, but we honor opt-out preferences through our own cookie preference controls.
       </p>
 
       <h2>8. Changes to This Policy</h2>
       <p>
-        We may update this Cookie Policy from time to time to reflect changes in our practices or applicable regulations. We will notify registered users of significant changes. Continued use of LegalOS after updates constitutes acceptance of the revised policy.
+        We may update this Cookie Policy from time to time to reflect changes in our practices or applicable regulations. We will notify registered users of significant changes. Continued use of Fastcase after updates constitutes acceptance of the revised policy.
       </p>
 
       <h2>9. Contact Us</h2>
       <p>For questions about our use of cookies, contact us at:</p>
       <ul>
-        <li><strong>Email:</strong> <a href="mailto:privacy@legalos.in">privacy@legalos.in</a></li>
+        <li><strong>Email:</strong> <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a></li>
         <li><strong>Contact Form:</strong> <Link to="/contact">Click here</Link></li>
       </ul>
     </LegalPageLayout>

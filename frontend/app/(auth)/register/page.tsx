@@ -77,7 +77,7 @@ export default function RegisterPage() {
               <Scale className="w-5 h-5 text-mint" />
             </div>
             <div>
-              <div className="text-white font-bold text-xl">LegalOS</div>
+              <div className="text-white font-bold text-xl">Fastcase</div>
               <div className="text-white/40 text-xs uppercase tracking-widest">Legal Platform</div>
             </div>
           </div>
@@ -120,13 +120,13 @@ export default function RegisterPage() {
             <div className="w-8 h-8 rounded-lg bg-sidebar flex items-center justify-center">
               <Scale className="w-4 h-4 text-mint" />
             </div>
-            <span className="text-sidebar font-bold text-lg">LegalOS</span>
+            <span className="text-sidebar font-bold text-lg">Fastcase</span>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="mb-7">
               <h2 className="text-2xl font-bold text-gray-900">Create an account</h2>
-              <p className="text-sm text-gray-500 mt-1">Join LegalOS to manage your legal practice</p>
+              <p className="text-sm text-gray-500 mt-1">Join Fastcase to manage your legal practice</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

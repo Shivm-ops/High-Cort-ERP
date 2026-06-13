@@ -42,7 +42,7 @@ const footerLinks = {
     { label: 'Features', to: '/features' },
     { label: 'Practice Areas', to: '/practice-areas' },
     { label: 'Pricing', to: '/pricing' },
-    { label: 'Why LegalOS', to: '/why-legalos' },
+    { label: 'Why Fastcase', to: '/why-Fastcase' },
     { label: 'Integrations', to: '/#integrations' },
   ],
   Company: [
@@ -152,20 +152,20 @@ export default function Footer() {
                 >
                   <Phone className="w-3 h-3" /> +91 94056 69420
                 </a>
-                <a href="mailto:support@legalos.in"
+                <a href="mailto:support@Fastcase.in"
                   className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
                 >
-                  <Mail className="w-3 h-3" /> support@legalos.in
+                  <Mail className="w-3 h-3" /> support@Fastcase.in
                 </a>
-                <a href="mailto:contact@legalos.in"
+                <a href="mailto:contact@Fastcase.in"
                   className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
                 >
-                  <Mail className="w-3 h-3" /> contact@legalos.in
+                  <Mail className="w-3 h-3" /> contact@Fastcase.in
                 </a>
-                <a href="mailto:grievance@legalos.in"
+                <a href="mailto:grievance@Fastcase.in"
                   className="flex items-center gap-1.5 text-[12px] text-white/40 hover:text-white/70 transition-colors"
                 >
-                  <Mail className="w-3 h-3" /> grievance@legalos.in
+                  <Mail className="w-3 h-3" /> grievance@Fastcase.in
                 </a>
               </div>
 
@@ -208,7 +208,7 @@ export default function Footer() {
               © {new Date().getFullYear()} SOSM Services Private Limited. All rights reserved.
             </p>
             <p className="text-[12px] text-white/20">
-              LegalOS is a software platform — not a law firm and does not provide legal advice.
+              Fastcase is a software platform — not a law firm and does not provide legal advice.
               Jurisdiction: Kolhapur, Maharashtra, India.
             </p>
           </div>

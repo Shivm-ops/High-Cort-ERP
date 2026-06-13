@@ -61,7 +61,7 @@ export default function ClientLoginPage() {
               <Scale className="w-5 h-5 text-blue-200" />
             </div>
             <div>
-              <div className="text-white font-bold text-xl">LegalOS</div>
+              <div className="text-white font-bold text-xl">Fastcase</div>
               <div className="text-white/40 text-xs uppercase tracking-widest">Client Portal</div>
             </div>
           </div>

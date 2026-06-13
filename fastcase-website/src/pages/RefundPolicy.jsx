@@ -10,10 +10,10 @@ export default function RefundPolicy() {
     >
       <h2>1. Overview</h2>
       <p>
-        This Refund & Cancellation Policy applies to all subscriptions and purchases made on the LegalOS platform operated by SOSM Services Private Limited. We have designed our refund policy to be fair and transparent while ensuring the sustainability of our service.
+        This Refund & Cancellation Policy applies to all subscriptions and purchases made on the Fastcase platform operated by SOSM Services Private Limited. We have designed our refund policy to be fair and transparent while ensuring the sustainability of our service.
       </p>
       <p>
-        By subscribing to LegalOS, you acknowledge and agree to the terms of this policy. Please read it carefully before making any purchase.
+        By subscribing to Fastcase, you acknowledge and agree to the terms of this policy. Please read it carefully before making any purchase.
       </p>
 
       <h2>2. Free Trial Policy</h2>
@@ -33,7 +33,7 @@ export default function RefundPolicy() {
       </p>
       <h3>3.2 Rationale</h3>
       <p>
-        Upon activation of a monthly subscription, you gain immediate access to all platform features, your data storage allocation, and the ability to start using LegalOS. Given that the service is immediately consumed, monthly fees are not eligible for refund.
+        Upon activation of a monthly subscription, you gain immediate access to all platform features, your data storage allocation, and the ability to start using Fastcase. Given that the service is immediately consumed, monthly fees are not eligible for refund.
       </p>
       <h3>3.3 Cancellation of Monthly Plans</h3>
       <ul>
@@ -86,7 +86,7 @@ export default function RefundPolicy() {
       <h2>6. How to Request a Refund</h2>
       <p>To request a refund:</p>
       <ol>
-        <li>Email <a href="mailto:billing@legalos.in">billing@legalos.in</a> with the subject line "Refund Request – [Your Account Email]"</li>
+        <li>Email <a href="mailto:billing@Fastcase.in">billing@Fastcase.in</a> with the subject line "Refund Request – [Your Account Email]"</li>
         <li>Include: your registered email, subscription plan, date of purchase, and reason for refund request</li>
         <li>Our billing team will review your request and respond within 3-5 business days</li>
         <li>Approved refunds are processed within 7–15 working days to the original payment method</li>
@@ -104,13 +104,13 @@ export default function RefundPolicy() {
       <h2>8. Cancellation Procedure</h2>
       <h3>8.1 How to Cancel</h3>
       <ul>
-        <li>Log in to your LegalOS account</li>
+        <li>Log in to your Fastcase account</li>
         <li>Navigate to Account Settings → Subscription</li>
         <li>Click "Cancel Subscription" and follow the prompts</li>
         <li>You will receive a cancellation confirmation email</li>
       </ul>
       <h3>8.2 Alternatively</h3>
-      <p>You may email <a href="mailto:support@legalos.in">support@legalos.in</a> with the subject "Subscription Cancellation Request" to cancel via our support team.</p>
+      <p>You may email <a href="mailto:support@Fastcase.in">support@Fastcase.in</a> with the subject "Subscription Cancellation Request" to cancel via our support team.</p>
 
       <h2>9. Subscription Expiry Rules</h2>
       <ul>
@@ -131,7 +131,7 @@ export default function RefundPolicy() {
       <h2>11. Contact for Billing Queries</h2>
       <p>For billing and refund queries, contact us at:</p>
       <ul>
-        <li><strong>Email:</strong> <a href="mailto:billing@legalos.in">billing@legalos.in</a></li>
+        <li><strong>Email:</strong> <a href="mailto:billing@Fastcase.in">billing@Fastcase.in</a></li>
         <li><strong>Support:</strong> <Link to="/contact">Contact Form</Link></li>
         <li><strong>Working Hours:</strong> Monday–Saturday, 9:00 AM – 6:00 PM IST</li>
       </ul>

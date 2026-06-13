@@ -19,11 +19,11 @@ class Settings(BaseSettings):
         "http://15.206.205.114:3000",
         "http://15.206.205.114:3001",
         "http://15.206.205.114:3002",
-        "http://lagalos.com",
-        "http://www.lagalos.com",
-        "http://app.lagalos.com",
-        "http://admin.lagalos.com",
-        "http://api.lagalos.com",
+        "http://fastcase.in",
+        "http://www.fastcase.in",
+        "http://app.fastcase.in",
+        "http://admin.fastcase.in",
+        "http://api.fastcase.in",
     ]
 
     # Database

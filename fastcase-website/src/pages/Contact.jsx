@@ -42,7 +42,7 @@ export default function Contact() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">Contact Us</h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            Have a question, need support, or want to learn more about LegalOS?
+            Have a question, need support, or want to learn more about Fastcase?
             We're here to help.
           </p>
         </div>
@@ -80,12 +80,12 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-gray-700 dark:text-slate-300 mb-0.5">Email</p>
-                      <a href="mailto:support@legalos.in" className="text-sm text-accent hover:underline">
-                        support@legalos.in
+                      <a href="mailto:support@Fastcase.in" className="text-sm text-accent hover:underline">
+                        support@Fastcase.in
                       </a>
                       <br />
-                      <a href="mailto:sales@legalos.in" className="text-sm text-accent hover:underline">
-                        sales@legalos.in
+                      <a href="mailto:sales@Fastcase.in" className="text-sm text-accent hover:underline">
+                        sales@Fastcase.in
                       </a>
                     </div>
                   </div>
@@ -114,12 +114,12 @@ export default function Contact() {
                 </h3>
                 <div className="space-y-3">
                   {[
-                    { dept: 'Technical Support', email: 'support@legalos.in' },
-                    { dept: 'Billing & Payments', email: 'billing@legalos.in' },
-                    { dept: 'Sales & Subscription', email: 'sales@legalos.in' },
-                    { dept: 'Privacy & Data Requests', email: 'privacy@legalos.in' },
-                    { dept: 'Legal & Compliance', email: 'legal@legalos.in' },
-                    { dept: 'Security Issues', email: 'security@legalos.in' },
+                    { dept: 'Technical Support', email: 'support@Fastcase.in' },
+                    { dept: 'Billing & Payments', email: 'billing@Fastcase.in' },
+                    { dept: 'Sales & Subscription', email: 'sales@Fastcase.in' },
+                    { dept: 'Privacy & Data Requests', email: 'privacy@Fastcase.in' },
+                    { dept: 'Legal & Compliance', email: 'legal@Fastcase.in' },
+                    { dept: 'Security Issues', email: 'security@Fastcase.in' },
                   ].map((d) => (
                     <div key={d.dept} className="flex items-center justify-between gap-2">
                       <span className="text-xs text-gray-500 dark:text-slate-400">{d.dept}</span>

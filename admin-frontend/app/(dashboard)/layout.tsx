@@ -34,7 +34,7 @@ function SidebarContent({ user, router, pathname }: any) {
         <div className="flex items-center gap-3">
           <Shield className="w-8 h-8 text-indigo-400" />
           <div>
-            <h1 className="text-xl font-bold tracking-tight">LegalOS Admin</h1>
+            <h1 className="text-xl font-bold tracking-tight">Fastcase Admin</h1>
             <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Control Center</p>
           </div>
         </div>

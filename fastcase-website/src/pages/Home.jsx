@@ -24,13 +24,13 @@ function DashboardMockup() {
           </div>
           <div className="flex-1 bg-white border border-line rounded-md px-3 py-1.5 flex items-center gap-1.5 text-[11px] text-ink/30">
             <Lock className="w-3 h-3 text-emerald-500" />
-            app.legalos.in/dashboard
+            app.Fastcase.in/dashboard
           </div>
         </div>
         {/* Real screenshot */}
         <img
           src="/screenshots/dashboard.png"
-          alt="LegalOS Dashboard"
+          alt="Fastcase Dashboard"
           className="w-full block"
           style={{ maxHeight: 460, objectFit: 'cover', objectPosition: 'top' }}
         />
@@ -174,7 +174,7 @@ export default function Home() {
                 Manage Clients, Cases, Hearings, Drafts, Billing, Research and Evidence from <strong className="text-ink/80 font-semibold">one secure platform</strong>.
               </p>
               <p className="text-[15px] text-ink/45 leading-relaxed mb-9 max-w-lg">
-                LegalOS helps advocates, law firms and legal professionals automate office operations, improve productivity and manage their entire legal practice digitally.
+                Fastcase helps advocates, law firms and legal professionals automate office operations, improve productivity and manage their entire legal practice digitally.
               </p>
 
               <div className="flex flex-wrap gap-3 mb-10">
@@ -294,13 +294,13 @@ export default function Home() {
       {/* ── PRODUCT SHOWCASE ───────────────────────────────────────── */}
       <ProductShowcase />
 
-      {/* ── HOW LEGALOS WORKS ──────────────────────────────────────── */}
+      {/* ── HOW Fastcase WORKS ──────────────────────────────────────── */}
       <section className="section-padding bg-surface-alt border-y border-line">
         <div className="section-container">
           <div className="text-center mb-16">
             <p className="eyebrow mb-4">How It Works</p>
             <h2 className="section-heading text-4xl lg:text-5xl mb-5">
-              How LegalOS Automates<br />Your Legal Practice
+              How Fastcase Automates<br />Your Legal Practice
             </h2>
             <p className="text-[17px] text-ink/50 max-w-2xl mx-auto">
               A complete workflow from client onboarding to case closure, designed specifically for Indian advocates, law firms, and legal professionals.
@@ -372,7 +372,7 @@ export default function Home() {
                 Enterprise Security Built<br />for Legal Professionals
               </h2>
               <p className="text-[16px] text-ink/50 leading-relaxed mb-8">
-                LegalOS implements enterprise-grade security across every layer of the platform to protect your client data, legal documents, and firm information.
+                Fastcase implements enterprise-grade security across every layer of the platform to protect your client data, legal documents, and firm information.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                 {[
@@ -514,14 +514,14 @@ export default function Home() {
             <p className="eyebrow mb-4">Integrations</p>
             <h2 className="section-heading text-4xl mb-4">Powerful Integrations</h2>
             <p className="text-[16px] text-ink/50 max-w-lg mx-auto">
-              LegalOS connects with the tools and systems that matter for Indian legal practice.
+              Fastcase connects with the tools and systems that matter for Indian legal practice.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { icon: MessageSquare, title: 'WhatsApp Notifications', desc: 'Automatically notify clients regarding hearings, invoices, and case updates.', color: 'text-green-600', bg: 'bg-green-50' },
-              { icon: Mail, title: 'Email Communication', desc: 'Send notices, reminders, and documents directly from LegalOS.', color: 'text-blue-600', bg: 'bg-blue-50' },
+              { icon: Mail, title: 'Email Communication', desc: 'Send notices, reminders, and documents directly from Fastcase.', color: 'text-blue-600', bg: 'bg-blue-50' },
               { icon: FileSearch, title: 'OCR Document Processing', desc: 'Extract information from uploaded legal documents automatically.', color: 'text-teal-600', bg: 'bg-teal-50' },
               { icon: FileText, title: 'e-Sign Integration', desc: 'Send documents for electronic signature directly from the platform.', color: 'text-violet-600', bg: 'bg-violet-50' },
               { icon: Receipt, title: 'GST Billing', desc: 'Generate compliant invoices and track payments effortlessly.', color: 'text-green-600', bg: 'bg-green-50' },
@@ -645,10 +645,10 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             {[
-              { q: 'What is LegalOS?', a: 'LegalOS is a comprehensive Advocate Practice Management Software developed by SOSM Services Private Limited. It is a cloud-based platform designed to automate and streamline every aspect of legal practice management for Indian advocates, law firms, and legal professionals.' },
+              { q: 'What is Fastcase?', a: 'Fastcase is a comprehensive Advocate Practice Management Software developed by SOSM Services Private Limited. It is a cloud-based platform designed to automate and streamline every aspect of legal practice management for Indian advocates, law firms, and legal professionals.' },
               { q: 'Is there a free trial?', a: 'Yes — all paid plans include a 14-day free trial with no credit card required. You get full access to every feature during the trial period.' },
-              { q: 'Is my data secure on LegalOS?', a: 'Yes. LegalOS implements enterprise-grade security including AES-256 encryption, role-based access control, audit logs, tenant isolation, secure document storage, and automated daily backups.' },
-              { q: 'Which languages does LegalOS support?', a: 'LegalOS currently supports English, Marathi, Hindi, and Gujarati. You can draft legal documents, notices, and templates in all four languages.' },
+              { q: 'Is my data secure on Fastcase?', a: 'Yes. Fastcase implements enterprise-grade security including AES-256 encryption, role-based access control, audit logs, tenant isolation, secure document storage, and automated daily backups.' },
+              { q: 'Which languages does Fastcase support?', a: 'Fastcase currently supports English, Marathi, Hindi, and Gujarati. You can draft legal documents, notices, and templates in all four languages.' },
               { q: 'Can I upgrade or downgrade my plan?', a: 'Absolutely. You can upgrade immediately (prorated) or downgrade at the next billing cycle. Annual plans also offer up to 20% savings over monthly billing.' },
             ].map(({ q, a }) => <HomeFAQItem key={q} q={q} a={a} />)}
           </div>
@@ -669,7 +669,7 @@ export default function Home() {
               The most professional legal platform in India.
             </h2>
             <p className="text-[18px] text-ink/50 max-w-xl mx-auto mb-10">
-              Start your free trial and experience how LegalOS transforms your legal practice — no credit card required.
+              Start your free trial and experience how Fastcase transforms your legal practice — no credit card required.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <Link to="/contact" className="btn-primary-lg">

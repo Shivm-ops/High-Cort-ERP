@@ -77,7 +77,7 @@ export default function GrievanceOfficer() {
             Grievance Redressal
           </h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            LegalOS is committed to resolving all user grievances in a fair, transparent,
+            Fastcase is committed to resolving all user grievances in a fair, transparent,
             and timely manner. If you have a concern, we are here to help.
           </p>
         </div>
@@ -113,23 +113,23 @@ export default function GrievanceOfficer() {
                   <div>
                     <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Designation</p>
                     <p className="text-gray-800 dark:text-slate-200">
-                      Grievance Officer – LegalOS
+                      Grievance Officer – Fastcase
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Email</p>
                     <a
-                      href="mailto:grievance@legalos.in"
+                      href="mailto:grievance@Fastcase.in"
                       className="text-accent hover:underline flex items-center gap-1"
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      grievance@legalos.in
+                      grievance@Fastcase.in
                     </a>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Postal Address</p>
                     <address className="not-italic text-gray-700 dark:text-slate-300 text-xs leading-relaxed">
-                      Grievance Officer – LegalOS<br />
+                      Grievance Officer – Fastcase<br />
                       SOSM Services Private Limited<br />
                       B4/5, Omkar Plaza, Rajaram Road,<br />
                       Shahupuri, Kolhapur – 416001,<br />

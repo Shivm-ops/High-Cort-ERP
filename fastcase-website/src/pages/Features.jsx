@@ -65,7 +65,7 @@ const features = [
     color: 'text-lime-600', bg: 'bg-lime-50',
     items: ['Filing Preparation Workspace', 'Filing Checklists', 'Filing Bundle Creation', 'Printable Court Documents', 'Document Packaging Tools', 'Pre-filing Verification'],
     benefits: 'Faster, error-free filing preparation with automated checklists.',
-    note: 'LegalOS does not directly file matters with government portals unless officially integrated.',
+    note: 'Fastcase does not directly file matters with government portals unless officially integrated.',
   },
   {
     id: 11, icon: BookOpen, title: 'Case Law Management', subtitle: 'Judgment & Citation Library',
@@ -177,7 +177,7 @@ export default function Features() {
             Start Using All 16 Features Today
           </h2>
           <p className="text-white/60 mb-8">
-            No feature paywalls. Get access to every feature from day one with your LegalOS subscription.
+            No feature paywalls. Get access to every feature from day one with your Fastcase subscription.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/contact"

@@ -8,7 +8,7 @@ export default function IntegrationsSettings() {
     <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-1">Third-Party Integrations</h2>
-        <p className="text-[13px] text-gray-500">Connect LegalOS with external platforms.</p>
+        <p className="text-[13px] text-gray-500">Connect Fastcase with external platforms.</p>
       </div>
 
       {/* WhatsApp Integration */}

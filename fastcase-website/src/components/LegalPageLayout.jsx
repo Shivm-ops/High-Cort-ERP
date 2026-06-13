@@ -35,7 +35,7 @@ export default function LegalPageLayout({ title, subtitle, lastUpdated, children
             {/* Company Banner */}
             <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/10 dark:border-primary/20 mb-8">
               <p className="text-sm text-primary dark:text-blue-300 font-semibold">
-                SOSM Services Private Limited — LegalOS
+                SOSM Services Private Limited — Fastcase
               </p>
               <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5">
                 B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra, India

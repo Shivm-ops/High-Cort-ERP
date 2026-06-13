@@ -33,7 +33,7 @@ export default function ReportsPage() {
       title: "Global User Report",
       description: "Download a full list of all registered advocates, admins, and support staff.",
       icon: Users,
-      filename: "lagalos_users_export.csv",
+      filename: "fastcase_users_export.csv",
       color: "text-blue-600 bg-blue-50 border-blue-100"
     },
     {
@@ -41,7 +41,7 @@ export default function ReportsPage() {
       title: "Law Firm Directory",
       description: "Export all tenant law firms, including their registration numbers and statuses.",
       icon: Building2,
-      filename: "lagalos_firms_export.csv",
+      filename: "fastcase_firms_export.csv",
       color: "text-emerald-600 bg-emerald-50 border-emerald-100"
     },
     {
@@ -49,7 +49,7 @@ export default function ReportsPage() {
       title: "Revenue Ledger",
       description: "Detailed export of all SaaS subscription payments, renewals, and refunds.",
       icon: CreditCard,
-      filename: "lagalos_revenue_export.csv",
+      filename: "fastcase_revenue_export.csv",
       color: "text-indigo-600 bg-indigo-50 border-indigo-100"
     }
   ];
@@ -96,7 +96,7 @@ export default function ReportsPage() {
         <div>
           <h3 className="text-lg font-bold text-indigo-900 mb-1">Need a Custom Report?</h3>
           <p className="text-indigo-700 text-sm max-w-2xl leading-relaxed">
-            These are the standard exports. For deep analytics, use the API directly or connect LegalOS database read replicas to BI tools like Tableau or PowerBI.
+            These are the standard exports. For deep analytics, use the API directly or connect Fastcase database read replicas to BI tools like Tableau or PowerBI.
           </p>
         </div>
       </div>

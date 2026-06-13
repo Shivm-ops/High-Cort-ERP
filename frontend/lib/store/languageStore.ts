@@ -49,7 +49,7 @@ export const useLanguageStore = create<LanguageState>()(
       setDocumentLanguage: (lang) => set({ documentLanguage: lang }),
     }),
     {
-      name: "lagalos-language-storage",
+      name: "fastcase-language-storage",
     }
   )
 );
