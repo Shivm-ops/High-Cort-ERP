@@ -24,6 +24,11 @@ class Settings(BaseSettings):
         "http://app.fastcase.in",
         "http://admin.fastcase.in",
         "http://api.fastcase.in",
+        "https://fastcase.in",
+        "https://www.fastcase.in",
+        "https://app.fastcase.in",
+        "https://admin.fastcase.in",
+        "https://api.fastcase.in",
     ]
 
     # Database
