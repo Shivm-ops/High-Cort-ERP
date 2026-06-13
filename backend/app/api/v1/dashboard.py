@@ -43,7 +43,7 @@ async def get_dashboard_metrics(
 
     urgent_filings_count = db.query(Filing).filter(
         Filing.case_id.in_(firm_case_ids),
-        Filing.status == "urgent"
+        Filing.status == "defect_raised"
     ).count()
 
     pending_notices_count = db.query(Document).filter(
