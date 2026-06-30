@@ -49,6 +49,171 @@ Yours faithfully,
 Advocate
 Bar Council No: {bar_no}
 Date: ___""",
+    "complaint": """BEFORE THE HON'BLE DISTRICT CONSUMER DISPUTES REDRESSAL COMMISSION
+{court}
+
+COMPLAINT NO. ___ OF {year}
+
+{client_name} ... COMPLAINANT
+Versus
+{recipient_name} ... OPPONENT / RESPONDENT
+
+COMPLAINT UNDER SECTION 35 OF THE CONSUMER PROTECTION ACT, 2019
+
+MOST RESPECTFULLY SHOWETH:
+
+1. The Complainant purchased a product/service from the Opponent.
+2. The product/service was found to be defective/deficient in the following manner: {case_details}.
+3. The Complainant repeatedly requested the Opponent to rectify the defect/deficiency, but to no avail.
+4. The acts of the Opponent constitute a clear deficiency of service and unfair trade practice.
+
+PRAYER:
+Therefore, the Complainant respectfully prays that this Hon'ble Commission may be pleased to direct the Respondent to refund the full amount, pay compensation for mental agony, and legal costs.
+
+Date: ___
+Place: ___                                    Advocate for Complainant""",
+    "reply": """REPLY TO LEGAL NOTICE
+
+To,
+{recipient_name}
+{recipient_address}
+
+Subject: Reply to your Legal Notice dated ___ regarding {subject}
+
+Under instructions from my client {client_name}, I hereby reply to your legal notice as follows:
+
+1. The allegations made in your notice are false, frivolous, and vexatious.
+2. The true facts are: {notice_body}.
+3. My client is not liable to pay any amount or take the actions demanded in your notice.
+
+You are hereby requested to withdraw your notice immediately, failing which my client shall be constrained to defend any proceedings at your cost.
+
+Yours faithfully,
+{advocate_name}
+Advocate
+Bar Council No: {bar_no}
+Date: ___""",
+    "written_statement": """IN THE COURT OF THE CIVIL JUDGE
+{court}
+
+SUIT NO. ___ OF {year}
+
+{recipient_name} ... PLAINTIFF
+Versus
+{client_name} ... DEFENDANT
+
+WRITTEN STATEMENT ON BEHALF OF THE DEFENDANT
+
+MOST RESPECTFULLY SHOWETH:
+
+1. The suit is not maintainable either in law or on facts.
+2. The Defendant denies each and every allegation made in the plaint.
+3. Substantive Case/Defense: {case_details}.
+
+PRAYER:
+It is therefore prayed that this Hon'ble Court may be pleased to dismiss the suit of the plaintiff with exemplary costs.
+
+Date: ___
+Place: ___                                    Advocate for Defendant""",
+    "affidavit": """BEFORE THE OATH COMMISSIONER / NOTARY PUBLIC
+{court}
+
+AFFIDAVIT
+
+I, {client_name}, residing at {recipient_address}, do hereby solemnly affirm and declare as under:
+
+1. That I am the deponent in this matter and fully conversant with the facts.
+2. That the statements made in the accompanying application/petition are true to my personal knowledge.
+3. Details: {case_details}.
+
+DEPONENT
+
+VERIFICATION:
+Verified at ___ on this ___ day of {year} that the contents of the above affidavit are true and correct.
+
+DEPONENT""",
+    "appeal": """IN THE HIGH COURT OF JUDICATURE
+{court}
+
+APPEAL NO. ___ OF {year}
+
+{client_name} ... APPELLANT
+Versus
+{recipient_name} ... RESPONDENT
+
+MEMORANDUM OF APPEAL UNDER SECTION 96 OF CPC / SECTION 374 OF CRPC
+
+MOST RESPECTFULLY SHOWETH:
+
+1. The Appellant is filing this appeal against the judgment/order dated ___ passed by the lower court.
+2. The lower court erred in law and facts by failing to consider {case_details}.
+3. Grounds of Appeal: The impugned judgment is contrary to established legal principles.
+
+PRAYER:
+Therefore, the Appellant prays that this Hon'ble Court may be pleased to set aside the impugned judgment/order.
+
+Date: ___
+Place: ___                                    Advocate for Appellant""",
+    "agreement": """LEGAL AGREEMENT / CONTRACT
+
+This agreement is entered into on this ___ day of {year} by and between:
+
+Party A: {client_name}, residing at {recipient_address}
+AND
+Party B: {recipient_name}, residing at {recipient_address}
+
+WHEREAS:
+The parties have agreed to execute this contract on the following terms:
+
+1. Scope: The parties shall collaborate/perform services as detailed: {case_details}.
+2. Term & Termination: This agreement is valid for {days} days.
+3. Resolution: Any dispute shall be resolved through arbitration.
+
+IN WITNESS WHEREOF, the parties hereto have signed this agreement.
+
+__________________                           __________________
+Party A                                      Party B""",
+    "petition": """IN THE COURT OF THE CIVIL JUDGE / FAMILY COURT
+{court}
+
+PETITION NO. ___ OF {year}
+
+{client_name} ... PETITIONER
+Versus
+{recipient_name} ... RESPONDENT
+
+PETITION UNDER THE RELEVANT PROVISIONS OF LAW
+
+MOST RESPECTFULLY SHOWETH:
+
+1. The Petitioner is filing this petition seeking appropriate relief/orders.
+2. The grounds for seeking relief are: {case_details}.
+3. The court has jurisdiction to entertain this petition.
+
+PRAYER:
+Therefore, the Petitioner prays that this Hon'ble Court may be pleased to grant the reliefs claimed herein.
+
+Date: ___
+Place: ___                                    Advocate for Petitioner""",
+    "other": """GENERAL LEGAL DRAFT
+
+BEFORE THE HON'BLE COURT OF {court}
+
+DRAFT NO. ___ OF {year}
+
+IN THE MATTER OF:
+{client_name}
+Versus
+{recipient_name}
+
+SUBMISSION / DRAFT STATEMENT:
+
+{case_details}
+
+Respectfully submitted,
+
+Date: ___
+Place: ___                                    Advocate for Client""",
 }
 
 SYSTEM_PROMPT = """You are LegalOS AI, an expert Indian legal assistant with deep knowledge of:
@@ -97,7 +262,30 @@ class AIService:
 
     async def generate_draft(self, draft_type: str, language: str, context: Dict, prompt: str) -> str:
         if not self.client:
-            template = DRAFT_TEMPLATES.get(draft_type, DRAFT_TEMPLATES["bail"])
+            # Map frontend types case-insensitively and support partial match overrides
+            dt_key = draft_type.lower().strip()
+            if "complaint" in dt_key:
+                dt_key = "complaint"
+            elif "reply" in dt_key:
+                dt_key = "reply"
+            elif "statement" in dt_key:
+                dt_key = "written_statement"
+            elif "affidavit" in dt_key:
+                dt_key = "affidavit"
+            elif "appeal" in dt_key:
+                dt_key = "appeal"
+            elif "agreement" in dt_key:
+                dt_key = "agreement"
+            elif "petition" in dt_key:
+                dt_key = "petition"
+            elif "notice" in dt_key:
+                dt_key = "notice"
+            elif "bail" in dt_key:
+                dt_key = "bail"
+            else:
+                dt_key = "other"
+
+            template = DRAFT_TEMPLATES.get(dt_key, DRAFT_TEMPLATES["other"])
             return template.format(**{k: context.get(k, f"[{k.upper()}]") for k in ["court", "year", "petitioner_name", "state", "case_details", "recipient_name", "recipient_address", "subject", "client_name", "notice_body", "action_required", "days", "advocate_name", "bar_no"]}, **context)
 
         lang_instruction = f"Draft in {self._lang_name(language)}." if language != "en" else ""
