@@ -83,6 +83,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Workspace",
     items: [
       { label: "Draft Workspace", href: "/draft-workspace", icon: Wand2 },
+      { label: "AI Draft Studio", href: "/ai-draft-studio", icon: Sparkles, badge: "✨", badgeColor: "purple" },
       { label: "Legal Research & Case Laws", href: "/legal-research", icon: Search },
       { label: "Court Order Analyzer", href: "/ai-tools/analyzer", icon: FileText, badge: "AI", badgeColor: "purple", requiredFeature: "ai_tools" },
       { label: "Case Assistant", href: "/ai-assistant", icon: Layers, requiredFeature: "ai_tools" },
