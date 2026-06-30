@@ -22,6 +22,7 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -45,48 +46,48 @@ export default function LoginPage() {
     }
   };
 
+  const features = [
+    { icon: Brain, text: "Smart Legal Drafting", desc: "Generate bail applications, writs, notices in seconds" },
+    { icon: Gavel, text: "Smart Case Management", desc: "Track every case stage with real-time updates" },
+    { icon: FileText, text: "Document Intelligence", desc: "OCR, search, and analyze any legal document" },
+    { icon: ShieldCheck, text: "Secure & Private", desc: "Bank-grade encryption for all client data" }
+  ];
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="min-h-screen flex">
       {/* Left branding panel */}
-      <div
-        className="hidden lg:flex w-[45%] flex-col justify-between p-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #013B36 0%, #014D46 50%, #0B3D2E 100%)" }}
-      >
-        <div className="absolute top-[-80px] left-[-80px] w-96 h-96 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #6EE7B7 0%, transparent 70%)" }} />
-        <div className="absolute bottom-20 right-[-60px] w-72 h-72 rounded-full opacity-[0.08]"
-          style={{ background: "radial-gradient(circle, #72D6C9 0%, transparent 70%)" }} />
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-xl bg-mint/20 flex items-center justify-center">
-              <Scale className="w-5 h-5 text-mint" />
-            </div>
-            <div>
-              <div className="text-white font-bold text-xl">Fastcase</div>
-              <div className="text-white/40 text-xs uppercase tracking-widest">Legal Platform</div>
-            </div>
+      <div className="hidden lg:flex flex-1 bg-sidebar flex-col justify-between p-12 text-white relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-mint/5 blur-[80px]" />
+        
+        <div className="flex items-center gap-2.5 relative z-10">
+          <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center">
+            <Scale className="w-5 h-5 text-mint" />
           </div>
-          <h1 className="text-white text-3xl font-bold leading-tight mb-4">
-            India's Complete Legal<br />Operating System
-          </h1>
-          <p className="text-white/60 text-base leading-relaxed">
+          <div>
+            <h1 className="font-bold text-lg leading-none">Fastcase</h1>
+            <span className="text-[10px] text-mint uppercase tracking-wider font-semibold">Legal Platform</span>
+          </div>
+        </div>
+
+        <div className="max-w-md relative z-10">
+          <h2 className="text-3xl font-bold tracking-tight mb-4">
+            India's Complete Legal Operating System
+          </h2>
+          <p className="text-white/70 text-sm leading-relaxed">
             Manage cases, draft documents, track hearings, and run your practice — all in one platform.
           </p>
         </div>
-        <div className="relative z-10 space-y-4">
-          {[
-            { icon: Brain, label: "Smart Legal Drafting", desc: "Generate bail applications, writs, notices in seconds" },
-            { icon: Gavel, label: "Smart Case Management", desc: "Track every case stage with real-time updates" },
-            { icon: FileText, label: "Document Intelligence", desc: "OCR, search, and analyze any legal document" },
-            { icon: ShieldCheck, label: "Secure & Private", desc: "Bank-grade encryption for all client data" },
-          ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Icon className="w-4 h-4 text-mint" />
+
+        <div className="space-y-5 relative z-10">
+          {features.map((f, i) => (
+            <div key={i} className="flex gap-4">
+              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <f.icon className="w-4 h-4 text-mint" />
               </div>
               <div>
-                <div className="text-white text-sm font-medium">{label}</div>
-                <div className="text-white/50 text-xs">{desc}</div>
+                <h4 className="text-xs font-semibold text-white">{f.text}</h4>
+                <p className="text-[10px] text-white/50 mt-0.5">{f.desc}</p>
               </div>
             </div>
           ))}
@@ -130,7 +131,16 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Password</label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-medium text-gray-600">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotModal(true)}
+                    className="text-xs font-semibold text-sidebar hover:text-sidebar-dark transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
                   <input
                     {...register("password")}
@@ -172,6 +182,34 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mx-4"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-mint/10 flex items-center justify-center text-sidebar">
+                <Scale className="w-5 h-5 text-sidebar" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Reset Password</h3>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              For security reasons, password resets must be initiated by your system administrator. Please contact your organization administrator or email <strong className="text-gray-900">support@fastcase.in</strong> to reset your credentials.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(false)}
+              className="w-full rounded-xl bg-sidebar py-2.5 text-sm font-semibold text-white hover:bg-sidebar-dark transition-colors"
+            >
+              Close
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
