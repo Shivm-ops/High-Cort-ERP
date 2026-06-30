@@ -300,8 +300,9 @@ export default function AIDraftStudioPage() {
     if (isDictating) {
       setIsDictating(false);
       const textToAdd = " Advocate further submits that the defective appliance has caused significant business interruption and loss of revenue to the complainant's establishment.";
-      setEditorContent(p => p + textToAdd);
-      setEditorWordCount(p => p.split(/\s+/).length);
+      const updated = editorContent + textToAdd;
+      setEditorContent(updated);
+      setEditorWordCount(updated.split(/\s+/).length);
       toast.success("Voice inputs transcribed successfully.");
     } else {
       setIsDictating(true);
@@ -491,7 +492,7 @@ export default function AIDraftStudioPage() {
                   <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
                     <div>
                       <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 mb-4">
-                        <Compare className="w-5 h-5" />
+                        <GitCompare className="w-5 h-5" />
                       </div>
                       <h4 className="font-bold text-gray-900 text-sm">Compare Two Drafts</h4>
                       <p className="text-xs text-gray-500 mt-1">Compare Draft A and Draft B side-by-side to highlight added, modified, or removed segments.</p>
