@@ -40,8 +40,13 @@ async def analyze_court_order_file(
     if not extracted_text.strip():
         extracted_text = "No readable text found in document. Please upload a searchable PDF."
 
+    api_key = None
+    if current_user and current_user.firm:
+        if current_user.firm.ai_provider == "openai" and current_user.firm.ai_api_key:
+            api_key = current_user.firm.ai_api_key
+
     try:
-        analysis = await ai_service.analyze_court_order(extracted_text)
+        analysis = await ai_service.analyze_court_order(extracted_text, api_key=api_key)
         return analysis
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI Analysis failed: {str(e)}")

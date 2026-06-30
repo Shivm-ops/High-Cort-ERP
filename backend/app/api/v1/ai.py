@@ -17,6 +17,13 @@ router = APIRouter()
 ai_service = AIService()
 
 
+def get_user_openai_key(user: User) -> Optional[str]:
+    if user and user.firm:
+        if user.firm.ai_provider == "openai" and user.firm.ai_api_key:
+            return user.firm.ai_api_key
+    return None
+
+
 class DraftRequest(BaseModel):
     draft_type: str  # bail, writ, notice, etc.
     language: str = "en"
@@ -29,13 +36,12 @@ class DraftRequest(BaseModel):
 class ResearchRequest(BaseModel):
     query: str
     language: str = "en"
-    filters: dict = {}
     include_acts: bool = True
     include_case_laws: bool = True
 
 
 class ChatMessage(BaseModel):
-    role: str  # user | assistant
+    role: str  # user, assistant, system
     content: str
 
 
@@ -47,14 +53,14 @@ class ChatRequest(BaseModel):
 
 class SummarizeRequest(BaseModel):
     text: str
-    doc_type: str = "general"  # fir, judgment, order, etc.
+    doc_type: str = "general"  # fir, judgment, contract, general
     language: str = "en"
 
 
 class TranslateRequest(BaseModel):
     text: str
-    source_language: str = "en"
-    target_language: str = "hi"
+    source_language: str
+    target_language: str
     doc_type: str = "legal"
 
 
@@ -73,11 +79,13 @@ async def generate_draft(
 ):
     """Generate AI legal draft based on type and context."""
     try:
+        api_key = get_user_openai_key(current_user)
         draft_content = await ai_service.generate_draft(
             draft_type=data.draft_type,
             language=data.language,
             context=data.context,
             prompt=data.prompt,
+            api_key=api_key,
         )
         return {
             "draft": draft_content,
@@ -97,11 +105,13 @@ async def legal_research(
 ):
     """AI-powered legal research with RAG."""
     try:
+        api_key = get_user_openai_key(current_user)
         results = await ai_service.legal_research(
             query=data.query,
             language=data.language,
             include_acts=data.include_acts,
             include_case_laws=data.include_case_laws,
+            api_key=api_key,
         )
         return results
     except Exception as e:
@@ -116,10 +126,12 @@ async def ai_chat(
 ):
     """AI legal assistant chat endpoint."""
     try:
+        api_key = get_user_openai_key(current_user)
         response = await ai_service.chat(
             messages=[{"role": m.role, "content": m.content} for m in data.messages],
             context=data.context,
             language=data.language,
+            api_key=api_key,
         )
         return {"response": response, "sources": []}
     except Exception as e:
@@ -133,10 +145,12 @@ async def summarize_document(
 ):
     """Summarize legal documents (FIR, judgment, etc.)."""
     try:
+        api_key = get_user_openai_key(current_user)
         summary = await ai_service.summarize(
             text=data.text,
             doc_type=data.doc_type,
             language=data.language,
+            api_key=api_key,
         )
         return {"summary": summary, "doc_type": data.doc_type}
     except Exception as e:
@@ -150,11 +164,13 @@ async def translate_document(
 ):
     """Translate legal documents between Indian languages."""
     try:
+        api_key = get_user_openai_key(current_user)
         translated = await ai_service.translate(
             text=data.text,
             source=data.source_language,
             target=data.target_language,
             doc_type=data.doc_type,
+            api_key=api_key,
         )
         return {
             "original": data.text,
@@ -214,7 +230,8 @@ async def get_matter_suggestions(
         # Build context string
         case_info = f"Title: {case.title}\nType: {case.case_type}\nDescription: {case.description or 'No description provided'}"
         
-        suggestions = await ai_service.get_case_suggestions(case_info)
+        api_key = get_user_openai_key(current_user)
+        suggestions = await ai_service.get_case_suggestions(case_info, api_key=api_key)
         return suggestions
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid case ID format")

@@ -5,7 +5,10 @@ import uuid
 from datetime import datetime
 import enum
 
+from sqlalchemy_utils import StringEncryptedType
+from sqlalchemy_utils.types.encrypted.encrypted_type import FernetEngine
 from app.core.database import Base
+from app.core.security_db import ENCRYPTION_KEY
 
 class FirmType(str, enum.Enum):
     INDIVIDUAL = "individual"
@@ -28,6 +31,12 @@ class Firm(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Bring Your Own Key (BYOK) AI Settings (encrypted in DB)
+    ai_provider = Column(String(50), default="platform", nullable=True)  # "platform", "openai", "azure", etc.
+    ai_api_key = Column(StringEncryptedType(String(500), ENCRYPTION_KEY, FernetEngine), nullable=True)
+    ai_api_base = Column(String(255), nullable=True)
+    ai_model = Column(String(100), nullable=True)
 
     # Relationships
     users = relationship("User", back_populates="firm")

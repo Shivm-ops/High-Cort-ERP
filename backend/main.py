@@ -16,10 +16,38 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def run_db_migrations():
+    from sqlalchemy import text
+    from sqlalchemy.exc import OperationalError
+    
+    columns = [
+        ("ai_provider", "VARCHAR(50) DEFAULT 'platform'"),
+        ("ai_api_key", "VARCHAR(500)"),
+        ("ai_api_base", "VARCHAR(255)"),
+        ("ai_model", "VARCHAR(100)")
+    ]
+    
+    with engine.connect() as conn:
+        for col_name, col_type in columns:
+            try:
+                conn.execute(text(f"ALTER TABLE firms ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+                logger.info(f"✅ Added column {col_name} to firms table")
+            except OperationalError as e:
+                err_msg = str(e).lower()
+                if "duplicate column" in err_msg or "already exists" in err_msg or "duplicate" in err_msg:
+                    logger.info(f"ℹ️ Column {col_name} already exists in firms table")
+                else:
+                    logger.warning(f"⚠️ Migration notice for {col_name}: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("🚀 LegalOS API starting up...")
     Base.metadata.create_all(bind=engine)
+    try:
+        run_db_migrations()
+    except Exception as e:
+        logger.error(f"❌ Failed to run database migrations: {e}")
     logger.info("✅ Database tables created/verified")
     yield
     logger.info("🛑 LegalOS API shutting down...")

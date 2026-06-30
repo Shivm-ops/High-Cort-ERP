@@ -180,3 +180,83 @@ async def get_user(
     if not current_user.is_superadmin and str(user.firm_id) != str(current_user.firm_id):
         raise HTTPException(status_code=403, detail="Access denied")
     return serialize_user(user)
+
+
+class FirmUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    ai_provider: Optional[str] = None
+    ai_api_key: Optional[str] = None
+    ai_api_base: Optional[str] = None
+    ai_model: Optional[str] = None
+
+
+@router.get("/me/firm")
+async def get_my_firm(
+    current_user: User = Depends(require_firm_member),
+):
+    firm = current_user.firm
+    if not firm:
+        raise HTTPException(status_code=404, detail="Firm not found")
+    
+    return {
+        "id": str(firm.id),
+        "name": firm.name,
+        "email": firm.email,
+        "phone": firm.phone,
+        "address": firm.address,
+        "ai_provider": firm.ai_provider or "platform",
+        "ai_api_base": firm.ai_api_base,
+        "ai_model": firm.ai_model,
+        "has_api_key": bool(firm.ai_api_key),
+    }
+
+
+@router.patch("/me/firm")
+async def update_my_firm(
+    data: FirmUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    firm = current_user.firm
+    if not firm:
+        raise HTTPException(status_code=404, detail="Firm not found")
+        
+    if data.name is not None:
+        firm.name = data.name
+    if data.email is not None:
+        firm.email = data.email
+    if data.phone is not None:
+        firm.phone = data.phone
+    if data.address is not None:
+        firm.address = data.address
+        
+    # BYOK settings
+    if data.ai_provider is not None:
+        firm.ai_provider = data.ai_provider
+    if data.ai_api_key is not None:
+        if data.ai_api_key == "":
+            firm.ai_api_key = None
+        elif not data.ai_api_key.startswith("********"):
+            firm.ai_api_key = data.ai_api_key
+    if data.ai_api_base is not None:
+        firm.ai_api_base = data.ai_api_base
+    if data.ai_model is not None:
+        firm.ai_model = data.ai_model
+        
+    db.commit()
+    db.refresh(firm)
+    
+    return {
+        "id": str(firm.id),
+        "name": firm.name,
+        "email": firm.email,
+        "phone": firm.phone,
+        "address": firm.address,
+        "ai_provider": firm.ai_provider or "platform",
+        "ai_api_base": firm.ai_api_base,
+        "ai_model": firm.ai_model,
+        "has_api_key": bool(firm.ai_api_key),
+    }

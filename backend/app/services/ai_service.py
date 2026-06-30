@@ -245,14 +245,24 @@ class AIService:
         except ImportError:
             logger.warning("OpenAI package not installed")
 
-    async def chat(self, messages: List[Dict], context: Dict = {}, language: str = "en") -> str:
-        if not self.client:
+    def _get_client(self, api_key: Optional[str] = None):
+        if api_key:
+            try:
+                from openai import AsyncOpenAI
+                return AsyncOpenAI(api_key=api_key)
+            except Exception as e:
+                logger.error(f"Error initializing custom AsyncOpenAI client: {e}")
+        return self.client
+
+    async def chat(self, messages: List[Dict], context: Dict = {}, language: str = "en", api_key: Optional[str] = None) -> str:
+        client = self._get_client(api_key)
+        if not client:
             return self._mock_response(messages[-1]["content"] if messages else "", language)
 
         system = SYSTEM_PROMPT.format(language=self._lang_name(language))
         full_messages = [{"role": "system", "content": system}] + messages
 
-        response = await self.client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=full_messages,
             max_tokens=2000,
@@ -260,8 +270,9 @@ class AIService:
         )
         return response.choices[0].message.content
 
-    async def generate_draft(self, draft_type: str, language: str, context: Dict, prompt: str) -> str:
-        if not self.client:
+    async def generate_draft(self, draft_type: str, language: str, context: Dict, prompt: str, api_key: Optional[str] = None) -> str:
+        client = self._get_client(api_key)
+        if not client:
             # Map frontend types case-insensitively and support partial match overrides
             dt_key = draft_type.lower().strip()
             if "complaint" in dt_key:
@@ -296,7 +307,7 @@ class AIService:
             {"role": "user", "content": f"Draft a {draft_type} with the following details:\n\n{prompt}\n\nContext: {context}"},
         ]
 
-        response = await self.client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=messages,
             max_tokens=3000,
@@ -304,31 +315,33 @@ class AIService:
         )
         return response.choices[0].message.content
 
-    async def legal_research(self, query: str, language: str = "en", include_acts: bool = True, include_case_laws: bool = True) -> Dict:
+    async def legal_research(self, query: str, language: str = "en", include_acts: bool = True, include_case_laws: bool = True, api_key: Optional[str] = None) -> Dict:
         """RAG-based legal research."""
         results = {
             "query": query,
-            "ai_analysis": await self._generate_research_analysis(query, language),
+            "ai_analysis": await self._generate_research_analysis(query, language, api_key=api_key),
             "case_laws": [],
             "sections": [],
             "summary": "",
         }
         return results
 
-    async def summarize(self, text: str, doc_type: str = "general", language: str = "en") -> str:
-        if not self.client:
+    async def summarize(self, text: str, doc_type: str = "general", language: str = "en", api_key: Optional[str] = None) -> str:
+        client = self._get_client(api_key)
+        if not client:
             return f"[AI Summary of {doc_type.upper()}]\n\nThis document has been analyzed and key points extracted. The document relates to {doc_type} proceedings and contains relevant legal information."
 
         messages = [
             {"role": "system", "content": f"You are a legal document summarizer. Summarize this {doc_type} concisely, highlighting key legal points, parties, and relief sought/granted."},
             {"role": "user", "content": f"Summarize this {doc_type}:\n\n{text[:4000]}"},
         ]
-        response = await self.client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=800, temperature=0.1)
+        response = await client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=800, temperature=0.1)
         return response.choices[0].message.content
 
-    async def analyze_court_order(self, text: str) -> Dict[str, Any]:
+    async def analyze_court_order(self, text: str, api_key: Optional[str] = None) -> Dict[str, Any]:
         """Analyze a court order and extract structured insights."""
-        if not self.client:
+        client = self._get_client(api_key)
+        if not client:
             return {
                 "executive_summary": {
                     "nature_of_matter": "Civil Suit / Criminal Appeal",
@@ -386,7 +399,7 @@ Return the output ONLY as a valid JSON object matching this schema exactly:
         ]
         
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=messages,
                 max_tokens=2000,
@@ -414,15 +427,16 @@ Return the output ONLY as a valid JSON object matching this schema exactly:
                 "risk_alerts": ["AI Analysis Failed"]
             }
 
-    async def translate(self, text: str, source: str, target: str, doc_type: str = "legal") -> str:
-        if not self.client:
+    async def translate(self, text: str, source: str, target: str, doc_type: str = "legal", api_key: Optional[str] = None) -> str:
+        client = self._get_client(api_key)
+        if not client:
             return f"[Translated to {self._lang_name(target)}]\n\n{text}"
 
         messages = [
             {"role": "system", "content": f"You are a professional legal translator. Translate from {self._lang_name(source)} to {self._lang_name(target)}. Maintain legal terminology accuracy and formal register."},
             {"role": "user", "content": f"Translate this {doc_type} document:\n\n{text}"},
         ]
-        response = await self.client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=2000, temperature=0.1)
+        response = await client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=2000, temperature=0.1)
         return response.choices[0].message.content
 
     async def calculate_limitation(self, act: str, section: str, trigger_date: str, case_type: str) -> Dict:
@@ -448,20 +462,22 @@ Return the output ONLY as a valid JSON object matching this schema exactly:
         }
         return suggestions.get(draft_type, ["Standard clause 1", "Standard clause 2", "Standard clause 3"])
 
-    async def _generate_research_analysis(self, query: str, language: str) -> str:
-        if not self.client:
+    async def _generate_research_analysis(self, query: str, language: str, api_key: Optional[str] = None) -> str:
+        client = self._get_client(api_key)
+        if not client:
             return f"Based on your research query '{query}', here is the AI analysis of applicable Indian law..."
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT.format(language=self._lang_name(language))},
             {"role": "user", "content": f"Provide a comprehensive legal analysis for: {query}. Include applicable sections, key precedents, and practical guidance."},
         ]
-        response = await self.client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=1500, temperature=0.2)
+        response = await client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=1500, temperature=0.2)
         return response.choices[0].message.content
 
-    async def get_case_suggestions(self, case_info: str) -> Dict[str, List[str]]:
+    async def get_case_suggestions(self, case_info: str, api_key: Optional[str] = None) -> Dict[str, List[str]]:
         """Generate legal research suggestions based on case context."""
-        if not self.client:
+        client = self._get_client(api_key)
+        if not client:
             return {
                 "sections": ["Section 439 CrPC", "Section 37 NDPS Act"],
                 "judgments": ["Sanjay Chandra v. CBI (2012)", "Arnesh Kumar v. State of Bihar (2014)"],
@@ -484,7 +500,7 @@ Return the output ONLY as a valid JSON object matching this schema exactly:
         ]
         
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=messages,
                 max_tokens=1000,
