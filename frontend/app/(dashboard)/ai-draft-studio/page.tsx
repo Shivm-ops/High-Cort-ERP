@@ -6,7 +6,7 @@ import {
   Sparkles, Search, FileText, Brain, Gavel, Scale, ChevronRight, 
   Download, Share2, FileEdit, Layers, ListChecks, Mic, Volume2, 
   Copy, Plus, ArrowLeft, Check, RotateCcw, FileSignature, History, 
-  Info, Globe, Users, Printer, BookOpen, Trash2, Compare, Merge, 
+  Info, Globe, Users, Printer, BookOpen, Trash2, GitCompare, Merge, 
   AlertTriangle, Eye, CheckCircle2, Languages, HelpCircle, FileCheck,
   ChevronDown
 } from "lucide-react";
