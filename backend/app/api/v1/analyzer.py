@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-import pypdf
+try:
+    import pypdf
+    PYPDF_AVAILABLE = True
+except ImportError:
+    pypdf = None
+    PYPDF_AVAILABLE = False
 import io
 
 from app.core.database import get_db
@@ -27,10 +32,12 @@ async def analyze_court_order_file(
     try:
         content = await file.read()
         
-        if file.filename.lower().endswith('.pdf'):
+        if file.filename.lower().endswith('.pdf') and PYPDF_AVAILABLE:
             pdf_reader = pypdf.PdfReader(io.BytesIO(content))
             for page in pdf_reader.pages:
                 extracted_text += page.extract_text() + "\n"
+        elif file.filename.lower().endswith('.pdf') and not PYPDF_AVAILABLE:
+            extracted_text = "PDF parsing library not installed. Please install pypdf."
         else:
             # Fallback for other files (mock text extraction)
             extracted_text = "MOCK EXTRACTED TEXT FROM NON-PDF FILE.\n" + str(content[:500])

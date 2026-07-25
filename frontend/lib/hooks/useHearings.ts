@@ -61,6 +61,10 @@ export function useHearings(params?: {
   date_to?: string;
   case_id?: string;
   status?: string;
+  court?: string;
+  judge?: string;
+  attended_by?: string;
+  limit?: number;
 }) {
   return useQuery({
     queryKey: KEYS.list(params),
@@ -69,6 +73,26 @@ export function useHearings(params?: {
       return data as { total: number; hearings: Hearing[] };
     },
   });
+}
+
+export function useHearingStats() {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  const thirtyDaysLater = new Date(today);
+  thirtyDaysLater.setDate(today.getDate() + 30);
+  const thirtyDaysStr = thirtyDaysLater.toISOString().split("T")[0];
+  const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
+
+  const { data: allMonth } = useHearings({ date_from: monthStart, date_to: thirtyDaysStr, limit: 500 });
+
+  const hearings = allMonth?.hearings || [];
+  return {
+    today: hearings.filter(h => h.hearing_date === todayStr).length,
+    upcoming: hearings.filter(h => h.hearing_date > todayStr && h.status === "scheduled").length,
+    completed: hearings.filter(h => h.status === "completed").length,
+    adjourned: hearings.filter(h => h.status === "adjourned").length,
+    total: allMonth?.total || 0,
+  };
 }
 
 export function useTodayHearings() {

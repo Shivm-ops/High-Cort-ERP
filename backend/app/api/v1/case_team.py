@@ -283,14 +283,19 @@ async def create_task(
     except ValueError:
         task_type = TaskType.OTHER
 
+    try:
+        assignee_uuid = uuid.UUID(data.assignee_id) if data.assignee_id else current_user.id
+    except (ValueError, AttributeError):
+        assignee_uuid = current_user.id
+
     task = CaseTask(
         case_id=case_id,
         title=data.title,
         description=data.description,
         task_type=task_type,
         priority=data.priority or "medium",
-        assignee_id=data.assignee_id,
-        assigned_by_id=str(current_user.id),
+        assignee_id=assignee_uuid,
+        assigned_by_id=current_user.id,
         deadline=data.deadline,
         notes=data.notes,
     )
@@ -306,7 +311,7 @@ async def create_task(
 @router.put("/{case_id}/tasks/{task_id}")
 async def update_task(
     case_id: uuid.UUID,
-    task_id: str,
+    task_id: uuid.UUID,
     data: TaskUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -344,7 +349,7 @@ async def update_task(
 @router.delete("/{case_id}/tasks/{task_id}", status_code=204)
 async def delete_task(
     case_id: uuid.UUID,
-    task_id: str,
+    task_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

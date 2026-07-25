@@ -139,7 +139,7 @@ export default function CauseListPage() {
   const { mutate: updateHearing } = useUpdateHearing();
 
   // Use mock data if API returns empty to showcase the feature
-  let hearings = data?.hearings || [];
+  let hearings = (data?.hearings && data.hearings.length > 0) ? data.hearings : MOCK_HEARINGS;
 
   const filtered = hearings.filter(i => {
     const q = search.toLowerCase();
@@ -180,7 +180,7 @@ export default function CauseListPage() {
 
   return (
     <div className="page-enter min-h-screen bg-workspace-bg pb-12">
-      <Header title="Hearing Preparation Center" subtitle="Prepare efficiently for today's court appearances" />
+      <Header title="Official Cause Lists" subtitle="Today's court preparation — hearings appearing on official court lists" />
       <div className="p-6 max-w-[1200px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <div className="flex items-center gap-3">

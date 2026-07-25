@@ -2,15 +2,16 @@
 
 import React, { useState } from "react";
 import Header from "@/components/layout/Header";
-import { useAllTasks, useUpdateTask, DashboardTask } from "@/lib/hooks/useTasks";
+import { useAllTasks, useUpdateTask, useDeleteTask, DashboardTask } from "@/lib/hooks/useTasks";
 import { useCases } from "@/lib/hooks/useCases";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Circle, AlertCircle, Clock, CalendarDays, Briefcase, FileText, ChevronRight, ChevronLeft, MoreHorizontal, Loader2, Plus } from "lucide-react";
+import { CheckCircle2, Circle, AlertCircle, Clock, CalendarDays, Briefcase, FileText, ChevronRight, ChevronLeft, MoreHorizontal, Loader2, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Modal from "@/components/ui/Modal";
+import { useAuthStore } from "@/lib/store/authStore";
 
 const KANBAN_COLUMNS = [
   { id: "pending", label: "To Do", color: "bg-gray-100", border: "border-gray-200" },
@@ -19,10 +20,12 @@ const KANBAN_COLUMNS = [
 ];
 
 export default function TasksPage() {
+  const user = useAuthStore(s => s.user);
   const qc = useQueryClient();
   const { data: tasks, isLoading } = useAllTasks();
   const { data: casesData } = useCases({ limit: 100 });
   const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
 
   const [timeModalOpen, setTimeModalOpen] = useState(false);
   const [addTaskModalOpen, setAddTaskModalOpen] = useState(false);
@@ -38,6 +41,8 @@ export default function TasksPage() {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [selectedTask, setSelectedTask] = useState<DashboardTask | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<DashboardTask | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [actualHours, setActualHours] = useState("");
   const [actualMins, setActualMins] = useState("");
 
@@ -81,8 +86,16 @@ export default function TasksPage() {
     }
     try {
       setIsCreating(true);
-      await api.post(`/cases/${newTask.case_id}/tasks`, newTask);
-      await qc.invalidateQueries({ queryKey: ["tasks", "all"] });
+      const currentUser = useAuthStore.getState().user;
+      const payload = { ...newTask } as any;
+      if (currentUser?.id) {
+        payload.assignee_id = currentUser.id;
+      }
+      if (!payload.deadline) {
+        delete payload.deadline;
+      }
+      await api.post(`/cases/${newTask.case_id}/tasks`, payload);
+      await qc.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("Task created successfully");
       setAddTaskModalOpen(false);
       setNewTask({ case_id: "", title: "", description: "", priority: "medium", task_type: "other", deadline: "" });
@@ -142,6 +155,13 @@ export default function TasksPage() {
               </button>
 
               <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setTaskToDelete(task)}
+                  className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                  title="Delete Task"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
                 {status !== "pending" && (
                   <button onClick={() => handleStatusChange(task.id, status === "completed" ? "in_progress" : "pending")} 
                     className="p-1.5 text-gray-400 hover:text-sidebar hover:bg-gray-100 rounded-md transition-colors" title="Move Left">
@@ -290,6 +310,55 @@ export default function TasksPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* ── Delete Confirmation Modal ── */}
+      <Modal open={!!taskToDelete} onClose={() => !isDeleting && setTaskToDelete(null)} title="" size="sm">
+        {taskToDelete && (
+          <div className="text-center px-2 pb-2">
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Delete Task?</h3>
+            <p className="text-sm text-gray-500 mb-1">
+              You are about to permanently delete:
+            </p>
+            <p className="text-sm font-bold text-gray-800 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 mb-5">
+              &ldquo;{taskToDelete.title}&rdquo;
+            </p>
+            <p className="text-xs text-red-500 font-medium mb-6">This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setTaskToDelete(null)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await deleteTask.mutateAsync(
+                      { caseId: taskToDelete.case_id, taskId: taskToDelete.id }
+                    );
+                    toast.success("Task deleted successfully");
+                    setTaskToDelete(null);
+                  } catch (err: any) {
+                    toast.error(err.response?.data?.detail || "Failed to delete task");
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {isDeleting ? "Deleting…" : "Delete Task"}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -75,8 +75,8 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Clients CRM", href: "/clients", icon: Users },
       { label: "Case Management", href: "/cases", icon: Briefcase, badge: "12", badgeColor: "mint" },
       { label: "MACT Management", href: "/mact", icon: Car, badge: "New", badgeColor: "blue", requiredFeature: "mact_management" },
-      { label: "Hearings & Calendar", href: "/hearings", icon: CalendarDays, badge: "3", badgeColor: "orange" },
-      { label: "Cause List", href: "/cause-list", icon: ListChecks },
+      { label: "Hearings", href: "/hearings", icon: Gavel, badge: "3", badgeColor: "orange" },
+      { label: "Official Cause Lists", href: "/cause-list", icon: ListChecks },
     ],
   },
   {
