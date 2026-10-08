@@ -55,11 +55,19 @@ class Settings(BaseSettings):
     # Elasticsearch
     ELASTICSEARCH_URL: str = "http://localhost:9200"
 
-    # Email
-    SMTP_HOST: str = "smtp.gmail.com"
+    # Email — Azure Communication Services
+    AZURE_COMMUNICATION_CONNECTION_STRING: str = ""
+    AZURE_EMAIL_FROM_ADDRESS: str = "noreply@fastcase.in"
+    AZURE_EMAIL_FROM_NAME: str = "Fastcase ERP"
+
+    # Email — SMTP (Amazon SES / Gmail / Mailtrap / Custom SMTP)
+    SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@fastcase.in"
+    SMTP_FROM_NAME: str = "Fastcase ERP"
+    SMTP_USE_TLS: bool = True
 
     class Config:
         env_file = ".env"

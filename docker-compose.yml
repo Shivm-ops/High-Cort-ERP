@@ -1,21 +1,19 @@
 version: "3.9"
 
 services:
-  # ─── Frontend ──────────────────────────────────────────────────────────────
+  # ─── ERP Frontend (Advocate Portal) ────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
+        - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
         - NEXT_PUBLIC_APP_NAME=Fastcase
     ports:
-      - "3002:3000"
+      - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
       - NEXT_PUBLIC_APP_NAME=Fastcase
-    depends_on:
-      - backend
 
   # ─── Admin Frontend ────────────────────────────────────────────────────────
   admin-frontend:
@@ -23,11 +21,11 @@ services:
       context: ./admin-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
+        - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
     ports:
       - "3001:3001"
     environment:
-      - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
       - PORT=3001
     depends_on:
       - backend
@@ -38,9 +36,9 @@ services:
       context: ./fastcase-website
       dockerfile: Dockerfile
       args:
-        - VITE_ERP_APP_URL=https://app.fastcase.in
+        - VITE_ERP_APP_URL=http://localhost:3002
     ports:
-      - "3000:80"
+      - "3003:80"
 
   # ─── Backend API ───────────────────────────────────────────────────────────
   backend:
@@ -52,58 +50,49 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - DATABASE_URL=postgresql+psycopg2://lagalos:lagalos_password@postgres:5432/lagalos_db
       - REDIS_URL=redis://redis:6379/0
       - ELASTICSEARCH_URL=http://elasticsearch:9200
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips "*"
 
-  # ─── Celery Worker ─────────────────────────────────────────────────────────
-  celery_worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    env_file:
-      - ./backend/.env
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      - redis
-    command: celery -A app.tasks worker --loglevel=info --concurrency=4
+      POSTGRES_DB: lagalos_db
+      POSTGRES_USER: lagalos
+      POSTGRES_PASSWORD: lagalos_password
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lagalos -d lagalos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # ─── PostgreSQL (Disabled for RDS Production) ─────────────────────────────
-  # postgres:
-  #   image: postgres:16-alpine
-  #   environment:
-  #     POSTGRES_DB: lagalos_db
-  #     POSTGRES_USER: lagalos
-  #     POSTGRES_PASSWORD: lagalos_password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #     - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U lagalos -d lagalos_db"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
-  # ─── Redis ─────────────────────────────────────────────────────────────────
+  # ─── Redis Cache ───────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 3
 
-  # ─── Elasticsearch ─────────────────────────────────────────────────────────
+  # ─── Optional Services (Enable with --profile services) ────────────────────
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     environment:
@@ -114,13 +103,9 @@ services:
       - "9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    profiles:
+      - services
 
-  # ─── Kibana (Elasticsearch UI) ─────────────────────────────────────────────
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.0
     ports:
@@ -130,9 +115,8 @@ services:
     depends_on:
       - elasticsearch
     profiles:
-      - debug
+      - services
 
-  # ─── ChromaDB (Vector Store) ───────────────────────────────────────────────
   chromadb:
     image: chromadb/chroma:latest
     ports:
@@ -141,8 +125,9 @@ services:
       - chromadb_data:/chroma/chroma
     environment:
       - CHROMA_SERVER_HOST=0.0.0.0
+    profiles:
+      - services
 
-  # ─── MinIO (S3-compatible local storage for dev) ───────────────────────────
   minio:
     image: minio/minio:latest
     ports:
@@ -154,7 +139,10 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
-  # ─── Nginx Reverse Proxy ───────────────────────────────────────────────────
+    profiles:
+      - services
+
+  # ─── Nginx Reverse Proxy (AWS Production Only) ─────────────────────────────
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -163,11 +151,12 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.aws.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - website
       - frontend
       - backend
+    profiles:
+      - aws
 
 volumes:
   postgres_data:

@@ -1,0 +1,124 @@
+version: "3.9"
+
+# ─── Hostinger VPS Full-Stack Deployment ────────────────────────────────────
+# Requirements: Ubuntu 22.04, Docker, Docker Compose, Certbot
+# Run with:  docker compose -f docker-compose.vps.yml up -d --build
+# Env vars:  set in /opt/fastcase/.env (loaded via env_file or shell export)
+
+services:
+
+  # ─── Marketing Website (yourdomain.com / www.yourdomain.com) ───────────────
+  website:
+    build:
+      context: ./fastcase-website
+      dockerfile: Dockerfile
+      args:
+        - VITE_ERP_APP_URL=https://app.fastcase.in
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  # ─── ERP Frontend (app.yourdomain.com) ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
+      - NEXT_PUBLIC_APP_NAME=Fastcase
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    expose:
+      - "3000"
+
+  # ─── Admin Frontend (admin.yourdomain.com) ──────────────────────────────────
+  admin-frontend:
+    build:
+      context: ./admin-frontend
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    expose:
+      - "3001"
+
+  # ─── Backend API (api.yourdomain.com) ───────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+    command: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 120
+
+  # ─── PostgreSQL Database ─────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lagalos_db
+      POSTGRES_USER: lagalos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lagalos -d lagalos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Cache ─────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── Nginx Reverse Proxy (HTTP only — Certbot handles SSL on host) ───────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.vps.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - website
+      - frontend
+      - admin-frontend
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: fastcase_network

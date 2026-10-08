@@ -9,9 +9,10 @@ Authentication endpoints with full security hardening:
   - Password change with old-password verification
 """
 
+import asyncio
 import re
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
@@ -28,6 +29,7 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.security import LoginHistory, UserSession
 from app.services.audit_service import log_action, extract_ip, AuditAction
+from app.services.email_service import send_login_notification, send_logout_notification
 
 router = APIRouter()
 
@@ -38,6 +40,10 @@ MIN_PASSWORD_LENGTH = 8
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+def utc_now() -> datetime:
+    """Return naive UTC timestamp to match database DateTime columns."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 def validate_password_strength(password: str) -> str:
     """Raise ValueError if password doesn't meet policy."""
@@ -54,8 +60,8 @@ def validate_password_strength(password: str) -> str:
 
 def _check_account_locked(user: User) -> None:
     """Raise 423 if account is currently locked."""
-    if user.locked_until and user.locked_until > datetime.utcnow():
-        remaining = int((user.locked_until - datetime.utcnow()).total_seconds() // 60) + 1
+    if user.locked_until and user.locked_until > utc_now():
+        remaining = int((user.locked_until - utc_now()).total_seconds() // 60) + 1
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
             detail=f"Account is locked due to too many failed attempts. Try again in {remaining} minute(s).",
@@ -66,7 +72,7 @@ def _record_failed_attempt(user: User, db: Session, ip: Optional[str], user_agen
     """Increment failure counter and lock account if threshold crossed."""
     user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
     if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-        user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+        user.locked_until = utc_now() + timedelta(minutes=LOCKOUT_MINUTES)
         user.failed_login_attempts = 0   # reset counter after locking
 
     # Write to login_history
@@ -76,7 +82,7 @@ def _record_failed_attempt(user: User, db: Session, ip: Optional[str], user_agen
         user_agent=user_agent,
         success=False,
         failure_reason="incorrect_password",
-        attempted_at=datetime.utcnow(),
+        attempted_at=utc_now(),
     )
     db.add(history)
     db.commit()
@@ -86,7 +92,7 @@ def _record_success(user: User, db: Session, ip: Optional[str], user_agent: Opti
     """Reset failure counter and update last_login."""
     user.failed_login_attempts = 0
     user.locked_until = None
-    user.last_login = datetime.utcnow()
+    user.last_login = utc_now()
     user.login_count = (user.login_count or 0) + 1
 
     history = LoginHistory(
@@ -94,7 +100,7 @@ def _record_success(user: User, db: Session, ip: Optional[str], user_agent: Opti
         ip_address=ip,
         user_agent=user_agent,
         success=True,
-        attempted_at=datetime.utcnow(),
+        attempted_at=utc_now(),
     )
     db.add(history)
 
@@ -112,8 +118,8 @@ def _create_session(user: User, access_token: str, db: Session, ip: Optional[str
         token_jti=jti,
         device_info=user_agent[:255] if user_agent else None,
         ip_address=ip,
-        created_at=datetime.utcnow(),
-        expires_at=datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        created_at=utc_now(),
+        expires_at=utc_now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
         is_active=True,
     )
     db.add(session)
@@ -220,13 +226,13 @@ async def login(
     # 2.5 Anomaly detection: >3 unique IPs in last hour
     recent_ips = db.query(LoginHistory.ip_address).filter(
         LoginHistory.user_id == user.id,
-        LoginHistory.attempted_at > datetime.utcnow() - timedelta(hours=1)
+        LoginHistory.attempted_at > utc_now() - timedelta(hours=1)
     ).distinct().count()
 
     if recent_ips > 3:
         log_action(db, AuditAction.SECURITY_ALERT, "AUTH", str(user.id), user=user, ip=ip,
                    details={"anomaly": "multiple_ips", "unique_ips_last_hour": recent_ips}, status="blocked")
-        user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+        user.locked_until = utc_now() + timedelta(minutes=LOCKOUT_MINUTES)
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED,
@@ -234,12 +240,12 @@ async def login(
         )
 
     # 3. Verify password
-    if not verify_password(form_data.password, user.hashed_password):
+    if not verify_password(form_data.password, str(user.hashed_password)):
         _record_failed_attempt(user, db, ip, user_agent)
         log_action(db, AuditAction.LOGIN_FAILURE, "AUTH", str(user.id), user=user, ip=ip,
                    details={"reason": "incorrect_password"}, status="failure")
         # Re-check lockout (may have just triggered)
-        if user.locked_until and user.locked_until > datetime.utcnow():
+        if user.locked_until and user.locked_until > utc_now():
             log_action(db, AuditAction.ACCOUNT_LOCKED, "USER", str(user.id), user=user, ip=ip,
                        details={"locked_until": str(user.locked_until)}, status="blocked")
         raise HTTPException(
@@ -264,6 +270,18 @@ async def login(
     log_action(db, AuditAction.LOGIN_SUCCESS, "AUTH", str(user.id), user=user, ip=ip,
                details={"login_count": user.login_count})
     db.commit()
+
+    # 6. Send login notification email (fire-and-forget — does not block response)
+    if user.email:
+        asyncio.create_task(
+            send_login_notification(
+                to_email=str(user.email),
+                full_name=str(user.full_name or user.email),
+                ip_address=ip,
+                user_agent=user_agent,
+                login_time=user.last_login,  # type: ignore[arg-type]
+            )
+        )
 
     sub_data = _get_user_subscription(user, db)
 
@@ -304,7 +322,7 @@ async def client_login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    if not client.hashed_password or not verify_password(form_data.password, client.hashed_password):
+    if not client.hashed_password or not verify_password(form_data.password, str(client.hashed_password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -318,8 +336,20 @@ async def client_login(
     access_token = create_access_token({"sub": str(client.id), "role": "client", "jti": jti})
     refresh_token = create_refresh_token({"sub": str(client.id)})
 
-    client.last_login = datetime.utcnow()
+    client.last_login = utc_now()
     db.commit()
+
+    # Send login notification email (fire-and-forget)
+    if client.email:
+        asyncio.create_task(
+            send_login_notification(
+                to_email=str(client.email),
+                full_name=str(client.name or client.email),
+                ip_address=ip,
+                user_agent=user_agent,
+                login_time=client.last_login,  # type: ignore[arg-type]
+            )
+        )
 
     return LoginResponse(
         access_token=access_token,
@@ -362,7 +392,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
             firm_id=new_firm.id,
             plan_id=trial_plan.id,
             status=SubscriptionStatus.ACTIVE,
-            end_date=datetime.utcnow() + timedelta(days=14)
+            end_date=utc_now() + timedelta(days=14)
         )
         db.add(sub)
 
@@ -430,6 +460,19 @@ async def logout(
 
     log_action(db, AuditAction.LOGOUT, "AUTH", str(current_user.id), user=current_user, ip=ip)
     db.commit()
+
+    # Send logout notification email (fire-and-forget — does not block response)
+    if current_user.email:
+        asyncio.create_task(
+            send_logout_notification(
+                to_email=str(current_user.email),
+                full_name=str(current_user.full_name or current_user.email),
+                ip_address=ip,
+                user_agent=request.headers.get("User-Agent", ""),
+                logout_time=utc_now(),
+            )
+        )
+
     return {"message": "Logged out successfully"}
 
 
@@ -443,7 +486,7 @@ async def change_password(
     """Change password — requires old password verification."""
     ip = extract_ip(request)
 
-    if not verify_password(data.current_password, current_user.hashed_password):
+    if not verify_password(data.current_password, str(current_user.hashed_password)):
         log_action(db, AuditAction.PASSWORD_CHANGED, "USER", str(current_user.id),
                    user=current_user, ip=ip, details={"result": "wrong_current_password"}, status="failure")
         db.commit()
@@ -453,7 +496,7 @@ async def change_password(
         raise HTTPException(status_code=400, detail="New password must differ from current password")
 
     current_user.hashed_password = get_password_hash(data.new_password)
-    current_user.updated_at = datetime.utcnow()
+    current_user.updated_at = utc_now()
 
     # Invalidate all active sessions (force re-login on all devices)
     db.query(UserSession).filter(
@@ -527,7 +570,7 @@ async def setup_mfa(current_user: User = Depends(get_current_user), db: Session 
     db.commit()
     
     totp = pyotp.TOTP(secret)
-    provisioning_uri = totp.provisioning_uri(name=current_user.email, issuer_name="LegalOS")
+    provisioning_uri = totp.provisioning_uri(name=str(current_user.email), issuer_name="LegalOS")
     
     return {"secret": secret, "provisioning_uri": provisioning_uri}
 
@@ -537,7 +580,7 @@ async def verify_mfa(data: VerifyMFARequest, current_user: User = Depends(get_cu
     if not current_user.mfa_secret:
         raise HTTPException(status_code=400, detail="MFA secret not set up.")
     
-    totp = pyotp.TOTP(current_user.mfa_secret)
+    totp = pyotp.TOTP(str(current_user.mfa_secret))
     if not totp.verify(data.token):
         raise HTTPException(status_code=400, detail="Invalid MFA token.")
     
