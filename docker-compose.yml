@@ -38,6 +38,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_ERP_APP_URL=http://localhost:3000
+        - VITE_ADMIN_APP_URL=http://localhost:3001
     ports:
       - "3003:80"
 

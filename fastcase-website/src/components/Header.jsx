@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
   Menu, X, Sun, Moon, Scale, ChevronDown, ArrowRight,
-  Users, Calendar, FileText, CreditCard, Search, Briefcase,
+  Users, Calendar, FileText, CreditCard, Search, Briefcase, Shield,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -24,16 +24,19 @@ const primaryNav = [
 ];
 
 const ERP_APP_URL = import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
+const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL || "http://localhost:3001";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
+  const [portalOpen, setPortalOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const dropdownRef = useRef(null);
+  const portalDropdownRef = useRef(null);
 
-  useEffect(() => { setMobileOpen(false); setFeaturesOpen(false); }, [location]);
+  useEffect(() => { setMobileOpen(false); setFeaturesOpen(false); setPortalOpen(false); }, [location]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -44,6 +47,7 @@ export default function Header() {
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setFeaturesOpen(false);
+      if (portalDropdownRef.current && !portalDropdownRef.current.contains(e.target)) setPortalOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -148,9 +152,58 @@ export default function Header() {
               {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
             </button>
 
-            <a href={ERP_APP_URL} className="hidden sm:inline-flex btn-secondary text-[14px] py-2 px-4 rounded-lg">
-              Login
-            </a>
+            {/* Portals Dropdown */}
+            <div className="relative" ref={portalDropdownRef}>
+              <button
+                onClick={() => setPortalOpen((o) => !o)}
+                className="hidden sm:inline-flex items-center gap-1.5 btn-secondary text-[14px] py-2 px-3.5 rounded-lg border border-line"
+              >
+                <span>Portal Login</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${portalOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {portalOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-line py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-3 py-1.5 border-b border-line mb-1">
+                    <p className="text-[11px] font-bold text-ink/40 uppercase tracking-wider">Access Portals</p>
+                  </div>
+                  
+                  {/* User Portal (Domain) */}
+                  <a
+                    href={ERP_APP_URL}
+                    className="flex items-start gap-3 px-3 py-2.5 hover:bg-surface transition-colors rounded-lg mx-1 group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Briefcase className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[13px] font-semibold text-ink group-hover:text-primary transition-colors">User Portal</span>
+                        <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">Domain</span>
+                      </div>
+                      <p className="text-[11px] text-ink/50 mt-0.5">Advocate & Firm ERP Workspace</p>
+                    </div>
+                  </a>
+
+                  {/* Super Admin Portal (Subdomain) */}
+                  <a
+                    href={ADMIN_APP_URL}
+                    className="flex items-start gap-3 px-3 py-2.5 hover:bg-surface transition-colors rounded-lg mx-1 group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Shield className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[13px] font-semibold text-ink group-hover:text-amber-600 transition-colors">Super Admin</span>
+                        <span className="text-[10px] font-semibold bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200">Subdomain</span>
+                      </div>
+                      <p className="text-[11px] text-ink/50 mt-0.5">Tenant & System Control Panel</p>
+                    </div>
+                  </a>
+                </div>
+              )}
+            </div>
 
             <Link to="/contact" className="btn-primary text-[14px] py-2 px-4 rounded-lg">
               Start Free Trial
@@ -180,8 +233,16 @@ export default function Header() {
               </NavLink>
             ))}
             <div className="pt-3 border-t border-line space-y-2">
-              <a href={ERP_APP_URL} className="btn-secondary w-full rounded-xl block text-center py-2.5">Login</a>
-              <Link to="/contact" className="btn-primary w-full rounded-xl">Start Free Trial</Link>
+              <p className="text-[11px] font-bold text-ink/40 uppercase tracking-wider px-1">Access Portals</p>
+              <a href={ERP_APP_URL} className="btn-secondary w-full rounded-xl flex items-center justify-between py-2.5 px-4 text-left">
+                <span>Advocate Workspace (User)</span>
+                <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">Domain</span>
+              </a>
+              <a href={ADMIN_APP_URL} className="btn-secondary w-full rounded-xl flex items-center justify-between py-2.5 px-4 text-left">
+                <span>Super Admin Portal</span>
+                <span className="text-[10px] font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Subdomain</span>
+              </a>
+              <Link to="/contact" className="btn-primary w-full rounded-xl text-center block mt-2">Start Free Trial</Link>
             </div>
           </div>
         </div>

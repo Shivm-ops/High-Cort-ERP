@@ -37,7 +37,16 @@ const trustCards = [
   },
 ];
 
+const ERP_APP_URL = import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
+const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL || "http://localhost:3001";
+
 const footerLinks = {
+  Portals: [
+    { label: 'Advocate Workspace', href: ERP_APP_URL, isExternal: true, badge: 'Domain' },
+    { label: 'Super Admin Portal', href: ADMIN_APP_URL, isExternal: true, badge: 'Subdomain' },
+    { label: 'Client Case Tracking', to: '/features' },
+    { label: 'Data & Security', to: '/data-security' },
+  ],
   Product: [
     { label: 'Features', to: '/features' },
     { label: 'Practice Areas', to: '/practice-areas' },
@@ -56,7 +65,6 @@ const footerLinks = {
     { label: 'Terms of Service', to: '/terms-of-service' },
     { label: 'Refund Policy', to: '/refund-policy' },
     { label: 'Disclaimer', to: '/disclaimer' },
-    { label: 'Data Security', to: '/data-security' },
     { label: 'Cookie Policy', to: '/cookie-policy' },
   ],
 };
@@ -102,10 +110,10 @@ export default function Footer() {
       {/* ── Main Footer ──────────────────────────────────────────────── */}
       <footer className="bg-[#0F172A] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
 
             {/* Brand column */}
-            <div className="lg:col-span-2">
+            <div className="col-span-2 lg:col-span-2">
               <Link to="/" className="flex items-center gap-2.5 mb-5 group">
                 <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
                   <Scale className="w-4 h-4 text-white" strokeWidth={2} />
@@ -188,11 +196,25 @@ export default function Footer() {
                 <ul className="space-y-2.5">
                   {links.map((l) => (
                     <li key={l.label}>
-                      <Link to={l.to}
-                        className="text-[13px] text-white/50 hover:text-white transition-colors duration-150"
-                      >
-                        {l.label}
-                      </Link>
+                      {l.isExternal ? (
+                        <a
+                          href={l.href}
+                          className="text-[13px] text-white/50 hover:text-white transition-colors duration-150 inline-flex items-center gap-1.5"
+                        >
+                          <span>{l.label}</span>
+                          {l.badge && (
+                            <span className="text-[9px] font-semibold bg-white/10 text-[#0EA5A4] px-1.5 py-0.5 rounded border border-white/10">
+                              {l.badge}
+                            </span>
+                          )}
+                        </a>
+                      ) : (
+                        <Link to={l.to}
+                          className="text-[13px] text-white/50 hover:text-white transition-colors duration-150"
+                        >
+                          {l.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>
