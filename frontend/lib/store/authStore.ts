@@ -17,6 +17,11 @@ export interface AuthUser {
   bar_council_no?: string;
   subscription?: SubscriptionInfo;
   is_superadmin?: boolean;
+  firm_id?: string | null;
+  firm_name?: string | null;
+  subdomain?: string | null;
+  custom_domain?: string | null;
+  domain?: string | null;
 }
 
 interface AuthState {

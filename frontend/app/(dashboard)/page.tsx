@@ -42,10 +42,50 @@ function StatCard({ label, value, icon: Icon, accent, bg, delay = 0 }: StatCardP
   );
 }
 
+const emptyMetrics = {
+  critical_matters: {
+    today_hearings: 0,
+    urgent_filings: 0,
+    pending_notices: 0,
+    limitation_alerts: 0,
+    pending_affidavits: 0,
+  },
+  limitation_alerts: [],
+  notice_summary: {
+    received: 0,
+    pending_replies: 0,
+    overdue_replies: 0,
+    replies_sent: 0,
+  },
+  matter_status: {
+    active: 0,
+    drafting: 0,
+    evidence: 0,
+    argument: 0,
+    appeal: 0,
+    closed: 0,
+  },
+  upcoming_hearings: [],
+  billing: {
+    outstanding: 0,
+    pending_hearing_fees: 0,
+    pending_filing_fees: 0,
+    advance_balance: 0,
+  },
+  team_work: {
+    drafting: 0,
+    research: 0,
+    filing: 0,
+    hearing: 0,
+  },
+  recent_activity: [],
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [globalSearch, setGlobalSearch] = useState("");
-  const { data: metrics, isLoading } = useDashboardMetrics();
+  const { data: rawMetrics, isLoading, isError } = useDashboardMetrics();
+  const metrics = rawMetrics || emptyMetrics;
 
   const today = new Date();
   const todayLabel = today.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
@@ -60,8 +100,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  if (!metrics) return null;
 
   return (
     <div className="flex flex-col h-full bg-[#F7F8F6]">

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "development"
     DEBUG: bool = True
     SECRET_KEY: str = "lagalos-development-secret-change-in-production-2025"
-    ENCRYPTION_KEY: str = ""
+    DOMAIN: str = "fastcase.in"
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
@@ -30,6 +30,17 @@ class Settings(BaseSettings):
         "https://admin.fastcase.in",
         "https://api.fastcase.in",
     ]
+
+    def all_allowed_origins(self) -> List[str]:
+        origins = list(self.ALLOWED_ORIGINS)
+        domain = (self.DOMAIN or "").strip().lower()
+        if domain:
+            for proto in ("http://", "https://"):
+                for prefix in ("", "www.", "app.", "admin.", "api."):
+                    origin = f"{proto}{prefix}{domain}"
+                    if origin not in origins:
+                        origins.append(origin)
+        return origins
 
     # Database
     DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/lagalos_db"

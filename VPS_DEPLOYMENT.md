@@ -109,11 +109,10 @@ docker compose -f docker-compose.vps.yml exec backend python seed.py
 
 | URL | Expected |
 |-----|----------|
-| `https://fastcase.in` | Marketing website |
-| `https://app.fastcase.in` | Login page |
-| `https://admin.fastcase.in` | Admin panel |
-| `https://api.fastcase.in/health` | `{"status":"healthy"}` |
-| `https://api.fastcase.in/api/docs` | Swagger API docs |
+| `https://YOUR_DOMAIN` / `https://www.YOUR_DOMAIN` | **User Portal** (ERP workspace & login) |
+| `https://admin.YOUR_DOMAIN` | **Superadmin Portal** |
+| `https://api.YOUR_DOMAIN/health` | `{"status":"healthy"}` |
+| `https://api.YOUR_DOMAIN/api/docs` | Swagger API docs |
 
 ---
 

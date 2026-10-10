@@ -16,6 +16,9 @@ export default function FirmProfile() {
     email: "",
     phone: "",
     address: "",
+    subdomain: "",
+    custom_domain: "",
+    domain: "",
     ai_provider: "platform",
     ai_api_key: "",
     ai_api_base: "",
@@ -36,6 +39,9 @@ export default function FirmProfile() {
             email: res.data.email || "",
             phone: res.data.phone || "",
             address: res.data.address || "",
+            subdomain: res.data.subdomain || "",
+            custom_domain: res.data.custom_domain || "",
+            domain: res.data.domain || "",
             ai_provider: res.data.ai_provider || "platform",
             ai_api_key: res.data.has_api_key ? "****************" : "",
             ai_api_base: res.data.ai_api_base || "",
@@ -60,6 +66,7 @@ export default function FirmProfile() {
         gst_no: firmData.gst_no,
         pan_no: firmData.pan_no,
         website: firmData.website,
+        custom_domain: firmData.custom_domain,
         email: firmData.email,
         phone: firmData.phone,
         address: firmData.address,
@@ -81,7 +88,10 @@ export default function FirmProfile() {
         setFirmData(prev => ({
           ...prev,
           has_api_key: res.data.has_api_key,
-          ai_api_key: res.data.has_api_key ? "****************" : ""
+          ai_api_key: res.data.has_api_key ? "****************" : "",
+          subdomain: res.data.subdomain || prev.subdomain,
+          custom_domain: res.data.custom_domain || "",
+          domain: res.data.domain || prev.domain
         }));
       }
     } catch (e) {
@@ -204,6 +214,36 @@ export default function FirmProfile() {
                 onChange={(e) => setFirmData({ ...firmData, phone: e.target.value })}
                 placeholder="+91 98765 43210"
                 className="w-full h-10 pl-9 pr-3 rounded-xl text-[13px] bg-gray-50 border border-gray-100 focus:outline-none focus:border-[#6EE7B7] text-charcoal"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 space-y-3">
+        <div>
+          <h3 className="text-[13px] font-semibold text-charcoal">Workspace domain</h3>
+          <p className="text-[11.5px] text-muted mt-0.5">
+            This is the public domain shown on your user workspace. Superadmin sees the assigned subdomain name.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[11px] font-semibold text-muted block mb-1.5">Your domain</label>
+            <div className="h-10 px-3 rounded-xl text-[13px] bg-white border border-emerald-100 flex items-center gap-2 text-charcoal font-medium">
+              <Globe className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="truncate">{firmData.domain || "Assigning…"}</span>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted block mb-1.5">Custom domain (optional)</label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
+              <input
+                value={firmData.custom_domain}
+                onChange={(e) => setFirmData({ ...firmData, custom_domain: e.target.value })}
+                placeholder="www.yourfirm.in"
+                className="w-full h-10 pl-9 pr-3 rounded-xl text-[13px] bg-white border border-gray-100 focus:outline-none focus:border-[#6EE7B7] text-charcoal"
               />
             </div>
           </div>

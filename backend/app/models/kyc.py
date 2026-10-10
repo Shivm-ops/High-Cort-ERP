@@ -2,13 +2,12 @@ from sqlalchemy import Column, String, Enum, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 from sqlalchemy_utils import StringEncryptedType
-from sqlalchemy_utils.types.encrypted.encrypted_type import FernetEngine
 from app.core.database import Base
-from app.core.security_db import ENCRYPTION_KEY
+from app.core.security_db import ENCRYPTION_KEY, FernetEngine
 
 class KycStatus(str, enum.Enum):
     PENDING = "pending"
@@ -46,7 +45,7 @@ class KycRecord(Base):
     status = Column(Enum(KycStatus), default=KycStatus.PENDING, nullable=False)
     rejection_reason = Column(Text)
     
-    submitted_at = Column(DateTime, default=datetime.utcnow)
+    submitted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     reviewed_at = Column(DateTime)
     reviewed_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 

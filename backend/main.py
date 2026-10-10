@@ -18,13 +18,16 @@ logger = logging.getLogger(__name__)
 
 def run_db_migrations():
     from sqlalchemy import text
-    from sqlalchemy.exc import OperationalError
+    from sqlalchemy.exc import OperationalError, ProgrammingError
     
     columns = [
         ("ai_provider", "VARCHAR(50) DEFAULT 'platform'"),
         ("ai_api_key", "VARCHAR(500)"),
         ("ai_api_base", "VARCHAR(255)"),
-        ("ai_model", "VARCHAR(100)")
+        ("ai_model", "VARCHAR(100)"),
+        ("website", "VARCHAR(255)"),
+        ("subdomain", "VARCHAR(100)"),
+        ("custom_domain", "VARCHAR(255)"),
     ]
     
     with engine.connect() as conn:
@@ -33,12 +36,43 @@ def run_db_migrations():
                 conn.execute(text(f"ALTER TABLE firms ADD COLUMN {col_name} {col_type}"))
                 conn.commit()
                 logger.info(f"✅ Added column {col_name} to firms table")
-            except OperationalError as e:
+            except (OperationalError, ProgrammingError) as e:
                 err_msg = str(e).lower()
                 if "duplicate column" in err_msg or "already exists" in err_msg or "duplicate" in err_msg:
                     logger.info(f"ℹ️ Column {col_name} already exists in firms table")
                 else:
                     logger.warning(f"⚠️ Migration notice for {col_name}: {e}")
+        for index_sql in [
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_firms_subdomain ON firms (subdomain)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_firms_custom_domain ON firms (custom_domain)",
+        ]:
+            try:
+                conn.execute(text(index_sql))
+                conn.commit()
+            except Exception as e:
+                logger.warning(f"⚠️ Index notice: {e}")
+
+    _backfill_firm_subdomains()
+
+
+def _backfill_firm_subdomains():
+    from app.core.database import SessionLocal
+    from app.models.firm import Firm
+    from app.services.tenant_domain import ensure_firm_subdomain
+
+    db = SessionLocal()
+    try:
+        firms = db.query(Firm).filter((Firm.subdomain.is_(None)) | (Firm.subdomain == "")).all()
+        for firm in firms:
+            ensure_firm_subdomain(db, firm)
+        if firms:
+            db.commit()
+            logger.info(f"✅ Assigned subdomains to {len(firms)} existing firms")
+    except Exception as e:
+        db.rollback()
+        logger.warning(f"⚠️ Subdomain backfill skipped: {e}")
+    finally:
+        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -66,7 +100,8 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=settings.all_allowed_origins(),
+    allow_origin_regex=r"^https?://.*$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

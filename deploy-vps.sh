@@ -77,6 +77,7 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 EOF
 
 # Patch nginx config with actual domain
+sed -i "s/fastcase\.in/$DOMAIN/g" nginx/nginx.vps.conf
 sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" nginx/nginx.vps.conf
 
 # Create backend production env file
@@ -84,6 +85,7 @@ cat > "$DEPLOY_DIR/backend/.env.production" << EOF
 APP_NAME=Fastcase
 APP_ENV=production
 DEBUG=false
+DOMAIN=$DOMAIN
 SECRET_KEY=$SECRET_KEY
 JWT_SECRET_KEY=$JWT_SECRET
 JWT_ALGORITHM=HS256
@@ -115,7 +117,7 @@ certbot certonly \
     --standalone \
     --non-interactive \
     --agree-tos \
-    --email "admin@fastcase.in" \
+    --email "admin@$DOMAIN" \
     -d "$DOMAIN" \
     -d "www.$DOMAIN" \
     -d "app.$DOMAIN" \
@@ -137,10 +139,9 @@ echo "  2. docker compose -f docker-compose.vps.yml up -d --build"
 echo "  3. docker compose -f docker-compose.vps.yml exec backend python seed.py"
 echo ""
 echo "  URLs:"
-echo "    https://$DOMAIN"
-echo "    https://app.$DOMAIN"
-echo "    https://admin.$DOMAIN"
-echo "    https://api.$DOMAIN/api/docs"
+echo "    User Portal:       https://$DOMAIN (and https://app.$DOMAIN)"
+echo "    Superadmin Portal: https://admin.$DOMAIN"
+echo "    Backend API Docs:  https://api.$DOMAIN/api/docs"
 echo ""
-echo "  Default login: admin@fastcase.in / lagalos@2025"
+echo "  Default login: admin@$DOMAIN / lagalos@2025"
 echo ""

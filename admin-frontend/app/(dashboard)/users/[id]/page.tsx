@@ -152,6 +152,12 @@ export default function UserProfilePage() {
             )}
           </div>
           <p className="text-gray-500 mt-1">{user.email} • {(user.role || 'User').replace('_', ' ')} at {user.firm_name}</p>
+          {user.subdomain && (
+            <p className="text-sm text-indigo-600 mt-1 font-medium">
+              Subdomain: <span className="font-mono font-bold">{user.subdomain}</span>
+              {user.domain ? <span className="text-gray-400 font-normal"> · User domain: {user.domain}</span> : null}
+            </p>
+          )}
         </div>
       </div>
 

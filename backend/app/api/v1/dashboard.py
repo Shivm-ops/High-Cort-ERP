@@ -29,10 +29,10 @@ async def get_dashboard_metrics(
 
     # ── Tenant isolation: all queries scoped to firm ──────────────────────────
     firm_case_ids = [
-        c.id for c in apply_firm_filter(db.query(Case), Case, current_user).all()
+        row[0] for row in apply_firm_filter(db.query(Case.id), Case, current_user).all()
     ]
     firm_client_ids = [
-        c.id for c in apply_firm_filter(db.query(Client), Client, current_user).all()
+        row[0] for row in apply_firm_filter(db.query(Client.id), Client, current_user).all()
     ]
 
     # 1. Today's Critical Matters

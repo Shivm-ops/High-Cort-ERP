@@ -242,8 +242,8 @@ export default function Sidebar() {
                 <div className="text-white font-bold text-[15px] leading-tight tracking-tight">
                   Fast<span style={{ color: accentColor }}>case</span>
                 </div>
-                <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase">
-                  Fastcase Platform
+                <div className="text-white/40 text-[10px] font-medium tracking-widest uppercase truncate" title={user?.domain || "Fastcase Platform"}>
+                  {user?.domain || "Fastcase Platform"}
                 </div>
               </motion.div>
             )}

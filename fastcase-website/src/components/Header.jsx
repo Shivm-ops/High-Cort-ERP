@@ -148,7 +148,7 @@ export default function Header() {
               {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
             </button>
 
-            <a href={import.meta.env.VITE_ERP_APP_URL || 'http://localhost:3002'} className="hidden sm:inline-flex btn-secondary text-[14px] py-2 px-4 rounded-lg">
+            <a href={ERP_APP_URL} className="hidden sm:inline-flex btn-secondary text-[14px] py-2 px-4 rounded-lg">
               Login
             </a>
 
@@ -180,7 +180,7 @@ export default function Header() {
               </NavLink>
             ))}
             <div className="pt-3 border-t border-line space-y-2">
-              <a href={import.meta.env.VITE_ERP_APP_URL || 'http://localhost:3002'} className="btn-secondary w-full rounded-xl block text-center py-2.5">Login</a>
+              <a href={ERP_APP_URL} className="btn-secondary w-full rounded-xl block text-center py-2.5">Login</a>
               <Link to="/contact" className="btn-primary w-full rounded-xl">Start Free Trial</Link>
             </div>
           </div>

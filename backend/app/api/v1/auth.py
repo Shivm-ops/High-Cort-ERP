@@ -284,6 +284,11 @@ async def login(
         )
 
     sub_data = _get_user_subscription(user, db)
+    from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
+    if user.firm:
+        ensure_firm_subdomain(db, user.firm)
+        db.commit()
+    firm_domains = domain_fields(user.firm) if user.firm else {}
 
     return LoginResponse(
         access_token=access_token,
@@ -296,7 +301,9 @@ async def login(
             "bar_council_no": user.bar_council_no,
             "is_superadmin": user.is_superadmin,
             "firm_id": str(user.firm_id) if user.firm_id else None,
+            "firm_name": user.firm.name if user.firm else None,
             "subscription": sub_data,
+            **firm_domains,
         }
     )
 
@@ -375,12 +382,15 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
     from app.models.firm import Firm
     from app.models.subscription import SubscriptionPlan, TenantSubscription, SubscriptionStatus
 
-    # Create a new firm (Individual Practice)
+    from app.services.tenant_domain import allocate_unique_subdomain
+
+    firm_name = f"{data.full_name}'s Practice"
     new_firm = Firm(
-        name=f"{data.full_name}'s Practice",
+        name=firm_name,
         type="INDIVIDUAL",
         phone=data.phone,
-        is_active=True
+        is_active=True,
+        subdomain=allocate_unique_subdomain(db, firm_name),
     )
     db.add(new_firm)
     db.flush()
@@ -513,6 +523,11 @@ async def change_password(
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     sub_data = _get_user_subscription(current_user, db)
+    from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
+    if current_user.firm:
+        ensure_firm_subdomain(db, current_user.firm)
+        db.commit()
+    firm_domains = domain_fields(current_user.firm) if current_user.firm else {}
     return {
         "id": str(current_user.id),
         "email": current_user.email,
@@ -523,8 +538,10 @@ async def get_me(current_user: User = Depends(get_current_user), db: Session = D
         "is_active": current_user.is_active,
         "is_superadmin": current_user.is_superadmin,
         "firm_id": str(current_user.firm_id) if current_user.firm_id else None,
+        "firm_name": current_user.firm.name if current_user.firm else None,
         "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
         "subscription": sub_data,
+        **firm_domains,
     }
 
 

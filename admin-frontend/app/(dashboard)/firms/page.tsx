@@ -11,7 +11,7 @@ export default function FirmsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFirm, setEditingFirm] = useState<string | null>(null);
-  const [firmData, setFirmData] = useState({ name: "", type: "PARTNERSHIP", email: "", phone: "", pan_no: "", address: "" });
+  const [firmData, setFirmData] = useState({ name: "", type: "PARTNERSHIP", email: "", phone: "", pan_no: "", address: "", subdomain: "", custom_domain: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [firmToDelete, setFirmToDelete] = useState<any>(null);
 
@@ -58,11 +58,13 @@ export default function FirmsPage() {
         email: firm.email || "",
         phone: firm.phone || "",
         pan_no: firm.pan_no || "",
-        address: firm.address || ""
+        address: firm.address || "",
+        subdomain: firm.subdomain || "",
+        custom_domain: firm.custom_domain || ""
       });
     } else {
       setEditingFirm(null);
-      setFirmData({ name: "", type: "PARTNERSHIP", email: "", phone: "", pan_no: "", address: "" });
+      setFirmData({ name: "", type: "PARTNERSHIP", email: "", phone: "", pan_no: "", address: "", subdomain: "", custom_domain: "" });
     }
     setIsModalOpen(true);
   };
@@ -143,6 +145,18 @@ export default function FirmsPage() {
                   <div>
                     <h2 className="font-bold text-gray-900 text-lg leading-tight line-clamp-1">{firm.name}</h2>
                     <p className="text-xs text-gray-500 uppercase font-semibold mt-0.5 tracking-wider">{firm.type}</p>
+                    {firm.subdomain && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                          subdomain: {firm.subdomain}
+                        </span>
+                        {firm.domain && (
+                          <span className="text-[10px] text-gray-400 font-medium truncate max-w-[150px]" title={firm.domain}>
+                            {firm.domain}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -253,6 +267,29 @@ export default function FirmsPage() {
                   className="w-full mt-1 border border-gray-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500" 
                   placeholder="e.g. Apex Legal Partners"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Subdomain</label>
+                  <input 
+                    type="text" 
+                    value={firmData.subdomain}
+                    onChange={e => setFirmData({...firmData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")})}
+                    className="w-full mt-1 border border-gray-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500 font-mono" 
+                    placeholder="apex-legal"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Superadmin shows subdomain. User portal shows the domain.</p>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500">Custom Domain</label>
+                  <input 
+                    type="text" 
+                    value={firmData.custom_domain}
+                    onChange={e => setFirmData({...firmData, custom_domain: e.target.value})}
+                    className="w-full mt-1 border border-gray-200 rounded-lg p-2 focus:outline-none focus:border-indigo-500" 
+                    placeholder="www.apexlegal.in"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

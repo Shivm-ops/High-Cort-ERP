@@ -23,16 +23,48 @@ export default function Contact() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    setError('');
+
+    // User's Web3Forms Access Key
+    const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '2331143f-9c75-4def-8367-75e6f7890ec9';
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          from_name: 'Fastcase Website Inquiry',
+          subject: `Fastcase: ${form.subject || 'New Contact'} from ${form.name}`,
+          name: form.name,
+          email: form.email,
+          phone: form.phone || 'N/A',
+          organization: form.organization || 'N/A',
+          message: form.message,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        setError(result.message || 'Failed to send message. Please verify your access key.');
+      }
+    } catch (err) {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
       setLoading(false);
-      setSubmitted(true);
-    }, 1200);
+    }
   };
 
   return (
@@ -161,6 +193,11 @@ export default function Contact() {
                     <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
                       Fill the form below and we'll get back to you within 1–2 business days.
                     </p>
+                    {error && (
+                      <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-xs text-red-600 dark:text-red-300">
+                        {error}
+                      </div>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

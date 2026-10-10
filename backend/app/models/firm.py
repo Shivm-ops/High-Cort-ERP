@@ -2,13 +2,12 @@ from sqlalchemy import Column, String, Boolean, Enum, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 from sqlalchemy_utils import StringEncryptedType
-from sqlalchemy_utils.types.encrypted.encrypted_type import FernetEngine
 from app.core.database import Base
-from app.core.security_db import ENCRYPTION_KEY
+from app.core.security_db import ENCRYPTION_KEY, FernetEngine
 
 class FirmType(str, enum.Enum):
     INDIVIDUAL = "individual"
@@ -28,9 +27,12 @@ class Firm(Base):
     email = Column(String(255))
     phone = Column(String(20))
     address = Column(Text)
+    website = Column(String(255))
+    subdomain = Column(String(100), unique=True, index=True, nullable=True)
+    custom_domain = Column(String(255), unique=True, index=True, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Bring Your Own Key (BYOK) AI Settings (encrypted in DB)
     ai_provider = Column(String(50), default="platform", nullable=True)  # "platform", "openai", "azure", etc.

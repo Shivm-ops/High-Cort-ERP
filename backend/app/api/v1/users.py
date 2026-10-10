@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.core.permissions import require_firm_member, require_roles, ROLES_ADMIN
 from app.models.user import User
+from app.models.firm import Firm
 from app.models.kyc import KycRecord, DocumentType, EntityType, KycStatus
 from datetime import datetime
 
@@ -14,7 +15,8 @@ SUPPORTED_LANGUAGES = {"en", "mr", "hi", "gu"}
 
 
 def serialize_user(u: User) -> dict:
-    return {
+    from app.services.tenant_domain import domain_fields
+    payload = {
         "id": str(u.id),
         "email": u.email,
         "full_name": u.full_name,
@@ -23,7 +25,11 @@ def serialize_user(u: User) -> dict:
         "bar_council_no": u.bar_council_no,
         "preferred_language": getattr(u, "preferred_language", "en") or "en",
         "firm_id": str(u.firm_id) if u.firm_id else None,
+        "firm_name": u.firm.name if u.firm else None,
     }
+    if u.firm:
+        payload.update(domain_fields(u.firm))
+    return payload
 
 
 class LanguageUpdate(BaseModel):
@@ -187,31 +193,48 @@ class FirmUpdate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
+    gst_no: Optional[str] = None
+    pan_no: Optional[str] = None
+    website: Optional[str] = None
+    custom_domain: Optional[str] = None
     ai_provider: Optional[str] = None
     ai_api_key: Optional[str] = None
     ai_api_base: Optional[str] = None
     ai_model: Optional[str] = None
 
 
-@router.get("/me/firm")
-async def get_my_firm(
-    current_user: User = Depends(require_firm_member),
-):
-    firm = current_user.firm
-    if not firm:
-        raise HTTPException(status_code=404, detail="Firm not found")
-    
+def _serialize_firm(firm) -> dict:
+    from app.services.tenant_domain import domain_fields
     return {
         "id": str(firm.id),
         "name": firm.name,
         "email": firm.email,
         "phone": firm.phone,
         "address": firm.address,
+        "gst_no": firm.gst_no,
+        "pan_no": firm.pan_no,
+        "website": firm.website,
         "ai_provider": firm.ai_provider or "platform",
         "ai_api_base": firm.ai_api_base,
         "ai_model": firm.ai_model,
         "has_api_key": bool(firm.ai_api_key),
+        **domain_fields(firm),
     }
+
+
+@router.get("/me/firm")
+async def get_my_firm(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    from app.services.tenant_domain import ensure_firm_subdomain
+
+    firm = current_user.firm
+    if not firm:
+        raise HTTPException(status_code=404, detail="Firm not found")
+    ensure_firm_subdomain(db, firm)
+    db.commit()
+    return _serialize_firm(firm)
 
 
 @router.patch("/me/firm")
@@ -224,6 +247,8 @@ async def update_my_firm(
     if not firm:
         raise HTTPException(status_code=404, detail="Firm not found")
         
+    from app.services.tenant_domain import ensure_firm_subdomain, normalize_custom_domain
+
     if data.name is not None:
         firm.name = data.name
     if data.email is not None:
@@ -232,6 +257,23 @@ async def update_my_firm(
         firm.phone = data.phone
     if data.address is not None:
         firm.address = data.address
+    if data.gst_no is not None:
+        firm.gst_no = data.gst_no
+    if data.pan_no is not None:
+        firm.pan_no = data.pan_no
+    if data.website is not None:
+        firm.website = data.website
+    if data.custom_domain is not None:
+        try:
+            custom = normalize_custom_domain(data.custom_domain)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        if custom:
+            clash = db.query(Firm).filter(Firm.custom_domain == custom, Firm.id != firm.id).first()
+            if clash:
+                raise HTTPException(status_code=400, detail="This domain is already in use")
+        firm.custom_domain = custom
+    ensure_firm_subdomain(db, firm)
         
     # BYOK settings
     if data.ai_provider is not None:
@@ -248,15 +290,4 @@ async def update_my_firm(
         
     db.commit()
     db.refresh(firm)
-    
-    return {
-        "id": str(firm.id),
-        "name": firm.name,
-        "email": firm.email,
-        "phone": firm.phone,
-        "address": firm.address,
-        "ai_provider": firm.ai_provider or "platform",
-        "ai_api_base": firm.ai_api_base,
-        "ai_model": firm.ai_model,
-        "has_api_key": bool(firm.ai_api_key),
-    }
+    return _serialize_firm(firm)

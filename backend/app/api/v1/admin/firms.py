@@ -23,6 +23,8 @@ class FirmCreate(BaseModel):
     phone: Optional[str] = None
     pan_no: Optional[str] = None
     address: Optional[str] = None
+    subdomain: Optional[str] = None
+    custom_domain: Optional[str] = None
 
 class FirmUpdate(BaseModel):
     name: Optional[str] = None
@@ -31,11 +33,21 @@ class FirmUpdate(BaseModel):
     phone: Optional[str] = None
     pan_no: Optional[str] = None
     address: Optional[str] = None
+    subdomain: Optional[str] = None
+    custom_domain: Optional[str] = None
 
 router = APIRouter()
 
 @router.post("/")
 def create_firm(payload: FirmCreate, db: Session = Depends(get_db), current_admin: User = Depends(get_current_superadmin)):
+    from app.services.tenant_domain import allocate_unique_subdomain, normalize_custom_domain, normalize_subdomain
+    try:
+        subdomain = normalize_subdomain(payload.subdomain) if payload.subdomain else allocate_unique_subdomain(db, payload.name)
+        custom_domain = normalize_custom_domain(payload.custom_domain)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    if db.query(Firm).filter(Firm.subdomain == subdomain).first():
+        raise HTTPException(status_code=400, detail="Subdomain is already in use")
     new_firm = Firm(
         name=payload.name,
         type=payload.type,
@@ -43,6 +55,8 @@ def create_firm(payload: FirmCreate, db: Session = Depends(get_db), current_admi
         phone=payload.phone,
         pan_no=payload.pan_no,
         address=payload.address,
+        subdomain=subdomain,
+        custom_domain=custom_domain,
         is_active=True
     )
     db.add(new_firm)
@@ -60,18 +74,40 @@ def update_firm(firm_id: str, payload: FirmUpdate, db: Session = Depends(get_db)
     if not firm:
         raise HTTPException(status_code=404, detail="Firm not found")
         
+    from app.services.tenant_domain import normalize_custom_domain, normalize_subdomain, ensure_firm_subdomain
     if payload.name: firm.name = payload.name
     if payload.type: firm.type = payload.type
     if payload.email is not None: firm.email = payload.email
     if payload.phone is not None: firm.phone = payload.phone
     if payload.pan_no is not None: firm.pan_no = payload.pan_no
     if payload.address is not None: firm.address = payload.address
+    if payload.subdomain is not None:
+        try:
+            subdomain = normalize_subdomain(payload.subdomain)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        clash = db.query(Firm).filter(Firm.subdomain == subdomain, Firm.id != firm.id).first()
+        if clash:
+            raise HTTPException(status_code=400, detail="Subdomain is already in use")
+        firm.subdomain = subdomain
+    if payload.custom_domain is not None:
+        try:
+            custom = normalize_custom_domain(payload.custom_domain)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        if custom:
+            clash = db.query(Firm).filter(Firm.custom_domain == custom, Firm.id != firm.id).first()
+            if clash:
+                raise HTTPException(status_code=400, detail="This domain is already in use")
+        firm.custom_domain = custom
+    ensure_firm_subdomain(db, firm)
     
     db.commit()
     return {"id": firm.id, "name": firm.name, "message": "Firm updated successfully"}
 
 @router.get("/")
 def get_firms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_admin: User = Depends(get_current_superadmin)):
+    from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
     firms = db.query(Firm).offset(skip).limit(limit).all()
     result = []
     for f in firms:
@@ -90,6 +126,7 @@ def get_firms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), cu
         # Subscription
         sub = db.query(TenantSubscription).filter(TenantSubscription.firm_id == f.id, TenantSubscription.status == 'active').first()
         
+        ensure_firm_subdomain(db, f)
         result.append({
             "id": f.id,
             "name": f.name,
@@ -100,6 +137,7 @@ def get_firms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), cu
             "address": f.address,
             "is_active": f.is_active,
             "created_at": f.created_at,
+            **domain_fields(f),
             "metrics": {
                 "total_users": len(f.users),
                 "active_users": active_users,
@@ -112,6 +150,7 @@ def get_firms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), cu
                 "status": sub.status if sub else "inactive"
             }
         })
+    db.commit()
     return result
 
 @router.put("/{firm_id}/status")

@@ -16,7 +16,28 @@ router = APIRouter()
 @router.get("/")
 def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_admin: User = Depends(get_current_superadmin)):
     users = db.query(User).offset(skip).limit(limit).all()
-    return [{"id": u.id, "email": u.email, "full_name": u.full_name, "role": u.user_type, "is_active": u.is_active, "firm_name": u.firm.name if u.firm else "Independent", "is_verified": u.is_verified, "created_at": u.created_at} for u in users]
+    from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
+    result = []
+    for u in users:
+        if u.firm:
+            ensure_firm_subdomain(db, u.firm)
+        item = {
+            "id": u.id,
+            "email": u.email,
+            "full_name": u.full_name,
+            "role": u.user_type,
+            "is_active": u.is_active,
+            "firm_name": u.firm.name if u.firm else "Independent",
+            "is_verified": u.is_verified,
+            "created_at": u.created_at,
+        }
+        if u.firm:
+            item.update(domain_fields(u.firm))
+        else:
+            item.update({"subdomain": None, "custom_domain": None, "domain": None})
+        result.append(item)
+    db.commit()
+    return result
 import uuid
 from app.models.user import UserRole
 
@@ -36,12 +57,14 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), current_admi
         
     from app.models.firm import Firm
     
-    # Create a new firm (Individual Practice) for the new user
+    from app.services.tenant_domain import allocate_unique_subdomain
+    firm_name = f"{payload.full_name}'s Practice"
     new_firm = Firm(
-        name=f"{payload.full_name}'s Practice",
+        name=firm_name,
         type="INDIVIDUAL",
         phone=payload.phone,
-        is_active=True
+        is_active=True,
+        subdomain=allocate_unique_subdomain(db, firm_name),
     )
     db.add(new_firm)
     db.flush()
@@ -87,6 +110,11 @@ def get_user_profile(user_id: str, db: Session = Depends(get_db), current_admin:
             "end_date": sub.end_date
         }
     
+    from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
+    if user.firm:
+        ensure_firm_subdomain(db, user.firm)
+        db.commit()
+    profile_domains = domain_fields(user.firm) if user.firm else {"subdomain": None, "custom_domain": None, "domain": None}
     return {
         "id": user.id,
         "email": user.email,
@@ -96,6 +124,7 @@ def get_user_profile(user_id: str, db: Session = Depends(get_db), current_admin:
         "is_active": user.is_active,
         "firm_name": user.firm.name if user.firm else "Independent",
         "created_at": user.created_at,
+        **profile_domains,
         "storage_used": storage_used,
         "subscription": subscription_data,
         "logins": [{"ip": l.ip_address, "success": l.success, "date": l.attempted_at} for l in logins],

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { toast, Toaster } from "sonner";
-import { Check, X, Shield, UserX, UserCheck, RefreshCw, Trash2 } from "lucide-react";
+import { Check, X, Shield, UserX, UserCheck, RefreshCw, Trash2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -121,6 +121,7 @@ export default function UsersPage() {
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Subdomain</th>
               <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
               <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">KYC Status</th>
               <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Platform Access</th>
@@ -138,8 +139,20 @@ export default function UsersPage() {
                     <div>
                       <p className="text-sm font-bold text-gray-900">{user.full_name}</p>
                       <p className="text-xs text-gray-500">{user.email}</p>
+                      {user.domain && (
+                        <p className="text-[11px] text-gray-400 mt-0.5">Domain: {user.domain}</p>
+                      )}
                     </div>
                   </div>
+                </td>
+                <td className="px-6 py-4">
+                  {user.subdomain ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md font-mono">
+                      <Globe className="w-3.5 h-3.5" /> {user.subdomain}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md uppercase">
@@ -210,7 +223,7 @@ export default function UsersPage() {
             ))}
             {users.length === 0 && !loading && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 text-sm">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 text-sm">
                   No users found in the system.
                 </td>
               </tr>
