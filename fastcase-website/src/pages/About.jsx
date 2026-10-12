@@ -23,7 +23,7 @@ const team = [
   },
   {
     initials: 'PP',
-    name: 'Priyankka Patil',
+    name: 'Priyankka',
     role: 'Head of Client Success',
     badges: ['Firm Onboarding', 'Advocate Workflows'],
     bio: 'Spearheads law firm onboarding, advocate workflow optimization, and continuous product feedback loops.',
