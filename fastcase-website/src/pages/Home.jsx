@@ -9,8 +9,16 @@ import {
   Layers, ChevronDown,
 } from 'lucide-react';
 
-const ERP_APP_URL = import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
-const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL || "http://localhost:3001";
+const getErpUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
+      return `${window.location.protocol}//app.${rootDomain}`;
+    }
+  }
+  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
+};
 
 /* ─── Dashboard Mockup ─────────────────────────────────────────────── */
 function DashboardMockup() {
@@ -181,11 +189,11 @@ export default function Home() {
               </p>
 
               <div className="flex flex-wrap gap-3 mb-10">
-                <Link to="/contact" className="btn-primary-lg">
-                  Start Free Trial <ArrowRight className="w-4 h-4" />
-                </Link>
-                <a href={import.meta.env.VITE_ERP_APP_URL || 'http://localhost:3000'} className="btn-secondary-lg">
-                  Book Live Demo
+                <a href={`${getErpUrl()}/register`} className="btn-primary-lg">
+                  Registration <ArrowRight className="w-4 h-4" />
+                </a>
+                <a href={`${getErpUrl()}/login`} className="btn-secondary-lg">
+                  Advocate Login
                 </a>
               </div>
 
@@ -246,133 +254,6 @@ export default function Home() {
                 <span className="text-[12px] font-medium text-ink/50">{text}</span>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── ACCESS PORTALS SECTION ───────────────────────────────────── */}
-      <section id="portals" className="section-padding bg-slate-50/70 border-b border-line">
-        <div className="section-container">
-          <div className="text-center mb-12">
-            <p className="eyebrow mb-3">Enterprise Architecture</p>
-            <h2 className="section-heading text-3xl lg:text-4xl mb-4">
-              Two Specialized Portals. One Unified Platform.
-            </h2>
-            <p className="text-[16px] text-ink/60 max-w-2xl mx-auto">
-              Fastcase separates advocate daily casework from multi-firm governance with dedicated, role-secured portals.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Card 1: User / Advocate Portal */}
-            <div className="bg-white rounded-2xl border border-line shadow-sm hover:shadow-md transition-all duration-200 p-7 flex flex-col justify-between group relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-teal" />
-              <div>
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Briefcase className="w-6 h-6" />
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-semibold">
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>Main Domain</span>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <h3 className="font-heading font-[800] text-xl text-ink mb-1">Advocate Workspace (User Portal)</h3>
-                  <p className="text-[13px] font-mono text-primary/80 bg-primary/5 px-2.5 py-1 rounded-md inline-block">
-                    {ERP_APP_URL.replace(/^https?:\/\//, '')}
-                  </p>
-                </div>
-
-                <p className="text-[14px] text-ink/60 leading-relaxed mb-6">
-                  The primary workspace for advocates, partners, and legal associates to manage day-to-day cases, cause lists, hearings, clients, AI legal drafts, and GST-compliant invoicing.
-                </p>
-
-                <ul className="space-y-2.5 mb-8">
-                  {[
-                    'Client CRM, KYC & Document Vault',
-                    'Matter Tracking & Limitation Timelines',
-                    'Daily Court Hearing Diary & Reminders',
-                    'AI Draft Studio & Legal Research',
-                    'GST Invoicing & Expense Accounting',
-                  ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-[13px] text-ink/75">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <a
-                  href={ERP_APP_URL}
-                  className="btn-primary w-full justify-center py-3 text-[14px] rounded-xl flex items-center gap-2 shadow-sm"
-                >
-                  <span>Launch User Portal</span>
-                  <ArrowRight className="w-4 h-4" />
-                </a>
-                <p className="text-[11px] text-ink/40 text-center mt-2.5">
-                  Default login: advocate or firm credentials
-                </p>
-              </div>
-            </div>
-
-            {/* Card 2: Super Admin Portal */}
-            <div className="bg-white rounded-2xl border border-line shadow-sm hover:shadow-md transition-all duration-200 p-7 flex flex-col justify-between group relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-rose-500" />
-              <div>
-                <div className="flex items-center justify-between mb-5">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                    <Shield className="w-6 h-6" />
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
-                    <Layers className="w-3.5 h-3.5" />
-                    <span>Subdomain</span>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <h3 className="font-heading font-[800] text-xl text-ink mb-1">Super Admin Control Center</h3>
-                  <p className="text-[13px] font-mono text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md inline-block">
-                    {ADMIN_APP_URL.replace(/^https?:\/\//, '')}
-                  </p>
-                </div>
-
-                <p className="text-[14px] text-ink/60 leading-relaxed mb-6">
-                  Centralized administrative dashboard for system operators to oversee firm onboarding, verify KYC, manage SaaS subscriptions, review global audit logs, and configure security.
-                </p>
-
-                <ul className="space-y-2.5 mb-8">
-                  {[
-                    'Multi-Tenant Firm & User Management',
-                    'Subscription Plans, Billing & License Limits',
-                    'Role Permissions & Access Governance',
-                    'Security Audits & Global Compliance Logs',
-                    'System Health & Infrastructure Telemetry',
-                  ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-[13px] text-ink/75">
-                      <CheckCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <a
-                  href={ADMIN_APP_URL}
-                  className="w-full justify-center py-3 text-[14px] rounded-xl flex items-center gap-2 font-semibold text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-sm"
-                >
-                  <span>Launch Super Admin</span>
-                  <ArrowRight className="w-4 h-4" />
-                </a>
-                <p className="text-[11px] text-ink/40 text-center mt-2.5">
-                  Restricted to platform super-administrators
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -802,11 +683,11 @@ export default function Home() {
               Start your free trial and experience how Fastcase transforms your legal practice — no credit card required.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <Link to="/contact" className="btn-primary-lg">
-                Start Free Trial <ArrowRight className="w-4 h-4" />
-              </Link>
-              <a href={import.meta.env.VITE_ERP_APP_URL || 'http://localhost:3000'} className="btn-secondary-lg">
-                Book a Live Demo
+              <a href={`${getErpUrl()}/register`} className="btn-primary-lg">
+                Registration <ArrowRight className="w-4 h-4" />
+              </a>
+              <a href={`${getErpUrl()}/login`} className="btn-secondary-lg">
+                Advocate Login
               </a>
             </div>
             <div className="flex flex-wrap justify-center gap-6">

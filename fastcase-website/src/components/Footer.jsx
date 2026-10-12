@@ -37,13 +37,21 @@ const trustCards = [
   },
 ];
 
-const ERP_APP_URL = import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
-const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL || "http://localhost:3001";
+const getErpUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
+      return `${window.location.protocol}//app.${rootDomain}`;
+    }
+  }
+  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
+};
 
 const footerLinks = {
-  Portals: [
-    { label: 'Advocate Workspace', href: ERP_APP_URL, isExternal: true, badge: 'Domain' },
-    { label: 'Super Admin Portal', href: ADMIN_APP_URL, isExternal: true, badge: 'Subdomain' },
+  Platform: [
+    { label: 'Advocate Login', href: `${getErpUrl()}/login`, isExternal: true },
+    { label: 'Registration', href: `${getErpUrl()}/register`, isExternal: true },
     { label: 'Client Case Tracking', to: '/features' },
     { label: 'Data & Security', to: '/data-security' },
   ],
