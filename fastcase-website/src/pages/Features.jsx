@@ -1,8 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users, Scale, FileText, Zap, MessageSquare, FolderOpen, ClipboardList,
-  Calendar, Gavel, Package, BookOpen, Search, CreditCard, Monitor,
-  Bell, Globe, ArrowRight, CheckCircle
+  Users, Scale, FileText, Calendar, CreditCard, Search,
+  ArrowRight, CheckCircle, ExternalLink, ShieldCheck, PlayCircle, LogIn
 } from 'lucide-react';
 
 const getErpUrl = () => {
@@ -16,154 +16,333 @@ const getErpUrl = () => {
   return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
 };
 
-const features = [
+const showcasePillars = [
   {
-    id: 1, icon: Users, title: 'Client Management',
-    color: 'text-blue-600', bg: 'bg-blue-50',
-    desc: 'Centralized client directory with KYC records and case history.',
-    items: ['Client CRM & Profiles', 'KYC Document Vault'],
+    id: 'client',
+    title: 'Client Management',
+    tag: 'CRM & Client KYC Vault',
+    desc: 'Centralized advocate CRM. Organize corporate and individual clients, store encrypted Aadhaar/PAN KYC documents, and track complete multi-matter history.',
+    image: '/screenshots/dashboard.webp',
+    bullets: [
+      'Comprehensive KYC vault with encrypted document storage',
+      'Client communication history & WhatsApp alert logs',
+      'Instant client intake forms with matter linking',
+    ],
   },
   {
-    id: 2, icon: Scale, title: 'Case Management',
-    color: 'text-violet-600', bg: 'bg-violet-50',
-    desc: 'End-to-end matter tracking across all active litigation courts.',
-    items: ['Case Lifecycle Tracking', 'Court Diary & Cause Lists'],
+    id: 'case',
+    title: 'Case & Matter Tracking',
+    tag: 'Matter Lifecycle & CNR',
+    desc: 'Track litigations across Supreme Court, High Courts, District Benches, and Tribunals with automated CNR lookup and daily cause list synchronization.',
+    image: '/screenshots/case-management.webp',
+    bullets: [
+      'Automated CNR sync across eCourts & High Court portals',
+      'Comprehensive matter stages: filing, evidence, arguments, orders',
+      'Pre-filing readiness checklists & document bundles',
+    ],
   },
   {
-    id: 3, icon: FileText, title: 'Draft Library',
-    color: 'text-teal-600', bg: 'bg-teal-50',
-    desc: '500+ verified legal templates for notices, writs, and petitions.',
-    items: ['500+ Verified Templates', 'Multi-Language Support'],
+    id: 'hearing',
+    title: 'Hearing Management',
+    tag: 'Command Center & Cause Lists',
+    desc: 'Never miss a court appearance. Interactive hearing diary automatically cross-references daily cause lists and alerts your team of upcoming dates and limitation deadlines.',
+    image: '/screenshots/hearing-prep.webp',
+    bullets: [
+      'Daily court diary & automated cause list integration',
+      'Limitation period countdown alerts & filing deadlines',
+      'Multi-bench court room and presiding judge tracking',
+    ],
   },
   {
-    id: 4, icon: Zap, title: 'Auto-Populate Drafts',
-    color: 'text-amber-600', bg: 'bg-amber-50',
-    desc: 'Generate court-ready documents in one click using client data.',
-    items: ['Instant 1-Click Auto-Fill', 'Word & PDF Export'],
+    id: 'draft',
+    title: 'Draft Automation',
+    tag: '500+ Verified Templates',
+    desc: 'Accelerate drafting by 5x. Access 500+ Bar-compliant templates for plaints, written statements, writs, notices, and bail applications with 1-click client data auto-population.',
+    image: '/screenshots/draft-workspace.png',
+    bullets: [
+      '500+ verified Indian court templates & vernacular formats',
+      '1-click auto-population with client & matter metadata',
+      'Instant export to editable Word (.docx) and indexed PDF',
+    ],
   },
   {
-    id: 5, icon: MessageSquare, title: 'Notice & Reply Studio',
-    color: 'text-orange-600', bg: 'bg-orange-50',
-    desc: 'OCR scan notices and draft professional replies 5x faster.',
-    items: ['OCR Scan Extraction', 'Dispatch Tracking'],
+    id: 'billing',
+    title: 'Billing & Invoicing',
+    tag: 'GST Invoices & Fee Ledger',
+    desc: 'Complete financial transparency. Generate GST-compliant fee bills, record hearing appearance fees, track client advance retainers, and issue automated payment receipts.',
+    image: '/screenshots/billing-invoicing.png',
+    bullets: [
+      'GST tax invoices with SAC 9982 legal service codes',
+      'Matter-wise fee, expense, and advance retainer ledger',
+      'Automated payment acknowledgments via WhatsApp',
+    ],
   },
   {
-    id: 6, icon: FolderOpen, title: 'Evidence Vault',
-    color: 'text-emerald-600', bg: 'bg-emerald-50',
-    desc: 'Bank-grade encrypted storage for case files and evidence.',
-    items: ['Matter-Wise Storage', 'In-Browser File Preview'],
+    id: 'research',
+    title: 'Legal Research',
+    tag: 'AI Judgments & Citations',
+    desc: 'Supercharge your legal strategy. Search Supreme Court and High Court citations, cross-reference statutory bare acts, and compile citation briefs directly inside case folders.',
+    image: '/screenshots/legal-research.png',
+    bullets: [
+      'Instant citation search across landmark judgments',
+      'Direct statutory bare acts & section cross-referencing',
+      'Matter-linked research notes and argument binders',
+    ],
+  },
+];
+
+// Clean, essential core blocks - without image clutter
+const importantBlocks = [
+  {
+    id: 1,
+    icon: Users,
+    title: 'Client Management & CRM',
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    badge: 'CRM & KYC',
+    desc: 'Centralized client directory with automated KYC records, Aadhaar/PAN vaults, and comprehensive client case history.',
+    items: ['Client CRM & Profiles', 'KYC Document Vault', 'Client Intake Studio'],
   },
   {
-    id: 7, icon: ClipboardList, title: 'Team Coordination',
-    color: 'text-cyan-600', bg: 'bg-cyan-50',
-    desc: 'Delegate tasks, set deadlines, and track advocate workloads.',
-    items: ['Task Delegation & Alerts', 'Role-Based Permissions'],
+    id: 2,
+    icon: Scale,
+    title: 'Case & Matter Tracking',
+    color: 'text-violet-600',
+    bg: 'bg-violet-50',
+    badge: 'Litigation',
+    desc: 'End-to-end matter lifecycle tracking across all active litigation courts with automated CNR syncing and case diaries.',
+    items: ['Case Lifecycle Tracking', 'CNR eCourts Sync', 'Pre-Filing Checklists'],
   },
   {
-    id: 8, icon: Calendar, title: 'Hearing Diary',
-    color: 'text-pink-600', bg: 'bg-pink-50',
-    desc: 'Smart court calendar with daily cause lists and alert reminders.',
-    items: ['Automated Court Alerts', 'Daily Cause List Sync'],
+    id: 3,
+    icon: Calendar,
+    title: 'Hearing Diary & Calendar',
+    color: 'text-orange-500',
+    bg: 'bg-orange-50',
+    badge: 'Court Diary',
+    desc: 'Smart court calendar with daily cause lists, limitation dates countdown, and automatic WhatsApp/SMS court alerts.',
+    items: ['Daily Cause List Sync', 'Automated Hearing Alerts', 'Limitation Reminders'],
   },
   {
-    id: 9, icon: Gavel, title: 'Court Orders',
-    color: 'text-red-600', bg: 'bg-red-50',
-    desc: 'Organize interim orders with automated compliance tracking.',
-    items: ['Order Repository', 'Compliance Deadlines'],
+    id: 4,
+    icon: FileText,
+    title: 'Draft Automation & Library',
+    color: 'text-teal-600',
+    bg: 'bg-teal-50',
+    badge: 'Automation',
+    desc: '500+ verified legal templates for notices, plaints, and petitions with 1-click client metadata auto-population.',
+    items: ['500+ Verified Templates', '1-Click Auto-Fill', 'Word & PDF Export'],
   },
   {
-    id: 10, icon: Package, title: 'E-Filing Workspace',
-    color: 'text-lime-600', bg: 'bg-lime-50',
-    desc: 'Prepare neat filing bundles with automated index sheets.',
-    items: ['Filing Bundle Generator', 'Pre-Filing Checklists'],
+    id: 5,
+    icon: CreditCard,
+    title: 'GST Billing & Invoicing',
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+    badge: 'Finance',
+    desc: 'GST-compliant legal tax invoices (SAC 9982), fee ledgers, advance trust retainers, and automated payment receipts.',
+    items: ['GST Tax Invoices', 'Receivables Ledger', 'Advance Retainers'],
   },
   {
-    id: 11, icon: BookOpen, title: 'Case Law Vault',
-    color: 'text-emerald-600', bg: 'bg-emerald-50',
-    desc: 'Save and tag winning judgments and citations for court briefs.',
-    items: ['Searchable Judgments', 'Citation Cross-Referencing'],
-  },
-  {
-    id: 12, icon: Search, title: 'Legal Research',
-    color: 'text-sky-600', bg: 'bg-sky-50',
-    desc: 'Build strong arguments with structured research notes.',
-    items: ['Research Notes Studio', 'Matter-Linked Citations'],
-  },
-  {
-    id: 13, icon: CreditCard, title: 'GST Billing & Invoicing',
-    color: 'text-green-600', bg: 'bg-green-50',
-    desc: 'GST-compliant legal fee invoices and payment tracking.',
-    items: ['GST Tax Invoices', 'Receivables Ledger'],
-  },
-  {
-    id: 14, icon: Monitor, title: 'Client Portal',
-    color: 'text-[#0F4C81]', bg: 'bg-[#0F4C81]/6',
-    desc: 'Transparent client portal for case updates, orders, and bills.',
-    items: ['Real-Time Case Status', 'Direct Document Access'],
-  },
-  {
-    id: 15, icon: Bell, title: 'WhatsApp Alerts',
-    color: 'text-green-600', bg: 'bg-green-50',
-    desc: 'Instant WhatsApp updates for hearing dates and payment receipts.',
-    items: ['Automated Hearing Alerts', 'Payment Acknowledgments'],
-  },
-  {
-    id: 16, icon: Globe, title: 'Regional Languages',
-    color: 'text-blue-600', bg: 'bg-blue-50',
-    desc: 'Work in your court language: English, Marathi, Hindi, Gujarati.',
-    items: ['4 Regional Languages', 'Vernacular Formats'],
+    id: 6,
+    icon: Search,
+    title: 'Legal Research & Case Law',
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50',
+    badge: 'Research',
+    desc: 'Search landmark High Court & Supreme Court citations, bare acts cross-referencing, and structured research briefs.',
+    items: ['Searchable Judgments', 'Bare Acts Linking', 'Research Studio'],
   },
 ];
 
 export default function Features() {
+  const [activeTab, setActiveTab] = useState(showcasePillars[0].id);
+  const currentPillar = showcasePillars.find(p => p.id === activeTab) || showcasePillars[0];
+
   return (
     <div className="bg-surface">
-      {/* Hero */}
+      {/* Hero with Live Demo & Login Tabs */}
       <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-16">
         <div className="section-container text-center">
-          <span className="inline-block bg-white/10 border border-white/20 text-white text-[12px] font-[700] tracking-wider uppercase px-4 py-1.5 rounded-full mb-5">
-            Core Features
+          <span className="inline-block bg-white/10 border border-white/20 text-white text-[12px] font-[700] tracking-wider uppercase px-4 py-1.5 rounded-full mb-4">
+            Platform Capabilities
           </span>
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
             Everything Your Legal Practice Needs
           </h1>
-          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto">
-            16 deeply integrated modules designed specifically for Indian advocates and law firms.
+          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto mb-8">
+            Essential litigation management modules designed specifically for Indian advocates and law chambers.
           </p>
+
+          {/* Prominent Live Demo & Login Action Tabs */}
+          <div className="inline-flex items-center p-1.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
+            <a
+              href={`${getErpUrl()}/register`}
+              className="px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary hover:bg-slate-100 transition-all flex items-center gap-2 shadow-sm"
+            >
+              <PlayCircle className="w-4 h-4 text-amber-500" />
+              Live Demo
+            </a>
+            <a
+              href={`${getErpUrl()}/login`}
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white hover:text-white/80 hover:bg-white/10 transition-all flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Login
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Interactive Platform Showcase (Live Demo & Login Tabs Included) */}
+      <section className="py-12 bg-slate-50 border-b border-line">
+        <div className="section-container">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+              Interactive Platform Showcase
+            </span>
+            <h2 className="font-heading font-[800] text-2xl md:text-3xl text-ink mt-3">
+              Explore The Advocate Workspace
+            </h2>
+            <p className="text-sm text-ink/60 mt-1.5">
+              Select any core pillar below to preview its live operational workflow.
+            </p>
+          </div>
+
+          {/* Module Selector Pills */}
+          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
+            {showcasePillars.map((p) => {
+              const isActive = activeTab === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setActiveTab(p.id)}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border flex items-center gap-2 ${
+                    isActive
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white text-ink/70 border-line hover:border-primary/40 hover:text-ink'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400' : 'bg-slate-300'}`} />
+                  {p.title}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Module Showcase Card */}
+          <div className="bg-white rounded-2xl border border-line shadow-card overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              {/* Left Detail (5 cols) */}
+              <div className="lg:col-span-5 p-6 md:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-line bg-gradient-to-b from-white to-slate-50/50">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 mb-3">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    {currentPillar.tag}
+                  </span>
+                  <h3 className="font-heading font-[800] text-2xl text-ink tracking-tight mb-2">
+                    {currentPillar.title}
+                  </h3>
+                  <p className="text-sm text-ink/65 leading-relaxed mb-6">
+                    {currentPillar.desc}
+                  </p>
+
+                  <div className="space-y-3 pt-4 border-t border-line">
+                    <p className="text-[11px] font-bold text-ink/40 uppercase tracking-wider">Key Capabilities</p>
+                    {currentPillar.bullets.map((b, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-xs sm:text-[13px] font-medium text-ink/80 leading-snug">{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live Demo and Login Action Tabs */}
+                <div className="pt-6 mt-6 border-t border-line flex items-center gap-3">
+                  <a
+                    href={`${getErpUrl()}/register`}
+                    className="btn-primary text-xs sm:text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                  >
+                    <PlayCircle className="w-3.5 h-3.5 text-amber-400" />
+                    Live Demo
+                  </a>
+                  <a
+                    href={`${getErpUrl()}/login`}
+                    className="btn-secondary text-xs sm:text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    Login
+                  </a>
+                </div>
+              </div>
+
+              {/* Right Screenshot Showcase (7 cols) */}
+              <div className="lg:col-span-7 bg-slate-900 p-4 sm:p-6 flex items-center justify-center">
+                <div className="relative w-full rounded-xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-950 group">
+                  <img
+                    src={currentPillar.image}
+                    alt={currentPillar.title}
+                    className="w-full h-auto object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                  <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-white text-[10px] font-medium flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Fastcase Workspace · Real-Time View
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Core Important Blocks (Replaces 16 cluttered cards - Clean, No Card Images) */}
       <section className="section-padding bg-white">
         <div className="section-container">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {features.map((f) => {
-              const Icon = f.icon;
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+              Core Architecture
+            </span>
+            <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-ink mt-3">
+              Essential Practice Pillars
+            </h2>
+            <p className="text-sm text-ink/55 mt-1.5">
+              Everything required to manage litigations, client relationships, and court compliance smoothly.
+            </p>
+          </div>
+
+          {/* Clean 6-Card Grid without image clutter */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {importantBlocks.map((b) => {
+              const Icon = b.icon;
               return (
-                <div key={f.id} className="card p-5 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between">
+                <div
+                  key={b.id}
+                  className="card p-6 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between border border-line bg-white"
+                >
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`w-10 h-10 ${f.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`w-5 h-5 ${f.color}`} />
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-11 h-11 ${b.bg} rounded-xl flex items-center justify-center flex-shrink-0 shadow-2xs`}>
+                        <Icon className={`w-5 h-5 ${b.color}`} />
                       </div>
-                      <span className="text-[11px] font-bold text-ink/20">
-                        #{f.id.toString().padStart(2, '0')}
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-ink/60 border border-slate-200 uppercase tracking-wider">
+                        {b.badge}
                       </span>
                     </div>
 
-                    <h3 className="font-heading font-[700] text-[15px] text-ink mb-1.5 leading-snug">
-                      {f.title}
+                    <h3 className="font-heading font-[700] text-[16px] text-ink mb-2 leading-snug">
+                      {b.title}
                     </h3>
-                    <p className="text-[12px] text-ink/55 leading-relaxed mb-3">
-                      {f.desc}
+                    <p className="text-[13px] text-ink/60 leading-relaxed mb-4">
+                      {b.desc}
                     </p>
                   </div>
 
-                  <ul className="space-y-1.5 pt-3 border-t border-line">
-                    {f.items.map((item) => (
-                      <li key={item} className="flex items-center gap-1.5">
-                        <CheckCircle className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
-                        <span className="text-[11px] font-medium text-ink/70">{item}</span>
+                  <ul className="space-y-2 pt-4 border-t border-line">
+                    {b.items.map((item) => (
+                      <li key={item} className="flex items-center gap-2">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                        <span className="text-[12px] font-medium text-ink/75">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -171,9 +350,32 @@ export default function Features() {
               );
             })}
           </div>
+
+          {/* Quick Access Bar */}
+          <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-primary text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-card">
+            <div>
+              <p className="font-heading font-bold text-lg">Ready to experience Fastcase?</p>
+              <p className="text-xs text-white/70 mt-0.5">Start your 14-day free practice trial or access your existing account.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <a
+                href={`${getErpUrl()}/register`}
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-primary hover:bg-slate-100 transition-all flex items-center gap-2 shadow-sm"
+              >
+                <PlayCircle className="w-4 h-4 text-amber-500" />
+                Live Demo
+              </a>
+              <a
+                href={`${getErpUrl()}/login`}
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/25 text-white transition-all flex items-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Login
+              </a>
+            </div>
+          </div>
         </div>
       </section>
     </div>
   );
 }
-
