@@ -1,19 +1,9 @@
 import { Link } from 'react-router-dom';
 import {
-  Scale, Target, Eye, MapPin, ArrowRight, CheckCircle,
-  Building2, Award, Shield, Users, Server, Globe2, FileText, Phone, Mail
+  Scale, Target, Eye, MapPin, CheckCircle,
+  Building2, Award, Shield, Users, Server, Globe2, FileText, Phone, Mail,
+  Sparkles, CheckCircle2, Milestone, Lock
 } from 'lucide-react';
-
-const getErpUrl = () => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
-      return `${window.location.protocol}//app.${rootDomain}`;
-    }
-  }
-  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
-};
 
 const team = [
   {
@@ -28,14 +18,14 @@ const team = [
     name: 'Bhupal Pujari',
     role: 'Director & Corporate Governance',
     company: 'SOSM Services Pvt Ltd',
-    badges: ['Corporate Law', 'Operations'],
+    badges: ['Corporate Law', 'Institutional Operations'],
     bio: 'Oversees statutory compliance, enterprise governance, and institutional legal partnerships across Maharashtra and India.',
   },
   {
     initials: 'PP',
     name: 'Priyankka Patil',
     role: 'Head of Client Success',
-    badges: ['Firm Onboarding', 'Client Experience'],
+    badges: ['Firm Onboarding', 'Advocate Workflows'],
     bio: 'Spearheads law firm onboarding, advocate workflow optimization, and continuous product feedback loops.',
   },
   {
@@ -51,12 +41,12 @@ const pillars = [
   {
     icon: Shield,
     title: 'Attorney-Client Privilege',
-    desc: 'Section 126 compliant data confidentiality with multi-tenant encryption isolating all case records and client files.',
+    desc: 'Section 126 of the Indian Evidence Act compliant data confidentiality with multi-tenant encryption isolating all case records and client files.',
   },
   {
     icon: Server,
     title: '100% Indian Data Sovereignty',
-    desc: 'All court data, briefs, and client vaults reside exclusively in certified tier-4 datacenters within Indian borders.',
+    desc: 'All court data, briefs, and client vaults reside exclusively in certified tier-4 datacenters within Indian borders (Mumbai & Bengaluru).',
   },
   {
     icon: Globe2,
@@ -66,7 +56,30 @@ const pillars = [
   {
     icon: Scale,
     title: 'Bar Council Alignment',
-    desc: 'Engineered as practice-enhancement software adhering strictly to professional ethics and Bar Council standards.',
+    desc: 'Engineered as practice-enhancement software adhering strictly to professional ethics and Bar Council of India standards.',
+  },
+];
+
+const milestones = [
+  {
+    year: '2024',
+    title: 'Incorporation & Foundation',
+    desc: 'SOSM Services Private Limited incorporated in Kolhapur, Maharashtra with a dedicated mission to digitize advocate operations.',
+  },
+  {
+    year: '2024',
+    title: 'Multi-Court Architecture',
+    desc: 'Engineered High Court and District Court cause list tracking and limitation timeline calculators.',
+  },
+  {
+    year: '2025',
+    title: 'Vernacular Legal Drafting',
+    desc: 'Digitized 500+ regional legal drafts across English, Marathi, Hindi, and Gujarati with 1-click matter auto-fill.',
+  },
+  {
+    year: '2026',
+    title: 'Sovereign Cloud Deployment',
+    desc: 'Enterprise-grade cloud infrastructure launched with automated encryption, daily backups, and 99.9% uptime SLA.',
   },
 ];
 
@@ -74,17 +87,17 @@ export default function About() {
   return (
     <div className="bg-[#F8FAFC]">
       {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #0A2540 0%, #0F4C81 50%, #173E65 100%)' }} className="pt-32 pb-20 text-white">
+      <section style={{ background: 'linear-gradient(135deg, #0A2540 0%, #0F4C81 50%, #173E65 100%)' }} className="pt-28 pb-20 text-white">
         <div className="section-container text-center max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-sky-200 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-6">
             <Scale className="w-3.5 h-3.5 text-amber-300" />
-            About Fastcase
+            Institutional Profile
           </div>
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight mb-5">
             Engineering the Digital Backbone for Indian Legal Practice
           </h1>
           <p className="text-base sm:text-lg text-sky-100/75 leading-relaxed max-w-2xl mx-auto">
-            Developed by SOSM Services Private Limited, Fastcase replaces cumbersome paper registers and manual diaries with a high-performance legal operating platform.
+            Developed by SOSM Services Private Limited in Kolhapur, Maharashtra, Fastcase replaces cumbersome paper registers and manual diaries with a high-performance legal operating platform.
           </p>
         </div>
       </section>
@@ -141,14 +154,17 @@ export default function About() {
           <div className="text-center mb-12">
             <p className="eyebrow mb-2">Our Foundation</p>
             <h2 className="font-heading font-[800] text-3xl text-slate-900">Built on Trust & Professional Ethics</h2>
+            <p className="text-slate-500 text-sm max-w-lg mx-auto mt-2">
+              Designed around the statutory realities and ethical codes of the Indian legal fraternity.
+            </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {pillars.map((p) => {
               const Icon = p.icon;
               return (
-                <div key={p.title} className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
-                  <div className="w-11 h-11 rounded-xl bg-white text-[#0F4C81] border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
-                    <Icon className="w-5 h-5" />
+                <div key={p.title} className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-white text-[#0F4C81] border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
+                    <Icon className="w-6 h-6" />
                   </div>
                   <h3 className="font-heading font-[700] text-base text-slate-900 mb-2">{p.title}</h3>
                   <p className="text-[13px] text-slate-600 leading-relaxed">{p.desc}</p>
@@ -159,8 +175,31 @@ export default function About() {
         </div>
       </section>
 
-      {/* ── LEADERSHIP TEAM ────────────────────────────────────────── */}
+      {/* ── PLATFORM MILESTONES ────────────────────────────────────── */}
       <section className="section-padding py-16 bg-[#F8FAFC]">
+        <div className="section-container max-w-4xl">
+          <div className="text-center mb-12">
+            <p className="eyebrow mb-2">Our Evolution</p>
+            <h2 className="font-heading font-[800] text-3xl text-slate-900">Platform Milestones</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6">
+            {milestones.map((m) => (
+              <div key={m.title} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-start gap-4">
+                <div className="px-3 py-1.5 rounded-xl bg-[#0F4C81]/10 text-[#0F4C81] font-heading font-[900] text-sm flex-shrink-0">
+                  {m.year}
+                </div>
+                <div>
+                  <h3 className="font-heading font-[800] text-base text-slate-900 mb-1">{m.title}</h3>
+                  <p className="text-[13px] text-slate-600 leading-relaxed">{m.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── LEADERSHIP TEAM ────────────────────────────────────────── */}
+      <section className="section-padding py-16 bg-white border-t border-slate-200">
         <div className="section-container">
           <div className="text-center mb-12">
             <p className="eyebrow mb-2">Leadership & Technology</p>
@@ -171,7 +210,7 @@ export default function About() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {team.map((m) => (
-              <div key={m.name} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+              <div key={m.name} className="bg-[#F8FAFC] rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                 <div>
                   <div className="flex items-center gap-3.5 mb-4">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0F4C81] to-[#1E4E7C] text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
@@ -184,9 +223,9 @@ export default function About() {
                   </div>
                   <p className="text-[13px] text-slate-600 leading-relaxed mb-4">{m.bio}</p>
                 </div>
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
+                <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-200">
                   {m.badges.map((b) => (
-                    <span key={b} className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                    <span key={b} className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-white text-slate-700 border border-slate-200 shadow-2xs">
                       {b}
                     </span>
                   ))}
@@ -198,9 +237,9 @@ export default function About() {
       </section>
 
       {/* ── STATUTORY CORPORATE REGISTRATION ───────────────────────── */}
-      <section className="section-padding py-16 bg-white border-t border-slate-200">
+      <section className="section-padding py-16 bg-[#F8FAFC] border-t border-slate-200">
         <div className="section-container max-w-4xl">
-          <div className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm">
+          <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-[#0F4C81] text-white rounded-2xl flex items-center justify-center shadow-md">
@@ -265,4 +304,3 @@ export default function About() {
     </div>
   );
 }
-
