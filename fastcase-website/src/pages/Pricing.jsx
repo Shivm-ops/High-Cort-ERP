@@ -100,8 +100,8 @@ export default function Pricing() {
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-16 bg-gradient-to-b from-white via-slate-50 to-[#F8FAFC] border-b border-slate-200">
         <div className="section-container text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-[#0F4C81]/8 border border-[#0F4C81]/15 text-[#0F4C81] text-[12px] font-bold tracking-wide uppercase rounded-full px-4 py-1.5 mb-5">
-            <Sparkles className="w-3.5 h-3.5 text-[#0EA5A4]" />
+          <div className="inline-flex items-center gap-2 bg-[#C59B27]/10 border border-[#C59B27]/25 text-[#977318] text-[12px] font-bold tracking-wide uppercase rounded-full px-4 py-1.5 mb-5">
+            <Sparkles className="w-3.5 h-3.5 text-[#C59B27]" />
             Transparent & Customizable Pricing
           </div>
 
@@ -129,7 +129,7 @@ export default function Pricing() {
               onClick={() => setIsAnnual(true)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200 ${
                 isAnnual
-                  ? 'bg-[#0F4C81] text-white shadow-md scale-100'
+                  ? 'bg-primary text-white shadow-md scale-100'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -155,14 +155,14 @@ export default function Pricing() {
                   key={plan.name}
                   className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
                     plan.highlight
-                      ? 'bg-gradient-to-b from-[#0B2545] via-[#133A66] to-[#0D2D52] text-white border-2 border-[#1E4E7C] shadow-[0_20px_50px_-10px_rgba(11,37,69,0.3)] hover:shadow-[0_25px_60px_-10px_rgba(11,37,69,0.4)] lg:-translate-y-2'
+                      ? 'bg-gradient-to-b from-[#021816] via-[#013B36] to-[#074E47] text-white border-2 border-amber-400/30 shadow-[0_25px_60px_-10px_rgba(1,59,54,0.4)] hover:shadow-[0_30px_70px_-10px_rgba(1,59,54,0.5)] lg:-translate-y-2'
                       : 'bg-white border border-slate-200 text-slate-900 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_12px_32px_-6px_rgba(15,23,42,0.1)] hover:-translate-y-1'
                   }`}
                 >
                   {/* Badge */}
                   {plan.badge && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-[11px] font-black px-4 py-1 rounded-full tracking-wider shadow-md">
+                      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-slate-950 text-[11px] font-black px-4 py-1 rounded-full tracking-wider shadow-md border border-amber-300/40">
                         <Sparkles className="w-3 h-3 text-slate-950" />
                         {plan.badge}
                       </span>
@@ -185,7 +185,7 @@ export default function Pricing() {
                         </p>
                       </div>
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                        plan.highlight ? 'bg-white/10 text-amber-300' : 'bg-slate-100 text-[#0F4C81]'
+                        plan.highlight ? 'bg-white/10 text-amber-300' : 'bg-primary/10 text-primary'
                       }`}>
                         <Icon className="w-6 h-6" />
                       </div>
@@ -208,7 +208,7 @@ export default function Pricing() {
                         )}
                       </div>
                       <p className={`text-[11px] font-semibold mt-1 ${
-                        plan.highlight ? 'text-amber-300' : 'text-[#0EA5A4]'
+                        plan.highlight ? 'text-amber-300' : 'text-[#014D46]'
                       }`}>
                         {plan.billedNote}
                       </p>
@@ -251,7 +251,7 @@ export default function Pricing() {
                         className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[15px] py-3.5 rounded-xl transition-all duration-200 ${
                           plan.highlight
                             ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg hover:shadow-xl hover:scale-[1.02]'
-                            : 'bg-[#0F4C81] hover:bg-[#0D4474] text-white shadow-md hover:shadow-lg'
+                            : 'bg-primary hover:bg-[#072B20] text-white shadow-md hover:shadow-lg'
                         }`}
                       >
                         {plan.cta} <ArrowRight className="w-4 h-4" />
@@ -325,7 +325,7 @@ export default function Pricing() {
                   className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50/70 transition-colors"
                 >
                   <span className="font-[700] text-[14px] text-slate-900">{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-[#0F4C81]' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-primary' : ''}`} />
                 </button>
                 {openFaq === idx && (
                   <div className="px-5 pb-5 pt-1 text-[13px] text-slate-600 leading-relaxed border-t border-slate-100">

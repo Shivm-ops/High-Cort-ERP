@@ -80,13 +80,13 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             {/* Left Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-[#0D2644]/5 border border-[#0D2644]/15 text-[#0D2644] text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1 mb-5">
+              <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1 mb-5">
                 <Gavel className="w-3.5 h-3.5 text-amber-500" />
                 Legal Operating System for Indian Advocates
               </div>
 
               <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.15] tracking-tight mb-4 text-balance">
-                Everything Your Legal Practice Needs, <span className="text-[#0F4C81]">Unified.</span>
+                Everything Your Legal Practice Needs, <span className="text-[#014D46]">Unified.</span>
               </h1>
 
               <p className="text-[16px] text-slate-600 leading-relaxed mb-6 max-w-lg">
@@ -136,7 +136,7 @@ export default function Home() {
               { icon: Shield, title: 'Sec 126 Privilege', desc: 'Encrypted client vaults' },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
-                <div className="w-9 h-9 rounded-lg bg-[#0F4C81]/8 text-[#0F4C81] flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
                   <Icon className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -156,7 +156,7 @@ export default function Home() {
       <section className="py-14 bg-white border-b border-slate-200">
         <div className="section-container">
           <div className="text-center max-w-xl mx-auto mb-10">
-            <span className="text-[11px] font-bold text-[#0D2644] uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+            <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
               Core Pillars
             </span>
             <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-slate-900 mt-3">
@@ -195,7 +195,7 @@ export default function Home() {
                 title: 'Privileged Evidence Vault',
                 desc: 'Section 126 Evidence Act compliant encryption isolating client files in Indian cloud datacenters.',
                 tag: 'Security',
-                color: 'text-[#0D2644] bg-slate-100 border-slate-200',
+                color: 'text-primary bg-primary/10 border-primary/20',
               },
             ].map((p) => {
               const Icon = p.icon;

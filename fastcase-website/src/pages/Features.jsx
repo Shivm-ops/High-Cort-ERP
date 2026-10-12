@@ -151,15 +151,15 @@ export default function Features() {
   return (
     <div className="bg-surface">
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-16">
+      <section style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }} className="pt-32 pb-16">
         <div className="section-container text-center">
-          <span className="inline-block bg-white/10 border border-white/20 text-white text-[12px] font-[700] tracking-wider uppercase px-4 py-1.5 rounded-full mb-4">
+          <span className="inline-block bg-[#C59B27]/20 border border-[#C59B27]/40 text-amber-300 text-[12px] font-[800] tracking-wider uppercase px-4 py-1.5 rounded-full mb-4 shadow-sm">
             Platform Capabilities
           </span>
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
             Everything Your Legal Practice Needs
           </h1>
-          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto">
+          <p className="text-base sm:text-lg text-white/80 max-w-xl mx-auto font-normal">
             Essential litigation management modules designed specifically for Indian advocates and law chambers.
           </p>
         </div>

@@ -68,7 +68,7 @@ export default function GrievanceOfficer() {
   return (
     <div>
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-20">
+      <section style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }} className="pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 border border-white/20 rounded-2xl mb-6">
             <Shield className="w-8 h-8 text-white" />
@@ -76,7 +76,7 @@ export default function GrievanceOfficer() {
           <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
             Grievance Redressal
           </h1>
-          <p className="text-lg text-blue-100 max-w-2xl mx-auto">
+          <p className="text-lg text-emerald-100/90 max-w-2xl mx-auto">
             Fastcase is committed to resolving all user grievances in a fair, transparent,
             and timely manner. If you have a concern, we are here to help.
           </p>

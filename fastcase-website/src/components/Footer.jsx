@@ -35,19 +35,19 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0F172A] text-white">
+    <footer className="bg-[#021513] text-white border-t border-[#013B36]/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
 
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-2">
             <Link to="/" className="flex items-center gap-2.5 mb-5 group">
-              <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
-                <Scale className="w-4 h-4 text-white" strokeWidth={2} />
+              <div className="w-8 h-8 bg-amber-400/10 rounded-lg flex items-center justify-center border border-amber-400/20">
+                <Scale className="w-4 h-4 text-amber-400" strokeWidth={2} />
               </div>
               <div>
                 <p className="font-heading font-[800] text-[18px] tracking-[-0.03em] text-white" style={{ lineHeight: '1.1' }}>
-                  Fast<span className="text-[#0EA5A4]">case</span>
+                  Fast<span className="text-amber-400">case</span>
                 </p>
                 <p className="text-[9px] font-semibold tracking-[0.1em] text-white/30 uppercase" style={{ lineHeight: '1', marginTop: '2px' }}>
                   Fastcase Platform

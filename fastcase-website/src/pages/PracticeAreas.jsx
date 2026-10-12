@@ -10,9 +10,9 @@ const practiceAreas = [
     icon: Scale,
     title: 'Civil Litigation',
     desc: 'Original suits, preliminary injunctions, partition disputes, and civil appellate tracking across High Courts.',
-    color: 'text-[#0D2644]',
-    bg: 'bg-slate-100',
-    border: 'border-slate-200',
+    color: 'text-primary',
+    bg: 'bg-primary/8',
+    border: 'border-primary/20',
     tags: ['Suit Tracking', 'Court Diary', 'Plaints & Written Statements'],
   },
   {
@@ -28,9 +28,9 @@ const practiceAreas = [
     icon: Users,
     title: 'Family & Matrimonial Law',
     desc: 'Divorce petitions, mutual consent terms, maintenance claims under Sec 125 CrPC, and child custody schedules.',
-    color: 'text-[#0F4C81]',
-    bg: 'bg-blue-50/70',
-    border: 'border-blue-100',
+    color: 'text-primary',
+    bg: 'bg-emerald-50/70',
+    border: 'border-emerald-100',
     tags: ['Custody Settlements', 'Confidential Vault', 'Maintenance Claims'],
   },
   {
@@ -55,9 +55,9 @@ const practiceAreas = [
     icon: Building2,
     title: 'Corporate & Commercial Disputes',
     desc: 'Commercial court plaints, Section 9 & 11 arbitration filings, summary suits, and contractual compliance.',
-    color: 'text-[#0D2644]',
-    bg: 'bg-slate-100',
-    border: 'border-slate-200',
+    color: 'text-primary',
+    bg: 'bg-primary/8',
+    border: 'border-primary/20',
     tags: ['Arbitration Petitions', 'Due Diligence', 'Team Workflows'],
   },
   {
@@ -73,9 +73,9 @@ const practiceAreas = [
     icon: CreditCard,
     title: 'Banking, DRT & SARFAESI',
     desc: 'Section 13(2) demand notices, Securitisation Applications (SA), DRT recovery proceedings, and N.I. Act 138 cases.',
-    color: 'text-[#0F4C81]',
-    bg: 'bg-blue-50/70',
-    border: 'border-blue-100',
+    color: 'text-primary',
+    bg: 'bg-primary/8',
+    border: 'border-primary/20',
     tags: ['DRT Proceedings', 'Sec 138 Cheque Bounce', 'SARFAESI Actions'],
   },
   {
@@ -100,9 +100,9 @@ const practiceAreas = [
     icon: Award,
     title: 'Intellectual Property Rights (IPR)',
     desc: 'Trademark & copyright applications, opposition proceedings before the Controller, and passing-off injunctions.',
-    color: 'text-[#0D2644]',
-    bg: 'bg-slate-100',
-    border: 'border-slate-200',
+    color: 'text-primary',
+    bg: 'bg-primary/8',
+    border: 'border-primary/20',
     tags: ['Trademark Opposition', 'Copyright Vault', 'Infringement Injunctions'],
   },
   {
@@ -122,7 +122,7 @@ export default function PracticeAreas() {
       {/* ── COURT-SUITE HERO ────────────────────────────────────────── */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #071626 0%, #0D2644 55%, #153B64 100%)'
+          background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)'
         }}
         className="pt-32 pb-20 text-white relative overflow-hidden"
       >
@@ -147,7 +147,7 @@ export default function PracticeAreas() {
       <section className="section-padding bg-white py-16">
         <div className="section-container">
           <div className="text-center max-w-xl mx-auto mb-12">
-            <span className="text-[11px] font-bold text-[#0D2644] uppercase tracking-widest bg-slate-100 px-3.5 py-1 rounded-full border border-slate-200">
+            <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3.5 py-1 rounded-full border border-primary/20">
               12 Practice Portfolios
             </span>
             <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-slate-900 mt-3">
@@ -164,7 +164,7 @@ export default function PracticeAreas() {
               return (
                 <div
                   key={area.title}
-                  className={`card p-6 border ${area.border} bg-white hover:border-[#0D2644]/40 hover:shadow-[0_12px_28px_-6px_rgba(13,38,68,0.1)] transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between`}
+                  className={`card p-6 border ${area.border} bg-white hover:border-primary/40 hover:shadow-[0_12px_28px_-6px_rgba(1,59,54,0.12)] transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between`}
                 >
                   <div>
                     <div className="flex items-center gap-3.5 mb-3.5">

@@ -68,10 +68,10 @@ export default function Contact() {
   return (
     <div className="bg-[#F8FAFC]">
       {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #0A2540 0%, #0F4C81 50%, #173E65 100%)' }} className="pt-28 pb-16 text-white">
-        <div className="section-container text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-sky-200 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+      <section style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }} className="pt-28 pb-16 text-white relative overflow-hidden">
+        <div className="section-container text-center max-w-3xl mx-auto relative z-10">
+          <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             Support & Communications
           </div>
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight mb-4">
@@ -94,7 +94,7 @@ export default function Contact() {
               {/* Corporate Card */}
               <div className="bg-white rounded-3xl p-7 border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-11 h-11 bg-[#0F4C81] text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                  <div className="w-11 h-11 bg-primary text-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                     <Building2 className="w-5 h-5" />
                   </div>
                   <div>
@@ -107,8 +107,8 @@ export default function Contact() {
 
                 <div className="space-y-4 pt-4 border-t border-slate-100">
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-[#0F4C81] flex-shrink-0 mt-0.5">
-                      <MapPin className="w-4 h-4 text-[#0EA5A4]" />
+                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                      <MapPin className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registered Office</p>
@@ -121,12 +121,12 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-[#0F4C81] flex-shrink-0 mt-0.5">
-                      <Phone className="w-4 h-4 text-[#0EA5A4]" />
+                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                      <Phone className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Direct Phone</p>
-                      <a href="tel:+919405669420" className="text-[13px] font-semibold text-slate-900 hover:text-[#0F4C81] transition-colors block mt-0.5">
+                      <a href="tel:+919405669420" className="text-[13px] font-semibold text-slate-900 hover:text-primary transition-colors block mt-0.5">
                         +91 94056 69420
                       </a>
                       <span className="text-[11px] text-slate-400">Available Mon–Sat (9 AM – 6 PM IST)</span>
@@ -134,23 +134,23 @@ export default function Contact() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-[#0F4C81] flex-shrink-0 mt-0.5">
-                      <Mail className="w-4 h-4 text-[#0EA5A4]" />
+                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                      <Mail className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Official Email</p>
-                      <a href="mailto:contact@fastcase.in" className="text-[13px] font-semibold text-slate-900 hover:text-[#0F4C81] transition-colors block mt-0.5">
+                      <a href="mailto:contact@fastcase.in" className="text-[13px] font-semibold text-slate-900 hover:text-primary transition-colors block mt-0.5">
                         contact@fastcase.in
                       </a>
-                      <a href="mailto:support@fastcase.in" className="text-[12px] text-slate-500 hover:text-[#0F4C81] transition-colors block">
+                      <a href="mailto:support@fastcase.in" className="text-[12px] text-slate-500 hover:text-primary transition-colors block">
                         support@fastcase.in
                       </a>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-[#0F4C81] flex-shrink-0 mt-0.5">
-                      <Clock className="w-4 h-4 text-[#0EA5A4]" />
+                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+                      <Clock className="w-4 h-4 text-primary" />
                     </div>
                     <div>
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Working Hours</p>
@@ -166,30 +166,30 @@ export default function Contact() {
               {/* Department Directory */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
                 <h3 className="font-heading font-[800] text-sm text-slate-900 mb-3 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[#0EA5A4]" /> Direct Department Inquiries
+                  <MessageSquare className="w-4 h-4 text-primary" /> Direct Department Inquiries
                 </h3>
                 <div className="space-y-2 text-[13px]">
                   <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                     <span className="text-slate-600 font-medium">Technical Support</span>
-                    <a href="mailto:support@fastcase.in" className="text-[#0F4C81] font-semibold hover:underline">
+                    <a href="mailto:support@fastcase.in" className="text-primary font-semibold hover:underline">
                       support@fastcase.in
                     </a>
                   </div>
                   <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                     <span className="text-slate-600 font-medium">Advocate Onboarding</span>
-                    <a href="mailto:contact@fastcase.in" className="text-[#0F4C81] font-semibold hover:underline">
+                    <a href="mailto:contact@fastcase.in" className="text-primary font-semibold hover:underline">
                       contact@fastcase.in
                     </a>
                   </div>
                   <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
                     <span className="text-slate-600 font-medium">Grievance Officer</span>
-                    <a href="mailto:grievance@fastcase.in" className="text-[#0F4C81] font-semibold hover:underline">
+                    <a href="mailto:grievance@fastcase.in" className="text-primary font-semibold hover:underline">
                       grievance@fastcase.in
                     </a>
                   </div>
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-slate-600 font-medium">Data Privacy & Security</span>
-                    <a href="mailto:privacy@fastcase.in" className="text-[#0F4C81] font-semibold hover:underline">
+                    <a href="mailto:privacy@fastcase.in" className="text-primary font-semibold hover:underline">
                       privacy@fastcase.in
                     </a>
                   </div>
@@ -217,7 +217,7 @@ export default function Contact() {
                         setSubmitted(false);
                         setForm({ name: '', email: '', phone: '', organization: '', subject: '', message: '' });
                       }}
-                      className="inline-flex items-center gap-2 bg-[#0F4C81] hover:bg-[#0D4474] text-white font-bold text-sm px-6 py-3 rounded-xl transition-all shadow-md"
+                      className="inline-flex items-center gap-2 bg-primary hover:bg-[#072B20] text-white font-bold text-sm px-6 py-3 rounded-xl transition-all shadow-md"
                     >
                       Send Another Inquiry
                     </button>
@@ -252,7 +252,7 @@ export default function Contact() {
                             onChange={handleChange}
                             required
                             placeholder="Adv. Rajesh Sharma"
-                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81] focus:bg-white focus:border-transparent transition-all shadow-sm"
+                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-transparent transition-all shadow-sm"
                           />
                         </div>
                         <div>
@@ -266,7 +266,7 @@ export default function Contact() {
                             onChange={handleChange}
                             required
                             placeholder="advocate@example.com"
-                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81] focus:bg-white focus:border-transparent transition-all shadow-sm"
+                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-transparent transition-all shadow-sm"
                           />
                         </div>
                       </div>
@@ -282,7 +282,7 @@ export default function Contact() {
                             value={form.phone}
                             onChange={handleChange}
                             placeholder="+91 98765 43210"
-                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81] focus:bg-white focus:border-transparent transition-all shadow-sm"
+                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-transparent transition-all shadow-sm"
                           />
                         </div>
                         <div>
@@ -295,7 +295,7 @@ export default function Contact() {
                             value={form.organization}
                             onChange={handleChange}
                             placeholder="Sharma & Associates"
-                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81] focus:bg-white focus:border-transparent transition-all shadow-sm"
+                            className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-transparent transition-all shadow-sm"
                           />
                         </div>
                       </div>
@@ -309,7 +309,7 @@ export default function Contact() {
                           value={form.subject}
                           onChange={handleChange}
                           required
-                          className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0F4C81] focus:bg-white focus:border-transparent transition-all shadow-sm cursor-pointer"
+                          className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-transparent transition-all shadow-sm cursor-pointer"
                         >
                           <option value="">Select a subject…</option>
                           {contactReasons.map((r) => (
@@ -329,7 +329,7 @@ export default function Contact() {
                           required
                           rows={5}
                           placeholder="Please share details about your chamber or the assistance you need…"
-                          className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0F4C81] focus:bg-white focus:border-transparent transition-all shadow-sm resize-none"
+                          className="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white focus:border-transparent transition-all shadow-sm resize-none"
                         />
                       </div>
 
@@ -337,7 +337,7 @@ export default function Contact() {
                         <button
                           type="submit"
                           disabled={loading}
-                          className="w-full inline-flex items-center justify-center gap-2 bg-[#0F4C81] hover:bg-[#0D4474] text-white font-[800] text-[15px] py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer"
+                          className="w-full inline-flex items-center justify-center gap-2 bg-primary hover:bg-[#072B20] text-white font-[800] text-[15px] py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-60 cursor-pointer"
                         >
                           {loading ? (
                             <span className="flex items-center gap-2">

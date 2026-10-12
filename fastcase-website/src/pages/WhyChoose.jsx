@@ -82,7 +82,7 @@ export default function WhyChoose() {
   return (
     <div>
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-20">
+      <section style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }} className="pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
             Why Choose Fastcase?
@@ -171,14 +171,14 @@ export default function WhyChoose() {
       {/* Data Security Highlight */}
       <section className="section-padding bg-white border-t border-line">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="card p-8 md:p-12 text-white" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
+          <div className="card p-8 md:p-12 text-white" style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }}>
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
-                <Shield className="w-14 h-14 text-blue-200 mb-5" />
+                <Shield className="w-14 h-14 text-emerald-200 mb-5" />
                 <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">
                   Your Data is Safe with Fastcase
                 </h2>
-                <p className="text-blue-100 leading-relaxed mb-6">
+                <p className="text-emerald-100/90 leading-relaxed mb-6">
                   We implement enterprise-grade security across every layer of the platform.
                   Your client data, legal documents, and business information are protected
                   with the highest standards of security.
@@ -212,7 +212,7 @@ export default function WhyChoose() {
       </section>
 
       {/* CTA */}
-      <section className="section-padding-sm border-t border-line" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
+      <section className="section-padding-sm border-t border-line" style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading font-[800] text-3xl tracking-tight text-white mb-4">
             Make the Switch to Fastcase
@@ -222,7 +222,7 @@ export default function WhyChoose() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/contact"
-              className="inline-flex items-center gap-2 bg-white text-[#0F4C81] font-[600] text-[15px] px-7 py-3.5 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-lg"
+              className="inline-flex items-center gap-2 bg-white text-primary font-[600] text-[15px] px-7 py-3.5 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-lg"
             >
               Start Free Trial <ArrowRight className="w-4 h-4" />
             </Link>

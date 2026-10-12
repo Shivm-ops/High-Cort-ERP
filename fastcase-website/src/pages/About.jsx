@@ -89,7 +89,7 @@ export default function About() {
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #071626 0%, #0D2644 55%, #153B64 100%)'
+          background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)'
         }}
         className="pt-28 pb-20 text-white relative overflow-hidden"
       >
@@ -112,7 +112,7 @@ export default function About() {
         <div className="section-container max-w-5xl">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0F4C81] flex items-center justify-center mb-5">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-5">
                 <Target className="w-6 h-6" />
               </div>
               <h2 className="font-heading font-[800] text-2xl text-slate-900 mb-3">Our Mission</h2>
@@ -149,7 +149,7 @@ export default function About() {
               const Icon = p.icon;
               return (
                 <div key={p.title} className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-white text-[#0F4C81] border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-white text-primary border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
                     <Icon className="w-6 h-6" />
                   </div>
                   <h3 className="font-heading font-[700] text-base text-slate-900 mb-2">{p.title}</h3>
@@ -171,7 +171,7 @@ export default function About() {
           <div className="grid sm:grid-cols-2 gap-6">
             {milestones.map((m) => (
               <div key={m.title} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex items-start gap-4">
-                <div className="px-3 py-1.5 rounded-xl bg-[#0F4C81]/10 text-[#0F4C81] font-heading font-[900] text-sm flex-shrink-0">
+                <div className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary font-heading font-[900] text-sm flex-shrink-0">
                   {m.year}
                 </div>
                 <div>
@@ -199,12 +199,12 @@ export default function About() {
               <div key={m.name} className="bg-[#F8FAFC] rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                 <div>
                   <div className="flex items-center gap-3.5 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0F4C81] to-[#1E4E7C] text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-[#014D46] text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
                       {m.initials}
                     </div>
                     <div className="min-w-0">
                       <p className="font-heading font-[800] text-[15px] text-slate-900 leading-snug truncate">{m.name}</p>
-                      <p className="text-[11px] font-semibold text-[#0EA5A4] uppercase tracking-wide mt-0.5">{m.role}</p>
+                      <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mt-0.5">{m.role}</p>
                     </div>
                   </div>
                   <p className="text-[13px] text-slate-600 leading-relaxed mb-4">{m.bio}</p>
@@ -228,7 +228,7 @@ export default function About() {
           <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[#0F4C81] text-white rounded-2xl flex items-center justify-center shadow-md">
+                <div className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-md">
                   <Building2 className="w-7 h-7" />
                 </div>
                 <div>
@@ -275,11 +275,11 @@ export default function About() {
 
             <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
               <div className="flex items-center gap-4">
-                <a href="mailto:contact@fastcase.in" className="flex items-center gap-1.5 hover:text-[#0F4C81] transition-colors">
-                  <Mail className="w-3.5 h-3.5 text-[#0EA5A4]" /> contact@fastcase.in
+                <a href="mailto:contact@fastcase.in" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-primary" /> contact@fastcase.in
                 </a>
-                <a href="tel:+919405669420" className="flex items-center gap-1.5 hover:text-[#0F4C81] transition-colors">
-                  <Phone className="w-3.5 h-3.5 text-[#0EA5A4]" /> +91 94056 69420
+                <a href="tel:+919405669420" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                  <Phone className="w-3.5 h-3.5 text-primary" /> +91 94056 69420
                 </a>
               </div>
               <span>Fastcase Platform by SOSM Services Pvt Ltd</span>

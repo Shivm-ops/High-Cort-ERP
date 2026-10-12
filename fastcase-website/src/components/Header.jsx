@@ -137,7 +137,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-[0_1px_3px_rgba(15,76,129,0.3)] group-hover:shadow-[0_2px_8px_rgba(15,76,129,0.3)] transition-shadow">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-[0_1px_3px_rgba(1,59,54,0.35)] group-hover:shadow-[0_2px_8px_rgba(1,59,54,0.35)] transition-shadow">
               <Scale className="w-4 h-4 text-white" strokeWidth={2} />
             </div>
             <div>

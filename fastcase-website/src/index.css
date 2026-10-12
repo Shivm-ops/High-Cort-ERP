@@ -29,22 +29,22 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background-color: #0F4C81;
+    background-color: #013B36;
     color: white;
     font-weight: 600;
     font-size: 0.9375rem;
     letter-spacing: -0.01em;
     padding: 0.75rem 1.5rem;
     border-radius: 0.75rem;
-    border: 1px solid transparent;
+    border: 1px solid rgba(197, 155, 39, 0.35);
     transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(15,76,129,0.2);
+    box-shadow: 0 1px 3px rgba(1, 59, 54, 0.25);
     cursor: pointer;
     text-decoration: none;
   }
   .btn-primary:hover {
-    background-color: #0D4474;
-    box-shadow: 0 4px 12px rgba(15,76,129,0.25);
+    background-color: #072B20;
+    box-shadow: 0 4px 14px rgba(1, 59, 54, 0.35);
     transform: translateY(-1px);
   }
 
@@ -53,22 +53,22 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background-color: #0F4C81;
+    background-color: #013B36;
     color: white;
     font-weight: 600;
     font-size: 1rem;
     letter-spacing: -0.01em;
     padding: 1rem 2rem;
     border-radius: 0.75rem;
-    border: 1px solid transparent;
+    border: 1px solid rgba(197, 155, 39, 0.35);
     transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(15,76,129,0.2);
+    box-shadow: 0 2px 6px rgba(1, 59, 54, 0.25);
     cursor: pointer;
     text-decoration: none;
   }
   .btn-primary-lg:hover {
-    background-color: #0D4474;
-    box-shadow: 0 4px 16px rgba(15,76,129,0.25);
+    background-color: #072B20;
+    box-shadow: 0 6px 18px rgba(1, 59, 54, 0.35);
     transform: translateY(-1px);
   }
 
@@ -192,20 +192,20 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: #0EA5A4;
+    color: #C59B27;
   }
 
   /* ── Legal prose ────────────────────────────────── */
   .legal-prose h2 {
     @apply text-xl font-bold mt-10 mb-4 pb-2 border-b border-slate-200;
     font-family: 'Manrope', 'Inter', sans-serif;
-    color: #0F172A;
+    color: #0B132B;
   }
 
   .legal-prose h3 {
     @apply text-base font-semibold mt-6 mb-3;
     font-family: 'Manrope', 'Inter', sans-serif;
-    color: #0F4C81;
+    color: #013B36;
   }
 
   .legal-prose p {
@@ -240,12 +240,12 @@
   }
 
   .legal-prose a {
-    color: #0F4C81;
+    color: #014D46;
     text-decoration: underline;
     text-underline-offset: 2px;
   }
   .legal-prose a:hover {
-    color: #2563EB;
+    color: #013B36;
   }
 }
 
