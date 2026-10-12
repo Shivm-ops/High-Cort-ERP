@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProductShowcase from '../components/ProductShowcase';
 import {
-  Scale, Users, Briefcase, Calendar, FileText, FolderOpen, BookOpen,
+  Users, Briefcase, Calendar, FileText, FolderOpen, BookOpen,
   Bell, LayoutDashboard, Receipt, CheckCircle, ArrowRight, Shield,
   Globe, Zap, Mail, Gavel, Lock, UserCheck, Timer, Database,
   ClipboardList, CreditCard, FileSearch, MessageSquare, Award, TrendingUp,
-  Layers, ChevronDown,
+  ChevronDown,
 } from 'lucide-react';
 
 const getErpUrl = () => {
@@ -35,7 +35,7 @@ function DashboardMockup() {
           </div>
           <div className="flex-1 bg-white border border-line rounded-md px-3 py-1.5 flex items-center gap-1.5 text-[11px] text-ink/30">
             <Lock className="w-3 h-3 text-emerald-500" />
-            app.Fastcase.in/dashboard
+            app.fastcase.in/dashboard
           </div>
         </div>
         {/* Real screenshot */}
@@ -73,75 +73,6 @@ function HomeFAQItem({ q, a }) {
     </div>
   );
 }
-
-/* ─── Data ─────────────────────────────────────────────────────────── */
-const features = [
-  {
-    icon: Users,
-    title: 'Client Management',
-    desc: 'Centralized client directory with KYC verification and matter history.',
-    items: ['Client CRM & Profiles', 'KYC Document Vault'],
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-  },
-  {
-    icon: Briefcase,
-    title: 'Matter Management',
-    desc: 'Complete tracking of cases, court dates, and opponent counsel.',
-    items: ['Case Lifecycle Tracking', 'Court Diary & Cause Lists'],
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
-  },
-  {
-    icon: Calendar,
-    title: 'Hearing Management',
-    desc: 'Automated court hearing alerts and daily cause list synchronization.',
-    items: ['Daily Cause List Sync', 'Automated Hearing Alerts'],
-    color: 'text-orange-500',
-    bg: 'bg-orange-50',
-  },
-  {
-    icon: FileText,
-    title: 'Draft Automation',
-    desc: 'Generate court-ready legal drafts and notices in seconds.',
-    items: ['500+ Verified Templates', 'Multi-Language (EN, MR, HI, GU)'],
-    color: 'text-teal-600',
-    bg: 'bg-teal-50',
-  },
-  {
-    icon: FolderOpen,
-    title: 'Evidence & Documents',
-    desc: 'Encrypted cloud storage with in-browser preview and OCR.',
-    items: ['Encrypted Evidence Storage', 'OCR Text Extraction'],
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
-  },
-  {
-    icon: Receipt,
-    title: 'Billing & Invoicing',
-    desc: 'Professional GST-compliant legal billing and payment ledgers.',
-    items: ['GST Tax Invoices', 'Receivables & Fee Ledgers'],
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-  },
-  {
-    icon: BookOpen,
-    title: 'Legal Research',
-    desc: 'Searchable case law library and argument preparation studio.',
-    items: ['Searchable Judgment Vault', 'Matter-Linked Citations'],
-    color: 'text-rose-600',
-    bg: 'bg-rose-50',
-  },
-  {
-    icon: Layers,
-    title: 'Client Portal',
-    desc: 'Real-time case tracking, document access, and WhatsApp notifications.',
-    items: ['Real-Time Case Tracking', 'WhatsApp Notifications'],
-    color: 'text-primary',
-    bg: 'bg-primary/8',
-  },
-];
-
 
 /* ─── Home Page ─────────────────────────────────────────────────────── */
 export default function Home() {
@@ -243,50 +174,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FEATURES ───────────────────────────────────────────────── */}
-      <section id="features" className="section-padding bg-white">
-        <div className="section-container">
-          <div className="text-center mb-16">
-            <p className="eyebrow mb-4">Platform Features</p>
-            <h2 className="section-heading text-4xl lg:text-5xl mb-5">
-              Everything your practice needs.
-            </h2>
-            <p className="text-[18px] text-ink/50 max-w-xl mx-auto">
-              16 deeply integrated modules covering every dimension of legal practice management.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
-            {features.map((f) => {
-              const Icon = f.icon;
-              return (
-                <div key={f.title} className="feature-card group">
-                  <div className={`w-10 h-10 ${f.bg} rounded-xl flex items-center justify-center mb-5 group-hover:scale-105 transition-transform duration-200`}>
-                    <Icon className={`w-5 h-5 ${f.color}`} />
-                  </div>
-                  <h3 className="font-heading font-[700] text-[16px] text-ink mb-1.5 tracking-tight">{f.title}</h3>
-                  <p className="text-[13px] text-ink/50 mb-4 leading-snug">{f.desc}</p>
-                  <ul className="space-y-2">
-                    {f.items.map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-success flex-shrink-0 mt-0.5" />
-                        <span className="text-[12px] text-ink/60">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link to="/features" className="btn-secondary-lg inline-flex">
-              Explore all 16 features <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── PRODUCT SHOWCASE ───────────────────────────────────────── */}
       <ProductShowcase />
 
@@ -367,22 +254,15 @@ export default function Home() {
                   'Role-Based Access Control',
                   'Complete Audit Logs',
                   'Secure Document Storage',
-                  'Daily Backups',
+                  'Daily Automated Backups',
                   'Disaster Recovery Protection',
                   'India-Hosted Infrastructure',
-                  'Session Management',
-                  'Activity Monitoring',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2.5 py-2.5 border-b border-line last:border-0">
                     <CheckCircle className="w-4 h-4 text-[#16A34A] flex-shrink-0" />
-                    <span className="text-[14px] text-ink/70 font-medium">{item}</span>
+                    <span className="text-[13px] text-ink/70 font-medium">{item}</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-8">
-                <Link to="/data-security" className="btn-secondary inline-flex text-[14px]">
-                  View Data Security Policy <ArrowRight className="w-4 h-4" />
-                </Link>
               </div>
             </div>
 
@@ -527,101 +407,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── PRACTICE AREAS ─────────────────────────────────────────── */}
-      <section className="section-padding bg-surface-alt border-y border-line">
-        <div className="section-container">
-          <div className="text-center mb-14">
-            <p className="eyebrow mb-4">Practice Areas</p>
-            <h2 className="section-heading text-4xl mb-4">Designed Specifically For Indian Advocates</h2>
-            <p className="text-[16px] text-ink/50 max-w-lg mx-auto">
-              Specialized workflows, templates, and case management tools for every major area of Indian legal practice.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[
-              'Civil Litigation',
-              'Criminal Litigation',
-              'Family Law',
-              'Consumer Matters',
-              'Property & Revenue Matters',
-              'Labour & Employment Law',
-              'Corporate & Commercial Law',
-              'Tax Litigation',
-              'DRT & SARFAESI',
-              'Motor Accident Claims (MACT)',
-              'Arbitration & Mediation',
-              'Documentation & Registration Practice',
-            ].map((area) => (
-              <div key={area}
-                className="bg-white border border-line rounded-xl px-4 py-3.5 flex items-center gap-2.5 hover:border-primary/30 hover:bg-primary/4 transition-all duration-150"
-              >
-                <CheckCircle className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
-                <span className="text-[13px] font-[600] text-ink/65">{area}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <Link to="/practice-areas" className="btn-secondary inline-flex text-[14px]">
-              View All Practice Areas <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING TEASER ─────────────────────────────────────────── */}
-      <section className="section-padding bg-white">
-        <div className="section-container">
-          <div className="text-center mb-12">
-            <p className="eyebrow mb-4">Pricing</p>
-            <h2 className="section-heading text-4xl mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-[16px] text-ink/50 max-w-lg mx-auto">
-              Choose the plan that fits your practice. Every plan includes a 14-day free trial — no credit card required.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {[
-              { name: 'Starter', tagline: 'For solo advocates', price: '₹999', period: '/month', desc: 'Everything a solo advocate needs to run a professional practice.', highlight: false },
-              { name: 'Professional', tagline: 'For growing law firms', price: '₹2,499', period: '/month', desc: 'Advanced features for multi-advocate practices and growing firms.', highlight: true, badge: 'Most Popular' },
-              { name: 'Enterprise', tagline: 'For large legal organizations', price: 'Custom', period: '', desc: 'Tailored solutions for large firms, corporate legal teams and institutions.', highlight: false },
-            ].map((plan) => (
-              <div key={plan.name}
-                className={`relative rounded-2xl border p-7 flex flex-col
-                  ${plan.highlight ? 'bg-primary border-primary shadow-feature' : 'bg-white border-line shadow-card'}`}
-              >
-                {plan.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center bg-teal text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide uppercase">
-                      {plan.badge}
-                    </span>
-                  </div>
-                )}
-                <p className={`font-heading font-[800] text-xl mb-0.5 ${plan.highlight ? 'text-white' : 'text-ink'}`}>{plan.name}</p>
-                <p className={`text-[12px] mb-5 ${plan.highlight ? 'text-white/60' : 'text-ink/40'}`}>{plan.tagline}</p>
-                <div className="flex items-end gap-1 mb-2">
-                  <span className={`font-heading font-[900] text-3xl tracking-tight ${plan.highlight ? 'text-white' : 'text-ink'}`}>{plan.price}</span>
-                  {plan.period && <span className={`text-[13px] mb-1 ${plan.highlight ? 'text-white/50' : 'text-ink/40'}`}>{plan.period}</span>}
-                </div>
-                <p className={`text-[13px] mb-6 flex-1 leading-relaxed ${plan.highlight ? 'text-white/60' : 'text-ink/50'}`}>{plan.desc}</p>
-                <Link to="/pricing"
-                  className={`inline-flex items-center justify-center gap-2 font-semibold text-[14px] py-2.5 rounded-xl transition-all duration-150
-                    ${plan.highlight ? 'bg-white text-primary hover:bg-white/90' : 'btn-primary'}`}
-                >
-                  View Plan <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-[13px] text-ink/35 mt-6">
-            Annual plans available with up to 20% discount ·{' '}
-            <Link to="/pricing" className="text-[#0EA5A4] hover:underline">Compare all plans</Link>
-          </p>
-        </div>
-      </section>
-
       {/* ── FAQ ──────────────────────────────────────────────────────── */}
       <section className="section-padding-sm bg-surface-alt border-y border-line">
         <div className="section-container max-w-3xl">
@@ -637,11 +422,6 @@ export default function Home() {
               { q: 'Which languages does Fastcase support?', a: 'Fastcase currently supports English, Marathi, Hindi, and Gujarati. You can draft legal documents, notices, and templates in all four languages.' },
               { q: 'Can I upgrade or downgrade my plan?', a: 'Absolutely. You can upgrade immediately (prorated) or downgrade at the next billing cycle. Annual plans also offer up to 20% savings over monthly billing.' },
             ].map(({ q, a }) => <HomeFAQItem key={q} q={q} a={a} />)}
-          </div>
-          <div className="text-center mt-8">
-            <Link to="/faq" className="btn-secondary inline-flex text-[14px]">
-              View all FAQs <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </div>
       </section>
