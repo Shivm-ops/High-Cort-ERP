@@ -300,11 +300,19 @@ export default function Header() {
           </nav>
 
           {/* Right actions */}
-          <div className="flex items-center gap-2">
-            <button onClick={toggleTheme} aria-label="Toggle theme"
-              className="hidden sm:flex p-2 rounded-lg text-ink/40 hover:text-ink/70 hover:bg-surface transition-colors"
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Responsive Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-white hover:bg-surface text-ink/70 hover:text-primary hover:border-primary/40 transition-all shadow-2xs cursor-pointer flex-shrink-0"
             >
-              {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+              {theme === 'dark' ? (
+                <Sun className="w-[18px] h-[18px] text-amber-500 transition-transform hover:rotate-45" />
+              ) : (
+                <Moon className="w-[18px] h-[18px] text-slate-700 transition-transform hover:-rotate-12" />
+              )}
             </button>
 
             {/* Direct Login Button */}
@@ -318,13 +326,13 @@ export default function Header() {
             {/* Direct Registration Button */}
             <a
               href={`${getErpUrl()}/register`}
-              className="btn-primary text-[14px] py-2 px-4 rounded-lg"
+              className="btn-primary text-[13px] sm:text-[14px] py-2 px-3.5 sm:px-4 rounded-lg whitespace-nowrap"
             >
               Registration
             </a>
 
             <button onClick={() => setMobileOpen(o => !o)} aria-label="Toggle menu"
-              className="lg:hidden p-2 rounded-lg text-ink/60 hover:bg-surface transition-colors ml-1"
+              className="lg:hidden p-2 rounded-lg text-ink/60 hover:bg-surface transition-colors ml-0.5"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -336,6 +344,20 @@ export default function Header() {
       {mobileOpen && (
         <div className="lg:hidden border-t border-line bg-white overflow-y-auto max-h-[85vh]">
           <div className="px-4 py-4 space-y-1">
+            {/* Mobile Theme Toggle Row */}
+            <div className="flex items-center justify-between px-3 py-2.5 mb-3 rounded-xl bg-surface border border-line">
+              <span className="text-[13px] font-semibold text-ink flex items-center gap-2">
+                {theme === 'dark' ? <Moon className="w-4 h-4 text-primary" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                Theme: <span className="capitalize text-ink/70 font-medium">{theme}</span>
+              </span>
+              <button
+                onClick={toggleTheme}
+                className="px-3 py-1 rounded-lg text-[12px] font-bold border border-line bg-white text-ink hover:text-primary shadow-2xs transition-colors cursor-pointer"
+              >
+                Switch to {theme === 'dark' ? 'Light' : 'Dark'}
+              </button>
+            </div>
+
             <NavLink to="/features"
               className={({ isActive }) =>
                 `block px-4 py-3 rounded-xl text-[15px] font-semibold transition-colors
