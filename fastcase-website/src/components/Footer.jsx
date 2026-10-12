@@ -37,24 +37,7 @@ const trustCards = [
   },
 ];
 
-const getErpUrl = () => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
-      return `${window.location.protocol}//app.${rootDomain}`;
-    }
-  }
-  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
-};
-
 const footerLinks = {
-  Platform: [
-    { label: 'Advocate Login', href: `${getErpUrl()}/login`, isExternal: true },
-    { label: 'Registration', href: `${getErpUrl()}/register`, isExternal: true },
-    { label: 'Client Case Tracking', to: '/features' },
-    { label: 'Data & Security', to: '/data-security' },
-  ],
   Product: [
     { label: 'Features', to: '/features' },
     { label: 'Practice Areas', to: '/practice-areas' },
@@ -118,7 +101,7 @@ export default function Footer() {
       {/* ── Main Footer ──────────────────────────────────────────────── */}
       <footer className="bg-[#0F172A] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
 
             {/* Brand column */}
             <div className="col-span-2 lg:col-span-2">
