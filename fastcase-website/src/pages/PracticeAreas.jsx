@@ -2,179 +2,189 @@ import { Link } from 'react-router-dom';
 import {
   Scale, Shield, Users, ShoppingCart, Car, Building2,
   Briefcase, CreditCard, MapPin, Receipt, CheckCircle,
-  ArrowRight, Award, Layers
+  Award, Layers, Gavel
 } from 'lucide-react';
-
-const getErpUrl = () => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
-      return `${window.location.protocol}//app.${rootDomain}`;
-    }
-  }
-  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
-};
 
 const practiceAreas = [
   {
     icon: Scale,
     title: 'Civil Litigation',
-    desc: 'Suits, injunctions, partition disputes, and appeal tracking.',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-100',
-    tags: ['Suit Tracking', 'Court Diary', 'Draft Templates'],
+    desc: 'Original suits, preliminary injunctions, partition disputes, and civil appellate tracking across High Courts.',
+    color: 'text-[#0D2644]',
+    bg: 'bg-slate-100',
+    border: 'border-slate-200',
+    tags: ['Suit Tracking', 'Court Diary', 'Plaints & Written Statements'],
   },
   {
     icon: Shield,
-    title: 'Criminal Law',
-    desc: 'FIR records, bail drafting, charge sheets, and evidence vault.',
-    color: 'text-red-600',
-    bg: 'bg-red-50',
-    border: 'border-red-100',
-    tags: ['FIR Tracking', 'Bail Petitions', 'Evidence Vault'],
+    title: 'Criminal Defense & Trials',
+    desc: 'Police FIR records, regular & anticipatory bail drafting, chargesheet analysis, and criminal writ petitions.',
+    color: 'text-rose-900',
+    bg: 'bg-rose-50/80',
+    border: 'border-rose-100',
+    tags: ['FIR Tracking', 'Bail Petitions', 'Trial Evidence Vault'],
   },
   {
     icon: Users,
-    title: 'Family Law',
-    desc: 'Divorce petitions, maintenance claims, and custody settlements.',
-    color: 'text-pink-600',
-    bg: 'bg-pink-50',
-    border: 'border-pink-100',
-    tags: ['Custody Claims', 'Confidential Vault', 'Settlement Records'],
+    title: 'Family & Matrimonial Law',
+    desc: 'Divorce petitions, mutual consent terms, maintenance claims under Sec 125 CrPC, and child custody schedules.',
+    color: 'text-[#0F4C81]',
+    bg: 'bg-blue-50/70',
+    border: 'border-blue-100',
+    tags: ['Custody Settlements', 'Confidential Vault', 'Maintenance Claims'],
   },
   {
     icon: ShoppingCart,
-    title: 'Consumer Law',
-    desc: 'Consumer forum complaints, legal notices, and hearing diary.',
-    color: 'text-orange-600',
-    bg: 'bg-orange-50',
-    border: 'border-orange-100',
-    tags: ['Forum Complaints', 'Notice Automation', 'Limitation Alerts'],
+    title: 'Consumer Protection Law',
+    desc: 'District Commission and State NCDRC complaint filings, statutory notices, and consumer hearing diaries.',
+    color: 'text-amber-800',
+    bg: 'bg-amber-50/80',
+    border: 'border-amber-100',
+    tags: ['NCDRC Complaints', 'Notice Automation', 'Limitation Alerts'],
   },
   {
     icon: Car,
-    title: 'Motor Accident (MACT)',
-    desc: 'Tribunal claims, medical records, and compensation calculators.',
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
+    title: 'Motor Accident Claims (MACT)',
+    desc: 'Tribunal compensation calculations, structured disability claims, insurance defenses, and medical record vaults.',
+    color: 'text-amber-900',
+    bg: 'bg-amber-50/80',
     border: 'border-amber-100',
-    tags: ['MACT Calculators', 'Medical Vault', 'Tribunal Diary'],
+    tags: ['MACT Calculators', 'Medical Records', 'Tribunal Diary'],
   },
   {
     icon: Building2,
-    title: 'Corporate & Commercial',
-    desc: 'Contracts, commercial arbitration, company disputes, and compliance.',
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
-    border: 'border-violet-100',
-    tags: ['Arbitration', 'Due Diligence', 'Team Workflows'],
+    title: 'Corporate & Commercial Disputes',
+    desc: 'Commercial court plaints, Section 9 & 11 arbitration filings, summary suits, and contractual compliance.',
+    color: 'text-[#0D2644]',
+    bg: 'bg-slate-100',
+    border: 'border-slate-200',
+    tags: ['Arbitration Petitions', 'Due Diligence', 'Team Workflows'],
   },
   {
     icon: Briefcase,
-    title: 'Labour & Employment',
-    desc: 'Industrial disputes, employee claims, and labour court hearings.',
-    color: 'text-teal-600',
-    bg: 'bg-teal-50',
+    title: 'Labour & Industrial Law',
+    desc: 'Industrial tribunal disputes, termination challenges, gratuity claims, and trade union conciliation records.',
+    color: 'text-teal-900',
+    bg: 'bg-teal-50/80',
     border: 'border-teal-100',
-    tags: ['Labour Diary', 'Notice Studio', 'Settlement Records'],
+    tags: ['Labour Court Diary', 'Conciliation Records', 'Settlement Deeds'],
   },
   {
     icon: CreditCard,
-    title: 'Banking & Finance',
-    desc: 'SARFAESI actions, DRT proceedings, and loan recovery tracking.',
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-100',
-    tags: ['SARFAESI & DRT', 'Notice Automation', 'Recovery Ledgers'],
+    title: 'Banking, DRT & SARFAESI',
+    desc: 'Section 13(2) demand notices, Securitisation Applications (SA), DRT recovery proceedings, and N.I. Act 138 cases.',
+    color: 'text-[#0F4C81]',
+    bg: 'bg-blue-50/70',
+    border: 'border-blue-100',
+    tags: ['DRT Proceedings', 'Sec 138 Cheque Bounce', 'SARFAESI Actions'],
   },
   {
     icon: MapPin,
-    title: 'Revenue & Land Matters',
-    desc: 'Mutation entries, land acquisition cases, and revenue appeals.',
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
+    title: 'Revenue, Land & Tenancy',
+    desc: 'RTS appeals before SDO/Collector, land acquisition objections, 7/12 mutation entries, and tenancy tribunal dates.',
+    color: 'text-emerald-900',
+    bg: 'bg-emerald-50/80',
     border: 'border-emerald-100',
-    tags: ['Revenue Appeals', 'Property Records', 'Hearing Calendar'],
+    tags: ['Revenue Appeals', '7/12 Records', 'Acquisition Claims'],
   },
   {
     icon: Receipt,
-    title: 'Tax Litigation',
-    desc: 'GST disputes, income tax appeals, assessments, and tribunal dates.',
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-    border: 'border-green-100',
-    tags: ['GST Cases', 'Tax Appeals', 'Statutory Deadlines'],
+    title: 'Direct & Indirect Tax Litigation',
+    desc: 'GST show cause notices, statutory appeals before CESTAT/ITAT, assessment orders, and High Court tax writs.',
+    color: 'text-emerald-900',
+    bg: 'bg-emerald-50/80',
+    border: 'border-emerald-100',
+    tags: ['GST Show Cause', 'ITAT Appeals', 'Statutory Deadlines'],
   },
   {
     icon: Award,
-    title: 'Intellectual Property (IPR)',
-    desc: 'Trademark filings, copyright matters, oppositions, and infringement.',
-    color: 'text-purple-600',
-    bg: 'bg-purple-50',
-    border: 'border-purple-100',
-    tags: ['Trademarks', 'Opposition Filings', 'Infringement Actions'],
+    title: 'Intellectual Property Rights (IPR)',
+    desc: 'Trademark & copyright applications, opposition proceedings before the Controller, and passing-off injunctions.',
+    color: 'text-[#0D2644]',
+    bg: 'bg-slate-100',
+    border: 'border-slate-200',
+    tags: ['Trademark Opposition', 'Copyright Vault', 'Infringement Injunctions'],
   },
   {
     icon: Layers,
     title: 'Insolvency & Bankruptcy (NCLT)',
-    desc: 'CIRP proceedings, NCLT applications, and creditor claim tracking.',
-    color: 'text-slate-600',
-    bg: 'bg-slate-50',
+    desc: 'Section 7 & 9 IBC petitions, CIRP claims processing, moratorium tracking, and NCLAT appellate records.',
+    color: 'text-slate-800',
+    bg: 'bg-slate-100',
     border: 'border-slate-200',
-    tags: ['CIRP & NCLT Diary', 'Resolution Plans', 'Creditor Vault'],
+    tags: ['NCLT Petitions', 'CIRP Claims Tracker', 'Resolution Plans'],
   },
 ];
 
 export default function PracticeAreas() {
   return (
-    <div className="bg-surface">
-      {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-16">
-        <div className="section-container text-center">
-          <span className="inline-block bg-white/10 border border-white/20 text-white text-[12px] font-[700] tracking-wider uppercase px-4 py-1.5 rounded-full mb-5">
-            Practice Areas
-          </span>
+    <div className="bg-[#F8FAFC]">
+      {/* ── COURT-SUITE HERO ────────────────────────────────────────── */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #071626 0%, #0D2644 55%, #153B64 100%)'
+        }}
+        className="pt-32 pb-20 text-white relative overflow-hidden"
+      >
+        {/* Subtle courtroom watermark aura */}
+        <div className="absolute inset-0 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.04] pointer-events-none" />
+
+        <div className="section-container text-center relative z-10 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5 shadow-sm">
+            <Gavel className="w-3.5 h-3.5 text-amber-400" />
+            Judicial Practice Domains
+          </div>
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
-            Tailored for Every Area of Indian Law
+            Tailored for Every Court & Jurisdiction
           </h1>
-          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto">
-            Specialized court tracking, templates, and evidence management built for your specific domain.
+          <p className="text-base sm:text-lg text-slate-200/80 max-w-2xl mx-auto leading-relaxed">
+            From District Court trials to High Court constitutional benches and tribunals — structured case workflows, statutory checklists, and Bar-compliant formats.
           </p>
         </div>
       </section>
 
-      {/* Practice Area Cards */}
-      <section className="section-padding bg-white">
+      {/* ── PRACTICE AREA CARDS (Courtroom Aesthetic) ────────────────── */}
+      <section className="section-padding bg-white py-16">
         <div className="section-container">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <span className="text-[11px] font-bold text-[#0D2644] uppercase tracking-widest bg-slate-100 px-3.5 py-1 rounded-full border border-slate-200">
+              12 Practice Portfolios
+            </span>
+            <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-slate-900 mt-3">
+              Specialized Advocate Workspaces
+            </h2>
+            <p className="text-sm text-slate-500 mt-1.5">
+              Engineered to meet the procedural rules and evidentiary standards of Indian courts.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {practiceAreas.map((area) => {
               const Icon = area.icon;
               return (
                 <div
                   key={area.title}
-                  className={`card p-5 border ${area.border} hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between`}
+                  className={`card p-6 border ${area.border} bg-white hover:border-[#0D2644]/40 hover:shadow-[0_12px_28px_-6px_rgba(13,38,68,0.1)] transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between`}
                 >
                   <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-10 h-10 ${area.bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <div className="flex items-center gap-3.5 mb-3.5">
+                      <div className={`w-10 h-10 ${area.bg} rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-200/60 shadow-2xs`}>
                         <Icon className={`w-5 h-5 ${area.color}`} />
                       </div>
-                      <h3 className="font-heading font-[700] text-[15px] text-ink leading-snug">
+                      <h3 className="font-heading font-[700] text-[15px] text-slate-900 leading-snug">
                         {area.title}
                       </h3>
                     </div>
-                    <p className="text-[12px] text-ink/55 leading-relaxed mb-4">
+                    <p className="text-[12.5px] text-slate-600 leading-relaxed mb-4">
                       {area.desc}
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-line flex flex-wrap gap-1.5">
+                  <div className="pt-3.5 border-t border-slate-100 flex flex-wrap gap-1.5">
                     {area.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-surface text-ink/70 border border-line"
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 border border-slate-200/80"
                       >
                         {tag}
                       </span>
@@ -186,26 +196,6 @@ export default function PracticeAreas() {
           </div>
         </div>
       </section>
-
-      {/* Stats bar */}
-      <section className="py-12 bg-surface-alt border-y border-line">
-        <div className="section-container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { stat: '12+', label: 'Practice Areas' },
-              { stat: '16', label: 'Integrated Modules' },
-              { stat: '4', label: 'Court Languages' },
-              { stat: '99.9%', label: 'Cloud Uptime' },
-            ].map((c) => (
-              <div key={c.label}>
-                <p className="font-heading font-[900] text-3xl sm:text-4xl text-[#0F4C81] tracking-tight mb-1">{c.stat}</p>
-                <p className="font-medium text-[13px] text-ink/60">{c.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
-

@@ -2,19 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users, Scale, FileText, Calendar, CreditCard, Search,
-  ArrowRight, CheckCircle, ExternalLink, ShieldCheck, PlayCircle, LogIn
+  ArrowRight, CheckCircle, ShieldCheck
 } from 'lucide-react';
-
-const getErpUrl = () => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
-      return `${window.location.protocol}//app.${rootDomain}`;
-    }
-  }
-  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
-};
 
 const showcasePillars = [
   {
@@ -161,7 +150,7 @@ export default function Features() {
 
   return (
     <div className="bg-surface">
-      {/* Hero with Live Demo & Login Tabs */}
+      {/* Hero */}
       <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-16">
         <div className="section-container text-center">
           <span className="inline-block bg-white/10 border border-white/20 text-white text-[12px] font-[700] tracking-wider uppercase px-4 py-1.5 rounded-full mb-4">
@@ -170,31 +159,13 @@ export default function Features() {
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
             Everything Your Legal Practice Needs
           </h1>
-          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto mb-8">
+          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto">
             Essential litigation management modules designed specifically for Indian advocates and law chambers.
           </p>
-
-          {/* Prominent Live Demo & Login Action Tabs */}
-          <div className="inline-flex items-center p-1.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
-            <a
-              href={`${getErpUrl()}/register`}
-              className="px-6 py-2.5 rounded-xl text-sm font-bold bg-white text-primary hover:bg-slate-100 transition-all flex items-center gap-2 shadow-sm"
-            >
-              <PlayCircle className="w-4 h-4 text-amber-500" />
-              Live Demo
-            </a>
-            <a
-              href={`${getErpUrl()}/login`}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white hover:text-white/80 hover:bg-white/10 transition-all flex items-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              Login
-            </a>
-          </div>
         </div>
       </section>
 
-      {/* Interactive Platform Showcase (Live Demo & Login Tabs Included) */}
+      {/* Interactive Platform Showcase */}
       <section className="py-12 bg-slate-50 border-b border-line">
         <div className="section-container">
           <div className="text-center max-w-2xl mx-auto mb-8">
@@ -234,7 +205,7 @@ export default function Features() {
           <div className="bg-white rounded-2xl border border-line shadow-card overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
               {/* Left Detail (5 cols) */}
-              <div className="lg:col-span-5 p-6 md:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-line bg-gradient-to-b from-white to-slate-50/50">
+              <div className="lg:col-span-5 p-6 md:p-8 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-line bg-gradient-to-b from-white to-slate-50/50">
                 <div>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 mb-3">
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -257,24 +228,6 @@ export default function Features() {
                     ))}
                   </div>
                 </div>
-
-                {/* Live Demo and Login Action Tabs */}
-                <div className="pt-6 mt-6 border-t border-line flex items-center gap-3">
-                  <a
-                    href={`${getErpUrl()}/register`}
-                    className="btn-primary text-xs sm:text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
-                  >
-                    <PlayCircle className="w-3.5 h-3.5 text-amber-400" />
-                    Live Demo
-                  </a>
-                  <a
-                    href={`${getErpUrl()}/login`}
-                    className="btn-secondary text-xs sm:text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
-                  >
-                    <LogIn className="w-3.5 h-3.5" />
-                    Login
-                  </a>
-                </div>
               </div>
 
               {/* Right Screenshot Showcase (7 cols) */}
@@ -296,7 +249,7 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Core Important Blocks (Replaces 16 cluttered cards - Clean, No Card Images) */}
+      {/* Core Important Blocks (Clean 6 Cards, No Card Images) */}
       <section className="section-padding bg-white">
         <div className="section-container">
           <div className="text-center max-w-xl mx-auto mb-10">
@@ -349,30 +302,6 @@ export default function Features() {
                 </div>
               );
             })}
-          </div>
-
-          {/* Quick Access Bar */}
-          <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-primary text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-card">
-            <div>
-              <p className="font-heading font-bold text-lg">Ready to experience Fastcase?</p>
-              <p className="text-xs text-white/70 mt-0.5">Start your 14-day free practice trial or access your existing account.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <a
-                href={`${getErpUrl()}/register`}
-                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white text-primary hover:bg-slate-100 transition-all flex items-center gap-2 shadow-sm"
-              >
-                <PlayCircle className="w-4 h-4 text-amber-500" />
-                Live Demo
-              </a>
-              <a
-                href={`${getErpUrl()}/login`}
-                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 border border-white/25 text-white transition-all flex items-center gap-2"
-              >
-                <LogIn className="w-4 h-4" />
-                Login
-              </a>
-            </div>
           </div>
         </div>
       </section>

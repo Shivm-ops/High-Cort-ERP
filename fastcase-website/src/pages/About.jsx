@@ -87,37 +87,23 @@ export default function About() {
   return (
     <div className="bg-[#F8FAFC]">
       {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #0A2540 0%, #0F4C81 50%, #173E65 100%)' }} className="pt-28 pb-20 text-white">
-        <div className="section-container text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-sky-200 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-6">
-            <Scale className="w-3.5 h-3.5 text-amber-300" />
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #071626 0%, #0D2644 55%, #153B64 100%)'
+        }}
+        className="pt-28 pb-20 text-white relative overflow-hidden"
+      >
+        <div className="section-container text-center max-w-3xl mx-auto relative z-10">
+          <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-6 shadow-sm">
+            <Scale className="w-3.5 h-3.5 text-amber-400" />
             Institutional Profile
           </div>
-          <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight mb-5">
+          <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight mb-5 text-white">
             Engineering the Digital Backbone for Indian Legal Practice
           </h1>
-          <p className="text-base sm:text-lg text-sky-100/75 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-200/80 leading-relaxed max-w-2xl mx-auto">
             Developed by SOSM Services Private Limited in Kolhapur, Maharashtra, Fastcase replaces cumbersome paper registers and manual diaries with a high-performance legal operating platform.
           </p>
-        </div>
-      </section>
-
-      {/* ── STATS BAR ──────────────────────────────────────────────── */}
-      <section className="bg-white border-b border-slate-200 py-8">
-        <div className="section-container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { stat: '12+', label: 'Practice Areas' },
-              { stat: '500+', label: 'Verified Court Drafts' },
-              { stat: '4', label: 'Regional Court Languages' },
-              { stat: '99.9%', label: 'Cloud Uptime SLA' },
-            ].map((s) => (
-              <div key={s.label}>
-                <p className="font-heading font-[900] text-3xl sm:text-4xl text-[#0F4C81] tracking-tight">{s.stat}</p>
-                <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">{s.label}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
