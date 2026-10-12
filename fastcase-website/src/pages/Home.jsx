@@ -79,84 +79,69 @@ const features = [
   {
     icon: Users,
     title: 'Client Management',
-    desc: 'A complete CRM built for legal practice.',
-    items: ['Client onboarding & KYC', 'PAN & Aadhaar records', 'Communication history', 'Client self-service portal'],
+    desc: 'Centralized client directory with KYC verification and matter history.',
+    items: ['Client CRM & Profiles', 'KYC Document Vault'],
     color: 'text-blue-600',
     bg: 'bg-blue-50',
   },
   {
     icon: Briefcase,
     title: 'Matter Management',
-    desc: 'Full visibility over every case, from intake to closure.',
-    items: ['Case lifecycle tracking', 'Court & judge details', 'Opponent management', 'Case timeline & notes'],
+    desc: 'Complete tracking of cases, court dates, and opponent counsel.',
+    items: ['Case Lifecycle Tracking', 'Court Diary & Cause Lists'],
     color: 'text-violet-600',
     bg: 'bg-violet-50',
   },
   {
     icon: Calendar,
     title: 'Hearing Management',
-    desc: 'Never miss a court date again.',
-    items: ['Smart court diary', 'Automated reminders', 'Cause list tracking', 'Multi-court calendar'],
+    desc: 'Automated court hearing alerts and daily cause list synchronization.',
+    items: ['Daily Cause List Sync', 'Automated Hearing Alerts'],
     color: 'text-orange-500',
     bg: 'bg-orange-50',
   },
   {
     icon: FileText,
     title: 'Draft Automation',
-    desc: 'Generate professional legal documents in seconds.',
-    items: ['Notices & replies', 'Agreements & petitions', 'Auto-populate from client data', 'Multi-language templates'],
+    desc: 'Generate court-ready legal drafts and notices in seconds.',
+    items: ['500+ Verified Templates', 'Multi-Language (EN, MR, HI, GU)'],
     color: 'text-teal-600',
     bg: 'bg-teal-50',
   },
   {
     icon: FolderOpen,
     title: 'Evidence & Documents',
-    desc: 'Centralized, secure document management.',
-    items: ['OCR text extraction', 'Evidence tagging & linking', 'Version control', 'Secure encrypted storage'],
+    desc: 'Encrypted cloud storage with in-browser preview and OCR.',
+    items: ['Encrypted Evidence Storage', 'OCR Text Extraction'],
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
   },
   {
     icon: Receipt,
     title: 'Billing & Invoicing',
-    desc: 'Professional GST-compliant billing built in.',
-    items: ['GST invoice generation', 'Payment tracking', 'Receivables dashboard', 'Revenue analytics'],
+    desc: 'Professional GST-compliant legal billing and payment ledgers.',
+    items: ['GST Tax Invoices', 'Receivables & Fee Ledgers'],
     color: 'text-green-600',
     bg: 'bg-green-50',
   },
   {
-    icon: ClipboardList,
-    title: 'Team Collaboration',
-    desc: 'Coordinate your entire team from one platform.',
-    items: ['Advocate & clerk roles', 'Task allocation', 'Internal notes', 'Workflow management'],
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-  },
-  {
     icon: BookOpen,
     title: 'Legal Research',
-    desc: 'Research smarter with integrated case law tools.',
-    items: ['Bare Acts library', 'Case law database', 'Citation management', 'AI-assisted research'],
+    desc: 'Searchable case law library and argument preparation studio.',
+    items: ['Searchable Judgment Vault', 'Matter-Linked Citations'],
     color: 'text-rose-600',
     bg: 'bg-rose-50',
   },
   {
-    icon: Timer,
-    title: 'Compliance & Limitation',
-    desc: 'Stay ahead of every deadline and compliance date.',
-    items: ['Limitation date calculator', 'Compliance due dates', 'Automated deadline alerts', 'Court order tracking'],
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
-  },
-  {
     icon: Layers,
     title: 'Client Portal',
-    desc: 'Transparent client experience without extra effort.',
-    items: ['Case status updates', 'Document access', 'Invoice download', 'Secure messaging'],
+    desc: 'Real-time case tracking, document access, and WhatsApp notifications.',
+    items: ['Real-Time Case Tracking', 'WhatsApp Notifications'],
     color: 'text-primary',
     bg: 'bg-primary/8',
   },
 ];
+
 
 /* ─── Home Page ─────────────────────────────────────────────────────── */
 export default function Home() {
@@ -318,52 +303,42 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
-                step: '01', icon: UserCheck, title: 'Client Onboarding & KYC',
+                step: '01', icon: UserCheck, title: 'Client Intake & KYC',
                 color: 'text-blue-600', bg: 'bg-blue-50',
-                items: ['Register clients', 'Store KYC records securely', 'Maintain complete client history', 'Centralized client database'],
+                items: ['Secure client onboarding', 'Centralized KYC vault'],
               },
               {
-                step: '02', icon: Briefcase, title: 'Case & Matter Creation',
+                step: '02', icon: Briefcase, title: 'Matter & Evidence Tracking',
                 color: 'text-violet-600', bg: 'bg-violet-50',
-                items: ['Create matters in seconds', 'Organize practice areas', 'Track opponents and parties', 'Manage timelines'],
+                items: ['Matter lifecycle stages', 'Encrypted evidence storage'],
               },
               {
-                step: '03', icon: FolderOpen, title: 'Document & Evidence Management',
-                color: 'text-emerald-600', bg: 'bg-emerald-50',
-                items: ['Upload evidence', 'OCR document extraction', 'Secure document repository', 'Version history tracking'],
-              },
-              {
-                step: '04', icon: FileText, title: 'Drafting & Notice Automation',
-                color: 'text-teal-600', bg: 'bg-teal-50',
-                items: ['Legal draft templates', 'Notice generation', 'Reply drafting', 'Auto-populated client information'],
-              },
-              {
-                step: '05', icon: Calendar, title: 'Hearings & Court Management',
+                step: '03', icon: Calendar, title: 'Drafts & Court Diary',
                 color: 'text-orange-500', bg: 'bg-orange-50',
-                items: ['Court diary', 'Hearing schedules', 'Automated reminders', 'Compliance tracking'],
+                items: ['500+ legal templates', 'Daily cause list alerts'],
               },
               {
-                step: '06', icon: Receipt, title: 'Billing & Client Updates',
+                step: '04', icon: Receipt, title: 'GST Billing & Portal',
                 color: 'text-green-600', bg: 'bg-green-50',
-                items: ['GST-compliant invoices', 'Payment tracking', 'Client portal access', 'Automated notifications'],
+                items: ['GST tax invoices', 'Client self-service updates'],
               },
             ].map(({ step, icon: Icon, title, color, bg, items }) => (
-              <div key={step} className="card p-6 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className={`w-11 h-11 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+              <div key={step} className="card p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-5 h-5 ${color}`} />
                   </div>
-                  <span className="font-heading font-[900] text-[32px] text-ink/8 leading-none tracking-tight">{step}</span>
+                  <span className="font-heading font-[900] text-[28px] text-ink/10 leading-none tracking-tight">{step}</span>
                 </div>
-                <h3 className="font-heading font-[700] text-[15px] text-ink mb-4 leading-snug">{title}</h3>
-                <ul className="space-y-2">
+                <h3 className="font-heading font-[700] text-[15px] text-ink mb-3 leading-snug">{title}</h3>
+                <ul className="space-y-1.5">
                   {items.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0 mt-0.5" />
-                      <span className="text-[13px] text-ink/60">{item}</span>
+                    <li key={item} className="flex items-center gap-2">
+                      <CheckCircle className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
+                      <span className="text-[12px] text-ink/65 font-medium">{item}</span>
                     </li>
                   ))}
                 </ul>

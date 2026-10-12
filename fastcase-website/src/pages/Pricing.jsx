@@ -1,103 +1,98 @@
 import { Link } from 'react-router-dom';
-import { CheckCircle, ArrowRight, Zap, Building2, Crown } from 'lucide-react';
+import { CheckCircle, ArrowRight, Zap, Building2, Crown, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+
+const getErpUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
+      return `${window.location.protocol}//app.${rootDomain}`;
+    }
+  }
+  return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
+};
 
 const plans = [
   {
     icon: Zap,
     name: 'Starter',
-    tagline: 'For solo advocates',
+    tagline: 'Solo Advocates',
     price: '₹999',
     period: '/month',
-    description: 'Everything you need to run a solo legal practice professionally.',
-    cta: 'Start Free Trial',
-    ctaTo: '/contact',
+    description: 'Essential toolkit to run your solo practice cleanly and efficiently.',
+    cta: 'Registration',
+    ctaHref: `${getErpUrl()}/register`,
     highlight: false,
     features: [
-      'Up to 50 active matters',
-      'Client management & CRM',
-      'Hearing calendar & reminders',
-      'Draft library (50 templates)',
-      'GST invoice generation',
-      'Document storage (5 GB)',
-      'WhatsApp notifications',
-      'Email support',
+      'Up to 50 active court matters',
+      'Client management & KYC vault',
+      'Hearing diary & smart reminders',
+      '50+ verified draft templates',
+      'GST tax invoice generation',
     ],
-    note: '14-day free trial included',
   },
   {
     icon: Crown,
     name: 'Professional',
-    tagline: 'For growing law firms',
+    tagline: 'Growing Law Firms',
     price: '₹2,499',
     period: '/month',
-    description: 'Advanced features for multi-advocate practices and growing firms.',
-    cta: 'Start Free Trial',
-    ctaTo: '/contact',
+    description: 'Advanced capabilities for multi-advocate litigation chambers.',
+    cta: 'Registration',
+    ctaHref: `${getErpUrl()}/register`,
     highlight: true,
     badge: 'Most Popular',
     features: [
-      'Unlimited active matters',
-      'Up to 5 advocate accounts',
-      'Full client CRM & portal',
-      'Unlimited draft templates',
-      'Multi-language support',
-      'OCR notice processing',
-      'Legal research workspace',
-      'GST billing & revenue reports',
-      'Evidence management (50 GB)',
-      'Task & team management',
-      'Priority support',
-      'Custom letterhead',
+      'Unlimited active court matters',
+      'Up to 5 advocate team accounts',
+      'Multi-language drafts (EN, MR, HI, GU)',
+      'OCR notice & evidence processing',
+      'Legal research & citation library',
+      'Client portal & WhatsApp alerts',
     ],
-    note: '14-day free trial included',
   },
   {
     icon: Building2,
     name: 'Enterprise',
-    tagline: 'For large legal organizations',
+    tagline: 'Large Legal Chambers',
     price: 'Custom',
     period: '',
-    description: 'Tailored deployment for large firms, corporate legal teams and institutions.',
+    description: 'Customized deployment and dedicated support for large firms.',
     cta: 'Contact Sales',
     ctaTo: '/contact',
     highlight: false,
     features: [
-      'Unlimited advocates & staff',
+      'Unlimited advocate & staff seats',
       'Dedicated account manager',
-      'Custom integrations & API',
-      'White-label options',
-      'Unlimited storage',
-      'Advanced analytics & reporting',
-      'SSO / enterprise auth',
-      'SLA-backed uptime guarantee',
-      'On-premise deployment option',
-      'Custom training & onboarding',
-      '24/7 dedicated support',
+      'Custom workflow integrations',
+      'Priority SLA & phone support',
+      'Enterprise security & audit logs',
     ],
-    note: 'Volume pricing available',
   },
 ];
 
 const faqs = [
-  { q: 'Is there a free trial?', a: 'Yes — all paid plans include a 14-day free trial with no credit card required. You get full access to every feature during the trial.' },
-  { q: 'Can I upgrade or downgrade at any time?', a: 'Absolutely. You can upgrade immediately (prorated) or downgrade at the next billing cycle through your account settings.' },
-  { q: 'Are GST invoices provided?', a: 'Yes. Fastcase generates proper GST tax invoices for all subscription payments, suitable for business expense claims.' },
-  { q: 'What happens to my data if I cancel?', a: 'Your data is retained for 90 days after cancellation in read-only mode, giving you full time to export everything. After 90 days it is securely deleted.' },
-  { q: 'Do you offer discounts for annual plans?', a: 'Yes — annual subscriptions receive up to 20% off compared to monthly billing. Contact us for annual pricing.' },
+  { q: 'Is there a free trial?', a: 'Yes, every plan includes a 14-day free trial with no credit card required.' },
+  { q: 'Can I upgrade or downgrade later?', a: 'Yes, you can easily change plans at any time from your account settings.' },
+  { q: 'Are GST invoices provided?', a: 'Yes, Fastcase issues GST-compliant tax invoices for all subscription payments.' },
+  { q: 'What happens to my data if I cancel?', a: 'Your data remains exportable for 90 days following cancellation.' },
 ];
 
 export default function Pricing() {
+  const [openFaq, setOpenFaq] = useState(null);
+
   return (
     <div className="bg-surface">
       {/* Hero */}
-      <section className="pt-32 pb-16 bg-white border-b border-line">
+      <section className="pt-32 pb-14 bg-white border-b border-line">
         <div className="section-container text-center">
-          <p className="eyebrow mb-4">Pricing</p>
-          <h1 className="display-heading text-5xl lg:text-6xl mb-5">
-            Simple, transparent pricing.
+          <p className="eyebrow mb-3">Transparent Pricing</p>
+          <h1 className="display-heading text-3xl sm:text-4xl md:text-5xl mb-4">
+            Simple, Transparent Plans
           </h1>
-          <p className="text-lg text-ink/60 max-w-xl mx-auto">
-            Choose the plan that fits your practice. Every plan includes a 14-day free trial — no credit card required.
+          <p className="text-base sm:text-lg text-ink/60 max-w-lg mx-auto">
+            Choose the plan that fits your practice. All plans include a 14-day free trial.
           </p>
         </div>
       </section>
@@ -105,14 +100,15 @@ export default function Pricing() {
       {/* Plans */}
       <section className="section-padding">
         <div className="section-container">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             {plans.map((plan) => {
               const Icon = plan.icon;
               return (
-                <div key={plan.name}
-                  className={`relative rounded-2xl border p-8 flex flex-col
+                <div
+                  key={plan.name}
+                  className={`relative rounded-2xl border p-7 flex flex-col justify-between
                     ${plan.highlight
-                      ? 'bg-primary border-primary shadow-feature'
+                      ? 'bg-primary border-primary shadow-feature text-white'
                       : 'bg-white border-line shadow-card hover:shadow-card-hover transition-shadow'
                     }`}
                 >
@@ -124,50 +120,76 @@ export default function Pricing() {
                     </div>
                   )}
 
-                  <div className="mb-6">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${plan.highlight ? 'bg-white/15' : 'bg-primary/8'}`}>
-                      <Icon className={`w-5 h-5 ${plan.highlight ? 'text-white' : 'text-primary'}`} />
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className={`font-heading font-[800] text-xl tracking-tight ${plan.highlight ? 'text-white' : 'text-ink'}`}>
+                          {plan.name}
+                        </p>
+                        <p className={`text-[12px] font-medium ${plan.highlight ? 'text-white/70' : 'text-ink/50'}`}>
+                          {plan.tagline}
+                        </p>
+                      </div>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.highlight ? 'bg-white/15' : 'bg-primary/8'}`}>
+                        <Icon className={`w-5 h-5 ${plan.highlight ? 'text-white' : 'text-primary'}`} />
+                      </div>
                     </div>
-                    <p className={`font-heading font-[800] text-2xl tracking-tight mb-0.5 ${plan.highlight ? 'text-white' : 'text-ink'}`}>
-                      {plan.name}
-                    </p>
-                    <p className={`text-[13px] ${plan.highlight ? 'text-white/60' : 'text-ink/50'}`}>{plan.tagline}</p>
+
+                    <div className="mb-4">
+                      <div className="flex items-baseline gap-1">
+                        <span className={`font-heading font-[900] text-3xl sm:text-4xl tracking-tight ${plan.highlight ? 'text-white' : 'text-ink'}`}>
+                          {plan.price}
+                        </span>
+                        {plan.period && (
+                          <span className={`text-[13px] ${plan.highlight ? 'text-white/60' : 'text-ink/40'}`}>
+                            {plan.period}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[12px] mt-1.5 leading-relaxed ${plan.highlight ? 'text-white/70' : 'text-ink/55'}`}>
+                        {plan.description}
+                      </p>
+                    </div>
+
+                    <div className={`pt-4 mb-6 border-t ${plan.highlight ? 'border-white/15' : 'border-line'}`}>
+                      <ul className="space-y-2">
+                        {plan.features.map((f) => (
+                          <li key={f} className="flex items-center gap-2">
+                            <CheckCircle className={`w-4 h-4 flex-shrink-0 ${plan.highlight ? 'text-teal-300' : 'text-[#16A34A]'}`} />
+                            <span className={`text-[13px] ${plan.highlight ? 'text-white/90' : 'text-ink/70'}`}>
+                              {f}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
 
-                  <div className="mb-6">
-                    <div className="flex items-end gap-1">
-                      <span className={`font-heading font-[900] text-4xl tracking-tight ${plan.highlight ? 'text-white' : 'text-ink'}`}>
-                        {plan.price}
-                      </span>
-                      {plan.period && (
-                        <span className={`text-[14px] mb-1.5 ${plan.highlight ? 'text-white/50' : 'text-ink/40'}`}>{plan.period}</span>
-                      )}
-                    </div>
-                    <p className={`text-[13px] mt-2 ${plan.highlight ? 'text-white/60' : 'text-ink/50'}`}>{plan.description}</p>
+                  <div>
+                    {plan.ctaHref ? (
+                      <a
+                        href={plan.ctaHref}
+                        className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[14px] py-3 rounded-xl transition-all duration-150
+                          ${plan.highlight
+                            ? 'bg-white text-primary hover:bg-white/90 shadow-md'
+                            : 'btn-primary'
+                          }`}
+                      >
+                        {plan.cta} <ArrowRight className="w-4 h-4" />
+                      </a>
+                    ) : (
+                      <Link
+                        to={plan.ctaTo}
+                        className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[14px] py-3 rounded-xl transition-all duration-150
+                          ${plan.highlight
+                            ? 'bg-white text-primary hover:bg-white/90 shadow-md'
+                            : 'btn-secondary border border-line'
+                          }`}
+                      >
+                        {plan.cta} <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    )}
                   </div>
-
-                  <Link to={plan.ctaTo}
-                    className={`w-full mb-6 inline-flex items-center justify-center gap-2 font-semibold text-[15px] py-3 rounded-xl transition-all duration-150
-                      ${plan.highlight
-                        ? 'bg-white text-primary hover:bg-white/90'
-                        : 'btn-primary'
-                      }`}
-                  >
-                    {plan.cta} <ArrowRight className="w-4 h-4" />
-                  </Link>
-
-                  <ul className="space-y-3 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5">
-                        <CheckCircle className={`w-4 h-4 flex-shrink-0 mt-0.5 ${plan.highlight ? 'text-teal' : 'text-success'}`} />
-                        <span className={`text-[13px] ${plan.highlight ? 'text-white/80' : 'text-ink/70'}`}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <p className={`text-[11px] mt-5 text-center ${plan.highlight ? 'text-white/40' : 'text-ink/30'}`}>
-                    {plan.note}
-                  </p>
                 </div>
               );
             })}
@@ -175,18 +197,27 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="section-padding-sm bg-white border-t border-line">
+      {/* FAQs */}
+      <section className="py-14 bg-white border-t border-line">
         <div className="section-container max-w-3xl">
-          <div className="text-center mb-12">
-            <h2 className="section-heading text-3xl mb-3">Pricing FAQ</h2>
-            <p className="text-ink/50">Common questions about billing and plans.</p>
+          <div className="text-center mb-10">
+            <h2 className="font-heading font-[800] text-2xl text-ink">Frequently Asked Questions</h2>
           </div>
-          <div className="divide-y divide-line">
-            {faqs.map((faq) => (
-              <div key={faq.q} className="py-6">
-                <p className="font-heading font-[700] text-[15px] text-ink mb-2">{faq.q}</p>
-                <p className="text-[14px] text-ink/60 leading-relaxed">{faq.a}</p>
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => (
+              <div key={faq.q} className="border border-line rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-surface transition-colors"
+                >
+                  <span className="font-[600] text-[14px] text-ink">{faq.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-ink/40 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === idx && (
+                  <div className="px-4 pb-4 pt-1 bg-surface/50 border-t border-line text-[13px] text-ink/65 leading-relaxed">
+                    {faq.a}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -194,15 +225,27 @@ export default function Pricing() {
       </section>
 
       {/* CTA */}
-      <section className="section-padding-sm border-t border-line">
+      <section className="section-padding-sm" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
         <div className="section-container text-center">
-          <h2 className="section-heading text-3xl mb-3">Ready to modernize your practice?</h2>
-          <p className="text-ink/50 mb-8">Start your 14-day free trial. No credit card required.</p>
+          <h2 className="font-heading font-[800] text-2xl sm:text-3xl tracking-tight text-white mb-3">
+            Get Started in Minutes
+          </h2>
+          <p className="text-white/65 text-sm sm:text-base mb-6 max-w-md mx-auto">
+            Create your account today. No long-term commitment, cancel anytime.
+          </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/contact" className="btn-primary-lg">
-              Start Free Trial <ArrowRight className="w-4 h-4" />
-            </Link>
-            <a href="http://localhost:3000" className="btn-secondary-lg">Book a Live Demo</a>
+            <a
+              href={`${getErpUrl()}/register`}
+              className="inline-flex items-center gap-2 bg-white text-[#0F4C81] font-[700] text-[14px] px-6 py-3 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-md"
+            >
+              Registration <ArrowRight className="w-4 h-4" />
+            </a>
+            <a
+              href={`${getErpUrl()}/login`}
+              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-[600] text-[14px] px-6 py-3 rounded-xl hover:bg-white/15 transition-all duration-150"
+            >
+              Advocate Login
+            </a>
           </div>
         </div>
       </section>
