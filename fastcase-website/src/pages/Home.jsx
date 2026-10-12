@@ -2,11 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProductShowcase from '../components/ProductShowcase';
 import {
-  Users, Briefcase, Calendar, FileText, FolderOpen, BookOpen,
-  Bell, LayoutDashboard, Receipt, CheckCircle, ArrowRight, Shield,
-  Globe, Zap, Mail, Gavel, Lock, UserCheck, Timer, Database,
-  ClipboardList, CreditCard, FileSearch, MessageSquare, Award, TrendingUp,
-  ChevronDown,
+  Users, Briefcase, Calendar, FileText, CheckCircle, ArrowRight, Shield,
+  Zap, Lock, ChevronDown, Gavel, CreditCard
 } from 'lucide-react';
 
 const getErpUrl = () => {
@@ -20,21 +17,20 @@ const getErpUrl = () => {
   return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
 };
 
-/* ─── Dashboard Mockup ─────────────────────────────────────────────── */
+/* ─── Compact Dashboard Mockup ────────────────────────────────────────── */
 function DashboardMockup() {
   return (
-    <div className="relative w-full max-w-[620px] mx-auto lg:mx-0">
-      <div className="absolute -inset-6 bg-gradient-to-br from-primary/8 via-teal/5 to-transparent rounded-3xl" />
-      <div className="relative bg-white rounded-2xl overflow-hidden border border-line shadow-dashboard">
-        {/* Browser chrome */}
-        <div className="bg-slate-50 border-b border-line px-4 py-3 flex items-center gap-3">
+    <div className="relative w-full max-w-[580px] mx-auto lg:mx-0">
+      <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_20px_50px_-12px_rgba(13,38,68,0.15)]">
+        {/* Browser bar */}
+        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center gap-3">
           <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-400/70" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-400/70" />
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/70" />
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
-          <div className="flex-1 bg-white border border-line rounded-md px-3 py-1.5 flex items-center gap-1.5 text-[11px] text-ink/30">
-            <Lock className="w-3 h-3 text-emerald-500" />
+          <div className="flex-1 bg-white border border-slate-200 rounded-md px-3 py-1 flex items-center gap-1.5 text-[11px] text-slate-400">
+            <Lock className="w-3 h-3 text-emerald-600" />
             app.fastcase.in/dashboard
           </div>
         </div>
@@ -42,93 +38,86 @@ function DashboardMockup() {
         <img
           src="/screenshots/dashboard.png"
           alt="Fastcase Dashboard"
-          className="w-full block"
-          style={{ maxHeight: 460, objectFit: 'cover', objectPosition: 'top' }}
+          className="w-full block object-cover object-top max-h-[380px]"
         />
       </div>
     </div>
   );
 }
 
-/* ─── Inline FAQ Item ───────────────────────────────────────────────── */
+/* ─── Compact FAQ Item ───────────────────────────────────────────────── */
 function HomeFAQItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={`border border-line rounded-xl overflow-hidden transition-all duration-200 ${open ? 'shadow-sm' : ''}`}>
+    <div className={`border border-slate-200 rounded-xl overflow-hidden transition-all duration-200 ${open ? 'shadow-xs border-primary/30' : 'bg-white'}`}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-start justify-between gap-4 p-5 text-left bg-white hover:bg-surface transition-colors"
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left bg-white hover:bg-slate-50 transition-colors"
         aria-expanded={open}
       >
-        <span className="text-[14px] font-semibold text-ink leading-snug">{q}</span>
+        <span className="text-[14px] font-semibold text-slate-900 leading-snug">{q}</span>
         <ChevronDown
-          className={`w-4 h-4 text-ink/40 flex-shrink-0 mt-0.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-primary' : ''}`}
         />
       </button>
       {open && (
-        <div className="px-5 pb-5 bg-white border-t border-line">
-          <p className="text-[14px] text-ink/60 leading-relaxed pt-4">{a}</p>
+        <div className="px-5 pb-4 pt-1 bg-white border-t border-slate-100">
+          <p className="text-[13.5px] text-slate-600 leading-relaxed">{a}</p>
         </div>
       )}
     </div>
   );
 }
 
-/* ─── Home Page ─────────────────────────────────────────────────────── */
+/* ─── Compact Home Page ──────────────────────────────────────────────── */
 export default function Home() {
   return (
-    <div className="bg-surface">
+    <div className="bg-[#F8FAFC]">
 
-      {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-20 lg:pt-36 lg:pb-28 overflow-hidden bg-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_60%_-10%,rgba(15,76,129,0.05),transparent)]" />
+      {/* ── HERO (Compact & Judicial) ─────────────────────────────────── */}
+      <section className="relative pt-28 pb-14 lg:pt-32 lg:pb-16 overflow-hidden bg-white border-b border-slate-200">
         <div className="section-container relative">
-          <div className="grid lg:grid-cols-2 gap-14 lg:gap-16 items-center">
-            {/* Left */}
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+            {/* Left Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-teal/8 border border-teal/15 text-teal text-[12px] font-bold tracking-wide uppercase rounded-full px-3.5 py-1.5 mb-7">
-                <Zap className="w-3 h-3" />
-                India's Advocate Practice Platform
+              <div className="inline-flex items-center gap-2 bg-[#0D2644]/5 border border-[#0D2644]/15 text-[#0D2644] text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1 mb-5">
+                <Gavel className="w-3.5 h-3.5 text-amber-500" />
+                Legal Operating System for Indian Advocates
               </div>
 
-              <h1 className="display-heading text-[2.75rem] sm:text-5xl lg:text-[3.5rem] mb-6 text-balance">
-                India's Complete<br />
-                <span className="text-primary">Advocate Practice</span><br />
-                Platform.
+              <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.15] tracking-tight mb-4 text-balance">
+                Everything Your Legal Practice Needs, <span className="text-[#0F4C81]">Unified.</span>
               </h1>
 
-              <p className="text-[18px] text-ink/55 leading-relaxed mb-4 max-w-lg">
-                Manage Clients, Cases, Hearings, Drafts, Billing, Research and Evidence from <strong className="text-ink/80 font-semibold">one secure platform</strong>.
-              </p>
-              <p className="text-[15px] text-ink/45 leading-relaxed mb-9 max-w-lg">
-                Fastcase helps advocates, law firms and legal professionals automate office operations, improve productivity and manage their entire legal practice digitally.
+              <p className="text-[16px] text-slate-600 leading-relaxed mb-6 max-w-lg">
+                Automate case lifecycles, court cause lists, 500+ vernacular drafts, and GST-compliant fee billing from one secure platform.
               </p>
 
-              <div className="flex flex-wrap gap-3 mb-10">
-                <a href={`${getErpUrl()}/register`} className="btn-primary-lg">
+              {/* CTAs */}
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <a href={`${getErpUrl()}/register`} className="btn-primary text-sm py-2.5 px-6 rounded-xl flex items-center gap-2 shadow-sm">
                   Registration <ArrowRight className="w-4 h-4" />
                 </a>
-                <a href={`${getErpUrl()}/login`} className="btn-secondary-lg">
+                <a href={`${getErpUrl()}/login`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
                   Advocate Login
                 </a>
               </div>
 
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
-                {[
-                  'Secure Cloud Platform',
-                  'Multi-Language Support',
-                  'GST Compliant Billing',
-                  'Built for Indian Advocates',
-                ].map((t) => (
-                  <div key={t} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
-                    <span className="text-[13px] text-ink/60 font-medium">{t}</span>
-                  </div>
-                ))}
+              {/* Key Trust Checkmarks */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> 14-Day Free Trial
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> 100% Indian Cloud Data
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Bar Council Compliant
+                </span>
               </div>
             </div>
 
-            {/* Right — Dashboard */}
+            {/* Right — Dashboard Mockup */}
             <div className="hidden lg:block">
               <DashboardMockup />
             </div>
@@ -136,296 +125,154 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── TRUST BAR ──────────────────────────────────────────────── */}
-      <section className="bg-surface-alt border-y border-line py-10">
+      {/* ── TRUST HIGHLIGHTS (Single Clean Strip) ───────────────────── */}
+      <section className="bg-slate-50 border-b border-slate-200 py-6">
         <div className="section-container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: LayoutDashboard, label: 'Practice Management', sub: 'Manage your entire legal office from one platform', color: 'text-primary', bg: 'bg-primary/8' },
-              { icon: BookOpen, label: 'Legal Research', sub: 'Research laws, provisions and case references', color: 'text-rose-600', bg: 'bg-rose-50' },
-              { icon: Users, label: 'Team Collaboration', sub: 'Coordinate advocates, clerks and staff efficiently', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-              { icon: Timer, label: 'Compliance Tracking', sub: 'Monitor deadlines, limitation periods and filings', color: 'text-amber-600', bg: 'bg-amber-50' },
-            ].map(({ icon: Icon, label, sub, color, bg }) => (
-              <div key={label} className="bg-white px-6 py-7 flex flex-col items-center text-center gap-3">
-                <div className={`w-11 h-11 ${bg} rounded-xl flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${color}`} />
+              { icon: Briefcase, title: 'Case Lifecycle', desc: 'CNR sync & cause lists' },
+              { icon: FileText, title: '500+ Drafts', desc: 'English, Marathi, Hindi' },
+              { icon: CreditCard, title: 'GST Invoicing', desc: 'SAC 9982 legal tax bills' },
+              { icon: Shield, title: 'Sec 126 Privilege', desc: 'Encrypted client vaults' },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
+                <div className="w-9 h-9 rounded-lg bg-[#0F4C81]/8 text-[#0F4C81] flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4" />
                 </div>
-                <div>
-                  <p className="font-heading font-[700] text-[15px] text-ink mb-1">{label}</p>
-                  <p className="text-[12px] text-ink/45 leading-snug">{sub}</p>
+                <div className="min-w-0">
+                  <p className="font-heading font-[700] text-[13px] text-slate-900 leading-tight truncate">{title}</p>
+                  <p className="text-[11px] text-slate-500 leading-tight mt-0.5 truncate">{desc}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-8">
-            {[
-              { icon: Shield, text: 'Enterprise-grade security' },
-              { icon: Lock, text: 'AES-256 encryption' },
-              { icon: Globe, text: 'India-hosted data centers' },
-              { icon: Award, text: 'Bar Council compliant' },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2">
-                <Icon className="w-3.5 h-3.5 text-teal flex-shrink-0" />
-                <span className="text-[12px] font-medium text-ink/50">{text}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── PRODUCT SHOWCASE ───────────────────────────────────────── */}
+      {/* ── PRODUCT SHOWCASE (Interactive Tabbed Screens) ───────────── */}
       <ProductShowcase />
 
-      {/* ── HOW Fastcase WORKS ──────────────────────────────────────── */}
-      <section className="section-padding bg-surface-alt border-y border-line">
+      {/* ── ESSENTIAL PILLARS (Clean 4-Card Grid) ───────────────────── */}
+      <section className="py-14 bg-white border-b border-slate-200">
         <div className="section-container">
-          <div className="text-center mb-16">
-            <p className="eyebrow mb-4">How It Works</p>
-            <h2 className="section-heading text-4xl lg:text-5xl mb-5">
-              How Fastcase Automates<br />Your Legal Practice
+          <div className="text-center max-w-xl mx-auto mb-10">
+            <span className="text-[11px] font-bold text-[#0D2644] uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+              Core Pillars
+            </span>
+            <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-slate-900 mt-3">
+              Built for Every Day of Court Practice
             </h2>
-            <p className="text-[17px] text-ink/50 max-w-2xl mx-auto">
-              A complete workflow from client onboarding to case closure, designed specifically for Indian advocates, law firms, and legal professionals.
+            <p className="text-sm text-slate-500 mt-1">
+              Replace physical diary registers with an automated digital command center.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
-                step: '01', icon: UserCheck, title: 'Client Intake & KYC',
-                color: 'text-blue-600', bg: 'bg-blue-50',
-                items: ['Secure client onboarding', 'Centralized KYC vault'],
+                icon: Calendar,
+                title: 'Hearing Diary & Sync',
+                desc: 'Automatic cause list updates, daily court board tracking, and limitation countdown alerts.',
+                tag: 'Court Diary',
+                color: 'text-amber-800 bg-amber-50 border-amber-200/60',
               },
               {
-                step: '02', icon: Briefcase, title: 'Matter & Evidence Tracking',
-                color: 'text-violet-600', bg: 'bg-violet-50',
-                items: ['Matter lifecycle stages', 'Encrypted evidence storage'],
+                icon: FileText,
+                title: 'Vernacular Legal Drafts',
+                desc: '500+ court-verified templates with 1-click matter auto-fill in English, Marathi, Hindi, and Gujarati.',
+                tag: 'Templates',
+                color: 'text-teal-900 bg-teal-50 border-teal-200/60',
               },
               {
-                step: '03', icon: Calendar, title: 'Drafts & Court Diary',
-                color: 'text-orange-500', bg: 'bg-orange-50',
-                items: ['500+ legal templates', 'Daily cause list alerts'],
+                icon: CreditCard,
+                title: 'GST Billing & Ledger',
+                desc: 'Compliant legal fee invoices, trust account retainers, and automated WhatsApp receipts.',
+                tag: 'Billing',
+                color: 'text-emerald-900 bg-emerald-50 border-emerald-200/60',
               },
               {
-                step: '04', icon: Receipt, title: 'GST Billing & Portal',
-                color: 'text-green-600', bg: 'bg-green-50',
-                items: ['GST tax invoices', 'Client self-service updates'],
+                icon: Shield,
+                title: 'Privileged Evidence Vault',
+                desc: 'Section 126 Evidence Act compliant encryption isolating client files in Indian cloud datacenters.',
+                tag: 'Security',
+                color: 'text-[#0D2644] bg-slate-100 border-slate-200',
               },
-            ].map(({ step, icon: Icon, title, color, bg, items }) => (
-              <div key={step} className="card p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`w-5 h-5 ${color}`} />
-                  </div>
-                  <span className="font-heading font-[900] text-[28px] text-ink/10 leading-none tracking-tight">{step}</span>
-                </div>
-                <h3 className="font-heading font-[700] text-[15px] text-ink mb-3 leading-snug">{title}</h3>
-                <ul className="space-y-1.5">
-                  {items.map((item) => (
-                    <li key={item} className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
-                      <span className="text-[12px] text-ink/65 font-medium">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── ENTERPRISE SECURITY ─────────────────────────────────────── */}
-      <section className="section-padding bg-white">
-        <div className="section-container">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
-            <div>
-              <p className="eyebrow mb-4">Security & Compliance</p>
-              <h2 className="section-heading text-4xl mb-5">
-                Enterprise Security Built<br />for Legal Professionals
-              </h2>
-              <p className="text-[16px] text-ink/50 leading-relaxed mb-8">
-                Fastcase implements enterprise-grade security across every layer of the platform to protect your client data, legal documents, and firm information.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-                {[
-                  'Multi-Tenant Data Isolation',
-                  'AES-256 Data Encryption',
-                  'Role-Based Access Control',
-                  'Complete Audit Logs',
-                  'Secure Document Storage',
-                  'Daily Automated Backups',
-                  'Disaster Recovery Protection',
-                  'India-Hosted Infrastructure',
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-2.5 py-2.5 border-b border-line last:border-0">
-                    <CheckCircle className="w-4 h-4 text-[#16A34A] flex-shrink-0" />
-                    <span className="text-[13px] text-ink/70 font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[
-                { icon: Lock, title: 'Data Security', desc: 'All client records and documents protected with enterprise-grade encryption.', color: 'text-primary', bg: 'bg-primary/8' },
-                { icon: Users, title: 'Access Control', desc: 'Advocates, associates, clerks, and staff receive role-based permissions.', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                { icon: ClipboardList, title: 'Audit Trail', desc: 'Track every action, modification, upload, and approval across the platform.', color: 'text-teal-600', bg: 'bg-teal-50' },
-                { icon: Database, title: 'Business Continuity', desc: "Automated backups and disaster recovery mechanisms protect your firm's data.", color: 'text-emerald-600', bg: 'bg-emerald-50' },
-              ].map(({ icon: Icon, title, desc, color, bg }) => (
-                <div key={title} className="card p-6 hover:shadow-card-hover transition-shadow">
-                  <div className={`w-11 h-11 ${bg} rounded-xl flex items-center justify-center mb-4`}>
-                    <Icon className={`w-5 h-5 ${color}`} />
-                  </div>
-                  <h3 className="font-heading font-[700] text-[15px] text-ink mb-2">{title}</h3>
-                  <p className="text-[13px] text-ink/55 leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CLIENT PORTAL ──────────────────────────────────────────── */}
-      <section className="section-padding bg-surface-alt border-y border-line">
-        <div className="section-container">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <p className="eyebrow mb-4">Client Portal</p>
-              <h2 className="section-heading text-4xl mb-5">
-                Keep Clients Informed Without<br />Endless Follow-Ups
-              </h2>
-              <p className="text-[16px] text-ink/50 leading-relaxed mb-6">
-                Clients receive secure access to everything they need — reducing inbound calls and delivering a professional digital experience.
-              </p>
-
-              <div className="mb-8">
-                <p className="text-[11px] font-[700] uppercase tracking-[0.08em] text-ink/35 mb-4">Clients receive secure access to:</p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    { icon: Briefcase, text: 'Case status updates' },
-                    { icon: Calendar, text: 'Hearing schedules' },
-                    { icon: FolderOpen, text: 'Shared documents' },
-                    { icon: Receipt, text: 'Invoice downloads' },
-                    { icon: TrendingUp, text: 'Payment history' },
-                    { icon: Bell, text: 'Important notifications' },
-                  ].map(({ icon: Icon, text }) => (
-                    <div key={text} className="flex items-center gap-2.5 bg-white border border-line rounded-xl px-4 py-3">
-                      <Icon className="w-4 h-4 text-[#0EA5A4] flex-shrink-0" />
-                      <span className="text-[13px] font-medium text-ink/70">{text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                {[
-                  'Reduce client status calls',
-                  'Improve transparency',
-                  'Increase client satisfaction',
-                  'Provide professional digital experience',
-                ].map((b) => (
-                  <div key={b} className="flex items-center gap-2.5">
-                    <CheckCircle className="w-4 h-4 text-[#16A34A] flex-shrink-0" />
-                    <span className="text-[14px] text-ink/65 font-medium">{b}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Portal mockup */}
-            <div className="card overflow-hidden border-line shadow-feature">
-              <div className="bg-primary px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                    <span className="text-white text-[11px] font-bold">RS</span>
-                  </div>
+            ].map((p) => {
+              const Icon = p.icon;
+              return (
+                <div key={p.title} className="card p-5 bg-white border border-slate-200/90 hover:shadow-card-hover hover:-translate-y-0.5 transition-all flex flex-col justify-between">
                   <div>
-                    <p className="text-white font-semibold text-[13px]">Rajesh Sharma</p>
-                    <p className="text-white/50 text-[10px]">Client Portal</p>
+                    <div className="flex items-center justify-between mb-3.5">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${p.color}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wider">
+                        {p.tag}
+                      </span>
+                    </div>
+                    <h3 className="font-heading font-[700] text-[15px] text-slate-900 mb-2 leading-snug">
+                      {p.title}
+                    </h3>
+                    <p className="text-[12.5px] text-slate-600 leading-relaxed">
+                      {p.desc}
+                    </p>
                   </div>
                 </div>
-                <span className="bg-success/20 text-emerald-300 text-[10px] font-bold px-2 py-1 rounded-full">Active</span>
-              </div>
-              <div className="p-5 space-y-3 bg-white">
-                {[
-                  { label: 'Property Dispute Matter', status: 'Active · Hearing on 15 Jun', icon: Briefcase, col: 'text-primary bg-primary/8' },
-                  { label: 'Next Hearing', status: '15 June 2025 · Dist. Court', icon: Calendar, col: 'text-orange-500 bg-orange-50' },
-                  { label: 'Invoice #INV-0047', status: '₹15,000 · Due 20 June', icon: Receipt, col: 'text-green-600 bg-green-50' },
-                  { label: 'Documents', status: '12 files · Last updated today', icon: FolderOpen, col: 'text-violet-600 bg-violet-50' },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl border border-line hover:bg-surface transition-colors">
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${item.col}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold text-ink">{item.label}</p>
-                        <p className="text-[11px] text-ink/45">{item.status}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── INTEGRATIONS ───────────────────────────────────────────── */}
-      <section id="integrations" className="section-padding bg-white">
-        <div className="section-container">
-          <div className="text-center mb-14">
-            <p className="eyebrow mb-4">Integrations</p>
-            <h2 className="section-heading text-4xl mb-4">Powerful Integrations</h2>
-            <p className="text-[16px] text-ink/50 max-w-lg mx-auto">
-              Fastcase connects with the tools and systems that matter for Indian legal practice.
-            </p>
+      {/* ── COMPACT FAQ (3 Essential Questions) ─────────────────────── */}
+      <section className="py-12 bg-slate-50 border-b border-slate-200">
+        <div className="section-container max-w-2xl">
+          <div className="text-center mb-8">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-slate-200">
+              Quick Answers
+            </span>
+            <h2 className="font-heading font-[800] text-2xl text-slate-900 mt-2.5">Frequently Asked Questions</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-2.5">
             {[
-              { icon: MessageSquare, title: 'WhatsApp Notifications', desc: 'Automatically notify clients regarding hearings, invoices, and case updates.', color: 'text-green-600', bg: 'bg-green-50' },
-              { icon: Mail, title: 'Email Communication', desc: 'Send notices, reminders, and documents directly from Fastcase.', color: 'text-blue-600', bg: 'bg-blue-50' },
-              { icon: FileSearch, title: 'OCR Document Processing', desc: 'Extract information from uploaded legal documents automatically.', color: 'text-teal-600', bg: 'bg-teal-50' },
-              { icon: FileText, title: 'e-Sign Integration', desc: 'Send documents for electronic signature directly from the platform.', color: 'text-violet-600', bg: 'bg-violet-50' },
-              { icon: Receipt, title: 'GST Billing', desc: 'Generate compliant invoices and track payments effortlessly.', color: 'text-green-600', bg: 'bg-green-50' },
-              { icon: Calendar, title: 'Calendar Synchronization', desc: 'Manage hearings and important dates across your team efficiently.', color: 'text-orange-500', bg: 'bg-orange-50' },
-              { icon: CreditCard, title: 'Payment Gateway Support', desc: 'Collect professional fees digitally with secure payment processing.', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-              { icon: Gavel, title: 'Future e-Courts Connectivity', desc: 'Designed for future integration with Indian court systems.', color: 'text-primary', bg: 'bg-primary/8' },
-            ].map(({ icon: Icon, title, desc, color, bg }) => (
-              <div key={title} className="card p-5 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
-                <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon className={`w-5 h-5 ${color}`} />
-                </div>
-                <h3 className="font-heading font-[700] text-[14px] text-ink mb-2">{title}</h3>
-                <p className="text-[13px] text-ink/55 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ──────────────────────────────────────────────────────── */}
-      <section className="section-padding-sm bg-surface-alt border-y border-line">
-        <div className="section-container max-w-3xl">
-          <div className="text-center mb-12">
-            <p className="eyebrow mb-4">FAQ</p>
-            <h2 className="section-heading text-3xl mb-3">Frequently Asked Questions</h2>
-          </div>
-          <div className="space-y-3">
-            {[
-              { q: 'What is Fastcase?', a: 'Fastcase is a comprehensive Advocate Practice Management Software developed by SOSM Services Private Limited. It is a cloud-based platform designed to automate and streamline every aspect of legal practice management for Indian advocates, law firms, and legal professionals.' },
-              { q: 'Is there a free trial?', a: 'Yes — all paid plans include a 14-day free trial with no credit card required. You get full access to every feature during the trial period.' },
-              { q: 'Is my data secure on Fastcase?', a: 'Yes. Fastcase implements enterprise-grade security including AES-256 encryption, role-based access control, audit logs, tenant isolation, secure document storage, and automated daily backups.' },
-              { q: 'Which languages does Fastcase support?', a: 'Fastcase currently supports English, Marathi, Hindi, and Gujarati. You can draft legal documents, notices, and templates in all four languages.' },
-              { q: 'Can I upgrade or downgrade my plan?', a: 'Absolutely. You can upgrade immediately (prorated) or downgrade at the next billing cycle. Annual plans also offer up to 20% savings over monthly billing.' },
+              {
+                q: 'What is Fastcase?',
+                a: 'Fastcase is an enterprise Practice Management System developed by SOSM Services Private Limited (Kolhapur) specifically for Indian advocates, chambers, and law firms to automate case tracking, cause lists, drafting, and billing.'
+              },
+              {
+                q: 'Is client and matter data privileged and secure?',
+                a: 'Yes. All data adheres strictly to Attorney-Client Privilege under Section 126 of the Indian Evidence Act. Data is encrypted using AES-256 and hosted exclusively in sovereign Indian tier-4 cloud datacenters in Mumbai and Bengaluru.'
+              },
+              {
+                q: 'How does the free trial work?',
+                a: 'You receive full access to all 16 modules for 14 days with zero commitment and no credit card required. You can upgrade, downgrade, or export your data at any time.'
+              },
             ].map(({ q, a }) => <HomeFAQItem key={q} q={q} a={a} />)}
           </div>
         </div>
       </section>
+
+      {/* ── CLEAN BOTTOM ACTION BAR ─────────────────────────────────── */}
+      <section className="py-10 bg-white">
+        <div className="section-container max-w-4xl text-center">
+          <h2 className="font-heading font-[800] text-2xl text-slate-900 mb-2">
+            Ready to Modernize Your Chamber Operations?
+          </h2>
+          <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+            Join hundreds of advocates across Maharashtra and India managing their daily practice on Fastcase.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a href={`${getErpUrl()}/register`} className="btn-primary text-sm py-2.5 px-6 rounded-xl flex items-center gap-2 shadow-sm">
+              Start 14-Day Free Trial <ArrowRight className="w-4 h-4" />
+            </a>
+            <Link to="/features" className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
+              Explore All Features
+            </Link>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }
-
