@@ -14,6 +14,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_ERP_APP_URL=https://app.fastcase.in
+        - VITE_ADMIN_APP_URL=https://admin.fastcase.in
     restart: unless-stopped
     expose:
       - "80"
