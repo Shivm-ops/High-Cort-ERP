@@ -25,11 +25,11 @@ const team = [
     bio: "As Director of SOSM Services Pvt Ltd, Bhupal brings strong leadership and strategic vision to Fastcase, guiding the company's growth, business development, and market expansion across key verticals.",
   },
   {
-    initials: 'SP',
-    name: 'Shivam Patil',
+    initials: 'SJ',
+    name: 'Shweta Jadhav',
     role: 'DevOps Engineer',
     badges: ['DevOps Engineer'],
-    bio: 'Shivam contributes as DevOps Engineer, managing deployments, infrastructure reliability, and ensuring the Fastcase platform remains secure, scalable, and always available.',
+    bio: 'Shweta contributes as DevOps Engineer, managing deployments, infrastructure reliability, and ensuring the Fastcase platform remains secure, scalable, and always available.',
   },
 ];
 
