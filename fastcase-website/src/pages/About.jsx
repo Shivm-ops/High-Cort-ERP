@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Scale, Target, Eye, MapPin, ArrowRight, CheckCircle, Building2, Award } from 'lucide-react';
+import {
+  Scale, Target, Eye, MapPin, ArrowRight, CheckCircle,
+  Building2, Award, Shield, Users, Server, Globe2, FileText, Phone, Mail
+} from 'lucide-react';
 
 const getErpUrl = () => {
   if (typeof window !== 'undefined') {
@@ -16,103 +19,174 @@ const team = [
   {
     initials: 'AP',
     name: 'Abhijit Patil',
-    role: 'Founder',
-    badges: ['SEBI Registered Analyst', 'ACFE (USA)'],
-    bio: 'Leads product vision, bringing forensic rigor and financial analytics to advocate operations.',
-  },
-  {
-    initials: 'P',
-    name: 'Priyankka',
-    role: 'Management Team',
-    badges: ['Strategy & Operations'],
-    bio: 'Oversees operational strategy, business execution, and firm onboarding across the platform.',
+    role: 'Founder & Product Architect',
+    badges: ['Forensic Analytics', 'ACFE (USA)', 'SEBI Reg. Analyst'],
+    bio: 'Brings deep financial analytics, statutory rigor, and technology architecture to modernize daily advocate practice.',
   },
   {
     initials: 'BP',
     name: 'Bhupal Pujari',
-    role: 'Director',
+    role: 'Director & Corporate Governance',
     company: 'SOSM Services Pvt Ltd',
-    badges: ['Corporate Leadership'],
-    bio: 'Drives strategic partnerships, compliance, and enterprise growth at SOSM Services.',
+    badges: ['Corporate Law', 'Operations'],
+    bio: 'Oversees statutory compliance, enterprise governance, and institutional legal partnerships across Maharashtra and India.',
+  },
+  {
+    initials: 'PP',
+    name: 'Priyankka Patil',
+    role: 'Head of Client Success',
+    badges: ['Firm Onboarding', 'Client Experience'],
+    bio: 'Spearheads law firm onboarding, advocate workflow optimization, and continuous product feedback loops.',
   },
   {
     initials: 'SJ',
     name: 'Shweta Jadhav',
-    role: 'DevOps Engineer',
-    badges: ['Cloud & Infrastructure'],
-    bio: 'Manages cloud infrastructure, continuous deployment, and platform reliability ensuring 99.9% uptime.',
+    role: 'Lead DevOps & Cloud Systems',
+    badges: ['Cloud Infrastructure', 'Cybersecurity'],
+    bio: 'Architects secure containerized deployments, automated backups, and 99.9% platform availability across Indian cloud datacenters.',
+  },
+];
+
+const pillars = [
+  {
+    icon: Shield,
+    title: 'Attorney-Client Privilege',
+    desc: 'Section 126 compliant data confidentiality with multi-tenant encryption isolating all case records and client files.',
+  },
+  {
+    icon: Server,
+    title: '100% Indian Data Sovereignty',
+    desc: 'All court data, briefs, and client vaults reside exclusively in certified tier-4 datacenters within Indian borders.',
+  },
+  {
+    icon: Globe2,
+    title: 'Vernacular Judicial Access',
+    desc: 'Deep multi-language support (English, Marathi, Hindi, Gujarati) enabling advocates to draft fluently in their court language.',
+  },
+  {
+    icon: Scale,
+    title: 'Bar Council Alignment',
+    desc: 'Engineered as practice-enhancement software adhering strictly to professional ethics and Bar Council standards.',
   },
 ];
 
 export default function About() {
   return (
-    <div className="bg-surface">
-      {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }} className="pt-32 pb-16">
-        <div className="section-container text-center">
-          <span className="inline-block bg-white/10 border border-white/20 text-white text-[12px] font-[700] tracking-wider uppercase px-4 py-1.5 rounded-full mb-5">
+    <div className="bg-[#F8FAFC]">
+      {/* ── HERO ───────────────────────────────────────────────────── */}
+      <section style={{ background: 'linear-gradient(135deg, #0A2540 0%, #0F4C81 50%, #173E65 100%)' }} className="pt-32 pb-20 text-white">
+        <div className="section-container text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-sky-200 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-6">
+            <Scale className="w-3.5 h-3.5 text-amber-300" />
             About Fastcase
-          </span>
-          <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
-            Transforming Indian Legal Practice
+          </div>
+          <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight mb-5">
+            Engineering the Digital Backbone for Indian Legal Practice
           </h1>
-          <p className="text-base sm:text-lg text-white/70 max-w-xl mx-auto">
-            Empowering advocates and law firms with smart, cloud-based practice management tools.
+          <p className="text-base sm:text-lg text-sky-100/75 leading-relaxed max-w-2xl mx-auto">
+            Developed by SOSM Services Private Limited, Fastcase replaces cumbersome paper registers and manual diaries with a high-performance legal operating platform.
           </p>
         </div>
       </section>
 
-      {/* Story & Mission */}
-      <section className="section-padding bg-white border-b border-line">
-        <div className="section-container max-w-4xl">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="card p-6 border-l-4 border-[#0F4C81]">
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="w-5 h-5 text-[#0F4C81]" />
-                <h2 className="font-heading font-[700] text-lg text-ink">Our Mission</h2>
+      {/* ── STATS BAR ──────────────────────────────────────────────── */}
+      <section className="bg-white border-b border-slate-200 py-8">
+        <div className="section-container">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { stat: '12+', label: 'Practice Areas' },
+              { stat: '500+', label: 'Verified Court Drafts' },
+              { stat: '4', label: 'Regional Court Languages' },
+              { stat: '99.9%', label: 'Cloud Uptime SLA' },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="font-heading font-[900] text-3xl sm:text-4xl text-[#0F4C81] tracking-tight">{s.stat}</p>
+                <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">{s.label}</p>
               </div>
-              <p className="text-[13px] text-ink/65 leading-relaxed">
-                To replace fragmented spreadsheets and paper registers with an intelligent, integrated workspace that automates casework, diary tracking, and billing for advocates across India.
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MISSION & VISION ───────────────────────────────────────── */}
+      <section className="section-padding py-16 bg-[#F8FAFC]">
+        <div className="section-container max-w-5xl">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#0F4C81] flex items-center justify-center mb-5">
+                <Target className="w-6 h-6" />
+              </div>
+              <h2 className="font-heading font-[800] text-2xl text-slate-900 mb-3">Our Mission</h2>
+              <p className="text-slate-600 text-[14px] leading-relaxed">
+                To equip every advocate in India — from solo practitioners at district courts to multi-partner litigation firms at High Courts — with enterprise-grade legal technology that automates case tracking, eliminates missed hearings, and streamlines professional fee collections.
               </p>
             </div>
-            <div className="card p-6 border-l-4 border-[#16A34A]">
-              <div className="flex items-center gap-2 mb-3">
-                <Scale className="w-5 h-5 text-[#16A34A]" />
-                <h2 className="font-heading font-[700] text-lg text-ink">Built for Advocates</h2>
+
+            <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5">
+                <Eye className="w-6 h-6" />
               </div>
-              <p className="text-[13px] text-ink/65 leading-relaxed">
-                Designed specifically for Indian district and high courts, supporting multi-language drafting (English, Marathi, Hindi, Gujarati), limitation deadlines, and GST-compliant invoicing.
+              <h2 className="font-heading font-[800] text-2xl text-slate-900 mb-3">Our Vision</h2>
+              <p className="text-slate-600 text-[14px] leading-relaxed">
+                A digitally unified Indian judicial ecosystem where legal professionals save hours on administrative paperwork each day, enabling them to focus on courtroom advocacy, research, and delivering transparent, prompt justice to their clients.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Team */}
-      <section className="section-padding bg-surface">
+      {/* ── CORE PILLARS ───────────────────────────────────────────── */}
+      <section className="section-padding py-16 bg-white border-y border-slate-200">
         <div className="section-container">
-          <div className="text-center mb-10">
-            <p className="eyebrow mb-2">Leadership & Engineering</p>
-            <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-ink">The Fastcase Team</h2>
+          <div className="text-center mb-12">
+            <p className="eyebrow mb-2">Our Foundation</p>
+            <h2 className="font-heading font-[800] text-3xl text-slate-900">Built on Trust & Professional Ethics</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {pillars.map((p) => {
+              const Icon = p.icon;
+              return (
+                <div key={p.title} className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all">
+                  <div className="w-11 h-11 rounded-xl bg-white text-[#0F4C81] border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-heading font-[700] text-base text-slate-900 mb-2">{p.title}</h3>
+                  <p className="text-[13px] text-slate-600 leading-relaxed">{p.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── LEADERSHIP TEAM ────────────────────────────────────────── */}
+      <section className="section-padding py-16 bg-[#F8FAFC]">
+        <div className="section-container">
+          <div className="text-center mb-12">
+            <p className="eyebrow mb-2">Leadership & Technology</p>
+            <h2 className="font-heading font-[800] text-3xl text-slate-900">The Minds Behind Fastcase</h2>
+            <p className="text-slate-500 text-sm max-w-lg mx-auto mt-2">
+              Combining forensic analytics, operational legal acumen, and high-reliability cloud architecture.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {team.map((m) => (
-              <div key={m.name} className="card p-5 flex flex-col justify-between hover:shadow-card-hover transition-all">
+              <div key={m.name} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                 <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-[#0F4C81]/10 border border-[#0F4C81]/20 flex items-center justify-center flex-shrink-0 font-bold text-[#0F4C81] text-xs">
+                  <div className="flex items-center gap-3.5 mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0F4C81] to-[#1E4E7C] text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
                       {m.initials}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-heading font-[700] text-ink text-[14px] leading-tight truncate">{m.name}</p>
-                      <p className="text-[11px] font-[600] text-teal uppercase tracking-wide mt-0.5">{m.role}</p>
+                      <p className="font-heading font-[800] text-[15px] text-slate-900 leading-snug truncate">{m.name}</p>
+                      <p className="text-[11px] font-semibold text-[#0EA5A4] uppercase tracking-wide mt-0.5">{m.role}</p>
                     </div>
                   </div>
-                  <p className="text-[12px] text-ink/60 leading-relaxed mb-3">{m.bio}</p>
+                  <p className="text-[13px] text-slate-600 leading-relaxed mb-4">{m.bio}</p>
                 </div>
-                <div className="flex flex-wrap gap-1 pt-3 border-t border-line">
+                <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
                   {m.badges.map((b) => (
-                    <span key={b} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/5 text-primary border border-primary/10">
+                    <span key={b} className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                       {b}
                     </span>
                   ))}
@@ -123,53 +197,91 @@ export default function About() {
         </div>
       </section>
 
-      {/* Company Info */}
-      <section className="section-padding-sm bg-white border-t border-line">
-        <div className="section-container max-w-3xl">
-          <div className="card p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-[#0F4C81] rounded-lg flex items-center justify-center text-white">
-                  <Building2 className="w-5 h-5" />
+      {/* ── STATUTORY CORPORATE REGISTRATION ───────────────────────── */}
+      <section className="section-padding py-16 bg-white border-t border-slate-200">
+        <div className="section-container max-w-4xl">
+          <div className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-[#0F4C81] text-white rounded-2xl flex items-center justify-center shadow-md">
+                  <Building2 className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-[800] text-base text-ink">SOSM Services Private Limited</h3>
-                  <p className="text-[12px] text-ink/50">Incorporated under Companies Act, 2013 · India</p>
+                  <h3 className="font-heading font-[800] text-xl text-slate-900">SOSM Services Private Limited</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Incorporated under Companies Act, 2013 · Ministry of Corporate Affairs, India</p>
                 </div>
               </div>
-              <div className="flex items-start gap-2 text-ink/60 text-[12px] mt-3">
-                <MapPin className="w-4 h-4 text-teal flex-shrink-0 mt-0.5" />
-                <span>B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra</span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full">
+                <CheckCircle className="w-4 h-4 text-emerald-600" /> Active & Verified Entity
+              </span>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 pt-6">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Registered Corporate Office</p>
+                <div className="flex items-start gap-2.5 text-slate-700 text-sm leading-relaxed">
+                  <MapPin className="w-4 h-4 text-[#0EA5A4] flex-shrink-0 mt-1" />
+                  <address className="not-italic">
+                    B4/5, Omkar Plaza, Rajaram Road,<br />
+                    Near ICICI Bank, E Ward, Shahupuri,<br />
+                    Kolhapur – 416001, Maharashtra, India
+                  </address>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Statutory Identifiers</p>
+                <div className="space-y-1.5 text-sm text-slate-700">
+                  <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 text-xs">CIN</span>
+                    <span className="font-mono font-semibold text-xs text-slate-800">U70200PN2024PTC236589</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 text-xs">GSTIN</span>
+                    <span className="font-mono font-semibold text-xs text-slate-800">27ABOCS9037R1Z6</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-slate-500 text-xs">Jurisdiction</span>
+                    <span className="font-semibold text-xs text-slate-800">Kolhapur & Bombay High Court</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex-shrink-0">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#16A34A] bg-[#16A34A]/8 border border-[#16A34A]/20 px-3 py-1.5 rounded-full">
-                <CheckCircle className="w-3.5 h-3.5" /> GST Registered
-              </span>
+
+            <div className="mt-6 pt-6 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+              <div className="flex items-center gap-4">
+                <a href="mailto:contact@fastcase.in" className="flex items-center gap-1.5 hover:text-[#0F4C81] transition-colors">
+                  <Mail className="w-3.5 h-3.5 text-[#0EA5A4]" /> contact@fastcase.in
+                </a>
+                <a href="tel:+919405669420" className="flex items-center gap-1.5 hover:text-[#0F4C81] transition-colors">
+                  <Phone className="w-3.5 h-3.5 text-[#0EA5A4]" /> +91 94056 69420
+                </a>
+              </div>
+              <span>Fastcase Platform by SOSM Services Pvt Ltd</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="section-padding-sm" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
-        <div className="section-container text-center">
-          <h2 className="font-heading font-[800] text-2xl sm:text-3xl tracking-tight text-white mb-3">
-            Ready to Get Started?
+      {/* ── BOTTOM CTA ─────────────────────────────────────────────── */}
+      <section className="section-padding-sm py-16" style={{ background: 'linear-gradient(135deg, #0A2540 0%, #123C66 100%)' }}>
+        <div className="section-container text-center text-white">
+          <h2 className="font-heading font-[800] text-2xl sm:text-3xl mb-3">
+            Join India's Modern Legal Revolution
           </h2>
-          <p className="text-white/65 text-sm sm:text-base mb-6 max-w-md mx-auto">
-            Join advocates and legal professionals modernizing their practice with Fastcase.
+          <p className="text-sky-100/70 text-sm sm:text-base mb-7 max-w-md mx-auto">
+            Experience the difference of software engineered specifically for Indian advocates.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a
               href={`${getErpUrl()}/register`}
-              className="inline-flex items-center gap-2 bg-white text-[#0F4C81] font-[700] text-[14px] px-6 py-3 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-md"
+              className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-[800] text-[14px] px-7 py-3.5 rounded-xl transition-all duration-150 shadow-lg"
             >
               Registration <ArrowRight className="w-4 h-4" />
             </a>
             <a
               href={`${getErpUrl()}/login`}
-              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-[600] text-[14px] px-6 py-3 rounded-xl hover:bg-white/15 transition-all duration-150"
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[600] text-[14px] px-7 py-3.5 rounded-xl transition-all duration-150"
             >
               Advocate Login
             </a>

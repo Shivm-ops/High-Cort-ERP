@@ -427,29 +427,37 @@ export default function Home() {
       </section>
 
       {/* ── FINAL CTA ──────────────────────────────────────────────── */}
-      <section className="section-padding bg-white">
+      <section className="section-padding-sm py-20" style={{ background: 'linear-gradient(135deg, #0A2540 0%, #123C66 100%)' }}>
         <div className="section-container">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="eyebrow mb-4">Get Started Today</p>
-            <h2 className="display-heading text-4xl lg:text-5xl mb-5">
-              The most professional legal platform in India.
+          <div className="max-w-3xl mx-auto text-center text-white">
+            <span className="inline-block bg-white/10 border border-white/20 text-sky-200 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5">
+              Get Started Today
+            </span>
+            <h2 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl mb-4 tracking-tight">
+              The Modern Legal Operating Platform for Indian Advocates
             </h2>
-            <p className="text-[18px] text-ink/50 max-w-xl mx-auto mb-10">
-              Start your free trial and experience how Fastcase transforms your legal practice — no credit card required.
+            <p className="text-[17px] text-sky-100/75 max-w-xl mx-auto mb-9 leading-relaxed">
+              Experience how Fastcase automates your daily casework, hearing schedules, and client billing — with 14 days free trial.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <a href={`${getErpUrl()}/register`} className="btn-primary-lg">
+            <div className="flex flex-wrap justify-center gap-4 mb-9">
+              <a
+                href={`${getErpUrl()}/register`}
+                className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-[800] text-[15px] px-8 py-3.5 rounded-xl transition-all duration-150 shadow-xl"
+              >
                 Registration <ArrowRight className="w-4 h-4" />
               </a>
-              <a href={`${getErpUrl()}/login`} className="btn-secondary-lg">
+              <a
+                href={`${getErpUrl()}/login`}
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[600] text-[15px] px-7 py-3.5 rounded-xl transition-all duration-150"
+              >
                 Advocate Login
               </a>
             </div>
             <div className="flex flex-wrap justify-center gap-6">
-              {['14-day free trial', 'No credit card required', 'Full feature access', 'Onboarding support'].map((t) => (
+              {['14-day free trial', 'No credit card required', 'Full feature access', 'Dedicated onboarding'].map((t) => (
                 <div key={t} className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-success" />
-                  <span className="text-[13px] text-ink/50">{t}</span>
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span className="text-[13px] text-sky-100/70">{t}</span>
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
-import { CheckCircle, ArrowRight, Zap, Building2, Crown, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { CheckCircle, ArrowRight, Zap, Building2, Crown, ChevronDown, Sparkles, Shield, HelpCircle } from 'lucide-react';
 
 const getErpUrl = () => {
   if (typeof window !== 'undefined') {
@@ -13,150 +13,228 @@ const getErpUrl = () => {
   return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
 };
 
-const plans = [
-  {
-    icon: Zap,
-    name: 'Starter',
-    tagline: 'Solo Advocates',
-    price: '₹999',
-    period: '/month',
-    description: 'Essential toolkit to run your solo practice cleanly and efficiently.',
-    cta: 'Registration',
-    ctaHref: `${getErpUrl()}/register`,
-    highlight: false,
-    features: [
-      'Up to 50 active court matters',
-      'Client management & KYC vault',
-      'Hearing diary & smart reminders',
-      '50+ verified draft templates',
-      'GST tax invoice generation',
-    ],
-  },
-  {
-    icon: Crown,
-    name: 'Professional',
-    tagline: 'Growing Law Firms',
-    price: '₹2,499',
-    period: '/month',
-    description: 'Advanced capabilities for multi-advocate litigation chambers.',
-    cta: 'Registration',
-    ctaHref: `${getErpUrl()}/register`,
-    highlight: true,
-    badge: 'Most Popular',
-    features: [
-      'Unlimited active court matters',
-      'Up to 5 advocate team accounts',
-      'Multi-language drafts (EN, MR, HI, GU)',
-      'OCR notice & evidence processing',
-      'Legal research & citation library',
-      'Client portal & WhatsApp alerts',
-    ],
-  },
-  {
-    icon: Building2,
-    name: 'Enterprise',
-    tagline: 'Large Legal Chambers',
-    price: 'Custom',
-    period: '',
-    description: 'Customized deployment and dedicated support for large firms.',
-    cta: 'Contact Sales',
-    ctaTo: '/contact',
-    highlight: false,
-    features: [
-      'Unlimited advocate & staff seats',
-      'Dedicated account manager',
-      'Custom workflow integrations',
-      'Priority SLA & phone support',
-      'Enterprise security & audit logs',
-    ],
-  },
-];
-
 const faqs = [
-  { q: 'Is there a free trial?', a: 'Yes, every plan includes a 14-day free trial with no credit card required.' },
-  { q: 'Can I upgrade or downgrade later?', a: 'Yes, you can easily change plans at any time from your account settings.' },
-  { q: 'Are GST invoices provided?', a: 'Yes, Fastcase issues GST-compliant tax invoices for all subscription payments.' },
-  { q: 'What happens to my data if I cancel?', a: 'Your data remains exportable for 90 days following cancellation.' },
+  { q: 'Is there a free trial?', a: 'Yes. Every plan includes a 14-day full-access trial without entering credit card details.' },
+  { q: 'How does Annual billing save me money?', a: 'When you choose Annual billing, you get a 20% discount on both Starter and Professional plans, saving you up to ₹6,000 every year.' },
+  { q: 'Can I switch or customize plans later?', a: 'Yes. You can upgrade, downgrade, or add additional advocate seats anytime from your firm billing dashboard.' },
+  { q: 'Are GST tax invoices provided?', a: 'Yes. Fastcase generates proper GST-compliant tax invoices for every payment so you can claim business expenses.' },
+  { q: 'Where is my legal data hosted?', a: 'All data is stored exclusively in high-security, ISO-compliant data centers located inside India (Bangalore & Mumbai).' },
 ];
 
 export default function Pricing() {
+  const [isAnnual, setIsAnnual] = useState(true);
   const [openFaq, setOpenFaq] = useState(null);
 
+  const plans = [
+    {
+      id: 'starter',
+      icon: Zap,
+      name: 'Starter',
+      tagline: 'Solo Advocates & Independent Counsels',
+      price: isAnnual ? '₹799' : '₹999',
+      period: '/month',
+      billedNote: isAnnual ? 'Billed annually (Save ₹2,400/yr)' : 'Billed monthly',
+      description: 'The complete digital workspace to manage your individual legal practice cleanly.',
+      cta: 'Registration',
+      ctaHref: `${getErpUrl()}/register`,
+      highlight: false,
+      features: [
+        'Up to 50 active court matters',
+        '1 Advocate workspace',
+        'Client directory & KYC document vault',
+        'Hearing diary & daily cause list sync',
+        '50+ court-verified draft templates',
+        'GST-compliant legal tax invoicing',
+        'WhatsApp hearing date alerts',
+      ],
+    },
+    {
+      id: 'pro',
+      icon: Crown,
+      name: 'Professional',
+      tagline: 'Chambers & Growing Law Firms',
+      price: isAnnual ? '₹1,999' : '₹2,499',
+      period: '/month',
+      billedNote: isAnnual ? 'Billed annually (Save ₹6,000/yr)' : 'Billed monthly',
+      description: 'Advanced collaboration, multi-language drafts, and full firm automation.',
+      cta: 'Registration',
+      ctaHref: `${getErpUrl()}/register`,
+      highlight: true,
+      badge: 'RECOMMENDED FOR FIRMS',
+      features: [
+        'Unlimited active court matters',
+        'Up to 5 advocate & associate accounts',
+        'Multi-language drafting (EN, MR, HI, GU)',
+        'OCR notice extraction & reply studio',
+        'Precedent vault & citation library',
+        'Client self-service case portal',
+        'Firm receivables ledger & audit logs',
+        'Priority email & WhatsApp assistance',
+      ],
+    },
+    {
+      id: 'enterprise',
+      icon: Building2,
+      name: 'Enterprise',
+      tagline: 'Large Legal Firms & Corporate Counsels',
+      price: 'Custom',
+      period: '',
+      billedNote: 'Tailored for large teams',
+      description: 'Dedicated infrastructure, custom security policies, and SLA-backed support.',
+      cta: 'Contact Sales',
+      ctaTo: '/contact',
+      highlight: false,
+      features: [
+        'Unlimited advocate & clerk accounts',
+        'Dedicated account manager',
+        'Custom court workflow configurations',
+        'Enterprise SSO & role permissions',
+        '99.99% uptime guarantee with SLA',
+        'Custom legal template digitization',
+      ],
+    },
+  ];
+
   return (
-    <div className="bg-surface">
-      {/* Hero */}
-      <section className="pt-32 pb-14 bg-white border-b border-line">
-        <div className="section-container text-center">
-          <p className="eyebrow mb-3">Transparent Pricing</p>
-          <h1 className="display-heading text-3xl sm:text-4xl md:text-5xl mb-4">
-            Simple, Transparent Plans
+    <div className="bg-[#F8FAFC]">
+      {/* ── HERO ───────────────────────────────────────────────────── */}
+      <section className="relative pt-32 pb-16 bg-gradient-to-b from-white via-slate-50 to-[#F8FAFC] border-b border-slate-200">
+        <div className="section-container text-center max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-[#0F4C81]/8 border border-[#0F4C81]/15 text-[#0F4C81] text-[12px] font-bold tracking-wide uppercase rounded-full px-4 py-1.5 mb-5">
+            <Sparkles className="w-3.5 h-3.5 text-[#0EA5A4]" />
+            Transparent & Customizable Pricing
+          </div>
+
+          <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-slate-900 mb-4">
+            Invest in Your Legal Practice
           </h1>
-          <p className="text-base sm:text-lg text-ink/60 max-w-lg mx-auto">
-            Choose the plan that fits your practice. All plans include a 14-day free trial.
+
+          <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto mb-8">
+            Choose the right plan for your caseload. Switch billing cycles anytime to maximize savings.
           </p>
+
+          {/* ── CUSTOMIZABLE BILLING TOGGLE ──────────────────────────── */}
+          <div className="inline-flex items-center bg-slate-200/80 p-1.5 rounded-2xl border border-slate-300/70 shadow-inner">
+            <button
+              onClick={() => setIsAnnual(false)}
+              className={`px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200 ${
+                !isAnnual
+                  ? 'bg-white text-slate-900 shadow-md scale-100'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Monthly Billing
+            </button>
+            <button
+              onClick={() => setIsAnnual(true)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-bold transition-all duration-200 ${
+                isAnnual
+                  ? 'bg-[#0F4C81] text-white shadow-md scale-100'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <span>Annual Billing</span>
+              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                isAnnual ? 'bg-amber-400 text-slate-950 shadow-sm' : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                Save 20%
+              </span>
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Plans */}
-      <section className="section-padding">
+      {/* ── PRICING CARDS ──────────────────────────────────────────── */}
+      <section className="section-padding py-16">
         <div className="section-container">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 items-stretch">
             {plans.map((plan) => {
               const Icon = plan.icon;
               return (
                 <div
                   key={plan.name}
-                  className={`relative rounded-2xl border p-7 flex flex-col justify-between
-                    ${plan.highlight
-                      ? 'bg-primary border-primary shadow-feature text-white'
-                      : 'bg-white border-line shadow-card hover:shadow-card-hover transition-shadow'
-                    }`}
+                  className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                    plan.highlight
+                      ? 'bg-gradient-to-b from-[#0B2545] via-[#133A66] to-[#0D2D52] text-white border-2 border-[#1E4E7C] shadow-[0_20px_50px_-10px_rgba(11,37,69,0.3)] hover:shadow-[0_25px_60px_-10px_rgba(11,37,69,0.4)] lg:-translate-y-2'
+                      : 'bg-white border border-slate-200 text-slate-900 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_12px_32px_-6px_rgba(15,23,42,0.1)] hover:-translate-y-1'
+                  }`}
                 >
+                  {/* Badge */}
                   {plan.badge && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="inline-flex items-center bg-teal text-white text-[11px] font-bold px-3 py-1 rounded-full tracking-wide uppercase">
+                      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-[11px] font-black px-4 py-1 rounded-full tracking-wider shadow-md">
+                        <Sparkles className="w-3 h-3 text-slate-950" />
                         {plan.badge}
                       </span>
                     </div>
                   )}
 
                   <div>
-                    <div className="flex items-center justify-between mb-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
                       <div>
-                        <p className={`font-heading font-[800] text-xl tracking-tight ${plan.highlight ? 'text-white' : 'text-ink'}`}>
+                        <h2 className={`font-heading font-[800] text-2xl tracking-tight mb-1 ${
+                          plan.highlight ? 'text-white' : 'text-slate-900'
+                        }`}>
                           {plan.name}
-                        </p>
-                        <p className={`text-[12px] font-medium ${plan.highlight ? 'text-white/70' : 'text-ink/50'}`}>
+                        </h2>
+                        <p className={`text-[12px] font-medium ${
+                          plan.highlight ? 'text-sky-200/80' : 'text-slate-500'
+                        }`}>
                           {plan.tagline}
                         </p>
                       </div>
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${plan.highlight ? 'bg-white/15' : 'bg-primary/8'}`}>
-                        <Icon className={`w-5 h-5 ${plan.highlight ? 'text-white' : 'text-primary'}`} />
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                        plan.highlight ? 'bg-white/10 text-amber-300' : 'bg-slate-100 text-[#0F4C81]'
+                      }`}>
+                        <Icon className="w-6 h-6" />
                       </div>
                     </div>
 
-                    <div className="mb-4">
-                      <div className="flex items-baseline gap-1">
-                        <span className={`font-heading font-[900] text-3xl sm:text-4xl tracking-tight ${plan.highlight ? 'text-white' : 'text-ink'}`}>
+                    {/* Price */}
+                    <div className="mb-5 pt-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`font-heading font-[900] text-4xl sm:text-5xl tracking-tight ${
+                          plan.highlight ? 'text-white' : 'text-slate-900'
+                        }`}>
                           {plan.price}
                         </span>
                         {plan.period && (
-                          <span className={`text-[13px] ${plan.highlight ? 'text-white/60' : 'text-ink/40'}`}>
+                          <span className={`text-[14px] font-medium ${
+                            plan.highlight ? 'text-sky-200/70' : 'text-slate-500'
+                          }`}>
                             {plan.period}
                           </span>
                         )}
                       </div>
-                      <p className={`text-[12px] mt-1.5 leading-relaxed ${plan.highlight ? 'text-white/70' : 'text-ink/55'}`}>
-                        {plan.description}
+                      <p className={`text-[11px] font-semibold mt-1 ${
+                        plan.highlight ? 'text-amber-300' : 'text-[#0EA5A4]'
+                      }`}>
+                        {plan.billedNote}
                       </p>
                     </div>
 
-                    <div className={`pt-4 mb-6 border-t ${plan.highlight ? 'border-white/15' : 'border-line'}`}>
-                      <ul className="space-y-2">
+                    {/* Description */}
+                    <p className={`text-[13px] leading-relaxed mb-6 pb-6 border-b ${
+                      plan.highlight ? 'text-slate-200 border-white/15' : 'text-slate-600 border-slate-100'
+                    }`}>
+                      {plan.description}
+                    </p>
+
+                    {/* Features List */}
+                    <div className="mb-8">
+                      <p className={`text-[11px] font-bold uppercase tracking-wider mb-3.5 ${
+                        plan.highlight ? 'text-sky-200/60' : 'text-slate-400'
+                      }`}>
+                        Included in this plan:
+                      </p>
+                      <ul className="space-y-2.5">
                         {plan.features.map((f) => (
-                          <li key={f} className="flex items-center gap-2">
-                            <CheckCircle className={`w-4 h-4 flex-shrink-0 ${plan.highlight ? 'text-teal-300' : 'text-[#16A34A]'}`} />
-                            <span className={`text-[13px] ${plan.highlight ? 'text-white/90' : 'text-ink/70'}`}>
+                          <li key={f} className="flex items-start gap-2.5 text-[13px]">
+                            <CheckCircle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                              plan.highlight ? 'text-emerald-400' : 'text-emerald-600'
+                            }`} />
+                            <span className={plan.highlight ? 'text-slate-100' : 'text-slate-700'}>
                               {f}
                             </span>
                           </li>
@@ -165,30 +243,36 @@ export default function Pricing() {
                     </div>
                   </div>
 
+                  {/* CTA Button */}
                   <div>
                     {plan.ctaHref ? (
                       <a
                         href={plan.ctaHref}
-                        className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[14px] py-3 rounded-xl transition-all duration-150
-                          ${plan.highlight
-                            ? 'bg-white text-primary hover:bg-white/90 shadow-md'
-                            : 'btn-primary'
-                          }`}
+                        className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[15px] py-3.5 rounded-xl transition-all duration-200 ${
+                          plan.highlight
+                            ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg hover:shadow-xl hover:scale-[1.02]'
+                            : 'bg-[#0F4C81] hover:bg-[#0D4474] text-white shadow-md hover:shadow-lg'
+                        }`}
                       >
                         {plan.cta} <ArrowRight className="w-4 h-4" />
                       </a>
                     ) : (
                       <Link
                         to={plan.ctaTo}
-                        className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[14px] py-3 rounded-xl transition-all duration-150
-                          ${plan.highlight
-                            ? 'bg-white text-primary hover:bg-white/90 shadow-md'
-                            : 'btn-secondary border border-line'
-                          }`}
+                        className={`w-full inline-flex items-center justify-center gap-2 font-[700] text-[15px] py-3.5 rounded-xl transition-all duration-200 ${
+                          plan.highlight
+                            ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg'
+                            : 'bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 shadow-sm'
+                        }`}
                       >
                         {plan.cta} <ArrowRight className="w-4 h-4" />
                       </Link>
                     )}
+                    <p className={`text-center text-[11px] mt-2.5 ${
+                      plan.highlight ? 'text-sky-200/50' : 'text-slate-400'
+                    }`}>
+                      14-day free trial · Cancel anytime
+                    </p>
                   </div>
                 </div>
               );
@@ -197,24 +281,54 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* FAQs */}
-      <section className="py-14 bg-white border-t border-line">
+      {/* ── SECURITY & GUARANTEES ──────────────────────────────────── */}
+      <section className="py-12 bg-white border-y border-slate-200">
+        <div className="section-container">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="flex flex-col items-center p-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5">
+                <Shield className="w-5 h-5" />
+              </div>
+              <h3 className="font-heading font-[700] text-[15px] text-slate-900 mb-1">100% Indian Data Sovereignty</h3>
+              <p className="text-[12px] text-slate-500 max-w-xs">Data stored exclusively in high-tier Mumbai and Bengaluru facilities.</p>
+            </div>
+            <div className="flex flex-col items-center p-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
+                <CheckCircle className="w-5 h-5" />
+              </div>
+              <h3 className="font-heading font-[700] text-[15px] text-slate-900 mb-1">Zero Hidden Fees</h3>
+              <p className="text-[12px] text-slate-500 max-w-xs">Transparent pricing with GST invoicing and no unexpected surcharges.</p>
+            </div>
+            <div className="flex flex-col items-center p-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-2.5">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <h3 className="font-heading font-[700] text-[15px] text-slate-900 mb-1">Dedicated Advocate Support</h3>
+              <p className="text-[12px] text-slate-500 max-w-xs">Direct onboarding assistance from team specialists via call and WhatsApp.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQS ───────────────────────────────────────────────────── */}
+      <section className="section-padding py-16 bg-[#F8FAFC]">
         <div className="section-container max-w-3xl">
           <div className="text-center mb-10">
-            <h2 className="font-heading font-[800] text-2xl text-ink">Frequently Asked Questions</h2>
+            <p className="eyebrow mb-2">Got Questions?</p>
+            <h2 className="font-heading font-[800] text-3xl text-slate-900">Pricing FAQs</h2>
           </div>
           <div className="space-y-3">
             {faqs.map((faq, idx) => (
-              <div key={faq.q} className="border border-line rounded-xl overflow-hidden">
+              <div key={faq.q} className="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200">
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-surface transition-colors"
+                  className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-50/70 transition-colors"
                 >
-                  <span className="font-[600] text-[14px] text-ink">{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-ink/40 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`} />
+                  <span className="font-[700] text-[14px] text-slate-900">{faq.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openFaq === idx ? 'rotate-180 text-[#0F4C81]' : ''}`} />
                 </button>
                 {openFaq === idx && (
-                  <div className="px-4 pb-4 pt-1 bg-surface/50 border-t border-line text-[13px] text-ink/65 leading-relaxed">
+                  <div className="px-5 pb-5 pt-1 text-[13px] text-slate-600 leading-relaxed border-t border-slate-100">
                     {faq.a}
                   </div>
                 )}
@@ -224,25 +338,25 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="section-padding-sm" style={{ background: 'linear-gradient(135deg, #0F4C81 0%, #1E3A5F 100%)' }}>
-        <div className="section-container text-center">
-          <h2 className="font-heading font-[800] text-2xl sm:text-3xl tracking-tight text-white mb-3">
-            Get Started in Minutes
+      {/* ── BOTTOM CTA ─────────────────────────────────────────────── */}
+      <section className="section-padding-sm py-16" style={{ background: 'linear-gradient(135deg, #0A2540 0%, #123C66 100%)' }}>
+        <div className="section-container text-center text-white">
+          <h2 className="font-heading font-[800] text-2xl sm:text-3xl mb-3">
+            Ready to Digitize Your Practice?
           </h2>
-          <p className="text-white/65 text-sm sm:text-base mb-6 max-w-md mx-auto">
-            Create your account today. No long-term commitment, cancel anytime.
+          <p className="text-sky-100/70 text-sm sm:text-base mb-7 max-w-md mx-auto">
+            Get started in less than 2 minutes. Experience Fastcase free for 14 days.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a
               href={`${getErpUrl()}/register`}
-              className="inline-flex items-center gap-2 bg-white text-[#0F4C81] font-[700] text-[14px] px-6 py-3 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-md"
+              className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-[800] text-[14px] px-7 py-3.5 rounded-xl transition-all duration-150 shadow-lg"
             >
               Registration <ArrowRight className="w-4 h-4" />
             </a>
             <a
               href={`${getErpUrl()}/login`}
-              className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-[600] text-[14px] px-6 py-3 rounded-xl hover:bg-white/15 transition-all duration-150"
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[600] text-[14px] px-7 py-3.5 rounded-xl transition-all duration-150"
             >
               Advocate Login
             </a>
