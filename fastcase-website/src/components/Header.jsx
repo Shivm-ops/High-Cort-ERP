@@ -170,7 +170,7 @@ export default function Header() {
               href={`${getErpUrl()}/register`}
               className="btn-primary text-[14px] py-2 px-4 rounded-lg"
             >
-              Start Free Trial
+              Registration
             </a>
 
             <button onClick={() => setMobileOpen(o => !o)} aria-label="Toggle menu"
@@ -201,7 +201,7 @@ export default function Header() {
                 Login
               </a>
               <a href={`${getErpUrl()}/register`} className="btn-primary w-full rounded-xl block text-center py-2.5 px-4">
-                Start Free Trial
+                Registration
               </a>
             </div>
           </div>
