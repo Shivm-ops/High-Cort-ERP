@@ -173,32 +173,7 @@ export default function Features() {
           </div>
         </div>
       </section>
-
-      {/* CTA */}
-      <section className="section-padding-sm py-16" style={{ background: 'linear-gradient(135deg, #0A2540 0%, #123C66 100%)' }}>
-        <div className="section-container text-center text-white">
-          <h2 className="font-heading font-[800] text-2xl sm:text-3xl tracking-tight mb-3">
-            Ready to Upgrade Your Practice?
-          </h2>
-          <p className="text-sky-100/70 text-sm sm:text-base mb-7 max-w-md mx-auto">
-            Get instant access to all 16 features. Simple onboarding with no credit card required.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href={`${getErpUrl()}/register`}
-              className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-[800] text-[14px] px-7 py-3.5 rounded-xl transition-all duration-150 shadow-lg"
-            >
-              Registration <ArrowRight className="w-4 h-4" />
-            </a>
-            <a
-              href={`${getErpUrl()}/login`}
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-[600] text-[14px] px-7 py-3.5 rounded-xl transition-all duration-150"
-            >
-              Advocate Login
-            </a>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
+
