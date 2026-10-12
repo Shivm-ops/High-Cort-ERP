@@ -1,6 +1,20 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+function getApiUrl(): string {
+  if (typeof window !== "undefined") {
+    if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    const host = window.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
+      return `${window.location.protocol}//api.${rootDomain}/api/v1`;
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+}
+
+export const API_URL = getApiUrl();
 
 export const api = axios.create({
   baseURL: API_URL,
