@@ -632,11 +632,11 @@ def seed_master_templates(db: Session):
 
         if existing:
             # Ensure it is marked public and active
-            if not existing.is_public_template:
-                existing.is_public_template = True
+            if not getattr(existing, "is_public_template", False):
+                setattr(existing, "is_public_template", True)
                 updated_count += 1
-            if existing.is_deleted:
-                existing.is_deleted = False
+            if getattr(existing, "is_deleted", False):
+                setattr(existing, "is_deleted", False)
                 updated_count += 1
         else:
             draft = Draft(
@@ -665,7 +665,7 @@ def seed_master_templates(db: Session):
         Draft.is_public_template == False,
     ).all()
     for d in unmarked:
-        d.is_public_template = True
+        setattr(d, "is_public_template", True)
         updated_count += 1
 
     db.commit()

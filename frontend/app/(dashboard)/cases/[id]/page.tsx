@@ -1026,12 +1026,20 @@ export default function CaseDetailPage() {
                   </button>
                 )}
                 {activeTab === "drafts" && (
-                  <button
-                    onClick={() => setShowAddDraft(true)}
-                    className="ml-auto flex items-center gap-1.5 rounded-xl bg-sidebar px-3 py-2 text-sm font-medium text-white hover:bg-sidebar-dark shadow-sm transition-colors"
-                  >
-                    <Plus className="w-4 h-4" /> Create Draft
-                  </button>
+                  <div className="ml-auto flex items-center gap-2">
+                    <button
+                      onClick={() => router.push(`/draft-workspace?caseId=${id}&clientId=${caseData.client_id || ""}`)}
+                      className="flex items-center gap-1.5 rounded-xl bg-sidebar px-3 py-2 text-sm font-medium text-white hover:bg-sidebar-dark shadow-sm transition-colors"
+                    >
+                      <Plus className="w-4 h-4" /> Open Draft Workspace
+                    </button>
+                    <button
+                      onClick={() => setShowAddDraft(true)}
+                      className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors"
+                    >
+                      Quick Draft
+                    </button>
+                  </div>
                 )}
                 {activeTab === "notices" && (
                   <button
@@ -1859,16 +1867,17 @@ export default function CaseDetailPage() {
                     {caseData.drafts.map((d) => (
                       <div
                         key={d.id}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 group transition-colors"
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 group transition-colors cursor-pointer"
+                        onClick={() => router.push(`/draft-workspace?draftId=${d.id}`)}
                       >
-                        <div 
-                          className="flex-1 cursor-pointer"
-                          onClick={() => router.push(`/draft-workspace?draftId=${d.id}`)}
-                        >
-                          <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors flex items-center gap-2">
                             {d.title}
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
+                              v{d.version || 1}
+                            </span>
                           </div>
-                          <div className="text-xs text-gray-400 capitalize">
+                          <div className="text-xs text-gray-400 capitalize mt-0.5">
                             {d.category} · {d.language}
                           </div>
                         </div>
@@ -1878,14 +1887,18 @@ export default function CaseDetailPage() {
                           </span>
                         )}
                         <button
-                          onClick={() => router.push(`/draft-workspace?draftId=${d.id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/draft-workspace?draftId=${d.id}`);
+                          }}
                           title="Open & Edit in Workspace"
-                          className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-200"
+                          className="p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-200"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setPrintDraftId(d.id);
                             setShowPrintPreview(true);
                           }}

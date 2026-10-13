@@ -16,8 +16,9 @@ export interface Draft {
   case_id?: string;
   client_id?: string;
   client_name?: string;
-  case_number?: string;
+  case_no?: string;
   case_title?: string;
+  parent_id?: string;
   tags: string[];
   is_template: boolean;
   ai_generated: boolean;
@@ -47,7 +48,7 @@ export interface DraftCreate {
 const KEYS = {
   all: ["drafts"] as const,
   list: (p?: Record<string, unknown>) => ["drafts", "list", p] as const,
-  templates: (p?: unknown) => ["drafts", "templates", p] as const,
+  templates: (catOrParams?: string | Record<string, unknown>) => ["drafts", "templates", catOrParams] as const,
   detail: (id: string) => ["drafts", id] as const,
 };
 
@@ -58,7 +59,6 @@ export function useDrafts(params?: {
   search?: string;
   category?: string;
   language?: string;
-  status?: string;
 }) {
   return useQuery({
     queryKey: KEYS.list(params),
@@ -69,8 +69,8 @@ export function useDrafts(params?: {
   });
 }
 
-export function useTemplates(params?: { category?: string; language?: string } | string) {
-  const queryParams = typeof params === "string" ? { category: params } : params;
+export function useTemplates(params?: string | { category?: string; language?: string; search?: string }) {
+  const queryParams = typeof params === "string" ? (params ? { category: params } : undefined) : params;
   return useQuery({
     queryKey: KEYS.templates(queryParams),
     queryFn: async () => {
@@ -79,7 +79,6 @@ export function useTemplates(params?: { category?: string; language?: string } |
     },
   });
 }
-
 
 export function useDraft(id: string) {
   return useQuery({
@@ -94,12 +93,12 @@ export function useDraft(id: string) {
 
 export function useAutoFill() {
   return useMutation({
-    mutationFn: async (payload: { template_content: string; client_id: string; case_id?: string }) => {
+    mutationFn: async (payload: { template_content: string; client_id?: string; case_id?: string }) => {
       const { data } = await api.post("/drafts/auto-fill", payload);
       return data as {
         filled_content: string;
         merge_map: Record<string, string>;
-        client_name: string;
+        client_name?: string;
         case_no?: string;
       };
     },
@@ -138,6 +137,21 @@ export function useUpdateDraft() {
   });
 }
 
+export function useDuplicateDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, title }: { id: string; title?: string }) => {
+      const { data } = await api.post(`/drafts/${id}/duplicate`, title ? { title } : {});
+      return data as Draft;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.all });
+      toast.success("Draft duplicated (Save As)");
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+}
+
 export function useDeleteDraft() {
   const qc = useQueryClient();
   return useMutation({
@@ -151,19 +165,3 @@ export function useDeleteDraft() {
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 }
-
-export function useCopyDraft() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { data } = await api.post(`/drafts/${id}/copy`);
-      return data as Draft;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.all });
-      toast.success("Draft copy created");
-    },
-    onError: (e) => toast.error(getErrorMessage(e)),
-  });
-}
-

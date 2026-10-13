@@ -20,79 +20,93 @@ from app.models.case import Case
 
 router = APIRouter()
 
-
-CATEGORY_ALIASES = {
-    "applications": DraftCategory.APPLICATION,
+CATEGORY_MAP = {
     "application": DraftCategory.APPLICATION,
-    "affidavits": DraftCategory.AFFIDAVIT,
+    "applications": DraftCategory.APPLICATION,
     "affidavit": DraftCategory.AFFIDAVIT,
-    "petitions": DraftCategory.PETITION,
+    "affidavits": DraftCategory.AFFIDAVIT,
     "petition": DraftCategory.PETITION,
-    "complaints": DraftCategory.COMPLAINT,
+    "petitions": DraftCategory.PETITION,
     "complaint": DraftCategory.COMPLAINT,
-    "replies": DraftCategory.REPLY,
+    "complaints": DraftCategory.COMPLAINT,
     "reply": DraftCategory.REPLY,
-    "written statements": DraftCategory.WRITTEN_STATEMENT,
+    "replies": DraftCategory.REPLY,
+    "written_statement": DraftCategory.WRITTEN_STATEMENT,
     "written_statements": DraftCategory.WRITTEN_STATEMENT,
     "written statement": DraftCategory.WRITTEN_STATEMENT,
-    "written_statement": DraftCategory.WRITTEN_STATEMENT,
-    "notices": DraftCategory.NOTICE,
+    "written statements": DraftCategory.WRITTEN_STATEMENT,
     "notice": DraftCategory.NOTICE,
-    "agreements": DraftCategory.AGREEMENT,
+    "notices": DraftCategory.NOTICE,
     "agreement": DraftCategory.AGREEMENT,
-    "appeals": DraftCategory.APPEAL,
+    "agreements": DraftCategory.AGREEMENT,
     "appeal": DraftCategory.APPEAL,
+    "appeals": DraftCategory.APPEAL,
     "vakalatnama": DraftCategory.VAKALATNAMA,
-    "motions": DraftCategory.MOTION,
     "motion": DraftCategory.MOTION,
-    "bail": DraftCategory.APPLICATION,
-    "civil": DraftCategory.PETITION,
+    "motions": DraftCategory.MOTION,
     "other": DraftCategory.OTHER,
 }
 
-LANG_ALIASES = {
+LANGUAGE_MAP = {
     "en": DraftLanguage.ENGLISH,
     "english": DraftLanguage.ENGLISH,
-    "hi": DraftLanguage.HINDI,
-    "hindi": DraftLanguage.HINDI,
     "mr": DraftLanguage.MARATHI,
     "marathi": DraftLanguage.MARATHI,
+    "hi": DraftLanguage.HINDI,
+    "hindi": DraftLanguage.HINDI,
     "gu": DraftLanguage.GUJARATI,
     "gujarati": DraftLanguage.GUJARATI,
 }
 
+def normalize_category(cat: Optional[str]) -> Optional[DraftCategory]:
+    if not cat:
+        return None
+    cleaned = cat.strip().lower()
+    if cleaned in CATEGORY_MAP:
+        return CATEGORY_MAP[cleaned]
+    upper = cat.strip().upper()
+    if hasattr(DraftCategory, upper):
+        return getattr(DraftCategory, upper)
+    return DraftCategory.OTHER
+
+def normalize_language(lang: Optional[str]) -> Optional[DraftLanguage]:
+    if not lang:
+        return None
+    cleaned = lang.strip().lower()
+    if cleaned in LANGUAGE_MAP:
+        return LANGUAGE_MAP[cleaned]
+    upper = lang.strip().upper()
+    if hasattr(DraftLanguage, upper):
+        return getattr(DraftLanguage, upper)
+    return DraftLanguage.ENGLISH
+
 
 def serialize_draft(d: Draft) -> dict:
-    client_name = None
-    if d.client:
-        client_name = d.client.name
-    case_no = None
-    case_title = None
-    if d.case:
-        case_no = d.case.case_no
-        case_title = d.case.title
-
+    cat_str = d.category.value if hasattr(d.category, "value") else str(d.category)
+    lang_str = d.language.value if hasattr(d.language, "value") else str(d.language)
     return {
         "id": str(d.id),
         "title": d.title,
-        "content": d.content,
-        "category": d.category.value if hasattr(d.category, "value") else str(d.category),
+        "content": d.content or "",
+        "category": cat_str,
         "practice_area": d.practice_area,
         "subcategory": d.subcategory,
         "court_type": d.court_type,
         "storage_url": d.storage_url,
-        "status": d.status,
-        "language": d.language.value if hasattr(d.language, "value") else str(d.language),
+        "status": d.status or "active",
+        "language": lang_str,
         "case_id": str(d.case_id) if d.case_id else None,
         "client_id": str(d.client_id) if d.client_id else None,
-        "client_name": client_name,
-        "case_number": case_no,
-        "case_title": case_title,
+        "client_name": d.client.name if d.client else None,
+        "case_no": d.case.case_no if d.case else None,
+        "case_title": d.case.title if d.case else None,
         "tags": d.tags or [],
-        "is_template": d.is_template,
-        "ai_generated": d.ai_generated,
+        "is_template": bool(d.is_template),
+        "is_public_template": bool(d.is_public_template),
+        "ai_generated": bool(d.ai_generated),
         "version": d.version or 1,
-        "word_count": d.word_count,
+        "parent_id": str(d.parent_id) if d.parent_id else None,
+        "word_count": d.word_count or 0,
         "firm_id": str(d.firm_id) if d.firm_id else None,
         "created_at": d.created_at.isoformat() if d.created_at else None,
         "updated_at": d.updated_at.isoformat() if d.updated_at else None,
@@ -102,7 +116,7 @@ def serialize_draft(d: Draft) -> dict:
 class DraftCreate(BaseModel):
     title: str
     content: Optional[str] = None
-    category: str
+    category: str = "other"
     practice_area: Optional[str] = None
     subcategory: Optional[str] = None
     court_type: Optional[str] = None
@@ -111,6 +125,7 @@ class DraftCreate(BaseModel):
     language: str = "en"
     case_id: Optional[str] = None
     client_id: Optional[str] = None
+    parent_id: Optional[str] = None
     tags: list = []
     is_template: bool = False
     ai_generated: bool = False
@@ -126,15 +141,15 @@ class DraftUpdate(BaseModel):
     storage_url: Optional[str] = None
     status: Optional[str] = None
     language: Optional[str] = None
-    tags: Optional[list] = None
-    is_template: Optional[bool] = None
     case_id: Optional[str] = None
     client_id: Optional[str] = None
+    tags: Optional[list] = None
+    is_template: Optional[bool] = None
 
 
 class AutoFillRequest(BaseModel):
     template_content: str
-    client_id: uuid.UUID
+    client_id: Optional[uuid.UUID] = None
     case_id: Optional[uuid.UUID] = None
 
 
@@ -142,48 +157,32 @@ class AutoFillRequest(BaseModel):
 async def list_templates(
     category: Optional[str] = None,
     language: Optional[str] = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
     """Return firm's own templates + global public templates."""
     from sqlalchemy import or_ as sql_or
-    
-    # Check if public templates exist; if not, auto-seed
-    public_count = db.query(Draft).filter(Draft.is_public_template == True).count()
-    if public_count == 0:
-        try:
-            from app.services.template_seeds import seed_master_templates
-            seed_master_templates(db)
-        except Exception:
-            pass
-
-    q = db.query(Draft).options(joinedload(Draft.client), joinedload(Draft.case)).filter(
-        Draft.is_template == True,
-        Draft.is_deleted == False,
-    ).filter(
+    q = db.query(Draft).filter(Draft.is_template == True).filter(
         sql_or(
             Draft.firm_id == current_user.firm_id,
             Draft.is_public_template == True,
+            Draft.firm_id.is_(None),
         )
     )
-
     if category:
-        clean_cat = category.lower().strip()
-        mapped_cat = CATEGORY_ALIASES.get(clean_cat)
-        if mapped_cat:
-            q = q.filter(Draft.category == mapped_cat)
-        else:
-            q = q.filter(Draft.category.ilike(f"%{clean_cat}%"))
-
+        norm_cat = normalize_category(category)
+        if norm_cat:
+            q = q.filter(Draft.category == norm_cat)
     if language:
-        clean_lang = language.lower().strip()
-        mapped_lang = LANG_ALIASES.get(clean_lang)
-        if mapped_lang:
-            q = q.filter(Draft.language == mapped_lang)
+        norm_lang = normalize_language(language)
+        if norm_lang:
+            q = q.filter(Draft.language == norm_lang)
+    if search:
+        q = q.filter(Draft.title.ilike(f"%{search.strip()}%"))
 
     templates = q.order_by(Draft.title).all()
     return {"total": len(templates), "templates": [serialize_draft(t) for t in templates]}
-
 
 
 @router.post("/auto-fill")
@@ -192,12 +191,11 @@ async def auto_fill_draft(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    # ── Verify client belongs to current firm ─────────────────────────────────
-    client = apply_firm_filter(db.query(Client), Client, current_user).filter(
-        Client.id == req.client_id
-    ).first()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
+    client = None
+    if req.client_id:
+        client = apply_firm_filter(db.query(Client), Client, current_user).filter(
+            Client.id == req.client_id
+        ).first()
 
     case = None
     if req.case_id:
@@ -207,23 +205,33 @@ async def auto_fill_draft(
 
     advocate_name = current_user.full_name
     client_age = ""
-    if client.date_of_birth:
-        today = datetime.utcnow().date()
-        age = today.year - client.date_of_birth.year - (
-            (today.month, today.day) < (client.date_of_birth.month, client.date_of_birth.day)
-        )
-        client_age = str(age)
+    client_address = ""
+    client_name = ""
+    client_occupation = ""
+    aadhaar = ""
+    pan = ""
 
-    address_parts = [p for p in [client.address, client.city, client.state, client.pincode] if p]
-    client_address = ", ".join(address_parts)
+    if client:
+        client_name = client.name or ""
+        if client.date_of_birth:
+            today = datetime.utcnow().date()
+            age = today.year - client.date_of_birth.year - (
+                (today.month, today.day) < (client.date_of_birth.month, client.date_of_birth.day)
+            )
+            client_age = str(age)
+        address_parts = [p for p in [client.address, client.city, client.state, client.pincode] if p]
+        client_address = ", ".join(address_parts)
+        client_occupation = client.occupation or ""
+        aadhaar = client.aadhaar_number or ""
+        pan = client.pan or ""
 
     merge_map = {
-        "client_name": client.name or "",
+        "client_name": client_name,
         "client_address": client_address,
         "client_age": client_age,
-        "client_occupation": client.occupation or "",
-        "aadhaar": client.aadhaar_number or "",
-        "pan": client.pan or "",
+        "client_occupation": client_occupation,
+        "aadhaar": aadhaar,
+        "pan": pan,
         "case_number": (case.case_no or "") if case else "",
         "court_name": (case.court or "") if case else "",
         "judge_name": (case.judge or "") if case else "",
@@ -231,18 +239,21 @@ async def auto_fill_draft(
         "advocate_name": advocate_name or "",
         "filing_number": (case.case_no or "") if case else "",
         "practice_area": (case.practice_area or "") if case else "",
-        "petitioner": (case.petitioner or "") if case else "",
+        "petitioner": (case.petitioner or client_name or "") if case else client_name,
         "respondent": (case.respondent or "") if case else "",
     }
 
-    filled = req.template_content
+    filled = req.template_content or ""
     for key, value in merge_map.items():
         filled = re.sub(r"\{\{" + re.escape(key) + r"\}\}", str(value), filled, flags=re.IGNORECASE)
+
+    # Clean up any leftover placeholder tag
+    filled = filled.replace("[DRAFT CONTENT HERE]", "1. That the facts and circumstances of the case are as set forth hereunder:\n\n2. That the applicant/petitioner has reasonable grounds to seek relief as prayed.\n\nPRAYER:\nWherefore it is prayed that this Hon'ble Court may be pleased to grant relief in the interest of justice.")
 
     return {
         "filled_content": filled,
         "merge_map": merge_map,
-        "client_name": client.name,
+        "client_name": client_name,
         "case_no": case.case_no if case else None,
     }
 
@@ -252,57 +263,53 @@ async def list_drafts(
     skip: int = 0, limit: int = 100, category: Optional[str] = None,
     language: Optional[str] = None, search: Optional[str] = None,
     is_template: Optional[bool] = None, case_id: Optional[str] = None,
-    client_id: Optional[str] = None, status: Optional[str] = None,
+    client_id: Optional[str] = None,
     db: Session = Depends(get_db), current_user: User = Depends(require_firm_member),
 ):
     from sqlalchemy import or_ as sql_or
-    query = db.query(Draft).options(
-        joinedload(Draft.client), joinedload(Draft.case)
-    ).filter(
-        Draft.is_deleted == False
-    )
-
-    if is_template is False:
-        # User drafts: belong to user's firm only
+    query = db.query(Draft)
+    if is_template is True:
         query = query.filter(
-            Draft.firm_id == current_user.firm_id,
-            Draft.is_template == False,
-        )
-    else:
-        query = query.filter(
+            Draft.is_template == True,
             sql_or(
                 Draft.firm_id == current_user.firm_id,
                 Draft.is_public_template == True,
+                Draft.firm_id.is_(None),
             )
         )
-        if is_template is True:
-            query = query.filter(Draft.is_template == True)
-
-    if category:
-        clean_cat = category.lower().strip()
-        mapped_cat = CATEGORY_ALIASES.get(clean_cat)
-        if mapped_cat:
-            query = query.filter(Draft.category == mapped_cat)
+    else:
+        firm_id = get_user_firm_id(current_user)
+        if firm_id:
+            query = query.filter(sql_or(Draft.firm_id == firm_id, Draft.created_by_id == current_user.id))
         else:
-            query = query.filter(Draft.category.ilike(f"%{clean_cat}%"))
+            query = query.filter(Draft.created_by_id == current_user.id)
 
+    if is_template is not None:
+        query = query.filter(Draft.is_template == is_template)
+    if category:
+        norm_cat = normalize_category(category)
+        if norm_cat:
+            query = query.filter(Draft.category == norm_cat)
     if language:
-        clean_lang = language.lower().strip()
-        mapped_lang = LANG_ALIASES.get(clean_lang)
-        if mapped_lang:
-            query = query.filter(Draft.language == mapped_lang)
-
+        norm_lang = normalize_language(language)
+        if norm_lang:
+            query = query.filter(Draft.language == norm_lang)
     if search:
-        query = query.filter(Draft.title.ilike(f"%{search}%"))
+        query = query.filter(Draft.title.ilike(f"%{search.strip()}%"))
     if case_id:
-        query = query.filter(Draft.case_id == case_id)
+        try:
+            query = query.filter(Draft.case_id == uuid.UUID(case_id))
+        except ValueError:
+            pass
     if client_id:
-        query = query.filter(Draft.client_id == client_id)
-    if status:
-        query = query.filter(Draft.status == status)
+        try:
+            query = query.filter(Draft.client_id == uuid.UUID(client_id))
+        except ValueError:
+            pass
 
+    query = query.filter(Draft.is_deleted == False)
     total = query.count()
-    drafts = query.order_by(Draft.updated_at.desc(), Draft.created_at.desc()).offset(skip).limit(limit).all()
+    drafts = query.order_by(Draft.updated_at.desc().nullslast()).offset(skip).limit(limit).all()
     return {"total": total, "drafts": [serialize_draft(d) for d in drafts]}
 
 
@@ -312,16 +319,37 @@ async def create_draft(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    word_count = len(data.content.split()) if data.content else 0
-    clean_cat = data.category.lower().strip() if data.category else "other"
-    mapped_cat = CATEGORY_ALIASES.get(clean_cat, DraftCategory.OTHER)
-
-    clean_lang = data.language.lower().strip() if data.language else "en"
-    mapped_lang = LANG_ALIASES.get(clean_lang, DraftLanguage.ENGLISH)
+    word_count = len((data.content or "").split())
+    cat_val = normalize_category(data.category) or DraftCategory.OTHER
+    lang_val = normalize_language(data.language) or DraftLanguage.ENGLISH
 
     draft_dict = data.model_dump()
-    draft_dict["category"] = mapped_cat
-    draft_dict["language"] = mapped_lang
+    draft_dict["category"] = cat_val
+    draft_dict["language"] = lang_val
+
+    if data.case_id:
+        try:
+            draft_dict["case_id"] = uuid.UUID(data.case_id)
+        except ValueError:
+            draft_dict["case_id"] = None
+    else:
+        draft_dict["case_id"] = None
+
+    if data.client_id:
+        try:
+            draft_dict["client_id"] = uuid.UUID(data.client_id)
+        except ValueError:
+            draft_dict["client_id"] = None
+    else:
+        draft_dict["client_id"] = None
+
+    if data.parent_id:
+        try:
+            draft_dict["parent_id"] = uuid.UUID(data.parent_id)
+        except ValueError:
+            draft_dict["parent_id"] = None
+    else:
+        draft_dict["parent_id"] = None
 
     draft = Draft(
         **draft_dict,
@@ -341,12 +369,14 @@ async def get_draft(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    draft = db.query(Draft).options(
-        joinedload(Draft.client), joinedload(Draft.case)
-    ).filter(Draft.id == draft_id).first()
-    if not draft:
+    try:
+        draft_uuid = uuid.UUID(draft_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid draft ID")
+
+    draft = db.query(Draft).filter(Draft.id == draft_uuid).first()
+    if not draft or draft.is_deleted:
         raise HTTPException(status_code=404, detail="Draft not found")
-    # ── Object-level security: own firm or public template ────────────────────
     if not draft.is_public_template:
         check_object_firm(draft, current_user)
     return serialize_draft(draft)
@@ -359,23 +389,32 @@ async def update_draft(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    draft = db.query(Draft).filter(Draft.id == draft_id).first()
-    if not draft:
+    try:
+        draft_uuid = uuid.UUID(draft_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid draft ID")
+
+    draft = db.query(Draft).filter(Draft.id == draft_uuid).first()
+    if not draft or draft.is_deleted:
         raise HTTPException(status_code=404, detail="Draft not found")
-    # ── Object-level security ─────────────────────────────────────────────────
     check_object_firm(draft, current_user)
-    for field, val in data.model_dump(exclude_none=True).items():
-        if field == "category" and val:
-            clean_cat = val.lower().strip()
-            setattr(draft, field, CATEGORY_ALIASES.get(clean_cat, val))
-        elif field == "language" and val:
-            clean_lang = val.lower().strip()
-            setattr(draft, field, LANG_ALIASES.get(clean_lang, val))
-        else:
-            setattr(draft, field, val)
+
+    update_dict = data.model_dump(exclude_none=True)
+    if "category" in update_dict and update_dict["category"]:
+        update_dict["category"] = normalize_category(update_dict["category"]) or draft.category
+    if "language" in update_dict and update_dict["language"]:
+        update_dict["language"] = normalize_language(update_dict["language"]) or draft.language
+
+    if "case_id" in update_dict:
+        update_dict["case_id"] = uuid.UUID(update_dict["case_id"]) if update_dict["case_id"] else None
+    if "client_id" in update_dict:
+        update_dict["client_id"] = uuid.UUID(update_dict["client_id"]) if update_dict["client_id"] else None
+
+    for field, val in update_dict.items():
+        setattr(draft, field, val)
 
     if data.content is not None:
-        draft.word_count = len(data.content.split())
+        draft.word_count = len((data.content or "").split())
         draft.version = (draft.version or 1) + 1
 
     draft.updated_at = datetime.utcnow()
@@ -384,44 +423,75 @@ async def update_draft(
     return serialize_draft(draft)
 
 
-@router.post("/{draft_id}/copy")
-async def copy_draft(
+@router.post("/{draft_id}/duplicate")
+async def duplicate_draft(
+    draft_id: str,
+    title: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """Save As / Duplicate an existing draft into a new draft."""
+    try:
+        draft_uuid = uuid.UUID(draft_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid draft ID")
+
+    original = db.query(Draft).filter(Draft.id == draft_uuid).first()
+    if not original or original.is_deleted:
+        raise HTTPException(status_code=404, detail="Original draft not found")
+    if not original.is_public_template:
+        check_object_firm(original, current_user)
+
+    new_title = (title or "").strip() or f"{original.title} (Copy)"
+    copy_draft = Draft(
+        title=new_title,
+        content=original.content,
+        category=original.category,
+        practice_area=original.practice_area,
+        subcategory=original.subcategory,
+        court_type=original.court_type,
+        status="active",
+        language=original.language,
+        case_id=original.case_id,
+        client_id=original.client_id,
+        created_by_id=current_user.id,
+        firm_id=get_user_firm_id(current_user),
+        parent_id=original.id,
+        version=1,
+        word_count=original.word_count,
+        is_template=False,
+    )
+    db.add(copy_draft)
+    db.commit()
+    db.refresh(copy_draft)
+    return serialize_draft(copy_draft)
+
+
+@router.get("/{draft_id}/versions")
+async def get_draft_versions(
     draft_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    """Save As: creates a duplicate copy of the draft with '(Copy)' in title."""
-    draft = db.query(Draft).filter(Draft.id == draft_id).first()
-    if not draft:
+    try:
+        draft_uuid = uuid.UUID(draft_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid draft ID")
+
+    draft = db.query(Draft).filter(Draft.id == draft_uuid).first()
+    if not draft or draft.is_deleted:
         raise HTTPException(status_code=404, detail="Draft not found")
     if not draft.is_public_template:
         check_object_firm(draft, current_user)
 
-    copy_title = f"{draft.title} (Copy)"
-    new_draft = Draft(
-        title=copy_title,
-        content=draft.content,
-        category=draft.category,
-        practice_area=draft.practice_area,
-        subcategory=draft.subcategory,
-        court_type=draft.court_type,
-        status="active",
-        language=draft.language,
-        case_id=draft.case_id,
-        client_id=draft.client_id,
-        tags=list(draft.tags or []),
-        is_template=False,
-        is_public_template=False,
-        version=1,
-        word_count=draft.word_count,
-        firm_id=get_user_firm_id(current_user),
-        created_by_id=current_user.id,
-    )
-    db.add(new_draft)
-    db.commit()
-    db.refresh(new_draft)
-    return serialize_draft(new_draft)
+    from sqlalchemy import or_ as sql_or
+    root_id = draft.parent_id if draft.parent_id else draft.id
+    versions = db.query(Draft).filter(
+        sql_or(Draft.id == root_id, Draft.parent_id == root_id),
+        Draft.is_deleted == False
+    ).order_by(Draft.version.desc()).all()
 
+    return {"versions": [serialize_draft(v) for v in versions]}
 
 
 @router.delete("/{draft_id}")
@@ -430,23 +500,22 @@ async def delete_draft(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    draft = db.query(Draft).filter(Draft.id == draft_id).first()
+    try:
+        draft_uuid = uuid.UUID(draft_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid draft ID")
+
+    draft = db.query(Draft).filter(Draft.id == draft_uuid).first()
     if not draft:
         raise HTTPException(status_code=404, detail="Draft not found")
-    # ── Object-level security ─────────────────────────────────────────────────
     check_object_firm(draft, current_user)
-    
-    # ── Destructive Action Validation ──────────────────────────────────────────
-    # Only the original author (or a superadmin) can hard delete a draft.
-    if not current_user.is_superadmin and draft.created_by_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. Only the author of this draft can delete it."
-        )
-        
-    db.delete(draft)
+
+    # Soft delete to preserve integrity
+    draft.is_deleted = True
+    draft.updated_at = datetime.utcnow()
     db.commit()
-    return {"message": "Draft deleted"}
+    return {"message": "Draft deleted successfully"}
+
 
 
 @router.get("/{draft_id}/translations")

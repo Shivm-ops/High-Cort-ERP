@@ -129,6 +129,7 @@ export interface CaseDraft {
   category: string;
   language: string;
   ai_generated: boolean;
+  version?: number;
   created_at: string;
 }
 
