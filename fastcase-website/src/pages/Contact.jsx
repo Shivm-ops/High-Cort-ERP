@@ -34,29 +34,32 @@ export default function Contact() {
     const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '2331143f-9c75-4def-8367-75e6f7890ec9';
 
     try {
+      const formData = new FormData();
+      formData.append('access_key', accessKey);
+      formData.append('from_name', 'Fastcase Website Inquiry');
+      formData.append('subject', `Fastcase Inquiry: ${form.subject || 'General'} from ${form.name}`);
+      formData.append('name', form.name);
+      formData.append('email', form.email);
+      formData.append('phone', form.phone || 'N/A');
+      formData.append('organization', form.organization || 'N/A');
+      formData.append('message', form.message);
+      formData.append('botcheck', '');
+
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify({
-          access_key: accessKey,
-          from_name: 'Fastcase Website Inquiry',
-          subject: `Fastcase Inquiry: ${form.subject || 'General'} from ${form.name}`,
-          name: form.name,
-          email: form.email,
-          phone: form.phone || 'N/A',
-          organization: form.organization || 'N/A',
-          message: form.message,
-        }),
+        body: formData,
       });
 
-      const result = await response.json();
-      if (result.success) {
+      const result = await response.json().catch(() => null);
+
+      if (response.ok && result?.success) {
         setSubmitted(true);
       } else {
-        setError(result.message || 'Failed to send message. Please try again or email us directly.');
+        const errorMsg = result?.message || `Submission failed (status ${response.status}). Please check your Web3Forms access key.`;
+        setError(errorMsg);
       }
     } catch (err) {
       setError('Network error. Please try again or reach out to us at contact@fastcase.in.');

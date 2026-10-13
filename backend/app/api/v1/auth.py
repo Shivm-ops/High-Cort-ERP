@@ -26,10 +26,10 @@ from app.core.security import (
     get_password_hash, decode_token, get_current_user
 )
 from app.core.config import settings
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.security import LoginHistory, UserSession
 from app.services.audit_service import log_action, extract_ip, AuditAction
-from app.services.email_service import send_login_notification, send_logout_notification
+from app.services.email_service import notify_login, send_login_notification, send_logout_notification
 
 router = APIRouter()
 
@@ -151,7 +151,49 @@ def _get_user_subscription(user: User, db: Session) -> dict:
     }
 
 
+def _get_admin_emails_for_notification(db: Session, firm_id: Optional[uuid.UUID] = None) -> list[str]:
+    """Gather admin recipient emails from settings, database superadmins, and firm admins."""
+    collected = set()
+
+    # 1. Configured ADMIN_EMAIL from settings / .env
+    admin_setting = getattr(settings, "ADMIN_EMAIL", "") or ""
+    if admin_setting:
+        for email in admin_setting.split(","):
+            clean_email = email.strip()
+            if clean_email:
+                collected.add(clean_email)
+
+    # 2. Database superadmins
+    try:
+        superadmins = db.query(User.email).filter(
+            User.is_superadmin == True,
+            User.is_active == True,
+        ).all()
+        for (sa_email,) in superadmins:
+            if sa_email and str(sa_email).strip():
+                collected.add(str(sa_email).strip())
+    except Exception:
+        pass
+
+    # 3. Firm admins (if user/client belongs to a firm)
+    if firm_id:
+        try:
+            firm_admins = db.query(User.email).filter(
+                User.firm_id == firm_id,
+                User.user_type == UserRole.ADMIN,
+                User.is_active == True,
+            ).all()
+            for (fa_email,) in firm_admins:
+                if fa_email and str(fa_email).strip():
+                    collected.add(str(fa_email).strip())
+        except Exception:
+            pass
+
+    return list(collected)
+
+
 # ── Schemas ───────────────────────────────────────────────────────────────────
+
 
 class LoginResponse(BaseModel):
     access_token: str
@@ -271,17 +313,23 @@ async def login(
                details={"login_count": user.login_count})
     db.commit()
 
-    # 6. Send login notification email (fire-and-forget — does not block response)
-    if user.email:
-        asyncio.create_task(
-            send_login_notification(
-                to_email=str(user.email),
-                full_name=str(user.full_name or user.email),
-                ip_address=ip,
-                user_agent=user_agent,
-                login_time=user.last_login,  # type: ignore[arg-type]
-            )
+    # 6. Send login notification email to user and admin (fire-and-forget — does not block response)
+    admin_emails = _get_admin_emails_for_notification(db, user.firm_id)
+    user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
+    firm_name_str = user.firm.name if user.firm else None
+
+    asyncio.create_task(
+        notify_login(
+            user_email=str(user.email) if user.email else "",
+            user_name=str(user.full_name or user.email),
+            ip_address=ip,
+            user_agent=user_agent,
+            user_role=user_role_str,
+            firm_name=firm_name_str,
+            admin_emails=admin_emails,
+            login_time=user.last_login,  # type: ignore[arg-type]
         )
+    )
 
     sub_data = _get_user_subscription(user, db)
     from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
@@ -346,17 +394,30 @@ async def client_login(
     client.last_login = utc_now()
     db.commit()
 
-    # Send login notification email (fire-and-forget)
-    if client.email:
-        asyncio.create_task(
-            send_login_notification(
-                to_email=str(client.email),
-                full_name=str(client.name or client.email),
-                ip_address=ip,
-                user_agent=user_agent,
-                login_time=client.last_login,  # type: ignore[arg-type]
-            )
+    # Send login notification email to client and admin (fire-and-forget)
+    admin_emails = _get_admin_emails_for_notification(db, client.firm_id)
+    client_firm_name = None
+    if client.firm_id:
+        try:
+            from app.models.firm import Firm
+            firm = db.query(Firm).filter(Firm.id == client.firm_id).first()
+            if firm:
+                client_firm_name = firm.name
+        except Exception:
+            pass
+
+    asyncio.create_task(
+        notify_login(
+            user_email=str(client.email) if client.email else "",
+            user_name=str(client.name or client.email),
+            ip_address=ip,
+            user_agent=user_agent,
+            user_role="client",
+            firm_name=client_firm_name,
+            admin_emails=admin_emails,
+            login_time=client.last_login,  # type: ignore[arg-type]
         )
+    )
 
     return LoginResponse(
         access_token=access_token,

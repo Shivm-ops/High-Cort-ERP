@@ -204,7 +204,177 @@ async def send_login_notification(
     await send_email(to_email, subject, html_body, text_body)
 
 
+# ── Admin Login notification ──────────────────────────────────────────────────
+
+async def send_admin_login_notification(
+    to_email: str,
+    user_email: str,
+    user_name: str,
+    user_role: str,
+    ip_address: str | None,
+    user_agent: str | None,
+    firm_name: str | None = None,
+    login_time: datetime | None = None,
+) -> None:
+    """Send a notification to admin about a user/client login."""
+    login_time = login_time or datetime.now(timezone.utc)
+    time_str = login_time.strftime("%d %b %Y, %I:%M %p UTC")
+    ip_str = ip_address or "Unknown"
+    device_str = (user_agent[:120] + "...") if user_agent and len(user_agent) > 120 else (user_agent or "Unknown")
+    firm_str = firm_name or "Individual Practice / Direct"
+    role_display = user_role.replace("_", " ").title()
+
+    subject = f"[Admin Alert] User Login: {user_name} ({user_email}) - Fastcase ERP"
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Alert - User Login</title>
+  <style>
+    body {{ margin:0; padding:0; background:#f4f6fb; font-family:'Segoe UI',Arial,sans-serif; }}
+    .wrapper {{ max-width:560px; margin:40px auto; background:#ffffff; border-radius:12px;
+                box-shadow:0 4px 20px rgba(0,0,0,0.08); overflow:hidden; }}
+    .header {{ background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+               padding:36px 32px; text-align:center; }}
+    .badge {{ display:inline-block; padding:4px 12px; background:rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#fbbf24; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }}
+    .header h1 {{ color:#ffffff; margin:0; font-size:22px; font-weight:700; letter-spacing:0.5px; }}
+    .header p  {{ color:#94a3b8; margin:6px 0 0; font-size:13px; }}
+    .body {{ padding:32px; }}
+    .body p {{ color:#374151; font-size:15px; line-height:1.6; margin:0 0 16px; }}
+    .info-box {{ background:#f8fafc; border-left:4px solid #0284c7; border-radius:6px;
+                 padding:16px 20px; margin:20px 0; border:1px solid #e2e8f0; border-left:4px solid #0284c7; }}
+    .info-row {{ display:flex; justify-content:space-between; padding:8px 0;
+                 border-bottom:1px solid #e2e8f0; font-size:14px; }}
+    .info-row:last-child {{ border-bottom:none; }}
+    .info-label {{ color:#64748b; font-weight:600; }}
+    .info-value {{ color:#0f172a; text-align:right; font-weight:600; max-width:300px; word-break:break-all; }}
+    .alert-box {{ background:#eff6ff; border-left:4px solid #3b82f6; border-radius:6px;
+                  padding:14px 18px; margin:20px 0; font-size:13px; color:#1e40af; }}
+    .footer {{ background:#f8fafc; padding:20px 32px; text-align:center;
+               font-size:12px; color:#94a3b8; border-top:1px solid #e2e8f0; }}
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="badge">Security Audit</div>
+      <h1>User Login Activity</h1>
+      <p>Fastcase ERP Administrator Notification</p>
+    </div>
+    <div class="body">
+      <p>Hello Administrator,</p>
+      <p>A user has successfully authenticated on <strong>Fastcase ERP</strong>. Here are the session details:</p>
+      <div class="info-box">
+        <div class="info-row">
+          <span class="info-label">User Name</span>
+          <span class="info-value">{user_name}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">User Email</span>
+          <span class="info-value">{user_email}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Account Role</span>
+          <span class="info-value">{role_display}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Firm / Practice</span>
+          <span class="info-value">{firm_str}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Login Time</span>
+          <span class="info-value">{time_str}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">IP Address</span>
+          <span class="info-value">{ip_str}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Device / Browser</span>
+          <span class="info-value">{device_str}</span>
+        </div>
+      </div>
+      <div class="alert-box">
+        <strong>Audit Information:</strong> This event has been recorded in the central audit logs. If this login looks suspicious, you can review active sessions or deactivate the account from the Admin Portal.
+      </div>
+    </div>
+    <div class="footer">
+      &copy; {login_time.year} Fastcase ERP &nbsp;|&nbsp;
+      Automated Administrator Security Notification
+    </div>
+  </div>
+</body>
+</html>"""
+
+    text_body = (
+        f"Admin Alert: User Login Detected\n\n"
+        f"A user has successfully logged in to Fastcase ERP.\n\n"
+        f"User Name  : {user_name}\n"
+        f"User Email : {user_email}\n"
+        f"Role       : {role_display}\n"
+        f"Firm       : {firm_str}\n"
+        f"Login Time : {time_str}\n"
+        f"IP Address : {ip_str}\n"
+        f"Device     : {device_str}\n\n"
+        f"-- Fastcase ERP Security System"
+    )
+
+    await send_email(to_email, subject, html_body, text_body)
+
+
+# ── Unified Login Notification Dispatcher ──────────────────────────────────────
+
+async def notify_login(
+    user_email: str,
+    user_name: str,
+    ip_address: str | None,
+    user_agent: str | None,
+    user_role: str = "User",
+    firm_name: str | None = None,
+    admin_emails: list[str] | None = None,
+    login_time: datetime | None = None,
+) -> None:
+    """Send login notification to the user and to all admin recipients."""
+    login_time = login_time or datetime.now(timezone.utc)
+    tasks = []
+
+    # 1. Send notification to user
+    if user_email:
+        tasks.append(
+            send_login_notification(
+                to_email=user_email,
+                full_name=user_name,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                login_time=login_time,
+            )
+        )
+
+    # 2. Send notification to admin(s)
+    if admin_emails:
+        for admin_email in admin_emails:
+            if admin_email:
+                tasks.append(
+                    send_admin_login_notification(
+                        to_email=admin_email,
+                        user_email=user_email,
+                        user_name=user_name,
+                        user_role=user_role,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        firm_name=firm_name,
+                        login_time=login_time,
+                    )
+                )
+
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
 # ── Logout notification ───────────────────────────────────────────────────────
+
 
 async def send_logout_notification(
     to_email: str,

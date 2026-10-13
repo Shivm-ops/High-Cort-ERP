@@ -3,547 +3,628 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Library, Search, FileText, Download, Star, Clock, Globe,
-  ShieldCheck, CheckCircle2, X, Upload, FileCheck, AlertCircle,
-  Languages, ArrowRight, ChevronDown, Filter, Sparkles
+  FileText, Search, Plus, Filter, Clock, Globe,
+  Download, Trash2, Edit3, Eye, Copy, CheckCircle2,
+  AlertCircle, BookOpen, User, Briefcase, FileSignature,
+  Printer, ArrowRight, Loader2, Sparkles, Building2
 } from "lucide-react";
 import Header from "@/components/layout/Header";
-import { cn } from "@/lib/utils";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Modal from "@/components/ui/Modal";
+import LetterheadPreview from "@/components/drafts/LetterheadPreview";
+import { useMyLetterhead } from "@/lib/hooks/useLetterhead";
+import { generateDocx } from "@/lib/exportDocx";
+import { 
+  useDrafts, 
+  useTemplates, 
+  useDeleteDraft, 
+  useCopyDraft, 
+  Draft 
+} from "@/lib/hooks/useDrafts";
 import { useRouter } from "next/navigation";
-import { useLanguageStore } from "@/lib/store/languageStore";
-import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { LANGUAGE_NAMES } from "@/lib/i18n";
 
-const LANG_CODES = [
-  { code: "all", label: "All Languages", nativeLabel: "All Languages", flag: "🌐", color: "gray" },
-  { code: "en",  label: "English",       nativeLabel: "English",        flag: "🇬🇧", color: "blue" },
-  { code: "mr",  label: "Marathi",       nativeLabel: "मराठी",          flag: "🇮🇳", color: "orange" },
-  { code: "hi",  label: "Hindi",         nativeLabel: "हिन्दी",          flag: "🇮🇳", color: "green" },
-  { code: "gu",  label: "Gujarati",      nativeLabel: "ગુજરાતી",        flag: "🇮🇳", color: "purple" },
+const LANG_OPTIONS = [
+  { code: "all", label: "All Languages", flag: "🌐" },
+  { code: "English", label: "English", flag: "🇬🇧" },
+  { code: "Marathi", label: "Marathi (मराठी)", flag: "🇮🇳" },
+  { code: "Hindi", label: "Hindi (हिन्दी)", flag: "🇮🇳" },
+  { code: "Gujarati", label: "Gujarati (ગુજરાતી)", flag: "🇮🇳" },
 ];
 
 const CATEGORIES = [
-  { id: "all",        label: "All Drafts",    count: 10247 },
-  { id: "bail",       label: "Bail",          count: 1842 },
-  { id: "civil",      label: "Civil",         count: 1520 },
-  { id: "property",   label: "Property",      count: 987 },
-  { id: "gst",        label: "GST / Taxation",count: 763 },
-  { id: "family",     label: "Family / Matrimonial", count: 612 },
-  { id: "notice",     label: "Notices",       count: 1934 },
-  { id: "agreements", label: "Agreements",    count: 845 },
-  { id: "mact",       label: "MACT / Motor",  count: 734 },
-  { id: "consumer",   label: "Consumer",      count: 521 },
-  { id: "labour",     label: "Labour / Service", count: 489 },
-  { id: "criminal",   label: "Criminal",      count: 1000 },
+  { key: "all", label: "All Categories" },
+  { key: "application", label: "Applications" },
+  { key: "affidavit", label: "Affidavits" },
+  { key: "petition", label: "Petitions" },
+  { key: "complaint", label: "Complaints" },
+  { key: "reply", label: "Replies" },
+  { key: "written_statement", label: "Written Statements" },
+  { key: "notice", label: "Notices" },
+  { key: "agreement", label: "Agreements" },
+  { key: "appeal", label: "Appeals" },
+  { key: "vakalatnama", label: "Vakalatnama" },
+  { key: "motion", label: "Motions" },
 ];
-
-// Rich mock data with cross-language mapping
-const DRAFTS: Draft[] = [
-  {
-    id: "1", title: "Anticipatory Bail Application u/s 438 CrPC", category: "bail",
-    language: "en", tags: ["Bail", "CrPC"], updatedAt: "2d ago", label: "Verified Draft", starred: true,
-    crossLang: [{ lang: "mr", id: "1-mr" }, { lang: "hi", id: "1-hi" }],
-  },
-  {
-    id: "2", title: "Section 138 NI Act Complaint", category: "civil",
-    language: "en", tags: ["NI Act", "Cheque"], updatedAt: "5d ago", label: "Court Format", starred: false,
-    crossLang: [{ lang: "mr", id: "2-mr" }, { lang: "gu", id: "2-gu" }],
-  },
-  {
-    id: "3", title: "RERA Complaint Draft — Possession Delay", category: "property",
-    language: "en", tags: ["RERA", "Property"], updatedAt: "1w ago", label: "Firm Draft", starred: true,
-    crossLang: [],
-  },
-  {
-    id: "4", title: "GST Appeal Before Appellate Authority", category: "gst",
-    language: "en", tags: ["GST", "Appeal"], updatedAt: "3d ago", label: "Verified Draft", starred: false,
-    crossLang: [{ lang: "gu", id: "4-gu" }],
-  },
-  {
-    id: "5", title: "जमानत अर्जी — NDPS Act u/s 37", category: "bail",
-    language: "hi", tags: ["Bail", "NDPS"], updatedAt: "1d ago", label: "Standard Format", starred: true,
-    crossLang: [{ lang: "en", id: "1" }, { lang: "mr", id: "1-mr" }],
-  },
-  {
-    id: "6", title: "Divorce Petition u/s 13 HMA", category: "family",
-    language: "en", tags: ["Family", "Divorce"], updatedAt: "1w ago", label: "Court Format", starred: false,
-    crossLang: [{ lang: "mr", id: "6-mr" }, { lang: "hi", id: "6-hi" }],
-  },
-  {
-    id: "7", title: "Legal Notice — Cheque Dishonour u/s 138", category: "notice",
-    language: "en", tags: ["Notice", "NI Act"], updatedAt: "4d ago", label: "Verified Draft", starred: true,
-    crossLang: [{ lang: "mr", id: "7-mr" }, { lang: "hi", id: "7-hi" }, { lang: "gu", id: "7-gu" }],
-  },
-  {
-    id: "8", title: "MACT Claim Petition — Road Accident", category: "mact",
-    language: "en", tags: ["MACT", "Accident"], updatedAt: "6d ago", label: "Template", starred: false,
-    crossLang: [{ lang: "mr", id: "8-mr" }],
-  },
-  {
-    id: "9", title: "वकालतनामा (Vakalatnama) — सत्र न्यायालय", category: "all",
-    language: "mr", tags: ["Vakalatnama", "Court"], updatedAt: "1d ago", label: "Court Format", starred: true,
-    crossLang: [{ lang: "en", id: "9-en" }, { lang: "hi", id: "9-hi" }, { lang: "gu", id: "9-gu" }],
-  },
-  {
-    id: "10", title: "ग्राहक तक्रार — ग्राहक संरक्षण कायदा 2019", category: "consumer",
-    language: "mr", tags: ["Consumer", "NCDRC"], updatedAt: "3d ago", label: "Verified Draft", starred: false,
-    crossLang: [{ lang: "en", id: "10-en" }, { lang: "hi", id: "10-hi" }],
-  },
-  {
-    id: "11", title: "ગ્રાહક ફરિયાદ — ગ્રાહક સુરક્ષા અધિનિયમ 2019", category: "consumer",
-    language: "gu", tags: ["Consumer", "NCDRC"], updatedAt: "2d ago", label: "Verified Draft", starred: true,
-    crossLang: [{ lang: "en", id: "10-en" }, { lang: "mr", id: "10" }, { lang: "hi", id: "10-hi" }],
-  },
-  {
-    id: "12", title: "Property Sale Agreement — Residential", category: "agreements",
-    language: "en", tags: ["Agreement", "Property"], updatedAt: "1w ago", label: "Standard Format", starred: false,
-    crossLang: [{ lang: "mr", id: "12-mr" }, { lang: "hi", id: "12-hi" }, { lang: "gu", id: "12-gu" }],
-  },
-];
-
-interface CrossLangRef { lang: string; id: string; }
-interface Draft {
-  id: string; title: string; category: string; language: string;
-  tags: string[]; updatedAt: string; label: string; starred: boolean;
-  crossLang: CrossLangRef[];
-}
-
-const REQUIRED_DOCS_MAP: Record<string, string[]> = {
-  bail: ["FIR Copy", "Arrest Memo", "Previous Bail Orders", "Surety Documents", "Identity Proof"],
-  civil: ["Aadhaar Copy", "PAN Card", "Original Agreement", "Legal Notice Copy"],
-  property: ["Sale Deed", "7/12 Extract", "Property Tax Receipt", "Title Certificate", "Index II"],
-  gst: ["GST Registration", "Show Cause Notice", "Assessment Order", "Challans", "Returns"],
-  family: ["Marriage Certificate", "Address Proof", "Photographs", "Income Affidavit"],
-  notice: ["Agreement Copy", "Cheque Copy (if 138)", "Return Memo (if 138)", "Ledger Extract"],
-  agreements: ["Aadhaar Copies of Parties", "Stamp Paper", "Witness IDs", "PAN Cards"],
-  mact: ["FIR", "RC Book", "Insurance Policy", "Medical Bills", "Disability Certificate"],
-  consumer: ["Purchase Bill / Invoice", "Complaint Notice", "Company Response", "Payment Proof"],
-  labour: ["Appointment Letter", "Termination Order", "Salary Slips", "PF Records"],
-  criminal: ["FIR", "Charge Sheet", "Witness List", "Seizure Memo"],
-  all: ["Aadhaar Copy", "PAN Card"],
-};
-
-const LANG_BADGE_COLORS: Record<string, string> = {
-  en: "bg-blue-50 text-blue-700 border-blue-100",
-  mr: "bg-orange-50 text-orange-700 border-orange-100",
-  hi: "bg-green-50 text-green-700 border-green-100",
-  gu: "bg-purple-50 text-purple-700 border-purple-100",
-};
-
-function LangBadge({ lang }: { lang: string }) {
-  const entry = LANG_CODES.find(l => l.code === lang);
-  if (!lang || !entry) return null;
-  return (
-    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", LANG_BADGE_COLORS[lang] || "bg-gray-50 text-gray-600 border-gray-100")}>
-      {entry.flag} {entry.nativeLabel}
-    </span>
-  );
-}
 
 export default function DraftLibraryPage() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const { draftLanguage } = useLanguageStore();
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedLanguage, setSelectedLanguage] = useState("all");
+  // Active view: "saved" (My Drafts) or "templates" (Template Library)
+  const [activeTab, setActiveTab] = useState<"saved" | "templates">("saved");
+
+  // Filters for Saved Drafts
   const [search, setSearch] = useState("");
-  const [showFavorites, setShowFavorites] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  // Filters for Template Library
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [selectedLang, setSelectedLang] = useState<string>("all");
+  const [selectedTemplateCat, setSelectedTemplateCat] = useState<string>("all");
+
+  // Modals & previews
   const [previewDraft, setPreviewDraft] = useState<Draft | null>(null);
-  const [showCrossLang, setShowCrossLang] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Draft | null>(null);
 
-  // Smart filter: if user has draft lang preference != all, highlight it
-  const activeLangHint = draftLanguage !== "en" ? draftLanguage : null;
+  const { data: myLetterhead } = useMyLetterhead();
 
-  const filtered = useMemo(() => {
-    return DRAFTS.filter(d => {
-      const q = search.toLowerCase();
-      const matchSearch = !q || d.title.toLowerCase().includes(q) || d.tags.some(t => t.toLowerCase().includes(q));
-      const matchCat = selectedCategory === "all" || d.category === selectedCategory;
-      const matchLang = selectedLanguage === "all" || d.language === selectedLanguage;
-      const matchFav = !showFavorites || d.starred;
-      return matchSearch && matchCat && matchLang && matchFav;
+  // Queries & Mutations
+  const { data: draftsData, isLoading: isLoadingDrafts } = useDrafts();
+  const savedDrafts = draftsData?.drafts || [];
+
+  const { data: templatesData, isLoading: isLoadingTemplates } = useTemplates(
+    selectedTemplateCat !== "all" || selectedLang !== "all"
+      ? {
+          category: selectedTemplateCat !== "all" ? selectedTemplateCat : undefined,
+          language: selectedLang !== "all" ? selectedLang : undefined,
+        }
+      : undefined
+  );
+  const masterTemplates = templatesData?.templates || [];
+
+  const deleteDraftMutation = useDeleteDraft();
+  const copyDraftMutation = useCopyDraft();
+
+  // Filtered saved drafts
+  const filteredDrafts = useMemo(() => {
+    return savedDrafts.filter((d) => {
+      const q = search.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        d.title.toLowerCase().includes(q) ||
+        (d.client_name && d.client_name.toLowerCase().includes(q)) ||
+        (d.case_number && d.case_number.toLowerCase().includes(q)) ||
+        (d.case_title && d.case_title.toLowerCase().includes(q));
+
+      const matchStatus =
+        statusFilter === "all" || (d.status || "draft") === statusFilter;
+      const matchCat =
+        categoryFilter === "all" || d.category === categoryFilter;
+
+      return matchSearch && matchStatus && matchCat;
     });
-  }, [search, selectedCategory, selectedLanguage, showFavorites]);
+  }, [savedDrafts, search, statusFilter, categoryFilter]);
 
-  const mostUsed = DRAFTS.filter(d => ["1", "7", "9", "10"].includes(d.id));
+  // Filtered templates
+  const filteredTemplates = useMemo(() => {
+    return masterTemplates.filter((t) => {
+      const q = templateSearch.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        t.title.toLowerCase().includes(q) ||
+        (t.tags && t.tags.some((tag: string) => tag.toLowerCase().includes(q)));
+      return matchSearch;
+    });
+  }, [masterTemplates, templateSearch]);
+
+  // Handlers
+  const handleDeleteDraft = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteDraftMutation.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleCopyDraft = async (draft: Draft) => {
+    try {
+      const copy = await copyDraftMutation.mutateAsync(draft.id);
+      toast.success(`Created duplicate copy: "${copy.title}"`);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleExportDocx = async (draft: Draft) => {
+    try {
+      toast.info("Generating DOCX file...");
+      const blob = await generateDocx(draft.content || "", myLetterhead || null, draft.language || "en");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${draft.title.replace(/[^a-zA-Z0-9_-]/g, "_")}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("DOCX Export completed");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to generate DOCX file");
+    }
+  };
 
   return (
-    <div className="page-enter min-h-screen bg-workspace-bg">
+    <div className="min-h-screen bg-workspace-bg pb-12 flex flex-col">
       <Header
-        title={t("drafts.title", "Draft Library")}
-        subtitle="10,000+ multilingual legal templates — English, मराठी, हिन्दी, ગુજરાતી"
+        title="Templates & Drafts"
+        subtitle="Manage saved pleadings, continue drafting, or assemble new documents from verified templates"
       />
 
-      <div className="p-6 flex flex-col lg:flex-row gap-6 max-w-[1600px] mx-auto">
-
-        {/* Left Sidebar Filters */}
-        <div className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-4">
-
-          {/* Language Filter — Primary Feature */}
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-              <Languages className="w-4 h-4 text-[#013B36]" />
-              <span className="text-[12px] font-bold text-charcoal">{t("drafts.filterLanguage", "Filter by Language")}</span>
-            </div>
-            <div className="p-2 flex flex-col gap-0.5">
-              {LANG_CODES.map(lang => (
-                <button
-                  key={lang.code}
-                  onClick={() => setSelectedLanguage(lang.code)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-150 text-[13px]",
-                    selectedLanguage === lang.code
-                      ? "bg-[#013B36] text-white font-semibold"
-                      : "text-gray-600 hover:bg-gray-50"
-                  )}
-                >
-                  <span className="text-base">{lang.flag}</span>
-                  <span className="flex-1">{lang.nativeLabel}</span>
-                  {lang.code !== "all" && (
-                    <span className={cn(
-                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                      selectedLanguage === lang.code ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
-                    )}>
-                      {DRAFTS.filter(d => d.language === lang.code).length}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Draft Language Hint */}
-            {activeLangHint && (
-              <div className="mx-3 mb-3 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl">
-                <p className="text-[10px] text-amber-700 font-medium">
-                  💡 Your default draft language is <strong>{LANGUAGE_NAMES[activeLangHint]}</strong>.
-                  <button onClick={() => setSelectedLanguage(activeLangHint)} className="underline ml-1">Filter to it?</button>
-                </p>
-              </div>
-            )}
+      <div className="p-6 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
+        
+        {/* Navigation & Controls Bar */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          
+          {/* Main Tab Switcher */}
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab("saved")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all",
+                activeTab === "saved"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              )}
+            >
+              <FileText className="w-4 h-4 text-indigo-600" />
+              Saved Drafts
+              <span className="ml-1 text-[11px] px-1.5 py-0.2 bg-indigo-50 text-indigo-700 rounded-full font-bold">
+                {savedDrafts.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab("templates")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all",
+                activeTab === "templates"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              )}
+            >
+              <BookOpen className="w-4 h-4 text-emerald-600" />
+              Template Library
+              <span className="ml-1 text-[11px] px-1.5 py-0.2 bg-emerald-50 text-emerald-700 rounded-full font-bold">
+                {masterTemplates.length}
+              </span>
+            </button>
           </div>
 
-          {/* Category Filter */}
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <div className="px-4 py-3 border-b border-gray-50 flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-[12px] font-bold text-charcoal">Categories</span>
-            </div>
-            <div className="p-2 max-h-80 overflow-y-auto flex flex-col gap-0.5">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all text-[13px]",
-                    selectedCategory === cat.id ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-gray-600 hover:bg-gray-50"
-                  )}
-                >
-                  <span>{cat.label}</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white border border-gray-100 text-gray-400">
-                    {cat.count.toLocaleString("en-IN")}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Favorites */}
+          {/* New Draft Primary Action Button */}
           <button
-            onClick={() => setShowFavorites(!showFavorites)}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-2xl border text-[13px] font-medium transition-all",
-              showFavorites
-                ? "bg-amber-50 border-amber-200 text-amber-700"
-                : "bg-white border-gray-100 text-gray-600 hover:border-gray-200"
-            )}
+            onClick={() => router.push("/draft-workspace")}
+            className="flex items-center gap-2 px-4 py-2.5 bg-sidebar hover:bg-sidebar-dark text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
           >
-            <Star className={cn("w-4 h-4", showFavorites ? "fill-amber-400 text-amber-400" : "")} />
-            My Favorites
-            {showFavorites && <span className="ml-auto text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">{DRAFTS.filter(d => d.starred).length}</span>}
+            <Plus className="w-4 h-4" /> Create New Draft
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col gap-5 min-w-0">
+        {/* TAB 1: SAVED DRAFTS */}
+        {activeTab === "saved" && (
+          <div className="flex flex-col gap-5">
+            {/* Filter & Search Bar */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[240px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search drafts by title, client name, case number..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
 
-          {/* Search Bar */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-wrap items-center gap-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6EE7B7]" />
-              <input
-                type="text"
-                placeholder="Search in English, मराठी, हिन्दी, ગુજરાતી…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full h-10 pl-10 pr-9 rounded-xl text-[13px] bg-gray-50 border border-gray-100 focus:outline-none focus:border-[#6EE7B7] focus:bg-white transition-all placeholder:text-gray-400 text-charcoal"
-              />
-            </div>
+              {/* Status Filter */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-gray-400 font-medium">Status:</span>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="border border-gray-200 rounded-xl px-2.5 py-1.5 bg-white text-gray-700 font-medium outline-none text-xs"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="draft">Working Draft</option>
+                  <option value="in_review">In Review</option>
+                  <option value="finalized">Finalized</option>
+                </select>
+              </div>
 
-            {/* Cross-Lang toggle */}
-            <button
-              onClick={() => setShowCrossLang(!showCrossLang)}
-              className={cn(
-                "h-10 px-3 rounded-xl flex items-center gap-2 text-[12px] font-medium border transition-all",
-                showCrossLang ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-gray-50 border-gray-100 text-gray-500"
-              )}
-            >
-              <Languages className="w-3.5 h-3.5" />
-              <span className="hidden sm:block">Cross-Language Suggestions</span>
-            </button>
-
-            <button className="h-10 px-4 rounded-xl text-[12px] font-semibold flex items-center gap-2 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors border border-gray-100">
-              <Upload className="w-3.5 h-3.5" /> Upload Template
-            </button>
-          </div>
-
-          {/* Most Used (only on fresh view) */}
-          {!search && selectedCategory === "all" && selectedLanguage === "all" && !showFavorites && (
-            <div>
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5" /> Most Used Templates
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                {mostUsed.map(draft => (
-                  <DraftCard
-                    key={draft.id}
-                    draft={draft}
-                    showCrossLang={showCrossLang}
-                    onClick={() => setPreviewDraft(draft)}
-                  />
-                ))}
+              {/* Category Filter */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-gray-400 font-medium">Category:</span>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="border border-gray-200 rounded-xl px-2.5 py-1.5 bg-white text-gray-700 font-medium outline-none text-xs"
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c.key} value={c.key}>{c.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
-          )}
 
-          {/* Results */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5" />
-                {search ? `Results for "${search}"` : showFavorites ? "Favorites" : selectedLanguage !== "all" ? `${LANG_CODES.find(l => l.code === selectedLanguage)?.nativeLabel} Templates` : selectedCategory !== "all" ? CATEGORIES.find(c => c.id === selectedCategory)?.label : "All Templates"}
-              </h2>
-              <span className="text-[11px] text-gray-400 font-medium">{filtered.length} drafts</span>
-            </div>
-
-            {filtered.length === 0 ? (
-              <div className="py-16 text-center bg-white rounded-2xl border border-gray-100" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                <Languages className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="text-[14px] font-semibold text-charcoal mb-1">No drafts found</p>
-                <p className="text-[12px] text-muted">Try a different language filter or search term</p>
-                {selectedLanguage !== "all" && (
+            {/* Drafts List */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              {isLoadingDrafts ? (
+                <div className="py-20 text-center text-gray-400">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 mb-2" />
+                  <p className="text-xs">Loading saved drafts...</p>
+                </div>
+              ) : filteredDrafts.length === 0 ? (
+                <div className="py-20 text-center px-4 max-w-md mx-auto">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-gray-800 mb-1">
+                    {search || statusFilter !== "all" || categoryFilter !== "all"
+                      ? "No drafts matching your filter"
+                      : "No saved drafts yet"}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-6">
+                    {search || statusFilter !== "all" || categoryFilter !== "all"
+                      ? "Try clearing your search query or reset status filters."
+                      : "Start drafting documents with verified templates or blank pleadings linked to clients & matters."}
+                  </p>
                   <button
-                    onClick={() => setSelectedLanguage("all")}
-                    className="mt-4 text-[12px] font-semibold text-indigo-600 underline"
+                    onClick={() => router.push("/draft-workspace")}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm"
                   >
-                    Show all languages
+                    Assemble First Draft
                   </button>
-                )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filtered.map(draft => (
-                  <DraftCard
-                    key={draft.id}
-                    draft={draft}
-                    showCrossLang={showCrossLang}
-                    onClick={() => setPreviewDraft(draft)}
-                  />
-                ))}
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-gray-50/80 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-[11px]">
+                        <th className="py-3 px-4">Document Title</th>
+                        <th className="py-3 px-4">Client &amp; Matter</th>
+                        <th className="py-3 px-4">Category &amp; Lang</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Last Updated</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredDrafts.map((draft) => (
+                        <tr 
+                          key={draft.id} 
+                          className="hover:bg-gray-50/80 transition-colors group cursor-pointer"
+                          onClick={() => router.push(`/draft-workspace?draftId=${draft.id}`)}
+                        >
+                          {/* Title */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors text-[13px]">
+                                {draft.title}
+                              </span>
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                                v{draft.version || 1}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-gray-400 mt-0.5">
+                              {draft.word_count || 0} words
+                            </div>
+                          </td>
+
+                          {/* Client & Matter */}
+                          <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-gray-800 font-medium flex items-center gap-1.5">
+                                <User className="w-3.5 h-3.5 text-indigo-500" />
+                                {draft.client_name || "Unlinked Client"}
+                              </span>
+                              <span className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                                <Briefcase className="w-3.5 h-3.5 text-emerald-500" />
+                                {draft.case_number || draft.case_title || "No matter linked"}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Category & Lang */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded text-[11px] bg-indigo-50 text-indigo-700 font-semibold capitalize border border-indigo-100">
+                                {draft.category?.replace("_", " ") || "Application"}
+                              </span>
+                              <span className="px-2 py-0.5 rounded text-[11px] bg-gray-100 text-gray-600 font-medium">
+                                {draft.language || "English"}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-3.5 px-4">
+                            <span className={cn(
+                              "px-2.5 py-1 rounded-full text-[11px] font-bold capitalize",
+                              draft.status === "finalized"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : draft.status === "in_review"
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-blue-50 text-blue-700 border border-blue-200"
+                            )}>
+                              {draft.status || "draft"}
+                            </span>
+                          </td>
+
+                          {/* Last Updated */}
+                          <td className="py-3.5 px-4 text-gray-500 text-[11px]">
+                            {draft.updated_at ? new Date(draft.updated_at).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric"
+                            }) : "Recent"}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Open / Edit */}
+                              <button
+                                onClick={() => router.push(`/draft-workspace?draftId=${draft.id}`)}
+                                title="Open & Edit Draft"
+                                className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+
+                              {/* Preview */}
+                              <button
+                                onClick={() => setPreviewDraft(draft)}
+                                title="Preview Document"
+                                className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+
+                              {/* Save As (Duplicate) */}
+                              <button
+                                onClick={() => handleCopyDraft(draft)}
+                                title="Duplicate / Save As"
+                                className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+
+                              {/* Export DOCX */}
+                              <button
+                                onClick={() => handleExportDocx(draft)}
+                                title="Download DOCX"
+                                className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                onClick={() => setDeleteTarget(draft)}
+                                title="Delete Draft"
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* TAB 2: TEMPLATE LIBRARY */}
+        {activeTab === "templates" && (
+          <div className="flex flex-col lg:flex-row gap-6">
+            
+            {/* Sidebar Filters */}
+            <div className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
+              
+              {/* Language Filter */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3">
+                  Language Filter
+                </span>
+                <div className="flex flex-col gap-1">
+                  {LANG_OPTIONS.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => setSelectedLang(l.code)}
+                      className={cn(
+                        "flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-left transition-colors",
+                        selectedLang === l.code
+                          ? "bg-indigo-600 text-white font-bold"
+                          : "text-gray-600 hover:bg-gray-50"
+                      )}
+                    >
+                      <span>{l.flag}</span>
+                      <span>{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category Filter */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3">
+                  Categories
+                </span>
+                <div className="flex flex-col gap-1 max-h-72 overflow-y-auto">
+                  {CATEGORIES.map((c) => (
+                    <button
+                      key={c.key}
+                      onClick={() => setSelectedTemplateCat(c.key)}
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-left transition-colors",
+                        selectedTemplateCat === c.key
+                          ? "bg-indigo-50 text-indigo-700 font-bold"
+                          : "text-gray-600 hover:bg-gray-50"
+                      )}
+                    >
+                      <span>{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Template Cards Grid */}
+            <div className="flex-1 flex flex-col gap-5">
+              
+              {/* Search */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search templates by title or practice area..."
+                    value={templateSearch}
+                    onChange={(e) => setTemplateSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {isLoadingTemplates ? (
+                <div className="py-20 text-center text-gray-400">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 mb-2" />
+                  <p className="text-xs">Loading verified templates...</p>
+                </div>
+              ) : filteredTemplates.length === 0 ? (
+                <div className="py-20 text-center bg-white rounded-2xl border border-gray-200 p-6">
+                  <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-sm font-bold text-gray-800 mb-1">No templates found</h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Try switching language to &quot;All Languages&quot; or selecting a different category.
+                  </p>
+                  <button
+                    onClick={() => { setSelectedLang("all"); setSelectedTemplateCat("all"); }}
+                    className="text-xs font-bold text-indigo-600 hover:underline"
+                  >
+                    Reset all template filters
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-bold text-gray-900 text-sm">{template.title}</h4>
+                          <span className="px-2 py-0.5 rounded text-[11px] bg-indigo-50 text-indigo-700 font-bold border border-indigo-100 shrink-0">
+                            {template.language}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600 font-medium">
+                            {template.practice_area || "General"}
+                          </span>
+                          {template.court_type && (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-medium">
+                              {template.court_type}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <button
+                          onClick={() => setPreviewDraft(template)}
+                          className="text-xs font-semibold text-gray-500 hover:text-gray-900 flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Preview
+                        </button>
+                        <button
+                          onClick={() => router.push(`/draft-workspace?templateId=${template.id}`)}
+                          className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                          Use Template <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Preview Modal */}
-      <AnimatePresence>
-        {previewDraft && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
-              onClick={() => setPreviewDraft(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row h-[85vh] max-h-[800px]"
-            >
-              {/* Left: Document Preview */}
-              <div className="flex-1 bg-gray-50 p-6 overflow-y-auto flex justify-center border-r border-gray-100">
-                <div className="w-full max-w-[500px] bg-white border border-gray-200 shadow-sm p-10 min-h-full font-serif text-[13px] leading-relaxed text-gray-800 flex flex-col items-center">
-                  <div className="w-full text-center mb-8 font-bold text-sm">BEFORE THE HON'BLE COURT / FORUM</div>
-                  <div className="w-full text-left mb-6 font-semibold">Case No: {"{{case_number}}"}</div>
-                  <div className="w-full text-left mb-8">
-                    {"{{client_name}}"}<br /><span className="pl-16">... Petitioner/Applicant</span><br /><br />
-                    VERSUS<br /><br />
-                    {"{{opponent_name}}"}<br /><span className="pl-16">... Respondent</span>
-                  </div>
-                  <div className="w-full font-bold text-center mb-6 uppercase">{previewDraft.title}</div>
-                  <div className="w-full text-center text-gray-300 border-2 border-dashed border-gray-100 p-8 rounded-xl text-[12px]">
-                    Template content loads from storage.<br />Select a matter to auto-fill fields.
-                  </div>
-                </div>
+      {previewDraft && (
+        <div className="fixed inset-0 z-50 flex bg-gray-900/70 backdrop-blur-xs items-center justify-center p-6 print:p-0">
+          <div className="bg-gray-100 rounded-2xl w-full max-w-[920px] max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-4 bg-white border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm">{previewDraft.title}</h3>
+                <span className="text-[11px] text-gray-500">
+                  {previewDraft.category} • {previewDraft.language}
+                </span>
               </div>
-
-              {/* Right: Info Panel */}
-              <div className="w-full md:w-[340px] bg-white p-6 flex flex-col shrink-0 overflow-y-auto">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-[15px] font-bold text-charcoal leading-snug pr-2">{previewDraft.title}</h3>
-                  <button onClick={() => setPreviewDraft(null)} className="p-2 text-gray-400 hover:text-charcoal hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  <span className="px-2.5 py-1 bg-[#013B36]/10 text-[#013B36] rounded-lg text-[11px] font-bold flex items-center gap-1.5">
-                    <ShieldCheck className="w-3 h-3" /> {previewDraft.label}
-                  </span>
-                  <LangBadge lang={previewDraft.language} />
-                </div>
-
-                {/* Cross-Language Available Versions */}
-                {previewDraft.crossLang.length > 0 && (
-                  <div className="mb-5">
-                    <h4 className="text-[12px] font-bold text-charcoal flex items-center gap-2 mb-2">
-                      <Globe className="w-3.5 h-3.5 text-indigo-500" /> Available in other languages
-                    </h4>
-                    <div className="bg-indigo-50/60 rounded-xl p-3 border border-indigo-100 space-y-2">
-                      {previewDraft.crossLang.map(ref => {
-                        const langEntry = LANG_CODES.find(l => l.code === ref.lang);
-                        return (
-                          <div key={ref.lang} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span>{langEntry?.flag}</span>
-                              <span className="text-[12px] font-semibold text-charcoal">{langEntry?.nativeLabel}</span>
-                            </div>
-                            <button className="text-[11px] text-indigo-600 font-semibold flex items-center gap-1 hover:text-indigo-800">
-                              Switch <ArrowRight className="w-3 h-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Required Documents */}
-                <div className="mb-5">
-                  <h4 className="text-[12px] font-bold text-charcoal flex items-center gap-2 mb-2">
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" /> Required Documents
-                  </h4>
-                  <div className="bg-emerald-50/50 rounded-xl p-3 border border-emerald-100 space-y-1.5">
-                    {(REQUIRED_DOCS_MAP[previewDraft.category] || REQUIRED_DOCS_MAP.all).map((doc, i) => (
-                      <div key={i} className="flex items-start gap-2 text-[12px] text-gray-700">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>{doc}</span>
-                      </div>
-                    ))}
-                    <div className="mt-3 pt-2 border-t border-emerald-100 text-[10px] text-emerald-700 font-medium flex items-start gap-1">
-                      <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" /> Collect these before drafting.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {previewDraft.tags.map(tag => (
-                    <span key={tag} className="text-[10px] px-2 py-1 bg-gray-100 text-gray-600 rounded-lg font-medium">{tag}</span>
-                  ))}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="mt-auto flex flex-col gap-2">
-                  <button
-                    onClick={() => {
-                      setPreviewDraft(null);
-                      router.push(`/draft-workspace?templateId=${previewDraft.id}`);
-                    }}
-                    className="w-full py-3 rounded-xl text-[13px] font-bold text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
-                    style={{ background: "linear-gradient(135deg, #013B36, #014D46)", boxShadow: "0 4px 14px rgba(1,59,54,0.25)" }}
-                  >
-                    <FileText className="w-4 h-4" /> Use This Template
-                  </button>
-                  <button 
-                    onClick={() => {
-                      toast.success(`Downloading ${previewDraft.title}.docx`);
-                      const a = document.createElement("a");
-                      a.href = "data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;charset=utf-8," + encodeURIComponent("MOCK CONTENT: " + previewDraft.title);
-                      a.download = `${previewDraft.title}.docx`;
-                      a.click();
-                    }}
-                    className="w-full py-2.5 rounded-xl text-[12px] font-semibold text-gray-600 bg-gray-50 border border-gray-100 flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Download (.docx)
-                  </button>
-                  <p className="text-[10px] text-muted text-center mt-1">
-                    Opens Draft Workspace to auto-fill client &amp; matter details.
-                  </p>
-                </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const id = previewDraft.id;
+                    setPreviewDraft(null);
+                    router.push(
+                      previewDraft.is_template
+                        ? `/draft-workspace?templateId=${id}`
+                        : `/draft-workspace?draftId=${id}`
+                    );
+                  }}
+                  className="px-3.5 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                  {previewDraft.is_template ? "Use Template" : "Open in Workspace"}
+                </button>
+                <button
+                  onClick={() => setPreviewDraft(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 font-bold"
+                >
+                  ✕
+                </button>
               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
+            </div>
 
-function DraftCard({ draft, showCrossLang, onClick }: { draft: Draft; showCrossLang: boolean; onClick: () => void }) {
-  return (
-    <motion.div
-      layout
-      onClick={onClick}
-      className="bg-white rounded-2xl border border-gray-100 p-4 cursor-pointer hover:shadow-md hover:border-[#013B36]/20 transition-all group flex flex-col"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex-1 min-w-0">
-          <span className="text-[10px] font-bold text-[#013B36]/60 uppercase tracking-wider">{draft.label}</span>
-          <div className="text-[13px] font-bold text-charcoal leading-snug mt-0.5 line-clamp-2 group-hover:text-[#013B36] transition-colors">
-            {draft.title}
+            <div className="flex-1 overflow-y-auto p-6 flex justify-center">
+              <div className="w-full max-w-[700px] bg-white border border-gray-200 shadow-sm p-10 min-h-[600px] font-serif text-[13px] leading-relaxed text-gray-900 whitespace-pre-wrap">
+                {previewDraft.content || "Empty document"}
+              </div>
+            </div>
           </div>
-        </div>
-        <button
-          onClick={e => e.stopPropagation()}
-          className={cn("transition-colors p-1.5 -mr-1.5 -mt-1 flex-shrink-0", draft.starred ? "text-amber-400" : "text-gray-200 hover:text-amber-300")}
-        >
-          <Star className="w-4 h-4" fill={draft.starred ? "currentColor" : "none"} />
-        </button>
-      </div>
-
-      {/* Cross-Language badges */}
-      {showCrossLang && draft.crossLang.length > 0 && (
-        <div className="flex items-center gap-1 flex-wrap mb-2">
-          <Globe className="w-3 h-3 text-indigo-400 flex-shrink-0" />
-          {draft.crossLang.map(ref => {
-            const entry = LANG_CODES.find(l => l.code === ref.lang);
-            return (
-              <span key={ref.lang} className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-                {entry?.nativeLabel}
-              </span>
-            );
-          })}
         </div>
       )}
 
-      {/* Footer */}
-      <div className="mt-auto pt-3 flex items-center justify-between border-t border-gray-50">
-        <div className="flex flex-wrap gap-1.5">
-          <LangBadge lang={draft.language} />
-          {draft.tags.slice(0, 1).map(t => (
-            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">{t}</span>
-          ))}
-        </div>
-        <div className="flex items-center gap-1 text-[10px] text-muted whitespace-nowrap">
-          <Clock className="w-3 h-3" /> {draft.updatedAt}
-        </div>
-      </div>
-    </motion.div>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteDraft}
+        title="Delete Draft"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        loading={deleteDraftMutation.isPending}
+      />
+    </div>
   );
 }

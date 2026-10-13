@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "Fastcase ERP"
     SMTP_USE_TLS: bool = True
 
+    # Admin Notifications
+    ADMIN_EMAIL: str = "admin@fastcase.in"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

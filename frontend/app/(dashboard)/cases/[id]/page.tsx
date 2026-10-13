@@ -1861,8 +1861,11 @@ export default function CaseDetailPage() {
                         key={d.id}
                         className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 group transition-colors"
                       >
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => router.push(`/draft-workspace?draftId=${d.id}`)}
+                        >
+                          <div className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
                             {d.title}
                           </div>
                           <div className="text-xs text-gray-400 capitalize">
@@ -1874,6 +1877,13 @@ export default function CaseDetailPage() {
                             AI
                           </span>
                         )}
+                        <button
+                          onClick={() => router.push(`/draft-workspace?draftId=${d.id}`)}
+                          title="Open & Edit in Workspace"
+                          className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-white transition-all shadow-sm border border-transparent hover:border-gray-200"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => {
                             setPrintDraftId(d.id);

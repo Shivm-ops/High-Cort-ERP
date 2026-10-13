@@ -21,20 +21,73 @@ from app.models.case import Case
 router = APIRouter()
 
 
+CATEGORY_ALIASES = {
+    "applications": DraftCategory.APPLICATION,
+    "application": DraftCategory.APPLICATION,
+    "affidavits": DraftCategory.AFFIDAVIT,
+    "affidavit": DraftCategory.AFFIDAVIT,
+    "petitions": DraftCategory.PETITION,
+    "petition": DraftCategory.PETITION,
+    "complaints": DraftCategory.COMPLAINT,
+    "complaint": DraftCategory.COMPLAINT,
+    "replies": DraftCategory.REPLY,
+    "reply": DraftCategory.REPLY,
+    "written statements": DraftCategory.WRITTEN_STATEMENT,
+    "written_statements": DraftCategory.WRITTEN_STATEMENT,
+    "written statement": DraftCategory.WRITTEN_STATEMENT,
+    "written_statement": DraftCategory.WRITTEN_STATEMENT,
+    "notices": DraftCategory.NOTICE,
+    "notice": DraftCategory.NOTICE,
+    "agreements": DraftCategory.AGREEMENT,
+    "agreement": DraftCategory.AGREEMENT,
+    "appeals": DraftCategory.APPEAL,
+    "appeal": DraftCategory.APPEAL,
+    "vakalatnama": DraftCategory.VAKALATNAMA,
+    "motions": DraftCategory.MOTION,
+    "motion": DraftCategory.MOTION,
+    "bail": DraftCategory.APPLICATION,
+    "civil": DraftCategory.PETITION,
+    "other": DraftCategory.OTHER,
+}
+
+LANG_ALIASES = {
+    "en": DraftLanguage.ENGLISH,
+    "english": DraftLanguage.ENGLISH,
+    "hi": DraftLanguage.HINDI,
+    "hindi": DraftLanguage.HINDI,
+    "mr": DraftLanguage.MARATHI,
+    "marathi": DraftLanguage.MARATHI,
+    "gu": DraftLanguage.GUJARATI,
+    "gujarati": DraftLanguage.GUJARATI,
+}
+
+
 def serialize_draft(d: Draft) -> dict:
+    client_name = None
+    if d.client:
+        client_name = d.client.name
+    case_no = None
+    case_title = None
+    if d.case:
+        case_no = d.case.case_no
+        case_title = d.case.title
+
     return {
         "id": str(d.id),
         "title": d.title,
         "content": d.content,
-        "category": d.category,
+        "category": d.category.value if hasattr(d.category, "value") else str(d.category),
         "practice_area": d.practice_area,
         "subcategory": d.subcategory,
         "court_type": d.court_type,
         "storage_url": d.storage_url,
         "status": d.status,
-        "language": d.language,
+        "language": d.language.value if hasattr(d.language, "value") else str(d.language),
         "case_id": str(d.case_id) if d.case_id else None,
         "client_id": str(d.client_id) if d.client_id else None,
+        "client_name": client_name,
+        "case_number": case_no,
+        "case_title": case_title,
         "tags": d.tags or [],
         "is_template": d.is_template,
         "ai_generated": d.ai_generated,
@@ -75,6 +128,8 @@ class DraftUpdate(BaseModel):
     language: Optional[str] = None
     tags: Optional[list] = None
     is_template: Optional[bool] = None
+    case_id: Optional[str] = None
+    client_id: Optional[str] = None
 
 
 class AutoFillRequest(BaseModel):
@@ -86,22 +141,49 @@ class AutoFillRequest(BaseModel):
 @router.get("/templates")
 async def list_templates(
     category: Optional[str] = None,
+    language: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
     """Return firm's own templates + global public templates."""
-    # Firm-owned templates OR public platform templates (firm_id IS NULL)
     from sqlalchemy import or_ as sql_or
-    q = db.query(Draft).filter(Draft.is_template == True).filter(
+    
+    # Check if public templates exist; if not, auto-seed
+    public_count = db.query(Draft).filter(Draft.is_public_template == True).count()
+    if public_count == 0:
+        try:
+            from app.services.template_seeds import seed_master_templates
+            seed_master_templates(db)
+        except Exception:
+            pass
+
+    q = db.query(Draft).options(joinedload(Draft.client), joinedload(Draft.case)).filter(
+        Draft.is_template == True,
+        Draft.is_deleted == False,
+    ).filter(
         sql_or(
             Draft.firm_id == current_user.firm_id,
             Draft.is_public_template == True,
         )
     )
+
     if category:
-        q = q.filter(Draft.category == category)
+        clean_cat = category.lower().strip()
+        mapped_cat = CATEGORY_ALIASES.get(clean_cat)
+        if mapped_cat:
+            q = q.filter(Draft.category == mapped_cat)
+        else:
+            q = q.filter(Draft.category.ilike(f"%{clean_cat}%"))
+
+    if language:
+        clean_lang = language.lower().strip()
+        mapped_lang = LANG_ALIASES.get(clean_lang)
+        if mapped_lang:
+            q = q.filter(Draft.language == mapped_lang)
+
     templates = q.order_by(Draft.title).all()
     return {"total": len(templates), "templates": [serialize_draft(t) for t in templates]}
+
 
 
 @router.post("/auto-fill")
@@ -167,31 +249,60 @@ async def auto_fill_draft(
 
 @router.get("/")
 async def list_drafts(
-    skip: int = 0, limit: int = 50, category: Optional[str] = None,
+    skip: int = 0, limit: int = 100, category: Optional[str] = None,
     language: Optional[str] = None, search: Optional[str] = None,
     is_template: Optional[bool] = None, case_id: Optional[str] = None,
+    client_id: Optional[str] = None, status: Optional[str] = None,
     db: Session = Depends(get_db), current_user: User = Depends(require_firm_member),
 ):
     from sqlalchemy import or_ as sql_or
-    # ── Tenant isolation: firm's drafts + global public templates ─────────────
-    query = db.query(Draft).filter(
-        sql_or(
-            Draft.firm_id == current_user.firm_id,
-            Draft.is_public_template == True,
-        )
+    query = db.query(Draft).options(
+        joinedload(Draft.client), joinedload(Draft.case)
+    ).filter(
+        Draft.is_deleted == False
     )
+
+    if is_template is False:
+        # User drafts: belong to user's firm only
+        query = query.filter(
+            Draft.firm_id == current_user.firm_id,
+            Draft.is_template == False,
+        )
+    else:
+        query = query.filter(
+            sql_or(
+                Draft.firm_id == current_user.firm_id,
+                Draft.is_public_template == True,
+            )
+        )
+        if is_template is True:
+            query = query.filter(Draft.is_template == True)
+
     if category:
-        query = query.filter(Draft.category == category)
+        clean_cat = category.lower().strip()
+        mapped_cat = CATEGORY_ALIASES.get(clean_cat)
+        if mapped_cat:
+            query = query.filter(Draft.category == mapped_cat)
+        else:
+            query = query.filter(Draft.category.ilike(f"%{clean_cat}%"))
+
     if language:
-        query = query.filter(Draft.language == language)
+        clean_lang = language.lower().strip()
+        mapped_lang = LANG_ALIASES.get(clean_lang)
+        if mapped_lang:
+            query = query.filter(Draft.language == mapped_lang)
+
     if search:
         query = query.filter(Draft.title.ilike(f"%{search}%"))
-    if is_template is not None:
-        query = query.filter(Draft.is_template == is_template)
     if case_id:
         query = query.filter(Draft.case_id == case_id)
+    if client_id:
+        query = query.filter(Draft.client_id == client_id)
+    if status:
+        query = query.filter(Draft.status == status)
+
     total = query.count()
-    drafts = query.offset(skip).limit(limit).all()
+    drafts = query.order_by(Draft.updated_at.desc(), Draft.created_at.desc()).offset(skip).limit(limit).all()
     return {"total": total, "drafts": [serialize_draft(d) for d in drafts]}
 
 
@@ -202,8 +313,18 @@ async def create_draft(
     current_user: User = Depends(require_firm_member),
 ):
     word_count = len(data.content.split()) if data.content else 0
+    clean_cat = data.category.lower().strip() if data.category else "other"
+    mapped_cat = CATEGORY_ALIASES.get(clean_cat, DraftCategory.OTHER)
+
+    clean_lang = data.language.lower().strip() if data.language else "en"
+    mapped_lang = LANG_ALIASES.get(clean_lang, DraftLanguage.ENGLISH)
+
+    draft_dict = data.model_dump()
+    draft_dict["category"] = mapped_cat
+    draft_dict["language"] = mapped_lang
+
     draft = Draft(
-        **data.model_dump(),
+        **draft_dict,
         created_by_id=current_user.id,
         word_count=word_count,
         firm_id=get_user_firm_id(current_user),
@@ -220,7 +341,9 @@ async def get_draft(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    draft = db.query(Draft).filter(Draft.id == draft_id).first()
+    draft = db.query(Draft).options(
+        joinedload(Draft.client), joinedload(Draft.case)
+    ).filter(Draft.id == draft_id).first()
     if not draft:
         raise HTTPException(status_code=404, detail="Draft not found")
     # ── Object-level security: own firm or public template ────────────────────
@@ -242,13 +365,63 @@ async def update_draft(
     # ── Object-level security ─────────────────────────────────────────────────
     check_object_firm(draft, current_user)
     for field, val in data.model_dump(exclude_none=True).items():
-        setattr(draft, field, val)
-    if data.content:
+        if field == "category" and val:
+            clean_cat = val.lower().strip()
+            setattr(draft, field, CATEGORY_ALIASES.get(clean_cat, val))
+        elif field == "language" and val:
+            clean_lang = val.lower().strip()
+            setattr(draft, field, LANG_ALIASES.get(clean_lang, val))
+        else:
+            setattr(draft, field, val)
+
+    if data.content is not None:
         draft.word_count = len(data.content.split())
         draft.version = (draft.version or 1) + 1
+
+    draft.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(draft)
     return serialize_draft(draft)
+
+
+@router.post("/{draft_id}/copy")
+async def copy_draft(
+    draft_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """Save As: creates a duplicate copy of the draft with '(Copy)' in title."""
+    draft = db.query(Draft).filter(Draft.id == draft_id).first()
+    if not draft:
+        raise HTTPException(status_code=404, detail="Draft not found")
+    if not draft.is_public_template:
+        check_object_firm(draft, current_user)
+
+    copy_title = f"{draft.title} (Copy)"
+    new_draft = Draft(
+        title=copy_title,
+        content=draft.content,
+        category=draft.category,
+        practice_area=draft.practice_area,
+        subcategory=draft.subcategory,
+        court_type=draft.court_type,
+        status="active",
+        language=draft.language,
+        case_id=draft.case_id,
+        client_id=draft.client_id,
+        tags=list(draft.tags or []),
+        is_template=False,
+        is_public_template=False,
+        version=1,
+        word_count=draft.word_count,
+        firm_id=get_user_firm_id(current_user),
+        created_by_id=current_user.id,
+    )
+    db.add(new_draft)
+    db.commit()
+    db.refresh(new_draft)
+    return serialize_draft(new_draft)
+
 
 
 @router.delete("/{draft_id}")

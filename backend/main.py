@@ -82,6 +82,13 @@ async def lifespan(app: FastAPI):
         run_db_migrations()
     except Exception as e:
         logger.error(f"❌ Failed to run database migrations: {e}")
+    try:
+        from app.services.template_seeds import seed_master_templates
+        from app.core.database import SessionLocal
+        with SessionLocal() as db_session:
+            seed_master_templates(db_session)
+    except Exception as e:
+        logger.warning(f"⚠️ Template seeding notice: {e}")
     logger.info("✅ Database tables created/verified")
     yield
     logger.info("🛑 LegalOS API shutting down...")

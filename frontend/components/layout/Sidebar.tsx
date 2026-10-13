@@ -110,7 +110,6 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Billing & Invoices", href: "/billing", icon: Receipt, requiredFeature: "billing" },
       { label: "Team", href: "/team", icon: Users2 },
-      { label: "Drafting", href: "/draft-workspace", icon: Wand2 },
       { label: "Limitation & Deadlines", href: "/compliance", icon: ShieldCheck },
       { label: "Tools & Calculators", href: "/tools", icon: Calculator },
     ],

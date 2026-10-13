@@ -15,6 +15,9 @@ export interface Draft {
   status?: string;
   case_id?: string;
   client_id?: string;
+  client_name?: string;
+  case_number?: string;
+  case_title?: string;
   tags: string[];
   is_template: boolean;
   ai_generated: boolean;
@@ -44,11 +47,19 @@ export interface DraftCreate {
 const KEYS = {
   all: ["drafts"] as const,
   list: (p?: Record<string, unknown>) => ["drafts", "list", p] as const,
-  templates: (cat?: string) => ["drafts", "templates", cat] as const,
+  templates: (p?: unknown) => ["drafts", "templates", p] as const,
   detail: (id: string) => ["drafts", id] as const,
 };
 
-export function useDrafts(params?: { case_id?: string; is_template?: boolean; search?: string; category?: string }) {
+export function useDrafts(params?: {
+  case_id?: string;
+  client_id?: string;
+  is_template?: boolean;
+  search?: string;
+  category?: string;
+  language?: string;
+  status?: string;
+}) {
   return useQuery({
     queryKey: KEYS.list(params),
     queryFn: async () => {
@@ -58,15 +69,17 @@ export function useDrafts(params?: { case_id?: string; is_template?: boolean; se
   });
 }
 
-export function useTemplates(category?: string) {
+export function useTemplates(params?: { category?: string; language?: string } | string) {
+  const queryParams = typeof params === "string" ? { category: params } : params;
   return useQuery({
-    queryKey: KEYS.templates(category),
+    queryKey: KEYS.templates(queryParams),
     queryFn: async () => {
-      const { data } = await api.get("/drafts/templates", { params: category ? { category } : undefined });
+      const { data } = await api.get("/drafts/templates", { params: queryParams });
       return data as { total: number; templates: Draft[] };
     },
   });
 }
+
 
 export function useDraft(id: string) {
   return useQuery({
@@ -138,3 +151,19 @@ export function useDeleteDraft() {
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 }
+
+export function useCopyDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post(`/drafts/${id}/copy`);
+      return data as Draft;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.all });
+      toast.success("Draft copy created");
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+}
+

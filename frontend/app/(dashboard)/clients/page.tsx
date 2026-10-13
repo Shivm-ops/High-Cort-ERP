@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, Users, Building2, RefreshCw, Pencil, Trash2, ExternalLink, Phone, Mail, MapPin } from "lucide-react";
+import { Plus, Search, Users, Building2, RefreshCw, Pencil, Trash2, ExternalLink, Phone, Mail, MapPin, FileText } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -158,6 +158,11 @@ export default function ClientsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => router.push(`/draft-workspace?clientId=${client.id}`)}
+                        title="Draft Document"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
+                        <FileText className="w-4 h-4" />
+                      </button>
                       <button onClick={() => router.push(`/clients/${client.id}`)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-sidebar hover:bg-sidebar/5 transition-colors">
                         <ExternalLink className="w-4 h-4" />
