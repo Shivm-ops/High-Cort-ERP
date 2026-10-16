@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useDisableInspect } from './hooks/useDisableInspect';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -19,6 +20,9 @@ import GrievanceOfficer from './pages/GrievanceOfficer';
 import PracticeAreas from './pages/PracticeAreas';
 
 export default function App() {
+  // Deter inspecting shortcuts and right-click
+  useDisableInspect();
+
   return (
     <div className="min-h-screen flex flex-col bg-surface transition-colors duration-300">
       <ScrollToTop />

@@ -10,6 +10,9 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts"],
   },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+  },
 };
 
 module.exports = nextConfig;
