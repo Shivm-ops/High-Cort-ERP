@@ -1,9 +1,10 @@
+from typing import Optional
 from sqlalchemy import Column, String, Enum, DateTime, Text, Boolean, ForeignKey, Integer
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 from sqlalchemy import JSON
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 from app.core.database import Base
@@ -61,8 +62,8 @@ class Draft(Base):
     # ── Tenant isolation ─────────────────────────────────────────────────────
     firm_id = Column(UUID(as_uuid=True), ForeignKey("firms.id"), nullable=True, index=True)
     # ─────────────────────────────────────────────────────────────────────────
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), onupdate=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     # Relationships
     case = relationship("Case", back_populates="drafts")

@@ -13,7 +13,7 @@ import asyncio
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -151,7 +151,7 @@ def _get_user_subscription(user: User, db: Session) -> dict:
     }
 
 
-def _get_admin_emails_for_notification(db: Session, firm_id: Optional[uuid.UUID] = None) -> list[str]:
+def _get_admin_emails_for_notification(db: Session, firm_id: Any = None) -> list[str]:
     """Gather admin recipient emails from settings, database superadmins, and firm admins."""
     collected = set()
 
@@ -391,18 +391,18 @@ async def client_login(
     access_token = create_access_token({"sub": str(client.id), "role": "client", "jti": jti})
     refresh_token = create_refresh_token({"sub": str(client.id)})
 
-    client.last_login = utc_now()
+    setattr(client, "last_login", utc_now())
     db.commit()
 
     # Send login notification email to client and admin (fire-and-forget)
     admin_emails = _get_admin_emails_for_notification(db, client.firm_id)
-    client_firm_name = None
+    client_firm_name: Optional[str] = None
     if client.firm_id:
         try:
             from app.models.firm import Firm
             firm = db.query(Firm).filter(Firm.id == client.firm_id).first()
-            if firm:
-                client_firm_name = firm.name
+            if firm and firm.name:
+                client_firm_name = str(firm.name)
         except Exception:
             pass
 

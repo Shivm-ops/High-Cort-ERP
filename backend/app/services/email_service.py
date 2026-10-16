@@ -10,6 +10,7 @@ asyncio.to_thread so the FastAPI event loop is never blocked.
 import asyncio
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 from azure.communication.email import EmailClient
 from azure.core.exceptions import HttpResponseError
@@ -43,7 +44,8 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
             },
         }
         try:
-            client = EmailClient.from_connection_string(conn_str)
+            email_client_cls: Any = EmailClient
+            client = email_client_cls.from_connection_string(conn_str)
             poller = client.begin_send(message)
             result = poller.result()
             logger.info("ACS email sent to %s | subject: %s | messageId: %s", to_email, subject, result.get("id"))

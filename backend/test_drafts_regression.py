@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from typing import Any
 from dotenv import load_dotenv
 
 backend_dir = os.path.dirname(__file__)
@@ -19,6 +20,12 @@ from app.services.template_seeds import seed_master_templates
 from app.api.v1.drafts import CATEGORY_ALIASES, LANG_ALIASES, serialize_draft
 
 class TestDraftsRegression(unittest.TestCase):
+    db: Any
+    user: Any
+    client: Client
+    case: Case
+    firm_id: Any
+
     @classmethod
     def setUpClass(cls):
         cls.db = SessionLocal()
@@ -28,16 +35,17 @@ class TestDraftsRegression(unittest.TestCase):
         cls.firm_id = cls.user.firm_id if cls.user and cls.user.firm_id else "00000000-0000-0000-0000-000000000001"
 
         # Find or create client and case
-        cls.client = cls.db.query(Client).filter(Client.firm_id == cls.firm_id).first()
-        if not cls.client:
-            cls.client = Client(name="Rajesh Sharma", phone="9876543210", city="Mumbai", firm_id=cls.firm_id)
-            cls.db.add(cls.client)
+        found_client = cls.db.query(Client).filter(Client.firm_id == cls.firm_id).first()
+        if not found_client:
+            found_client = Client(name="Rajesh Sharma", phone="9876543210", city="Mumbai", firm_id=cls.firm_id)
+            cls.db.add(found_client)
             cls.db.commit()
-            cls.db.refresh(cls.client)
+            cls.db.refresh(found_client)
+        cls.client = found_client
 
-        cls.case = cls.db.query(Case).filter(Case.firm_id == cls.firm_id).first()
-        if not cls.case:
-            cls.case = Case(
+        found_case = cls.db.query(Case).filter(Case.firm_id == cls.firm_id).first()
+        if not found_case:
+            found_case = Case(
                 title="Sharma vs State of Maharashtra", 
                 case_no="CR-9082/2026", 
                 court="Sessions Court", 
@@ -45,9 +53,10 @@ class TestDraftsRegression(unittest.TestCase):
                 firm_id=cls.firm_id,
                 client_id=cls.client.id
             )
-            cls.db.add(cls.case)
+            cls.db.add(found_case)
             cls.db.commit()
-            cls.db.refresh(cls.case)
+            cls.db.refresh(found_case)
+        cls.case = found_case
 
         # Clean any previous test artifacts
         cls.db.query(Draft).filter(Draft.title.like("Bail Application - Rajesh Sharma%")).delete(synchronize_session=False)
@@ -108,26 +117,30 @@ class TestDraftsRegression(unittest.TestCase):
         """Scenario 2 & 4: Reopen draft by ID and verify exact content loaded."""
         draft = self.db.query(Draft).filter(Draft.title == "Bail Application - Rajesh Sharma").first()
         self.assertIsNotNone(draft)
-        self.assertIn("BEFORE THE HON'BLE SESSIONS COURT", draft.content)
+        assert draft is not None
+        self.assertIn("BEFORE THE HON'BLE SESSIONS COURT", str(draft.content or ""))
         self.assertEqual(draft.version, 1)
 
     def test_04_edit_draft_and_persist(self):
         """Scenario 3 & 4: Edit draft content, verify version increments and persists."""
         draft = self.db.query(Draft).filter(Draft.title == "Bail Application - Rajesh Sharma").first()
-        updated_content = draft.content + "\n\nGROUNDS FOR BAIL:\n1. The applicant is innocent."
-        draft.content = updated_content
-        draft.version = (draft.version or 1) + 1
-        draft.word_count = len(updated_content.split())
+        assert draft is not None
+        updated_content = str(draft.content or "") + "\n\nGROUNDS FOR BAIL:\n1. The applicant is innocent."
+        setattr(draft, "content", updated_content)
+        setattr(draft, "version", int(getattr(draft, "version", 1) or 1) + 1)
+        setattr(draft, "word_count", len(updated_content.split()))
         self.db.commit()
         self.db.refresh(draft)
 
         reloaded = self.db.query(Draft).filter(Draft.id == draft.id).first()
+        assert reloaded is not None
         self.assertEqual(reloaded.version, 2)
-        self.assertIn("GROUNDS FOR BAIL", reloaded.content)
+        self.assertIn("GROUNDS FOR BAIL", str(reloaded.content or ""))
 
     def test_05_save_as_duplicate(self):
         """Scenario 6: Use Save As to create a separate copy, leaving original unchanged."""
         original = self.db.query(Draft).filter(Draft.title == "Bail Application - Rajesh Sharma").first()
+        assert original is not None
         original_id = original.id
         original_content = original.content
 
@@ -154,6 +167,7 @@ class TestDraftsRegression(unittest.TestCase):
 
         # Verify original is unchanged
         fresh_original = self.db.query(Draft).filter(Draft.id == original_id).first()
+        assert fresh_original is not None
         self.assertEqual(fresh_original.content, original_content)
         self.assertEqual(fresh_original.version, 2)
 
@@ -187,18 +201,19 @@ class TestDraftsRegression(unittest.TestCase):
     def test_07_autofill_template_fields(self):
         """Scenario 9: Test auto-fill logic for client and matter."""
         template_text = "BEFORE THE COURT\nCase No: {{case_number}}\n{{client_name}} vs {{opponent_name}}"
-        filled = template_text.replace("{{case_number}}", self.case.case_no)
-        filled = filled.replace("{{client_name}}", self.client.name)
+        filled = template_text.replace("{{case_number}}", str(self.case.case_no))
+        filled = filled.replace("{{client_name}}", str(self.client.name))
         filled = filled.replace("{{opponent_name}}", "State")
         
-        self.assertIn(self.case.case_no, filled)
-        self.assertIn(self.client.name, filled)
+        self.assertIn(str(self.case.case_no), filled)
+        self.assertIn(str(self.client.name), filled)
         self.assertNotIn("{{case_number}}", filled)
 
     def test_08_delete_draft(self):
         """Verify delete draft removes document while preserving templates."""
         draft_to_delete = self.db.query(Draft).filter(Draft.title == "Bail Application - Rajesh Sharma (Copy)").first()
         self.assertIsNotNone(draft_to_delete)
+        assert draft_to_delete is not None
         d_id = draft_to_delete.id
         self.db.delete(draft_to_delete)
         self.db.commit()

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.core.database import get_db
@@ -57,6 +57,9 @@ LANGUAGE_MAP = {
     "gu": DraftLanguage.GUJARATI,
     "gujarati": DraftLanguage.GUJARATI,
 }
+
+CATEGORY_ALIASES = CATEGORY_MAP
+LANG_ALIASES = LANGUAGE_MAP
 
 def normalize_category(cat: Optional[str]) -> Optional[DraftCategory]:
     if not cat:
@@ -214,7 +217,7 @@ async def auto_fill_draft(
     if client:
         client_name = client.name or ""
         if client.date_of_birth:
-            today = datetime.utcnow().date()
+            today = datetime.now(timezone.utc).date()
             age = today.year - client.date_of_birth.year - (
                 (today.month, today.day) < (client.date_of_birth.month, client.date_of_birth.day)
             )
@@ -414,10 +417,10 @@ async def update_draft(
         setattr(draft, field, val)
 
     if data.content is not None:
-        draft.word_count = len((data.content or "").split())
-        draft.version = (draft.version or 1) + 1
+        setattr(draft, "word_count", len((data.content or "").split()))
+        setattr(draft, "version", int(getattr(draft, "version", 1) or 1) + 1)
 
-    draft.updated_at = datetime.utcnow()
+    setattr(draft, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
     db.commit()
     db.refresh(draft)
     return serialize_draft(draft)
@@ -511,8 +514,8 @@ async def delete_draft(
     check_object_firm(draft, current_user)
 
     # Soft delete to preserve integrity
-    draft.is_deleted = True
-    draft.updated_at = datetime.utcnow()
+    setattr(draft, "is_deleted", True)
+    setattr(draft, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
     db.commit()
     return {"message": "Draft deleted successfully"}
 
