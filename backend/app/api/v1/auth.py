@@ -648,7 +648,7 @@ async def setup_mfa(current_user: User = Depends(get_current_user), db: Session 
     db.commit()
     
     totp = pyotp.TOTP(secret)
-    provisioning_uri = totp.provisioning_uri(name=str(current_user.email), issuer_name="LegalOS")
+    provisioning_uri = totp.provisioning_uri(name=str(current_user.email), issuer_name="Fastcase")
     
     return {"secret": secret, "provisioning_uri": provisioning_uri}
 

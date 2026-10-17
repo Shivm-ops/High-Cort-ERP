@@ -349,7 +349,7 @@ export default function AIDraftStudioPage() {
     toast.loading("Running diff comparison...");
     setTimeout(() => {
       setCompareOutput(`[NO_CHANGE] BEFORE THE DISTRICT CONSUMER FORUM\n
-[REMOVED] - IN THE MATTER OF LEGALOS SYSTEM ADMIN\n
+[REMOVED] - IN THE MATTER OF PREVIOUS ADVOCATE\n
 [ADDED] + IN THE MATTER OF FASTCASE SYSTEM ADMIN\n
 [NO_CHANGE] Under Section 35 of the Act.\n
 [ADDED] + Defect details: defective cooling coil caused leakage in the kitchen.\n

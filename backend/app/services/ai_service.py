@@ -1,4 +1,4 @@
-"""AI Service — LangChain + OpenAI + RAG architecture for LegalOS"""
+"""AI Service — LangChain + OpenAI + RAG architecture for Fastcase"""
 
 from typing import Optional, List, Dict, Any
 import json
@@ -216,7 +216,7 @@ Date: ___
 Place: ___                                    Advocate for Client""",
 }
 
-SYSTEM_PROMPT = """You are LegalOS AI, an expert Indian legal assistant with deep knowledge of:
+SYSTEM_PROMPT = """You are Fastcase AI, an expert Indian legal assistant with deep knowledge of:
 - Indian statutes: IPC/BNS, CrPC/BNSS, CPC, Evidence Act/BSA, GST Act, Companies Act, RERA, SARFAESI, etc.
 - Supreme Court and High Court judgments
 - Legal drafting standards for Indian courts

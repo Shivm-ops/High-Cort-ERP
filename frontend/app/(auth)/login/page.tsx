@@ -65,14 +65,13 @@ export default function LoginPage() {
             <Scale className="w-5 h-5 text-mint" />
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-none">Fastcase</h1>
-            <span className="text-[10px] text-mint uppercase tracking-wider font-semibold">Legal Platform</span>
+            <h1 className="font-bold text-xl leading-none">Fastcase</h1>
           </div>
         </div>
 
         <div className="max-w-md relative z-10">
           <h2 className="text-3xl font-bold tracking-tight mb-4">
-            India's Complete Legal Operating System
+            Smart Practice Management
           </h2>
           <p className="text-white/70 text-sm leading-relaxed">
             Manage cases, draft documents, track hearings, and run your practice — all in one platform.

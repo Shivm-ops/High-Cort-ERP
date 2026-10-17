@@ -1,4 +1,4 @@
-"""Search Service — Elasticsearch + Vector Search for LegalOS"""
+"""Search Service — Elasticsearch + Vector Search for Fastcase"""
 
 from typing import Optional, List, Dict, Any
 from app.core.config import settings

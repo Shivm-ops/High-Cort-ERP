@@ -24,7 +24,7 @@ class WhatsAppService:
             f"This is a reminder regarding your case: *{case_title}*.\n"
             f"Your next hearing is scheduled on *{hearing_date}* at *{court}*.\n\n"
             f"Please ensure you are available or have provided all necessary documents to your advocate.\n\n"
-            f"Regards,\nLegalOS Legal Team"
+            f"Regards,\nFastcase Legal Team"
         )
         return await WhatsAppService.send_message(phone_number, message)
 
@@ -36,6 +36,6 @@ class WhatsAppService:
             f"A new invoice *{invoice_no}* for the amount of *₹{amount}* has been generated for your legal services.\n"
             f"The due date for this payment is *{due_date}*.\n\n"
             f"You can view and pay your invoice securely by logging into your Client Portal.\n\n"
-            f"Regards,\nLegalOS Billing Team"
+            f"Regards,\nFastcase Billing Team"
         )
         return await WhatsAppService.send_message(phone_number, message)

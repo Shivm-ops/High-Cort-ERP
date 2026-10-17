@@ -1,4 +1,4 @@
-"""Document Service — OCR, PDF processing, S3 upload for LegalOS"""
+"""Document Service — OCR, PDF processing, S3 upload for Fastcase"""
 
 import hashlib
 import logging
@@ -49,8 +49,9 @@ class DocumentService:
 
         # Fallback: local storage for development
         import os
-        local_path = f"/tmp/lagalos_docs/{object_key}"
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        import tempfile
+        local_path = os.path.join(tempfile.gettempdir(), "lagalos_docs", object_key)
+        os.makedirs(os.path.dirname(local_path), mode=0o700, exist_ok=True)
         with open(local_path, "wb") as f:
             f.write(content)
         return f"local://{local_path}", file_hash

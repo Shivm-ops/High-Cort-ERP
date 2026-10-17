@@ -241,7 +241,7 @@ def reset_password(user_id: str, payload: PasswordResetPayload, request: Request
         raise HTTPException(status_code=404, detail="User not found")
         
     # Use custom password or temporary default
-    new_pass = payload.new_password if payload.new_password else "LegalOS@2025"
+    new_pass = payload.new_password if payload.new_password else "Fastcase@2025"
     user.hashed_password = get_password_hash(new_pass)
     db.query(UserSession).filter(UserSession.user_id == uid).update({"is_active": False})
     db.commit()

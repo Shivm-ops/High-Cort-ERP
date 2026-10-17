@@ -1,7 +1,7 @@
 """
 app/models/audit_log.py
 ========================
-Firm-level audit trail for all user actions on LegalOS data.
+Firm-level audit trail for all user actions on Fastcase data.
 Captures every create/read/update/delete plus auth events.
 """
 

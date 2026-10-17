@@ -1,8 +1,8 @@
-# LegalOS Phase 2 QA Checklist
+# Fastcase Phase 2 QA Checklist
 
 ## 1. Authentication & Security
 - [ ] Attempt to register a new user with a weak password (e.g., `123`). Ensure validation fails.
-- [ ] Register a new user with a strong password (e.g., `LegalOS@2025!`). Ensure success.
+- [ ] Register a new user with a strong password (e.g., `Fastcase@2026!`). Ensure success.
 - [ ] Attempt to login with an incorrect password 5 times in a row.
 - [ ] On the 6th attempt, ensure the account is locked (Error 423) and the error message displays the remaining lockout time.
 - [ ] Verify that changing a password revokes all other active sessions (force logout from other devices).

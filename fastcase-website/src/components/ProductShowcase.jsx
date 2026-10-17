@@ -75,7 +75,7 @@ export default function ProductShowcase() {
             See Fastcase in Action
           </h2>
           <p className="text-[17px] text-ink/50 max-w-xl mx-auto">
-            A purpose-built legal operating system — explore the platform that advocates and law firms across India use to run their entire practice.
+            A purpose-built legal ERP — explore the platform that advocates and law firms across India use to run their entire practice.
           </p>
         </div>
 

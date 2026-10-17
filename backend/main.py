@@ -1,4 +1,4 @@
-"""LegalOS — India's AI Legal Operating System
+"""Fastcase — REST API
 FastAPI Application Entry Point
 """
 
@@ -37,6 +37,7 @@ def run_db_migrations():
                 conn.commit()
                 logger.info(f"✅ Added column {col_name} to firms table")
             except (OperationalError, ProgrammingError) as e:
+                conn.rollback()
                 err_msg = str(e).lower()
                 if "duplicate column" in err_msg or "already exists" in err_msg or "duplicate" in err_msg:
                     logger.info(f"ℹ️ Column {col_name} already exists in firms table")
@@ -50,6 +51,7 @@ def run_db_migrations():
                 conn.execute(text(index_sql))
                 conn.commit()
             except Exception as e:
+                conn.rollback()
                 logger.warning(f"⚠️ Index notice: {e}")
 
     _backfill_firm_subdomains()
@@ -76,7 +78,7 @@ def _backfill_firm_subdomains():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 LegalOS API starting up...")
+    logger.info("🚀 Fastcase API starting up...")
     Base.metadata.create_all(bind=engine)
     try:
         run_db_migrations()
@@ -91,12 +93,12 @@ async def lifespan(app: FastAPI):
         logger.warning(f"⚠️ Template seeding notice: {e}")
     logger.info("✅ Database tables created/verified")
     yield
-    logger.info("🛑 LegalOS API shutting down...")
+    logger.info("🛑 Fastcase API shutting down...")
 
 
 app = FastAPI(
-    title="LegalOS API",
-    description="India's AI-powered Legal Operating System — REST API",
+    title="Fastcase API",
+    description="Fastcase REST API",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -104,11 +106,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS
+# CORS — only allow the root domain, its subdomains (incl. firm tenant subdomains) and localhost
+import re as _re
+_domain_re = _re.escape((settings.DOMAIN or "fastcase.in").strip().lower())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.all_allowed_origins(),
-    allow_origin_regex=r"^https?://.*$",
+    allow_origin_regex=rf"^https?://(([a-z0-9-]+\.)*{_domain_re}|localhost(:\d+)?)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -121,16 +125,16 @@ app.include_router(api_v1_router, prefix="/api/v1")
 @app.get("/")
 async def root():
     return {
-        "name": "LegalOS API",
+        "name": "Fastcase API",
         "version": "1.0.0",
-        "description": "India's AI Legal Operating System",
+        "description": "Fastcase REST API",
         "docs": "/api/docs",
     }
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "lagalos-api"}
+    return {"status": "healthy", "service": "fastcase-api"}
 
 
 if __name__ == "__main__":

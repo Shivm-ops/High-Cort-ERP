@@ -56,7 +56,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-[14px] text-white/50 leading-relaxed mb-5 max-w-xs">
-              India's complete legal operating system — built for advocates, law firms and legal professionals.
+              Built for advocates, law firms and legal professionals across India.
             </p>
 
             {/* Address */}

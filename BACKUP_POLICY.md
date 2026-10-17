@@ -1,4 +1,4 @@
-# LegalOS Backup Policy
+# Fastcase ERP Backup Policy
 
 ## Objective
 Ensure all firm data, documents, and audit logs are secure, versioned, and recoverable in the event of hardware failure, accidental deletion, or disaster.
@@ -17,7 +17,7 @@ Ensure all firm data, documents, and audit logs are secure, versioned, and recov
 ### Implementation Command
 ```bash
 # Example backup script (run via cron)
-pg_dump -U postgres -h localhost -d lagalos_db -F c -f /backups/lagalos_db_$(date +\%F).dump
+pg_dump -U postgres -h localhost -d fastcase_db -F c -f /backups/fastcase_db_$(date +\%F).dump
 ```
 
 ## 2. Document Storage (S3 / MinIO)

@@ -1,7 +1,7 @@
 """
 seed_massive.py
 ===============
-Script to bulk insert realistic mass-scale data to test LegalOS performance metrics.
+Script to bulk insert realistic mass-scale data to test Fastcase performance metrics.
 WARNING: 100k clients and 500k documents on SQLite will take a long time and expand the file significantly.
 We scale this down for local testing to demonstrate the ORM bulk inserts.
 """

@@ -4,15 +4,19 @@ import json
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "LegalOS"
+    APP_NAME: str = "Fastcase"
     APP_ENV: str = "development"
     DEBUG: bool = True
-    SECRET_KEY: str = "lagalos-development-secret-change-in-production-2025"
+    SECRET_KEY: str = "fastcase-development-secret-change-in-production-2025"
     DOMAIN: str = "fastcase.in"
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
+        "http://139.59.73.77",
+        "http://139.59.73.77:3000",
+        "http://139.59.73.77:3001",
+        "http://139.59.73.77:3002",
         "http://43.204.229.196",
         "http://43.204.229.196:3000",
         "http://15.206.205.114",
@@ -43,11 +47,11 @@ class Settings(BaseSettings):
         return origins
 
     # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/lagalos_db"
+    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/fastcase_db"
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # JWT
-    JWT_SECRET_KEY: str = "lagalos-jwt-secret-dev-2025"
+    JWT_SECRET_KEY: str = "fastcase-jwt-secret-dev-2025"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -57,11 +61,11 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"
 
-    # AWS S3
+    # Storage (AWS S3 / DigitalOcean Spaces)
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "ap-south-1"
-    AWS_S3_BUCKET: str = "lagalos-documents"
+    AWS_S3_BUCKET: str = "fastcase-documents"
 
     # Elasticsearch
     ELASTICSEARCH_URL: str = "http://localhost:9200"
