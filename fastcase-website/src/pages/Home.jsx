@@ -80,13 +80,13 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             {/* Left Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1 mb-5">
+              <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5 mb-6">
                 <Gavel className="w-3.5 h-3.5 text-amber-500" />
                 Legal ERP for Indian Advocates
               </div>
 
-              <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.15] tracking-tight mb-4 text-balance">
-                Everything Your Legal Practice Needs, <span className="text-[#014D46]">Unified.</span>
+              <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.32] sm:leading-[1.28] lg:leading-[1.24] tracking-tight mb-5 text-balance">
+                Everything Your Legal Practice Needs, <span className="text-[#014D46] dark:text-[#3FB594]">Unified.</span>
               </h1>
 
               <p className="text-[16px] text-slate-600 leading-relaxed mb-6 max-w-lg">
