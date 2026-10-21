@@ -38,7 +38,7 @@ export default function LoginPage() {
         document.cookie = `access_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
       toast.success("Welcome back!");
-      router.push("/");
+      window.location.href = "/";
     } catch (e) {
       toast.error(getErrorMessage(e));
     } finally {

@@ -21,7 +21,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated && !isAuthenticated) {
+    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
+    if (hydrated && !isAuthenticated && !hasToken) {
       // Also clear the cookie so middleware doesn't loop
       document.cookie = "access_token=; path=/; max-age=0";
       router.replace("/login");
@@ -37,8 +38,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
   // Authenticated — render children
-  if (isAuthenticated) {
+  if (isAuthenticated || hasToken) {
     return <>{children}</>;
   }
 

@@ -2,14 +2,22 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 function getApiUrl(): string {
   if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const isIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(host);
+    if (isIp) {
+      if (host === "127.0.0.1") {
+        return "http://localhost:8000/api/v1";
+      }
+      return `${window.location.protocol}//${host}:8000/api/v1`;
+    }
+    if (host === "localhost") {
+      return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+    }
     if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
       return process.env.NEXT_PUBLIC_API_URL;
     }
-    const host = window.location.hostname;
-    if (host !== "localhost" && host !== "127.0.0.1") {
-      const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
-      return `${window.location.protocol}//api.${rootDomain}/api/v1`;
-    }
+    const rootDomain = host.replace(/^(app|admin|landing|www)\./, "");
+    return `${window.location.protocol}//api.${rootDomain}/api/v1`;
   }
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 }
@@ -45,7 +53,12 @@ api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    if (error.response?.status === 401 && !original._retry) {
+    const isAuthRoute =
+      original?.url?.includes("/auth/token") ||
+      original?.url?.includes("/auth/refresh") ||
+      original?.url?.includes("/auth/client-login");
+
+    if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

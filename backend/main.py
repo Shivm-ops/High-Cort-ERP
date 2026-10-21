@@ -106,13 +106,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — only allow the root domain, its subdomains (incl. firm tenant subdomains) and localhost
+# CORS — allow the root domain, its subdomains (incl. firm tenant subdomains), localhost, 127.0.0.1, and direct IPs
 import re as _re
 _domain_re = _re.escape((settings.DOMAIN or "fastcase.in").strip().lower())
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.all_allowed_origins(),
-    allow_origin_regex=rf"^https?://(([a-z0-9-]+\.)*{_domain_re}|localhost(:\d+)?)$",
+    allow_origin_regex=rf"^https?://(([a-z0-9-]+\.)*{_domain_re}|localhost(:\d+)?|127\.0\.0\.1(:\d+)?|(\d{{1,3}}\.){{3}}\d{{1,3}}(:\d+)?)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

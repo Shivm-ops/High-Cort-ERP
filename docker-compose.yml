@@ -55,6 +55,7 @@ services:
       - DATABASE_URL=postgresql+psycopg2://lagalos:lagalos_password@postgres:5432/lagalos_db
       - REDIS_URL=redis://redis:6379/0
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ENCRYPTION_KEY=k1cT7yG-QxV8_W9zL1mN3oP5qR7sT9uV1wX3yZ5aB7c=
     depends_on:
       postgres:
         condition: service_healthy
