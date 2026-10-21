@@ -3,9 +3,9 @@ import "./globals.css";
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Fastcase",
+  title: "Fastcase — India's Complete Legal Operating System",
   description:
-    "Enterprise-grade Practice Management Platform for Indian advocates, law firms, and legal professionals.",
+    "Enterprise-grade Legal Operating System and Practice Management Platform for Indian advocates, law firms, and legal professionals.",
   keywords: "legal ERP, advocate software, legal drafting, case management India",
   icons: {
     icon: "/favicon.ico",

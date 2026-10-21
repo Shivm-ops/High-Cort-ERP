@@ -78,10 +78,11 @@ export default function RegisterPage() {
             </div>
             <div>
               <div className="text-white font-bold text-xl">Fastcase</div>
+              <div className="text-mint text-[10px] uppercase tracking-wider font-semibold">Legal Platform</div>
             </div>
           </div>
           <h1 className="text-white text-3xl font-bold leading-tight mb-4">
-            Fastcase
+            India's Complete Legal<br />Operating System
           </h1>
           <p className="text-white/60 text-base leading-relaxed">
             Manage cases, draft documents, track hearings, and run your practice — all in one platform.
