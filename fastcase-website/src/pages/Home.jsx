@@ -253,16 +253,8 @@ export default function Home() {
                 a: 'Fastcase organizes your cases by CNR number, court, and case stage. It generates daily chamber cause lists, maintains full hearing histories with court orders, and provides automated calendar reminders so you never miss a court date or limitation deadline.'
               },
               {
-                q: 'Can clients view their case updates and hearing dates directly?',
-                a: 'Yes. Fastcase includes a dedicated, secure Client Portal where clients can log in to view their case timeline, upcoming hearings, uploaded court orders, and invoices—reducing repetitive status phone calls to your chamber.'
-              },
-              {
                 q: 'Is client and matter data privileged and secure?',
                 a: 'Yes. All data adheres strictly to Attorney-Client Privilege under Section 126 of the Indian Evidence Act. Data is encrypted using AES-256 and hosted exclusively in sovereign Indian tier-4 cloud datacenters in Mumbai and Bengaluru.'
-              },
-              {
-                q: 'How does the free trial work?',
-                a: 'You receive full access to all 16 modules for 14 days with zero commitment and no credit card required. You can upgrade, downgrade, or export your data at any time.'
               },
             ].map(({ q, a }) => <HomeFAQItem key={q} q={q} a={a} />)}
           </div>
