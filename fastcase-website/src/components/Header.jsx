@@ -306,10 +306,10 @@ export default function Header() {
               onClick={toggleTheme}
               aria-label="Toggle theme"
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="flex items-center justify-center w-9 h-9 rounded-lg border border-line bg-white hover:bg-surface text-ink/70 hover:text-primary hover:border-primary/40 transition-all shadow-2xs cursor-pointer flex-shrink-0"
+              className="flex items-center justify-center w-9 h-9 rounded-lg border border-line dark:border-[#183344] bg-white dark:bg-[#0C1D26] hover:bg-surface dark:hover:bg-[#122734] text-ink/70 hover:text-primary hover:border-primary/40 transition-all shadow-2xs cursor-pointer flex-shrink-0"
             >
               {theme === 'dark' ? (
-                <Sun className="w-[18px] h-[18px] text-amber-500 transition-transform hover:rotate-45" />
+                <Sun className="w-[18px] h-[18px] text-amber-400 transition-transform hover:rotate-45" />
               ) : (
                 <Moon className="w-[18px] h-[18px] text-slate-700 transition-transform hover:-rotate-12" />
               )}
@@ -342,17 +342,17 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-line bg-white overflow-y-auto max-h-[85vh]">
+        <div className="lg:hidden border-t border-line dark:border-[#183344] bg-white dark:bg-[#0C1D26] overflow-y-auto max-h-[85vh]">
           <div className="px-4 py-4 space-y-1">
             {/* Mobile Theme Toggle Row */}
-            <div className="flex items-center justify-between px-3 py-2.5 mb-3 rounded-xl bg-surface border border-line">
+            <div className="flex items-center justify-between px-3 py-2.5 mb-3 rounded-xl bg-surface dark:bg-[#081720] border border-line dark:border-[#183344]">
               <span className="text-[13px] font-semibold text-ink flex items-center gap-2">
                 {theme === 'dark' ? <Moon className="w-4 h-4 text-primary" /> : <Sun className="w-4 h-4 text-amber-500" />}
                 Theme: <span className="capitalize text-ink/70 font-medium">{theme}</span>
               </span>
               <button
                 onClick={toggleTheme}
-                className="px-3 py-1 rounded-lg text-[12px] font-bold border border-line bg-white text-ink hover:text-primary shadow-2xs transition-colors cursor-pointer"
+                className="px-3 py-1 rounded-lg text-[12px] font-bold border border-line dark:border-[#183344] bg-white dark:bg-[#0C1D26] text-ink hover:text-primary shadow-2xs transition-colors cursor-pointer"
               >
                 Switch to {theme === 'dark' ? 'Light' : 'Dark'}
               </button>
