@@ -107,6 +107,54 @@ class DataBridgeService:
             return False, f"File size exceeds the 50 MB limit ({file_size / (1024*1024):.1f} MB)."
         return True, None
 
+    def validate_file_content(self, content: bytes, filename: str) -> Tuple[bool, Optional[str]]:
+        """
+        Deep content inspection:
+        - Rejects executable signatures (MZ, ELF, shell shebangs, HTML/PHP scripts)
+        - Verifies magic byte headers match the claimed file extension
+        - Ensures text files contain valid characters without embedded NUL bytes
+        """
+        if not content:
+            return False, "File content is empty (0 bytes)."
+
+        # 1. Global Blocklist for Executable & Script Signatures
+        if content.startswith(b"MZ"):
+            return False, "Dangerous content detected: Executable binary (DOS/PE) is strictly forbidden."
+        if content.startswith(b"\x7fELF"):
+            return False, "Dangerous content detected: Linux ELF binary is strictly forbidden."
+        if content.startswith(b"#!/"):
+            return False, "Dangerous content detected: Shell/system script is strictly forbidden."
+        if content.strip().lower().startswith((b"<script", b"<?php", b"<%")):
+            return False, "Dangerous content detected: Embedded active script is strictly forbidden."
+
+        ext = self.get_extension(filename)
+        sample = content[:1024]
+
+        # 2. Signature verification per supported format
+        if ext == "pdf":
+            if b"%PDF-" not in sample:
+                return False, "Invalid PDF: File does not contain standard %PDF- header."
+        elif ext == "png":
+            if not content.startswith(b"\x89PNG\r\n\x1a\n"):
+                return False, "Invalid PNG: File does not match PNG signature header."
+        elif ext in ("jpg", "jpeg"):
+            if not content.startswith(b"\xff\xd8\xff"):
+                return False, "Invalid JPEG: File does not match JPEG signature header."
+        elif ext == "tiff":
+            if not (content.startswith(b"II*\x00") or content.startswith(b"MM\x00*")):
+                return False, "Invalid TIFF: File does not match TIFF signature header."
+        elif ext == "docx":
+            if not content.startswith(b"PK\x03\x04"):
+                return False, "Invalid DOCX: File is not a valid OpenXML package (missing PK zip signature)."
+        elif ext == "doc":
+            if not (content.startswith(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1") or content.startswith(b"PK\x03\x04")):
+                return False, "Invalid DOC: File does not match MS-DOC compound binary or RTF signature."
+        elif ext == "txt":
+            if b"\x00" in sample:
+                return False, "Invalid TXT: Text file contains embedded binary null bytes."
+
+        return True, None
+
     def classify_document(self, filename: str, text_sample: Optional[str] = None) -> Tuple[str, float]:
         """
         Classify document based on filename heuristics and text sample.
@@ -220,9 +268,9 @@ class DataBridgeService:
         reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
         rows = []
         for r in reader:
-            # Clean keys and values
+            # Clean keys and values, stripping any residual BOM markers
             clean_row = {
-                (k.strip() if k else f"col_{idx}"): (v.strip() if v else "")
+                (k.lstrip("\ufeff").strip() if k else f"col_{idx}"): (v.strip() if v else "")
                 for idx, (k, v) in enumerate(r.items())
             }
             if any(clean_row.values()):  # Skip completely blank lines
@@ -237,6 +285,16 @@ class DataBridgeService:
         """
         try:
             with zipfile.ZipFile(io.BytesIO(content)) as z:
+                # Security: Enforce uncompressed size quota and entry limits
+                total_uncompressed = sum(info.file_size for info in z.infolist())
+                if total_uncompressed > 50 * 1024 * 1024:
+                    raise ValueError("Spreadsheet uncompressed size exceeds 50 MB safety limit (potential decompression bomb).")
+                if len(z.infolist()) > 500:
+                    raise ValueError("Spreadsheet archive contains an unusually high number of entries.")
+                for info in z.infolist():
+                    if ".." in info.filename or info.filename.startswith(("/", "\\")):
+                        raise ValueError("Invalid entry name detected in spreadsheet archive.")
+
                 # 1. Read shared strings
                 shared_strings = []
                 if "xl/sharedStrings.xml" in z.namelist():
@@ -335,8 +393,11 @@ class DataBridgeService:
                 # Read from storage
                 if doc.file_path and doc.file_path.startswith("local://"):
                     local_p = doc.file_path.replace("local://", "")
-                    if os.path.exists(local_p):
-                        with open(local_p, "rb") as f:
+                    import tempfile
+                    canonical_p = os.path.realpath(local_p)
+                    temp_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "lagalos_docs"))
+                    if (canonical_p.startswith(temp_storage_dir) or "lagalos_docs" in canonical_p) and os.path.exists(canonical_p) and not os.path.isdir(canonical_p):
+                        with open(canonical_p, "rb") as f:
                             file_bytes = f.read()
                 elif self.doc_service.s3_client and doc.file_path and doc.file_path.startswith("https://"):
                     # S3 download

@@ -102,6 +102,7 @@ def serialize_draft(d: Draft) -> dict:
         "client_id": str(d.client_id) if d.client_id else None,
         "client_name": d.client.name if d.client else None,
         "case_no": d.case.case_no if d.case else None,
+        "case_number": d.case.case_no if d.case else None,
         "case_title": d.case.title if d.case else None,
         "tags": d.tags or [],
         "is_template": bool(d.is_template),

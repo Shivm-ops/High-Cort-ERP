@@ -81,10 +81,14 @@ async def upload_bridge_file(
     raw_content = await file.read()
     file_size = len(raw_content)
 
-    # 1. Validate
+    # 1. Validate metadata & deep content
     is_valid, err_msg = bridge_service.validate_file_metadata(file.filename, file_size)
     if not is_valid:
         raise HTTPException(status_code=400, detail=err_msg)
+
+    content_valid, content_err = bridge_service.validate_file_content(raw_content, file.filename)
+    if not content_valid:
+        raise HTTPException(status_code=400, detail=content_err)
 
     # 2. Check case and client permissions
     resolved_case = None
@@ -229,6 +233,10 @@ async def analyze_bridge_file(
     is_valid, err_msg = bridge_service.validate_file_metadata(file.filename, file_size)
     if not is_valid:
         raise HTTPException(status_code=400, detail=err_msg)
+
+    content_valid, content_err = bridge_service.validate_file_content(raw_content, file.filename)
+    if not content_valid:
+        raise HTTPException(status_code=400, detail=content_err)
 
     clean_name = bridge_service.sanitize_filename(file.filename)
     mime_type = file.content_type or "application/octet-stream"
@@ -457,6 +465,12 @@ async def execute_migration(
     rows = payload.rows
     mapping = payload.mapping
     strategy = payload.duplicate_strategy.lower()  # skip | update | create_new
+
+    if len(rows) > 5000:
+        raise HTTPException(
+            status_code=400,
+            detail="Migration batch size exceeds the 5,000 record safety limit. Please partition large datasets into smaller files."
+        )
 
     imported_count = 0
     updated_count = 0
