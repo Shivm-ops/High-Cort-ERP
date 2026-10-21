@@ -169,4 +169,4 @@ volumes:
 
 networks:
   default:
-    name: lagalos_network
+    name: fastcase_network
