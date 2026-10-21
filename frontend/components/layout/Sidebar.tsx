@@ -38,6 +38,7 @@ import {
   CheckCircle,
   Car,
   FileText,
+  HardDriveUpload,
   X
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
@@ -112,6 +113,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Team", href: "/team", icon: Users2 },
       { label: "Limitation & Deadlines", href: "/compliance", icon: ShieldCheck },
       { label: "Tools & Calculators", href: "/tools", icon: Calculator },
+      { label: "Data Bridge", href: "/data-bridge", icon: HardDriveUpload, badge: "New", badgeColor: "mint" },
     ],
   },
   {
@@ -146,6 +148,7 @@ const NAV_LABEL_KEYS: Record<string, string> = {
   "/team": "nav.team",
   "/compliance": "nav.limitation",
   "/tools": "nav.tools",
+  "/data-bridge": "nav.dataBridge",
   "/settings": "nav.settings",
 };
 

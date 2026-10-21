@@ -507,6 +507,26 @@ export default function ToolsPage() {
         <AnimatePresence mode="wait">
           {!active ? (
             <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {/* Data Bridge Quick Launcher Banner */}
+              <div className="mb-6 p-6 rounded-2xl bg-gradient-to-r from-sidebar to-[#014D46] text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-mint/20 text-mint border border-mint/30 uppercase tracking-wider">New Capability</span>
+                    <span className="text-xs text-white/70">Practice Migration & Archival</span>
+                  </div>
+                  <h3 className="text-xl font-bold">Fastcase Data Bridge</h3>
+                  <p className="text-xs text-white/80 max-w-xl mt-1">
+                    Import files & folders directly from your computer, migrate legacy client/case spreadsheets, and securely export practice archives.
+                  </p>
+                </div>
+                <a
+                  href="/data-bridge"
+                  className="relative z-10 px-5 py-2.5 rounded-xl bg-mint text-sidebar font-bold text-xs hover:bg-white transition-all flex items-center gap-1.5 shrink-0 shadow-sm"
+                >
+                  Launch Data Bridge →
+                </a>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {TOOLS.map((t, i) => (
                   <motion.button

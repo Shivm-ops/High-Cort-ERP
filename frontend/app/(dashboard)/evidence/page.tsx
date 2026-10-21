@@ -109,9 +109,15 @@ export default function EvidencePage() {
               </option>
             ))}
           </select>
+          <a
+            href="/data-bridge"
+            className="ml-auto h-9 px-3.5 rounded-xl text-[12px] font-semibold border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <FolderOpen className="w-3.5 h-3.5 text-sidebar" /> Bulk Import via Data Bridge
+          </a>
           <button 
             onClick={() => setShowUploadModal(true)}
-            className="ml-auto h-9 px-4 rounded-xl text-[12px] font-semibold flex items-center gap-1.5" style={{ background: "linear-gradient(135deg,#6EE7B7,#72D6C9)", color: "#013B36" }}>
+            className="h-9 px-4 rounded-xl text-[12px] font-semibold flex items-center gap-1.5" style={{ background: "linear-gradient(135deg,#6EE7B7,#72D6C9)", color: "#013B36" }}>
             <Upload className="w-3.5 h-3.5" /> Upload File
           </button>
         </div>

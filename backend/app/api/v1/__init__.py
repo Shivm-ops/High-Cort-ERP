@@ -51,3 +51,7 @@ router.include_router(admin.router, prefix="/admin", tags=["Super Admin APIs"])
 
 router.include_router(mact.router, prefix="/mact", tags=["MACT Management"])
 router.include_router(analyzer.router, prefix="/analyzer", tags=["Court Order Analyzer"])
+
+from . import data_bridge
+router.include_router(data_bridge.router, prefix="/data-bridge", tags=["Data Bridge"])
+
