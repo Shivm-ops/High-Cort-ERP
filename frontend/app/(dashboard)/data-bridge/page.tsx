@@ -47,7 +47,9 @@ import {
   executeMigration,
   MigrationPreviewResult,
   MigrationValidationResult,
-  MigrationExecutionResult
+  MigrationExecutionResult,
+  validatePracticeRestore,
+  executePracticeRestore
 } from "@/lib/hooks/useDataBridge";
 
 function formatBytes(bytes: number, decimals = 1) {
@@ -307,6 +309,43 @@ export default function DataBridgePage() {
   // ─────────────────────────────────────────────────────────────────────────────
   const [exportCaseId, setExportCaseId] = useState<string>("");
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [backupPassphrase, setBackupPassphrase] = useState<string>("");
+  const [includeDocFiles, setIncludeDocFiles] = useState<boolean>(true);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restorePassphrase, setRestorePassphrase] = useState<string>("");
+  const [restoreReport, setRestoreReport] = useState<any>(null);
+  const [isRestoring, setIsRestoring] = useState<boolean>(false);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
+
+  const handleValidateRestore = async (file: File) => {
+    setIsRestoring(true);
+    try {
+      const rep = await validatePracticeRestore(file, restorePassphrase);
+      setRestoreReport(rep);
+      toast.success("Backup archive validated successfully!");
+    } catch (e: any) {
+      toast.error(getErrorMessage(e));
+      setRestoreReport(null);
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const handleExecuteRestore = async () => {
+    if (!restoreFile) return;
+    setIsRestoring(true);
+    try {
+      const result = await executePracticeRestore(restoreFile, restorePassphrase, "skip");
+      toast.success(`Restore complete! Restored ${result.clients_restored} clients, ${result.cases_restored} cases.`);
+      setRestoreReport(null);
+      setRestoreFile(null);
+      refetchHistory();
+    } catch (e: any) {
+      toast.error(getErrorMessage(e));
+    } finally {
+      setIsRestoring(false);
+    }
+  };
 
   const downloadExport = async (endpoint: string, fallbackName: string) => {
     setIsExporting(true);
@@ -1001,24 +1040,163 @@ export default function DataBridgePage() {
 
             {/* 3. Full Practice Disaster Recovery Backup */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-3">
-                  <Database className="w-5 h-5" />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  {backupPassphrase.trim() ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" /> AES-256-GCM
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Standard ZIP
+                    </span>
+                  )}
                 </div>
-                <h4 className="text-sm font-bold text-gray-900">Full Practice Backup Package</h4>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                  Download a complete firm archive package containing clients, cases, document manifests, and backup metadata for disaster recovery.
-                </p>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900">Practice Backup Package</h4>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Export clients, cases, manifests, and optional raw documents for disaster recovery.
+                  </p>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-gray-100">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                      Encryption Passphrase (Optional)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Enter passphrase for AES-256..."
+                      value={backupPassphrase}
+                      onChange={(e) => setBackupPassphrase(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer pt-1">
+                    <input
+                      type="checkbox"
+                      checked={includeDocFiles}
+                      onChange={(e) => setIncludeDocFiles(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded text-sidebar focus:ring-mint"
+                    />
+                    <span className="text-[11px] text-gray-600">Bundle Document Files (up to 150 MB)</span>
+                  </label>
+
+                  {!backupPassphrase.trim() && (
+                    <p className="text-[10px] text-amber-700 bg-amber-50/70 p-2 rounded-lg border border-amber-100 leading-tight">
+                      ⚠️ Note: Plaintext ZIP will be downloaded. Store on an encrypted chamber drive or provide a passphrase above.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <button
                 type="button"
                 disabled={isExporting}
-                onClick={() => downloadExport("/data-bridge/export/practice-backup", "Fastcase_Practice_Backup.zip")}
+                onClick={() => {
+                  const url = `/data-bridge/export/practice-backup?include_documents=${includeDocFiles}${
+                    backupPassphrase.trim() ? `&passphrase=${encodeURIComponent(backupPassphrase.trim())}` : ""
+                  }`;
+                  const filename = backupPassphrase.trim() ? "Fastcase_Practice_Backup.fcenc" : "Fastcase_Practice_Backup.zip";
+                  downloadExport(url, filename);
+                }}
                 className="w-full py-2.5 rounded-xl bg-sidebar text-white text-xs font-semibold hover:bg-sidebar-dark disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Download className="w-3.5 h-3.5 text-mint" />
-                Generate Complete Backup (ZIP)
+                {backupPassphrase.trim() ? "Export Encrypted Backup (.fcenc)" : "Export Standard Backup (ZIP)"}
+              </button>
+            </div>
+
+            {/* 4. Practice Disaster Recovery Restore Card */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <RefreshCw className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900">Disaster Recovery Restore</h4>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                    Restore practice clients and cases from a verified Fastcase backup (.zip or .fcenc).
+                  </p>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-gray-100">
+                  <input
+                    type="file"
+                    ref={restoreInputRef}
+                    accept=".zip,.fcenc"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setRestoreFile(file);
+                        handleValidateRestore(file);
+                      }
+                    }}
+                  />
+
+                  {restoreFile ? (
+                    <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200 text-xs flex items-center justify-between">
+                      <div className="truncate max-w-[180px]">
+                        <p className="font-semibold text-gray-900 truncate">{restoreFile.name}</p>
+                        <p className="text-[10px] text-gray-500">{formatBytes(restoreFile.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRestoreFile(null);
+                          setRestoreReport(null);
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded text-gray-500"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => restoreInputRef.current?.click()}
+                      className="w-full py-2 px-3 border border-dashed border-gray-300 hover:border-sidebar rounded-xl text-xs text-gray-600 hover:text-sidebar font-medium flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Select Backup File (.zip or .fcenc)
+                    </button>
+                  )}
+
+                  <input
+                    type="password"
+                    placeholder="Decryption passphrase (if encrypted)"
+                    value={restorePassphrase}
+                    onChange={(e) => setRestorePassphrase(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                  />
+
+                  {restoreReport && (
+                    <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[11px] space-y-1">
+                      <div className="font-bold text-emerald-900 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        Valid {restoreReport.source_firm_name || "Practice"} Archive
+                      </div>
+                      <p className="text-gray-600">
+                        Clients: {restoreReport.counts?.clients_total} · Cases: {restoreReport.counts?.cases_total}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={!restoreReport || isRestoring}
+                onClick={handleExecuteRestore}
+                className="w-full py-2.5 rounded-xl bg-emerald-700 text-white text-xs font-semibold hover:bg-emerald-800 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Check className="w-3.5 h-3.5" />
+                {isRestoring ? "Restoring Records..." : "Execute Practice Restore"}
               </button>
             </div>
           </div>

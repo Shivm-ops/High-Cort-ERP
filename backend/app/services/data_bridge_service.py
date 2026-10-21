@@ -30,7 +30,70 @@ from app.models.user import User
 from app.services.document_service import DocumentService
 from app.core.permissions import apply_firm_filter, check_object_firm
 
+try:
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.primitives import hashes
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+
 logger = logging.getLogger(__name__)
+
+ENCRYPTION_MAGIC = b"FCENC01"
+
+
+def encrypt_archive_bytes(data: bytes, passphrase: str) -> bytes:
+    """
+    Encrypt raw archive bytes using authenticated AES-256-GCM.
+    Key derivation: PBKDF2-HMAC-SHA256 with 600,000 iterations and 16-byte random salt.
+    Container format:
+    [MAGIC: 7 bytes (FCENC01)] + [SALT: 16 bytes] + [NONCE: 12 bytes] + [CIPHERTEXT + TAG: N bytes]
+    """
+    if not HAS_CRYPTOGRAPHY:
+        raise RuntimeError("Cryptography library is not installed on this host.")
+    salt = os.urandom(16)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=600000,
+    )
+    key = kdf.derive(passphrase.encode("utf-8"))
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)
+    ciphertext = aesgcm.encrypt(nonce, data, ENCRYPTION_MAGIC)
+    return ENCRYPTION_MAGIC + salt + nonce + ciphertext
+
+
+def decrypt_archive_bytes(encrypted_data: bytes, passphrase: str) -> bytes:
+    """
+    Decrypt an archive encrypted with encrypt_archive_bytes using AES-256-GCM.
+    Verifies magic header and cryptographic integrity tag.
+    """
+    if not HAS_CRYPTOGRAPHY:
+        raise RuntimeError("Cryptography library is not installed on this host.")
+    if len(encrypted_data) < 7 + 16 + 12 + 16:
+        raise ValueError("Encrypted archive is truncated or corrupted.")
+    magic = encrypted_data[:7]
+    if magic != ENCRYPTION_MAGIC:
+        raise ValueError("Invalid archive header. The file is either not an encrypted Fastcase backup or is corrupted.")
+    salt = encrypted_data[7:23]
+    nonce = encrypted_data[23:35]
+    ciphertext = encrypted_data[35:]
+
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=600000,
+    )
+    key = kdf.derive(passphrase.encode("utf-8"))
+    aesgcm = AESGCM(key)
+    try:
+        return aesgcm.decrypt(nonce, ciphertext, ENCRYPTION_MAGIC)
+    except Exception:
+        raise ValueError("Decryption failed. Incorrect passphrase or corrupted archive data.")
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "doc", "txt", "jpg", "jpeg", "png", "tiff"}
 DANGEROUS_EXTENSIONS = {"exe", "bat", "cmd", "sh", "py", "js", "vbs", "scr", "dll", "msi", "ps1"}
@@ -456,8 +519,24 @@ class DataBridgeService:
         zip_buf.seek(0)
         return zip_buf.getvalue(), zip_filename
 
-    def create_practice_backup_zip(self, current_user: User, db: Session) -> Tuple[bytes, str]:
-        """Create a complete firm practice backup archive containing CSV data and metadata."""
+    def scan_content_for_malware(self, content: bytes, filename: str) -> Tuple[bool, Optional[str]]:
+        """
+        Check content for known malicious signatures and virus signatures (including EICAR).
+        """
+        EICAR_SIG = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+        if EICAR_SIG in content:
+            return False, "Malware signature detected (EICAR standard test string)."
+        return self.validate_file_content(content, filename)
+
+    def create_practice_backup_zip(
+        self,
+        current_user: User,
+        db: Session,
+        passphrase: Optional[str] = None,
+        include_document_files: bool = True,
+        max_bundle_bytes: int = 150 * 1024 * 1024,
+    ) -> Tuple[bytes, str, Dict[str, Any]]:
+        """Create a complete firm practice backup archive containing CSV data, manifests, and optional document files."""
         zip_buf = io.BytesIO()
         firm_name = current_user.firm.name if current_user.firm else "Fastcase_Practice"
         safe_firm = self.sanitize_filename(firm_name).replace(" ", "_")
@@ -478,6 +557,10 @@ class DataBridgeService:
             ),
             Document.is_deleted == False
         ).all()
+
+        exported_docs = []
+        omitted_docs = []
+        accumulated_doc_bytes = 0
 
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as z:
             # 1. Clients CSV
@@ -568,21 +651,309 @@ class DataBridgeService:
                 ])
             z.writestr("documents_manifest.csv", d_buf.getvalue())
 
-            # 4. Backup Metadata
+            # 4. Optional Document Binary Files
+            if include_document_files:
+                for doc in docs:
+                    file_bytes = b""
+                    if doc.file_path and doc.file_path.startswith("local://"):
+                        local_p = doc.file_path.replace("local://", "")
+                        import tempfile
+                        canonical_p = os.path.realpath(local_p)
+                        temp_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "lagalos_docs"))
+                        if (canonical_p.startswith(temp_storage_dir) or "lagalos_docs" in canonical_p) and os.path.exists(canonical_p) and not os.path.isdir(canonical_p):
+                            try:
+                                with open(canonical_p, "rb") as f:
+                                    file_bytes = f.read()
+                            except Exception as e:
+                                logger.warning(f"Could not read local document {doc.id}: {e}")
+                    elif self.doc_service.s3_client and doc.file_path and doc.file_path.startswith("https://"):
+                        try:
+                            key = doc.file_path.split(".amazonaws.com/")[-1]
+                            resp = self.doc_service.s3_client.get_object(Bucket=os.getenv("AWS_S3_BUCKET", ""), Key=key)
+                            file_bytes = resp["Body"].read()
+                        except Exception as e:
+                            logger.warning(f"Failed to read S3 doc {doc.id}: {e}")
+
+                    if file_bytes:
+                        if accumulated_doc_bytes + len(file_bytes) <= max_bundle_bytes:
+                            actual_hash = hashlib.sha256(file_bytes).hexdigest()
+                            safe_name = self.sanitize_filename(doc.original_filename or doc.name)
+                            arc_path = f"documents/{doc.id}_{safe_name}"
+                            z.writestr(arc_path, file_bytes)
+                            accumulated_doc_bytes += len(file_bytes)
+                            exported_docs.append({
+                                "id": str(doc.id),
+                                "path": arc_path,
+                                "sha256": actual_hash,
+                                "size": len(file_bytes),
+                            })
+                        else:
+                            omitted_docs.append({
+                                "id": str(doc.id),
+                                "name": doc.name,
+                                "reason": "Exceeded backup document bundle size quota (150 MB limit)",
+                            })
+                    else:
+                        omitted_docs.append({
+                            "id": str(doc.id),
+                            "name": doc.name,
+                            "reason": "File content could not be located in storage",
+                        })
+
+            # 5. Backup Metadata Manifest
+            completeness = "full" if (docs and len(exported_docs) == len(docs)) else ("partial_manifest_only" if docs else "empty")
             meta = {
-                "backup_version": "1.0",
+                "backup_version": "2.0",
                 "app": "Fastcase Legal Operating System",
                 "exported_by": current_user.email,
                 "exported_at": datetime.now(timezone.utc).isoformat(),
                 "firm_id": str(current_user.firm_id) if current_user.firm_id else None,
                 "firm_name": firm_name,
+                "is_encrypted": bool(passphrase and passphrase.strip()),
+                "encryption_algorithm": "AES-256-GCM (PBKDF2-SHA256, 600,000 iterations)" if (passphrase and passphrase.strip()) else "None (Unencrypted Standard ZIP)",
                 "counts": {
                     "clients": len(clients),
                     "cases": len(cases),
-                    "documents": len(docs),
-                }
+                    "documents_manifest": len(docs),
+                    "document_files_bundled": len(exported_docs),
+                    "document_files_omitted": len(omitted_docs),
+                },
+                "backup_completeness": completeness,
+                "exported_documents": exported_docs,
+                "omitted_or_missing_documents": omitted_docs,
             }
             z.writestr("backup_manifest.json", json.dumps(meta, indent=2))
 
-        zip_buf.seek(0)
-        return zip_buf.getvalue(), zip_filename
+        raw_zip = zip_buf.getvalue()
+
+        if passphrase and passphrase.strip():
+            encrypted_bytes = encrypt_archive_bytes(raw_zip, passphrase.strip())
+            enc_filename = f"Fastcase_Backup_{safe_firm}_{timestamp}.fcenc"
+            return encrypted_bytes, enc_filename, meta
+
+        return raw_zip, zip_filename, meta
+
+    def validate_restore_archive(
+        self,
+        archive_bytes: bytes,
+        current_user: User,
+        db: Session,
+        passphrase: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Validate a practice backup archive before restoring, checking manifest, firm, and duplicates."""
+        if archive_bytes.startswith(ENCRYPTION_MAGIC):
+            if not passphrase:
+                raise ValueError("This backup archive is encrypted with AES-256-GCM. Please provide the decryption passphrase.")
+            archive_bytes = decrypt_archive_bytes(archive_bytes, passphrase)
+
+        try:
+            with zipfile.ZipFile(io.BytesIO(archive_bytes)) as z:
+                namelist = z.namelist()
+                if "backup_manifest.json" not in namelist:
+                    raise ValueError("Archive is not a valid Fastcase practice backup (missing backup_manifest.json).")
+
+                manifest = json.loads(z.read("backup_manifest.json").decode("utf-8"))
+                
+                clients_rows = []
+                if "clients.csv" in namelist:
+                    clients_rows = self.parse_csv_bytes(z.read("clients.csv"))
+
+                cases_rows = []
+                if "cases.csv" in namelist:
+                    cases_rows = self.parse_csv_bytes(z.read("cases.csv"))
+
+                doc_entries = [n for n in namelist if n.startswith("documents/") and not n.endswith("/")]
+
+                existing_clients = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.is_deleted == False).all()
+                existing_client_names = {cl.name.lower().strip() for cl in existing_clients if cl.name}
+
+                existing_cases = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.is_deleted == False).all()
+                existing_case_nos = {c.case_no.lower().strip() for c in existing_cases if c.case_no}
+
+                clients_new = sum(1 for r in clients_rows if (r.get("Name") or "").lower().strip() not in existing_client_names)
+                cases_new = sum(1 for r in cases_rows if (r.get("Case No") or "").lower().strip() not in existing_case_nos)
+
+                return {
+                    "valid": True,
+                    "backup_version": manifest.get("backup_version", "1.0"),
+                    "exported_at": manifest.get("exported_at"),
+                    "source_firm_name": manifest.get("firm_name"),
+                    "source_firm_id": manifest.get("firm_id"),
+                    "counts": {
+                        "clients_total": len(clients_rows),
+                        "clients_new": clients_new,
+                        "clients_duplicate": len(clients_rows) - clients_new,
+                        "cases_total": len(cases_rows),
+                        "cases_new": cases_new,
+                        "cases_duplicate": len(cases_rows) - cases_new,
+                        "document_files_in_archive": len(doc_entries),
+                    },
+                    "manifest": manifest,
+                    "requires_confirmation": True,
+                }
+        except Exception as e:
+            logger.error(f"Archive validation failed: {e}")
+            raise ValueError(f"Could not validate backup archive: {e}")
+
+    def execute_restore_archive(
+        self,
+        archive_bytes: bytes,
+        current_user: User,
+        db: Session,
+        passphrase: Optional[str] = None,
+        conflict_strategy: str = "skip",
+    ) -> Dict[str, Any]:
+        """
+        Safely execute a transactional restoration of clients and cases from a verified backup archive.
+        """
+        if archive_bytes.startswith(ENCRYPTION_MAGIC):
+            if not passphrase:
+                raise ValueError("Archive is encrypted. Decryption passphrase required.")
+            archive_bytes = decrypt_archive_bytes(archive_bytes, passphrase)
+
+        with zipfile.ZipFile(io.BytesIO(archive_bytes)) as z:
+            manifest = json.loads(z.read("backup_manifest.json").decode("utf-8"))
+            firm_id = current_user.firm_id
+
+            # 1. Restore Clients
+            clients_created = 0
+            clients_updated = 0
+            client_id_map = {}
+            existing_by_name = {}
+
+            if "clients.csv" in z.namelist():
+                client_rows = self.parse_csv_bytes(z.read("clients.csv"))
+                existing_clients = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.is_deleted == False).all()
+                existing_by_phone = {cl.phone.replace(" ", "").replace("-", ""): cl for cl in existing_clients if cl.phone}
+                existing_by_name = {cl.name.lower().strip(): cl for cl in existing_clients if cl.name}
+
+                for row in client_rows:
+                    old_id = row.get("ID")
+                    name = (row.get("Name") or "").strip()
+                    phone = (row.get("Phone") or "").strip()
+                    if not name:
+                        continue
+
+                    clean_phone = phone.replace(" ", "").replace("-", "")
+                    match = existing_by_phone.get(clean_phone) or existing_by_name.get(name.lower())
+
+                    if match:
+                        if conflict_strategy == "update":
+                            if row.get("Email"): match.email = row.get("Email")
+                            if row.get("City"): match.city = row.get("City")
+                            if row.get("State"): match.state = row.get("State")
+                            if row.get("PAN"): match.pan = row.get("PAN")
+                            clients_updated += 1
+                        client_id_map[old_id] = match.id
+                        continue
+
+                    cl_type = ClientType.CORPORATE if (row.get("Type") or "").lower() == "corporate" else ClientType.INDIVIDUAL
+                    new_cl = Client(
+                        name=name,
+                        phone=phone or "0000000000",
+                        email=row.get("Email") or None,
+                        type=cl_type,
+                        address=row.get("Address") or None,
+                        city=row.get("City") or None,
+                        state=row.get("State") or None,
+                        pincode=row.get("Pincode") or None,
+                        pan=row.get("PAN") or None,
+                        notes=row.get("Notes") or "Restored from Fastcase Practice Backup",
+                        firm_id=firm_id,
+                        created_by_id=current_user.id,
+                    )
+                    db.add(new_cl)
+                    db.flush()
+                    clients_created += 1
+                    if old_id:
+                        client_id_map[old_id] = new_cl.id
+                    existing_by_name[name.lower()] = new_cl
+
+            # 2. Restore Cases
+            cases_created = 0
+            cases_updated = 0
+            case_id_map = {}
+
+            if "cases.csv" in z.namelist():
+                case_rows = self.parse_csv_bytes(z.read("cases.csv"))
+                existing_cases = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.is_deleted == False).all()
+                existing_by_cno = {c.case_no.lower().strip(): c for c in existing_cases if c.case_no}
+
+                for row in case_rows:
+                    old_case_id = row.get("ID")
+                    case_no = (row.get("Case No") or "").strip()
+                    title = (row.get("Title") or "").strip()
+                    if not case_no or not title:
+                        continue
+
+                    old_cl_id = row.get("Client ID")
+                    cl_name = (row.get("Client Name") or "").strip().lower()
+                    target_cl_id = client_id_map.get(old_cl_id)
+                    if not target_cl_id and cl_name in existing_by_name:
+                        target_cl_id = existing_by_name[cl_name].id
+
+                    if not target_cl_id:
+                        fallback_cl_name = row.get("Client Name") or f"Client for {case_no}"
+                        new_cl = Client(
+                            name=fallback_cl_name,
+                            phone=current_user.phone or "0000000000",
+                            notes=f"Auto-created during practice restore for case {case_no}",
+                            firm_id=firm_id,
+                            created_by_id=current_user.id,
+                        )
+                        db.add(new_cl)
+                        db.flush()
+                        target_cl_id = new_cl.id
+                        existing_by_name[fallback_cl_name.lower()] = new_cl
+
+                    match_case = existing_by_cno.get(case_no.lower())
+                    if match_case:
+                        if conflict_strategy == "update":
+                            match_case.title = title
+                            if row.get("Court"): match_case.court = row.get("Court")
+                            if row.get("Judge"): match_case.judge = row.get("Judge")
+                            cases_updated += 1
+                        case_id_map[old_case_id] = match_case.id
+                        continue
+
+                    def parse_d(val):
+                        if not val: return None
+                        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+                            try: return datetime.strptime(val.strip(), fmt).date()
+                            except Exception: continue
+                        return None
+
+                    new_case = Case(
+                        case_no=case_no,
+                        title=title,
+                        court=row.get("Court") or "District Court",
+                        practice_area=row.get("Practice Area") or "Civil",
+                        client_id=target_cl_id,
+                        judge=row.get("Judge") or None,
+                        petitioner=row.get("Petitioner") or None,
+                        respondent=row.get("Respondent") or None,
+                        opposing_counsel=row.get("Opposing Counsel") or None,
+                        filing_date=parse_d(row.get("Filing Date")),
+                        next_hearing_date=parse_d(row.get("Next Hearing Date")),
+                        fees_agreed=float(row.get("Fees Agreed") or 0.0),
+                        fees_received=float(row.get("Fees Received") or 0.0),
+                        firm_id=firm_id,
+                        created_by_id=current_user.id,
+                        primary_advocate_id=current_user.id,
+                    )
+                    db.add(new_case)
+                    db.flush()
+                    cases_created += 1
+                    if old_case_id:
+                        case_id_map[old_case_id] = new_case.id
+
+            db.commit()
+
+            return {
+                "success": True,
+                "clients_restored": clients_created,
+                "clients_updated": clients_updated,
+                "cases_restored": cases_created,
+                "cases_updated": cases_updated,
+                "backup_version": manifest.get("backup_version"),
+            }

@@ -14,10 +14,14 @@ import main  # Ensure all SQLAlchemy models are registered
 from app.services.data_bridge_service import (
     DataBridgeService,
     ALLOWED_EXTENSIONS,
-    MAX_FILE_SIZE_BYTES
+    MAX_FILE_SIZE_BYTES,
+    encrypt_archive_bytes,
+    decrypt_archive_bytes,
+    ENCRYPTION_MAGIC
 )
 from app.core.database import SessionLocal
 from app.models.user import User
+from app.models.firm import Firm
 from app.models.case import Case, CaseStatus
 from app.models.client import Client, ClientType
 from app.models.document import Document
@@ -85,13 +89,26 @@ def test_magic_byte_and_content_validation():
     print("✓ test_magic_byte_and_content_validation passed")
 
 
+def test_malware_scanner_hook():
+    service = DataBridgeService()
+    # EICAR test string
+    eicar = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    valid, err = service.scan_content_for_malware(eicar, "suspicious.pdf")
+    assert not valid and "EICAR" in err, f"Expected EICAR detection, got: {err}"
+
+    # Normal PDF
+    good_pdf = b"%PDF-1.5 standard court petition content"
+    valid, err = service.scan_content_for_malware(good_pdf, "petition.pdf")
+    assert valid and err is None
+    print("✓ test_malware_scanner_hook passed (EICAR detected, clean PDF accepted)")
+
+
 def test_zip_bomb_and_archive_security():
     service = DataBridgeService()
 
     # Create a malicious zip simulating decompression bomb (>50MB uncompressed)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        # Create an entry with claimed 60MB uncompressed size
         z.writestr("xl/worksheets/sheet1.xml", b" " * (55 * 1024 * 1024))
     
     malicious_xlsx = buf.getvalue()
@@ -128,7 +145,6 @@ def test_formula_injection_mitigation():
         san = service.sanitize_csv_cell(val)
         assert san.startswith("'"), f"Failed to sanitize formula prefix: {val} -> {san}"
     
-    # Safe text must remain uncorrupted
     normal = "Advocate Rajesh Kumar, High Court of Delhi"
     assert service.sanitize_csv_cell(normal) == normal
     print("✓ test_formula_injection_mitigation passed")
@@ -159,8 +175,41 @@ def test_csv_encodings_and_sniffing():
     print("✓ test_csv_encodings_and_sniffing passed")
 
 
+def test_aes_gcm_backup_encryption_and_decryption():
+    """Verify authenticated AES-256-GCM encryption with PBKDF2 key derivation."""
+    test_payload = b"Fastcase Confidential Legal Practice Database Archive Bytes 12345"
+    passphrase = "Chamber#Secret@Key2026!StrongPassphrase"
+
+    # Encrypt
+    encrypted_bytes = encrypt_archive_bytes(test_payload, passphrase)
+    assert encrypted_bytes.startswith(ENCRYPTION_MAGIC)
+    assert len(encrypted_bytes) > len(test_payload)
+
+    # Decrypt with correct passphrase
+    decrypted = decrypt_archive_bytes(encrypted_bytes, passphrase)
+    assert decrypted == test_payload, "Decrypted plaintext does not match original!"
+
+    # Test wrong passphrase
+    try:
+        decrypt_archive_bytes(encrypted_bytes, "WrongPassword123")
+        assert False, "Decryption succeeded with incorrect password!"
+    except ValueError as e:
+        assert "decryption failed" in str(e).lower()
+
+    # Test tampering with ciphertext (authenticated AEAD tag must detect it)
+    tampered = bytearray(encrypted_bytes)
+    tampered[-5] ^= 0xFF  # Flip bits in tag/ciphertext
+    try:
+        decrypt_archive_bytes(bytes(tampered), passphrase)
+        assert False, "Tampered ciphertext was not detected by AEAD tag!"
+    except ValueError as e:
+        assert "decryption failed" in str(e).lower()
+
+    print("✓ test_aes_gcm_backup_encryption_and_decryption passed (AES-256-GCM verified)")
+
+
 def test_practice_backup_structure_and_manifest():
-    """Verify that practice backup generates valid archive with all manifests and sanitized CSVs."""
+    """Verify that practice backup generates valid archive with manifests and optional document bundle."""
     db = SessionLocal()
     try:
         service = DataBridgeService()
@@ -169,29 +218,87 @@ def test_practice_backup_structure_and_manifest():
             print("⚠ Skipping practice backup test: No test user found in DB")
             return
 
-        zip_bytes, zip_filename = service.create_practice_backup_zip(user, db)
+        zip_bytes, zip_filename, meta = service.create_practice_backup_zip(user, db, passphrase="TestPassphrase123")
         assert len(zip_bytes) > 0
-        assert zip_filename.endswith(".zip")
-        assert zip_filename.startswith("Fastcase_Backup_")
+        assert zip_filename.endswith(".fcenc"), f"Expected .fcenc extension for encrypted archive, got {zip_filename}"
+        assert meta["is_encrypted"] is True
+        assert "AES-256-GCM" in meta["encryption_algorithm"]
 
-        # Inspect ZIP contents
-        with zipfile.ZipFile(io.BytesIO(zip_bytes), "r") as z:
+        # Decrypt and inspect ZIP contents
+        decrypted_zip = decrypt_archive_bytes(zip_bytes, "TestPassphrase123")
+        with zipfile.ZipFile(io.BytesIO(decrypted_zip), "r") as z:
             names = z.namelist()
             assert "clients.csv" in names, "clients.csv missing from backup archive"
             assert "cases.csv" in names, "cases.csv missing from backup archive"
             assert "documents_manifest.csv" in names, "documents_manifest.csv missing from backup archive"
             assert "backup_manifest.json" in names, "backup_manifest.json missing from backup archive"
 
-            # Parse and validate backup_manifest.json
             manifest_raw = z.read("backup_manifest.json").decode("utf-8")
             manifest = json.loads(manifest_raw)
             assert manifest["app"] == "Fastcase Legal Operating System"
-            assert manifest["backup_version"] == "1.0"
-            assert "counts" in manifest
-            assert "clients" in manifest["counts"]
-            assert "cases" in manifest["counts"]
-            assert "documents" in manifest["counts"]
+            assert manifest["backup_version"] == "2.0"
+            assert manifest["is_encrypted"] is True
             print(f"✓ test_practice_backup_structure passed (Counts: {manifest['counts']})")
+    finally:
+        db.close()
+
+
+def test_practice_restore_pipeline():
+    """Verify disaster recovery: validate and execute restore of clients and cases."""
+    db = SessionLocal()
+    try:
+        service = DataBridgeService()
+        user = db.query(User).first()
+        if not user:
+            print("⚠ Skipping restore test: No test user found in DB")
+            return
+
+        # 1. Synthesize a mock practice backup archive
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as z:
+            # Clients CSV
+            c_csv = "ID,Name,Type,Phone,Email\n11111111-1111-1111-1111-111111111111,Restore Test Client,individual,9998887776,restore@test.in\n"
+            z.writestr("clients.csv", c_csv)
+
+            # Cases CSV
+            cs_csv = "ID,Case No,Title,Court,Practice Area,Client ID,Client Name\n22222222-2222-2222-2222-222222222222,REST-001/2026,Disaster Recovery Matter,Delhi High Court,Civil,11111111-1111-1111-1111-111111111111,Restore Test Client\n"
+            z.writestr("cases.csv", cs_csv)
+
+            # Manifest
+            manifest = {
+                "backup_version": "2.0",
+                "app": "Fastcase Legal Operating System",
+                "firm_id": str(user.firm_id),
+                "firm_name": "Test Firm",
+                "counts": {"clients": 1, "cases": 1, "documents_manifest": 0},
+            }
+            z.writestr("backup_manifest.json", json.dumps(manifest))
+
+        raw_archive = zip_buf.getvalue()
+
+        # 2. Validate archive
+        report = service.validate_restore_archive(raw_archive, user, db)
+        assert report["valid"] is True
+        assert report["counts"]["clients_total"] == 1
+        assert report["counts"]["cases_total"] == 1
+        assert report["requires_confirmation"] is True
+
+        # 3. Execute restore
+        result = service.execute_restore_archive(raw_archive, user, db, conflict_strategy="skip")
+        assert result["success"] is True
+
+        # Verify the restored records in DB
+        restored_case = db.query(Case).filter(Case.case_no == "REST-001/2026", Case.firm_id == user.firm_id).first()
+        assert restored_case is not None, "Restored case not found in database!"
+        assert restored_case.client.name == "Restore Test Client", "Client relationship was not restored properly!"
+
+        # Clean up test records
+        db.delete(restored_case)
+        if restored_case.client:
+            db.delete(restored_case.client)
+        db.commit()
+
+        print("✓ test_practice_restore_pipeline passed (Disaster recovery verified)")
     finally:
         db.close()
 
@@ -206,15 +313,13 @@ def test_tenant_isolation_and_cross_firm_protection():
             return
 
         user1 = users[0]
-        # Query cases belonging to user1's firm
         cases_firm1 = apply_firm_filter(db.query(Case), Case, user1).all()
         for c in cases_firm1:
-            assert c.firm_id == user1.firm_id, f"Cross-firm data leak: Case {c.id} firm_id {c.firm_id} != user firm_id {user1.firm_id}"
+            assert c.firm_id == user1.firm_id, f"Cross-firm leak: Case {c.id} firm_id {c.firm_id} != user firm_id {user1.firm_id}"
 
-        # Query clients belonging to user1's firm
         clients_firm1 = apply_firm_filter(db.query(Client), Client, user1).all()
         for cl in clients_firm1:
-            assert cl.firm_id == user1.firm_id, f"Cross-firm data leak: Client {cl.id} firm_id {cl.firm_id} != user firm_id {user1.firm_id}"
+            assert cl.firm_id == user1.firm_id, f"Cross-firm leak: Client {cl.id} firm_id {cl.firm_id} != user firm_id {user1.firm_id}"
 
         print("✓ test_tenant_isolation_and_cross_firm_protection passed")
     finally:
@@ -226,10 +331,13 @@ if __name__ == "__main__":
     print("FASTCASE DATA BRIDGE — VERIFICATION & SECURITY AUDIT TEST SUITE")
     print("=" * 70)
     test_magic_byte_and_content_validation()
+    test_malware_scanner_hook()
     test_zip_bomb_and_archive_security()
     test_formula_injection_mitigation()
     test_csv_encodings_and_sniffing()
+    test_aes_gcm_backup_encryption_and_decryption()
     test_practice_backup_structure_and_manifest()
+    test_practice_restore_pipeline()
     test_tenant_isolation_and_cross_firm_protection()
     print("=" * 70)
     print("ALL SECURITY, INTEGRITY & PRACTICE RECOVERY TESTS PASSED (100% GREEN)")

@@ -155,3 +155,28 @@ export async function executeMigration(
   });
   return data;
 }
+
+export async function validatePracticeRestore(file: File, passphrase?: string) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (passphrase) formData.append("passphrase", passphrase);
+  const { data } = await api.post("/data-bridge/restore/validate", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function executePracticeRestore(
+  file: File,
+  passphrase?: string,
+  conflictStrategy: "skip" | "update" = "skip"
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (passphrase) formData.append("passphrase", passphrase);
+  formData.append("conflict_strategy", conflictStrategy);
+  const { data } = await api.post("/data-bridge/restore/execute", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}

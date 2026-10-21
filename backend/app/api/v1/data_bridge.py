@@ -541,19 +541,7 @@ async def execute_migration(
             # Pre-fetch firm clients for linking
             firm_clients = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.is_deleted == False).all()
             client_by_name = {cl.name.lower().strip(): cl for cl in firm_clients if cl.name}
-
-            # Default client if none specified
-            default_client = firm_clients[0] if firm_clients else None
-            if not default_client:
-                # Create a default practice client to satisfy foreign key
-                default_client = Client(
-                    name=f"{current_user.full_name}'s General Clients",
-                    phone=current_user.phone or "0000000000",
-                    firm_id=firm_id,
-                    created_by_id=current_user.id,
-                )
-                db.add(default_client)
-                db.flush()
+            client_by_id = {str(cl.id): cl for cl in firm_clients}
 
             for idx, row in enumerate(rows, start=1):
                 case_no = (row.get(mapping.get("case_no", "")) or "").strip()
@@ -581,11 +569,53 @@ async def execute_migration(
                         updated_count += 1
                         continue
 
-                # Associate client
-                client_target = default_client
-                raw_client_name = (row.get(mapping.get("client_name", "")) or "").strip().lower()
-                if raw_client_name and raw_client_name in client_by_name:
-                    client_target = client_by_name[raw_client_name]
+                # ── Robust, Explicit Client Association (No Silent Fallback) ──
+                raw_client_id = (row.get(mapping.get("client_id", "")) or "").strip()
+                raw_client_name = (row.get(mapping.get("client_name", "")) or "").strip()
+
+                client_target = None
+
+                # 1. Check explicit client_id with strict firm isolation
+                if raw_client_id:
+                    try:
+                        parsed_cid = uuid.UUID(raw_client_id)
+                        matched_cl = client_by_id.get(str(parsed_cid))
+                        if not matched_cl:
+                            matched_cl = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.id == parsed_cid).first()
+                        if matched_cl:
+                            client_target = matched_cl
+                        else:
+                            error_list.append(f"Row {idx} ('{case_no}'): Client ID '{raw_client_id}' does not exist in your firm. Case rejected to prevent cross-firm leakage.")
+                            continue
+                    except ValueError:
+                        error_list.append(f"Row {idx} ('{case_no}'): Invalid Client ID format '{raw_client_id}'.")
+                        continue
+
+                # 2. Check client_name in firm
+                if not client_target and raw_client_name:
+                    norm_name = raw_client_name.lower().strip()
+                    if norm_name in client_by_name:
+                        client_target = client_by_name[norm_name]
+                    else:
+                        # Auto-create the specifically named client for this firm so relationship is preserved accurately
+                        new_cl = Client(
+                            name=raw_client_name,
+                            phone=current_user.phone or "0000000000",
+                            notes=f"Auto-created from case migration for matter {case_no}",
+                            firm_id=firm_id,
+                            created_by_id=current_user.id,
+                        )
+                        db.add(new_cl)
+                        db.flush()
+                        client_target = new_cl
+                        client_by_name[norm_name] = new_cl
+                        client_by_id[str(new_cl.id)] = new_cl
+
+                # 3. If neither client_id nor client_name could be resolved:
+                # Do NOT silently associate with an unrelated client! Reject row explicitly.
+                if not client_target:
+                    error_list.append(f"Row {idx} ('{case_no}'): Unresolvable client relationship. Every case must specify an identifiable Client Name or Client ID. Row rejected.")
+                    continue
 
                 # Parse optional dates
                 def parse_date(val):
@@ -811,15 +841,25 @@ async def export_cases_csv(
 @router.get("/export/practice-backup")
 async def export_practice_backup(
     request: Request,
+    passphrase: Optional[str] = Query(None, description="Optional AES-256-GCM encryption passphrase"),
+    include_documents: bool = Query(True, description="Bundle raw document binary files up to safety quota"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
     """
     Generate and stream a full firm practice backup ZIP containing clients, cases,
-    document manifests, and practice metadata.
+    document manifests, raw document files (up to 150 MB quota), and optional AES-256-GCM encryption.
     """
     ip = extract_ip(request)
-    zip_bytes, zip_filename = bridge_service.create_practice_backup_zip(current_user, db)
+    zip_bytes, zip_filename, meta = bridge_service.create_practice_backup_zip(
+        current_user,
+        db,
+        passphrase=passphrase,
+        include_document_files=include_documents,
+    )
+
+    is_enc = bool(passphrase and passphrase.strip())
+    media_t = "application/octet-stream" if is_enc else "application/zip"
 
     log_action(
         db,
@@ -828,14 +868,94 @@ async def export_practice_backup(
         str(current_user.firm_id),
         user=current_user,
         ip=ip,
-        details={"archive_size": len(zip_bytes)}
+        details={
+            "archive_size": len(zip_bytes),
+            "is_encrypted": is_enc,
+            "completeness": meta.get("backup_completeness"),
+            "doc_files_bundled": meta.get("counts", {}).get("document_files_bundled", 0),
+        }
     )
 
     return StreamingResponse(
         io.BytesIO(zip_bytes),
-        media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{zip_filename}"'}
+        media_type=media_t,
+        headers={
+            "Content-Disposition": f'attachment; filename="{zip_filename}"',
+            "X-Fastcase-Encrypted": "true" if is_enc else "false",
+            "X-Fastcase-Completeness": str(meta.get("backup_completeness")),
+        }
     )
+
+
+# ── 4. Practice Restore (Disaster Recovery) ───────────────────────────────────
+
+@router.post("/restore/validate")
+async def validate_practice_restore(
+    file: UploadFile = File(...),
+    passphrase: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    Step 1 of Disaster Recovery: Validate a practice backup archive without modifying data.
+    Returns entity counts, duplicate analysis, and archive completeness.
+    """
+    content = await file.read()
+    if len(content) > 200 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Restore archive exceeds 200 MB limit.")
+
+    try:
+        report = bridge_service.validate_restore_archive(content, current_user, db, passphrase=passphrase)
+        return report
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Restore validation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Archive validation failed: {str(e)}")
+
+
+@router.post("/restore/execute")
+async def execute_practice_restore(
+    request: Request,
+    file: UploadFile = File(...),
+    passphrase: Optional[str] = Form(None),
+    conflict_strategy: str = Form("skip"),  # skip | update
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    Step 2 of Disaster Recovery: Transactionally restore clients and cases from a verified archive.
+    """
+    ip = extract_ip(request)
+    content = await file.read()
+    if len(content) > 200 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Restore archive exceeds 200 MB limit.")
+
+    try:
+        result = bridge_service.execute_restore_archive(
+            content,
+            current_user,
+            db,
+            passphrase=passphrase,
+            conflict_strategy=conflict_strategy,
+        )
+
+        log_action(
+            db,
+            "DATA_BRIDGE_RESTORE",
+            "PRACTICE_BACKUP",
+            str(current_user.firm_id),
+            user=current_user,
+            ip=ip,
+            details=result,
+        )
+
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Restore execution failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
 
 
 # ── 4. Migration & Import History ─────────────────────────────────────────────
