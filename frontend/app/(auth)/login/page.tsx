@@ -71,7 +71,7 @@ export default function LoginPage() {
 
         <div className="max-w-md relative z-10">
           <h2 className="text-3xl font-bold tracking-tight mb-4">
-            Smart Practice Management
+            Fastcase
           </h2>
           <p className="text-white/70 text-sm leading-relaxed">
             Manage cases, draft documents, track hearings, and run your practice — all in one platform.

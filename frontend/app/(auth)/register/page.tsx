@@ -81,7 +81,7 @@ export default function RegisterPage() {
             </div>
           </div>
           <h1 className="text-white text-3xl font-bold leading-tight mb-4">
-            Smart Practice<br />Management
+            Fastcase
           </h1>
           <p className="text-white/60 text-base leading-relaxed">
             Manage cases, draft documents, track hearings, and run your practice — all in one platform.
