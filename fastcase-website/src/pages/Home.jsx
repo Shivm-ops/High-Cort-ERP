@@ -238,7 +238,23 @@ export default function Home() {
             {[
               {
                 q: 'What is Fastcase?',
-                a: 'Fastcase is an enterprise Practice Management System developed by SOSM Services Private Limited (Kolhapur) specifically for Indian advocates, chambers, and law firms to automate case tracking, cause lists, drafting, and billing.'
+                a: 'Fastcase is an enterprise Practice Management System developed by SOSM Services Private Limited specifically for Indian advocates, chambers, and law firms to automate case tracking, cause lists, drafting, and billing.'
+              },
+              {
+                q: 'What core features does the Fastcase application provide?',
+                a: 'Fastcase includes end-to-end legal practice tools: CNR-based Case Tracking & Daily Cause Lists, 500+ Vernacular Legal Drafts (English, Marathi, Hindi, Gujarati), Hearing Calendars with automated reminders, Document OCR Intelligence, GST-compliant Legal Invoicing (SAC 9982), and Client Intake Portals.'
+              },
+              {
+                q: 'Can multiple advocates and chamber team members collaborate on cases?',
+                a: 'Yes. Fastcase offers multi-user chamber management with role-based access for Senior Advocates, Associates, Clerks, and Interns. You can assign tasks, delegate hearings, share research notes, and track internal progress across all active matters.'
+              },
+              {
+                q: 'How does Fastcase automate court case tracking and hearings?',
+                a: 'Fastcase organizes your cases by CNR number, court, and case stage. It generates daily chamber cause lists, maintains full hearing histories with court orders, and provides automated calendar reminders so you never miss a court date or limitation deadline.'
+              },
+              {
+                q: 'Can clients view their case updates and hearing dates directly?',
+                a: 'Yes. Fastcase includes a dedicated, secure Client Portal where clients can log in to view their case timeline, upcoming hearings, uploaded court orders, and invoices—reducing repetitive status phone calls to your chamber.'
               },
               {
                 q: 'Is client and matter data privileged and secure?',
