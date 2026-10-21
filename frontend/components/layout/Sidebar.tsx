@@ -113,7 +113,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Team", href: "/team", icon: Users2 },
       { label: "Limitation & Deadlines", href: "/compliance", icon: ShieldCheck },
       { label: "Tools & Calculators", href: "/tools", icon: Calculator },
-      { label: "Data Bridge", href: "/data-bridge", icon: HardDriveUpload, badge: "New", badgeColor: "mint" },
+      { label: "Import & Export", href: "/data-bridge", icon: HardDriveUpload, badge: "New", badgeColor: "mint" },
     ],
   },
   {
@@ -356,7 +356,9 @@ export default function Sidebar() {
                                   : "text-white/75 group-hover:text-white"
                               )}
                             >
-                              {t(NAV_LABEL_KEYS[item.href] || item.label)}
+                              {NAV_LABEL_KEYS[item.href] && t(NAV_LABEL_KEYS[item.href]) !== NAV_LABEL_KEYS[item.href]
+                                ? t(NAV_LABEL_KEYS[item.href])
+                                : item.label}
                             </motion.span>
                           )}
                         </AnimatePresence>
