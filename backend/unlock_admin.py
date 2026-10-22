@@ -33,7 +33,7 @@ from app.core.security import get_password_hash
 db = SessionLocal()
 
 EMAIL = "admin@fastcase.in"
-PASSWORD = "lagalos@2025"
+PASSWORD = "legal@2025"
 
 try:
     admin = db.query(User).filter(User.email == EMAIL).first()

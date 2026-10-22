@@ -6,8 +6,8 @@ BASE_URL = "http://127.0.0.1:8000"
 @pytest.fixture(scope="session")
 def token():
     response = requests.post(f"{BASE_URL}/api/v1/auth/token", data={
-        "username": "admin@lagalos.in",
-        "password": "lagalos@2025"
+        "username": "admin@fastcase.in",
+        "password": "legal@2025"
     })
     assert response.status_code == 200
     assert "access_token" in response.json()

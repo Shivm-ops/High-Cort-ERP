@@ -5,13 +5,13 @@ from app.models.user import User
 from app.core.security import get_password_hash
 
 db = SessionLocal()
-admin = db.query(User).filter(User.email == "admin@lagalos.in").first()
+admin = db.query(User).filter(User.email.in_(["admin@fastcase.in", "admin@lagalos.in"])).first()
 if admin:
-    admin.hashed_password = get_password_hash("lagalos@2025")
+    admin.hashed_password = get_password_hash("legal@2025")
     admin.failed_login_attempts = 0
     admin.locked_until = None
     db.commit()
-    print("Admin unlocked and password reset successfully")
+    print("Admin unlocked and password reset to legal@2025 successfully")
 else:
     print("Admin not found")
 db.close()

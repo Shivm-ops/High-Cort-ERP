@@ -52,7 +52,7 @@ print("  ✓ Tables ready")
 db = SessionLocal()
 
 DEFAULT_EMAIL    = "admin@fastcase.in"
-DEFAULT_PASSWORD = "lagalos@2025"
+DEFAULT_PASSWORD = "legal@2025"
 DEFAULT_NAME     = "Fastcase System Admin"
 
 try:
