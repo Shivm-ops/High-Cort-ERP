@@ -957,3 +957,209 @@ class DataBridgeService:
                 "cases_updated": cases_updated,
                 "backup_version": manifest.get("backup_version"),
             }
+
+    def read_document_bytes(self, doc: Document) -> Optional[bytes]:
+        """Safely read document content from local disk or S3."""
+        if not doc or not doc.file_path:
+            return None
+        if doc.file_path.startswith("local://"):
+            local_p = os.path.realpath(doc.file_path.replace("local://", ""))
+            if os.path.exists(local_p) and not os.path.isdir(local_p):
+                try:
+                    with open(local_p, "rb") as f:
+                        return f.read()
+                except Exception as e:
+                    logger.warning(f"Error reading local file {local_p}: {e}")
+                    return None
+        elif self.doc_service.s3_client and doc.file_path.startswith("https://"):
+            try:
+                key = doc.file_path.split(".amazonaws.com/")[-1]
+                resp = self.doc_service.s3_client.get_object(Bucket=os.getenv("AWS_S3_BUCKET", ""), Key=key)
+                return resp["Body"].read()
+            except Exception as e:
+                logger.warning(f"Error reading S3 file for doc {doc.id}: {e}")
+                return None
+        return None
+
+    def export_client_documents_zip(
+        self,
+        client: Client,
+        docs: List[Document],
+        current_user: User,
+        db: Session,
+        case_id: Optional[str] = None,
+    ) -> Tuple[bytes, str, Dict[str, Any]]:
+        """
+        Export client documents into a structured ZIP archive with:
+        - Subfolders: Client_KYC_Identity/, Cases/{case_no}_{title}/, General_Documents/
+        - MANIFEST.json and MANIFEST.csv
+        - Strict tenant isolation and audit manifest
+        """
+        clean_client_name = re.sub(r'[^a-zA-Z0-9_\- ]', '_', client.name).strip() or "Client"
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"Fastcase_{clean_client_name}_Documents_{timestamp}.zip"
+
+        zip_buf = io.BytesIO()
+        manifest_records = []
+        exported_files_count = 0
+        total_bytes = 0
+
+        with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as z:
+            for doc in docs:
+                file_bytes = self.read_document_bytes(doc)
+                safe_name = self.sanitize_filename(doc.original_filename or doc.name)
+                # Determine folder path inside ZIP
+                if doc.case:
+                    case_folder = re.sub(r'[^a-zA-Z0-9_\- ]', '_', f"{doc.case.case_no}_{doc.case.title[:30]}").strip()
+                    zip_path = f"Cases/{case_folder}/{str(doc.id)[:8]}_{safe_name}"
+                    doc_scope = "case_specific"
+                elif doc.doc_type in ("identity_document", "kyc", "bank_record"):
+                    zip_path = f"Client_KYC_Identity/{str(doc.id)[:8]}_{safe_name}"
+                    doc_scope = "client_identity"
+                else:
+                    zip_path = f"General_Documents/{str(doc.id)[:8]}_{safe_name}"
+                    doc_scope = "client_general"
+
+                status = "included"
+                sha256 = doc.hash_sha256 or ""
+                size = doc.file_size or 0
+
+                if file_bytes:
+                    z.writestr(zip_path, file_bytes)
+                    exported_files_count += 1
+                    total_bytes += len(file_bytes)
+                    sha256 = hashlib.sha256(file_bytes).hexdigest()
+                    size = len(file_bytes)
+                else:
+                    status = "missing_content"
+
+                manifest_records.append({
+                    "document_id": str(doc.id),
+                    "document_name": doc.name,
+                    "original_filename": doc.original_filename or doc.name,
+                    "document_type": doc.doc_type,
+                    "scope": doc_scope,
+                    "client_id": str(client.id),
+                    "client_name": client.name,
+                    "client_reference": client.phone or client.email or str(client.id)[:8],
+                    "case_id": str(doc.case_id) if doc.case_id else "",
+                    "case_no": doc.case.case_no if doc.case else "",
+                    "case_title": doc.case.title if doc.case else "",
+                    "archive_path": zip_path,
+                    "size_bytes": size,
+                    "sha256": sha256,
+                    "export_status": status,
+                    "created_at": doc.created_at.isoformat() if doc.created_at else "",
+                })
+
+            # Write MANIFEST.json
+            summary = {
+                "export_version": "2.0",
+                "application": "Fastcase Legal Operating System — Client Data Bridge",
+                "client": {
+                    "id": str(client.id),
+                    "name": client.name,
+                    "phone": client.phone,
+                    "email": client.email,
+                    "client_type": client.type.value if (hasattr(client, "type") and hasattr(client.type, "value")) else str(getattr(client, "type", "individual")),
+                },
+                "exported_by": current_user.email,
+                "exported_at": datetime.now(timezone.utc).isoformat(),
+                "firm_id": str(current_user.firm_id) if current_user.firm_id else None,
+                "total_documents_selected": len(docs),
+                "total_files_bundled": exported_files_count,
+                "total_bytes": total_bytes,
+                "documents": manifest_records,
+            }
+            z.writestr("MANIFEST.json", json.dumps(summary, indent=2))
+
+            # Write MANIFEST.csv
+            csv_buf = io.StringIO()
+            csv_writer = csv.writer(csv_buf)
+            csv_writer.writerow([
+                "Document ID", "Document Name", "Original Filename", "Type", "Scope",
+                "Client Name", "Client Reference", "Case No", "Case Title",
+                "Archive Path", "File Size Bytes", "SHA256", "Export Status", "Created At"
+            ])
+            for rec in manifest_records:
+                csv_writer.writerow([
+                    rec["document_id"],
+                    self.sanitize_csv_cell(rec["document_name"]),
+                    self.sanitize_csv_cell(rec["original_filename"]),
+                    rec["document_type"],
+                    rec["scope"],
+                    self.sanitize_csv_cell(rec["client_name"]),
+                    self.sanitize_csv_cell(rec["client_reference"]),
+                    self.sanitize_csv_cell(rec["case_no"]),
+                    self.sanitize_csv_cell(rec["case_title"]),
+                    rec["archive_path"],
+                    rec["size_bytes"],
+                    rec["sha256"],
+                    rec["export_status"],
+                    rec["created_at"],
+                ])
+            z.writestr("MANIFEST.csv", csv_buf.getvalue())
+
+        return zip_buf.getvalue(), zip_filename, summary
+
+
+def bridge_service_extract_text(raw_content: bytes, filename: str, mime_type: Optional[str] = None) -> str:
+    """
+    Extract text from PDF, DOCX, TXT, or image content.
+    Works for text extraction in Data Bridge and AI drafting.
+    """
+    if not raw_content:
+        return ""
+    ext = (filename.rsplit(".", 1)[-1]).lower() if "." in filename else ""
+
+    # 1. Plain text
+    if ext == "txt" or mime_type == "text/plain":
+        for enc in ["utf-8-sig", "utf-8", "latin-1"]:
+            try:
+                return raw_content.decode(enc)
+            except UnicodeDecodeError:
+                continue
+        return raw_content.decode("utf-8", errors="ignore")
+
+    # 2. PDF extraction via PyMuPDF (fitz)
+    if ext == "pdf" or mime_type == "application/pdf":
+        try:
+            import fitz
+            doc = fitz.open(stream=raw_content, filetype="pdf")
+            pages = []
+            for page in doc:
+                t = page.get_text()
+                if t and t.strip():
+                    pages.append(t.strip())
+            doc.close()
+            return "\n\n".join(pages)
+        except Exception as e:
+            logger.warning(f"PyMuPDF extraction failed for {filename}: {e}")
+
+    # 3. DOCX extraction via OpenXML document.xml parsing
+    if ext == "docx" or (mime_type and "openxmlformats" in mime_type):
+        try:
+            with zipfile.ZipFile(io.BytesIO(raw_content)) as z:
+                if "word/document.xml" in z.namelist():
+                    xml_content = z.read("word/document.xml").decode("utf-8", errors="ignore")
+                    tree = ET.fromstring(xml_content)
+                    paragraphs = []
+                    for p in tree.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p"):
+                        texts = [node.text for node in p.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t") if node.text]
+                        if texts:
+                            paragraphs.append("".join(texts))
+                    return "\n\n".join(paragraphs)
+        except Exception as e:
+            logger.warning(f"DOCX XML extraction failed for {filename}: {e}")
+
+    # 4. OCR for images if available
+    if ext in ("jpg", "jpeg", "png", "tiff") or (mime_type and mime_type.startswith("image/")):
+        try:
+            import pytesseract
+            from PIL import Image
+            image = Image.open(io.BytesIO(raw_content))
+            return pytesseract.image_to_string(image, lang="eng+hin+mar+guj").strip()
+        except Exception as e:
+            logger.warning(f"Image OCR failed for {filename}: {e}")
+
+    return ""

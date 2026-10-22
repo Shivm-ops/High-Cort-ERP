@@ -3,9 +3,10 @@ import hashlib
 import time
 import base64
 import os
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Request
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Request, Query, Header
+from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from app.core.database import get_db
 from app.core.config import settings
@@ -38,25 +39,31 @@ def _make_download_token(doc_id: str, user_id: str) -> str:
     return base64.urlsafe_b64encode(raw.encode()).decode()
 
 
-def _verify_download_token(token: str, doc_id: str, user_id: str) -> bool:
-    """Verify the download token has not expired and is authentic."""
+def _decode_and_verify_download_token(token: str, doc_id: str) -> Optional[str]:
+    """Verify HMAC token and return authorized user_id if valid."""
     try:
         raw = base64.urlsafe_b64decode(token.encode()).decode()
         parts = raw.rsplit(":", 1)
         if len(parts) != 2:
-            return False
+            return None
         payload, sig = parts
         expected_sig = hmac.new(_DOWNLOAD_SECRET, payload.encode(), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(sig, expected_sig):
-            return False
+            return None
         d_id, u_id, expires = payload.split(":")
-        if d_id != doc_id or u_id != user_id:
-            return False
+        if d_id != doc_id:
+            return None
         if int(time.time()) > int(expires):
-            return False
-        return True
+            return None
+        return u_id
     except Exception:
-        return False
+        return None
+
+
+def _verify_download_token(token: str, doc_id: str, user_id: str) -> bool:
+    """Verify the download token has not expired and is authentic."""
+    res_uid = _decode_and_verify_download_token(token, doc_id)
+    return res_uid == user_id
 
 
 # ── Firm ownership helpers ────────────────────────────────────────────────────
@@ -197,6 +204,10 @@ async def upload_document(
         case_obj = db.query(Case).filter(Case.id == resolved_case_id).first()
         if case_obj:
             resolved_client_id = case_obj.client_id
+    elif resolved_case_id and resolved_client_id:
+        case_obj = db.query(Case).filter(Case.id == resolved_case_id).first()
+        if case_obj and case_obj.client_id and str(case_obj.client_id) != str(resolved_client_id):
+            raise HTTPException(status_code=400, detail="The selected case does not belong to the selected client.")
 
     doc = Document(
         name=file.filename,
@@ -241,29 +252,26 @@ async def get_download_url(
     current_user: User = Depends(require_firm_member),
 ):
     """
-    Return a short-lived presigned URL (S3) or signed token URL (local dev).
-    File path is never exposed directly. Firm ownership is verified before URL generation.
-    URL expires in 1 hour.
+    Return short-lived presigned/signed token URLs for preview and download.
+    Firm ownership is verified before URL generation.
     """
     ip = extract_ip(request)
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # ── Object-level security ─────────────────────────────────────────────────
     _doc_firm_check(doc, current_user, db)
 
-    # ── Generate secure download URL ──────────────────────────────────────────
+    token = _make_download_token(doc_id, str(current_user.id))
     if doc_service.s3_client and doc.file_path and doc.file_path.startswith("https://"):
-        # Extract S3 key from URL
         bucket_url = f"https://{settings.AWS_S3_BUCKET}.s3.{settings.AWS_REGION}.amazonaws.com/"
         object_key = doc.file_path.replace(bucket_url, "")
         download_url = await doc_service.generate_download_url(object_key, expiry_seconds=3600)
+        preview_url = download_url
         url_type = "presigned_s3"
     else:
-        # Local dev: HMAC-signed token via our own API
-        token = _make_download_token(doc_id, str(current_user.id))
-        download_url = f"/api/v1/documents/{doc_id}/stream?token={token}"
+        preview_url = f"/api/v1/documents/{doc_id}/stream?disposition=inline&token={token}"
+        download_url = f"/api/v1/documents/{doc_id}/stream?disposition=attachment&token={token}"
         url_type = "signed_local"
 
     log_action(db, AuditAction.DOCUMENT_DOWNLOAD, "DOCUMENT", doc_id,
@@ -273,6 +281,8 @@ async def get_download_url(
 
     return {
         "download_url": download_url,
+        "preview_url": preview_url,
+        "token": token,
         "filename": doc.name,
         "mime_type": doc.mime_type,
         "expires_in_seconds": 3600,
@@ -283,32 +293,211 @@ async def get_download_url(
 @router.get("/{doc_id}/stream")
 async def stream_document(
     doc_id: str,
-    token: str,
+    token: Optional[str] = Query(None),
+    disposition: Optional[str] = Query("inline"),
+    request: Request = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     """
-    Serve file content only if the signed token is valid and not expired.
-    This is the local-dev fallback; in production S3 presigned URLs are used instead.
+    Serve file content for inline preview or attachment download.
+    Supports either signed HMAC token (for browser iframe/window.open)
+    or Authorization: Bearer <jwt> header.
+    Firm isolation is strictly verified.
     """
-    if not _verify_download_token(token, doc_id, str(current_user.id)):
-        raise HTTPException(status_code=403, detail="Download token is invalid or expired")
+    authed_user = None
 
+    # 1. Verify signed HMAC token if provided
+    if token:
+        user_id = _decode_and_verify_download_token(token, doc_id)
+        if not user_id:
+            raise HTTPException(status_code=403, detail="Invalid or expired download token")
+        try:
+            import uuid
+            u_uuid = uuid.UUID(user_id)
+            authed_user = db.query(User).filter(User.id == u_uuid, User.is_active == True).first()
+        except Exception:
+            pass
+        if not authed_user:
+            raise HTTPException(status_code=403, detail="Invalid user associated with download token")
+
+    # 2. Check Authorization header
+    if not authed_user and request:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            raw_jwt = auth_header.split(" ", 1)[1]
+            try:
+                from app.core.security import decode_token
+                import uuid
+                payload = decode_token(raw_jwt)
+                user_sub = payload.get("sub")
+                if user_sub:
+                    try:
+                        u_uuid = uuid.UUID(user_sub)
+                        authed_user = db.query(User).filter(User.id == u_uuid, User.is_active == True).first()
+                    except ValueError:
+                        authed_user = db.query(User).filter(User.email == user_sub, User.is_active == True).first()
+            except Exception:
+                pass
+
+    if not authed_user:
+        raise HTTPException(status_code=401, detail="Authentication required or token expired")
+
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    _doc_firm_check(doc, authed_user, db)
+
+    from fastapi.responses import FileResponse
+    local_path = doc.file_path.replace("local://", "") if doc.file_path else ""
+    if not local_path or not os.path.exists(local_path):
+        raise HTTPException(status_code=404, detail="File content not found on server")
+
+    filename = doc.original_filename or doc.name or "document"
+    ext = (filename.rsplit(".", 1)[-1]).lower() if "." in filename else ""
+    mime = doc.mime_type or "application/octet-stream"
+    if mime == "application/octet-stream":
+        if ext == "pdf":
+            mime = "application/pdf"
+        elif ext in ("jpg", "jpeg"):
+            mime = "image/jpeg"
+        elif ext == "png":
+            mime = "image/png"
+        elif ext == "txt":
+            mime = "text/plain; charset=utf-8"
+        elif ext == "docx":
+            mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+    disp_type = "inline" if disposition == "inline" else "attachment"
+    return FileResponse(
+        path=local_path,
+        filename=filename,
+        media_type=mime,
+        content_disposition_type=disp_type,
+    )
+
+
+@router.get("/{doc_id}/content")
+async def get_document_content(
+    doc_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    Extract and return text content from document (via OCR or file text extraction)
+    for preview and AI drafting.
+    """
     doc = db.query(Document).filter(Document.id == doc_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)
 
-    from fastapi.responses import FileResponse
-    local_path = doc.file_path.replace("local://", "")
-    if not os.path.exists(local_path):
-        raise HTTPException(status_code=404, detail="File not found on server")
+    text = ""
+    if doc.ocr_text and doc.ocr_text.strip():
+        text = doc.ocr_text.strip()
+    else:
+        from app.services.data_bridge_service import bridge_service_extract_text
+        local_path = doc.file_path.replace("local://", "") if doc.file_path else ""
+        if local_path and os.path.exists(local_path):
+            try:
+                with open(local_path, "rb") as f:
+                    raw = f.read()
+                text = bridge_service_extract_text(raw, doc.name, doc.mime_type)
+            except Exception as e:
+                logger.warning(f"Failed to read file for text extraction {doc_id}: {e}")
 
-    return FileResponse(
-        path=local_path,
-        filename=doc.original_filename or doc.name,
-        media_type=doc.mime_type or "application/octet-stream",
-    )
+    token = _make_download_token(doc_id, str(current_user.id))
+    return {
+        "id": str(doc.id),
+        "name": doc.name,
+        "original_filename": doc.original_filename,
+        "doc_type": doc.doc_type,
+        "mime_type": doc.mime_type,
+        "file_size": doc.file_size,
+        "text": text,
+        "has_text": bool(text.strip()),
+        "preview_url": f"/api/v1/documents/{doc_id}/stream?token={token}&disposition=inline",
+        "download_url": f"/api/v1/documents/{doc_id}/stream?token={token}&disposition=attachment",
+        "case_id": str(doc.case_id) if doc.case_id else None,
+        "case_title": doc.case.title if doc.case else None,
+        "case_no": doc.case.case_no if doc.case else None,
+        "client_id": str(doc.client_id) if doc.client_id else None,
+        "client_name": doc.client.name if doc.client else None,
+        "created_at": doc.created_at.isoformat() if doc.created_at else None,
+    }
+
+
+class DocumentUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    doc_type: Optional[str] = None
+    client_id: Optional[str] = None
+    case_id: Optional[str] = None
+    description: Optional[str] = None
+    is_evidence: Optional[bool] = None
+    exhibit_number: Optional[str] = None
+
+
+@router.patch("/{doc_id}")
+async def update_document(
+    doc_id: str,
+    payload: DocumentUpdateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    ip = extract_ip(request)
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    _doc_firm_check(doc, current_user, db)
+
+    import uuid
+    # Resolve target case & client
+    target_case_id = doc.case_id
+    if payload.case_id is not None:
+        if payload.case_id.strip():
+            _verify_case_firm(payload.case_id, current_user, db)
+            target_case_id = uuid.UUID(payload.case_id)
+        else:
+            target_case_id = None
+
+    target_client_id = doc.client_id
+    if payload.client_id is not None:
+        if payload.client_id.strip():
+            _verify_client_firm(payload.client_id, current_user, db)
+            target_client_id = uuid.UUID(payload.client_id)
+        else:
+            target_client_id = None
+
+    # Cross-validate case and client
+    if target_case_id and target_client_id:
+        case_obj = db.query(Case).filter(Case.id == target_case_id).first()
+        if case_obj and case_obj.client_id and str(case_obj.client_id) != str(target_client_id):
+            raise HTTPException(status_code=400, detail="The selected case does not belong to the selected client.")
+    elif target_case_id and not target_client_id:
+        case_obj = db.query(Case).filter(Case.id == target_case_id).first()
+        if case_obj and case_obj.client_id:
+            target_client_id = case_obj.client_id
+
+    if payload.name is not None and payload.name.strip():
+        doc.name = payload.name.strip()
+    if payload.doc_type is not None:
+        doc.doc_type = payload.doc_type
+    if payload.description is not None:
+        doc.description = payload.description
+    if payload.is_evidence is not None:
+        doc.is_evidence = payload.is_evidence
+    if payload.exhibit_number is not None:
+        doc.exhibit_number = payload.exhibit_number
+
+    doc.case_id = target_case_id
+    doc.client_id = target_client_id
+
+    log_action(db, AuditAction.DOCUMENT_UPDATE, "DOCUMENT", doc_id,
+               user=current_user, ip=ip,
+               details={"name": doc.name, "case_id": str(doc.case_id) if doc.case_id else None, "client_id": str(doc.client_id) if doc.client_id else None})
+    db.commit()
+    db.refresh(doc)
+    return _safe_doc_dict(doc)
 
 
 @router.get("/{doc_id}")

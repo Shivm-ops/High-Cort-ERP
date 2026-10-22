@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface BridgeUploadItem {
   id: string;
+  docId?: string;
   file: File;
   name: string;
   size: number;
@@ -20,6 +21,55 @@ export interface BridgeUploadItem {
   clientName?: string;
   hashSha256?: string;
   ocrProcessed?: boolean;
+  previewUrl?: string;
+  downloadUrl?: string;
+  hints?: any;
+}
+
+export interface ClientDocument {
+  id: string;
+  name: string;
+  original_filename: string;
+  doc_type: string;
+  file_size: number;
+  mime_type: string;
+  description?: string;
+  case_id?: string;
+  case_title?: string;
+  case_no?: string;
+  client_id?: string;
+  client_name?: string;
+  client_phone?: string;
+  preview_url: string;
+  download_url: string;
+  token?: string;
+  ocr_processed?: boolean;
+  hash_sha256?: string;
+  created_at: string;
+}
+
+export interface AIDraftRequest {
+  doc_id?: string;
+  text?: string;
+  operation: string;
+  instructions?: string;
+  facts?: string;
+  save_as_draft?: boolean;
+  draft_title?: string;
+  category?: string;
+  language?: string;
+  client_id?: string;
+  case_id?: string;
+}
+
+export interface AIDraftResult {
+  operation: string;
+  original_text: string;
+  proposed_draft: string;
+  word_count: number;
+  saved_as_draft: boolean;
+  draft_id?: string;
+  document_id?: string;
 }
 
 export interface MigrationPreviewResult {
@@ -179,4 +229,79 @@ export async function executePracticeRestore(
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data;
+}
+
+export function useClientDocuments(params: {
+  clientId?: string;
+  caseId?: string;
+  docType?: string;
+  search?: string;
+  unassignedOnly?: boolean;
+}) {
+  return useQuery({
+    queryKey: ["client_documents", params],
+    queryFn: async () => {
+      const query = new URLSearchParams();
+      if (params.clientId) query.set("client_id", params.clientId);
+      if (params.caseId) query.set("case_id", params.caseId);
+      if (params.docType && params.docType !== "all") query.set("doc_type", params.docType);
+      if (params.search) query.set("search", params.search);
+      if (params.unassignedOnly) query.set("unassigned_only", "true");
+      const { data } = await api.get<{ total: number; documents: ClientDocument[] }>(
+        `/data-bridge/client-documents?${query.toString()}`
+      );
+      return data;
+    },
+  });
+}
+
+export async function getDocumentContent(docId: string) {
+  const { data } = await api.get<{
+    id: string;
+    name: string;
+    original_filename: string;
+    doc_type: string;
+    mime_type: string;
+    file_size: number;
+    text: string;
+    has_text: boolean;
+    preview_url: string;
+    download_url: string;
+    case_id?: string;
+    case_title?: string;
+    case_no?: string;
+    client_id?: string;
+    client_name?: string;
+    created_at?: string;
+  }>(`/documents/${docId}/content`);
+  return data;
+}
+
+export async function aiDraftImprove(payload: AIDraftRequest): Promise<AIDraftResult> {
+  const { data } = await api.post<AIDraftResult>("/data-bridge/ai-draft-improve", payload);
+  return data;
+}
+
+export async function updateDocument(docId: string, payload: {
+  name?: string;
+  doc_type?: string;
+  client_id?: string;
+  case_id?: string;
+  description?: string;
+}) {
+  const { data } = await api.patch(`/documents/${docId}`, payload);
+  return data;
+}
+
+export async function exportClientDocuments(clientId: string, caseId?: string, docIds?: string[]) {
+  const params = new URLSearchParams();
+  params.set("client_id", clientId);
+  if (caseId) params.set("case_id", caseId);
+  if (docIds && docIds.length > 0) {
+    docIds.forEach((id) => params.append("doc_ids", id));
+  }
+  const response = await api.get(`/data-bridge/export/client-documents?${params.toString()}`, {
+    responseType: "blob",
+  });
+  return response;
 }

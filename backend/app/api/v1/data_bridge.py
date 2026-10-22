@@ -15,6 +15,7 @@ import re
 import csv
 import json
 import uuid
+import logging
 from datetime import datetime, timezone, date
 from typing import Optional, List, Dict, Any
 
@@ -25,6 +26,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_ as sql_or
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.security import get_current_user
 from app.core.permissions import require_firm_member, apply_firm_filter, check_object_firm
 from app.models.document import Document, DocumentType
@@ -32,8 +34,13 @@ from app.models.case import Case, CaseStatus, CaseStage, CasePriority
 from app.models.client import Client, ClientType
 from app.models.user import User
 from app.models.audit_log import AuditLog
+from app.models.draft import Draft, DraftCategory, DraftLanguage
 from app.services.data_bridge_service import DataBridgeService, ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES
 from app.services.audit_service import log_action, extract_ip, AuditAction
+from app.services.ai_service import AIService
+from app.api.v1.documents import _make_download_token
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 bridge_service = DataBridgeService()
@@ -111,7 +118,10 @@ async def upload_bridge_file(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid client ID format")
 
-    if resolved_case and not resolved_client:
+    if resolved_case and resolved_client:
+        if resolved_case.client_id and str(resolved_case.client_id) != str(resolved_client.id):
+            raise HTTPException(status_code=400, detail="The selected case does not belong to the selected client.")
+    elif resolved_case and not resolved_client:
         resolved_client = resolved_case.client
 
     # 3. Store file securely
@@ -137,21 +147,8 @@ async def upload_bridge_file(
         firm_cases = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.is_deleted == False).limit(200).all()
         firm_clients = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.is_deleted == False).limit(200).all()
         hints = bridge_service.extract_case_and_client_hints(clean_name, ocr_text[:500] if ocr_text else None, firm_cases, firm_clients)
-
-        # If user didn't specify case/client, and high-confidence match found:
-        if not resolved_case and hints.get("suggested_case_id"):
-            try:
-                sc_id = uuid.UUID(hints["suggested_case_id"])
-                resolved_case = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.id == sc_id).first()
-            except Exception:
-                pass
-
-        if not resolved_client and hints.get("suggested_client_id"):
-            try:
-                scl_id = uuid.UUID(hints["suggested_client_id"])
-                resolved_client = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.id == scl_id).first()
-            except Exception:
-                pass
+        # Note: Do NOT silently attach uncertain documents if user didn't specify case/client.
+        # Return suggestions in hints for user review and confirmation.
 
     # 6. Save Document
     doc = Document(
@@ -199,6 +196,10 @@ async def upload_bridge_file(
     db.commit()
     db.refresh(doc)
 
+    token = _make_download_token(str(doc.id), str(current_user.id))
+    preview_url = f"/api/v1/documents/{doc.id}/stream?disposition=inline&token={token}"
+    download_url = f"/api/v1/documents/{doc.id}/stream?disposition=attachment&token={token}"
+
     return {
         "id": str(doc.id),
         "name": doc.name,
@@ -215,6 +216,9 @@ async def upload_bridge_file(
         "ocr_processed": doc.ocr_processed,
         "classification_confidence": classification_conf,
         "hints": hints,
+        "preview_url": preview_url,
+        "download_url": download_url,
+        "token": token,
         "created_at": doc.created_at.isoformat() if doc.created_at else None,
     }
 
@@ -988,4 +992,365 @@ async def get_bridge_history(
             }
             for log in logs
         ]
+    }
+
+
+# ── 5. Client Document Library ───────────────────────────────────────────────
+
+@router.get("/client-documents")
+async def list_client_documents(
+    client_id: Optional[str] = Query(None),
+    case_id: Optional[str] = Query(None),
+    doc_type: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    unassigned_only: bool = Query(False),
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    List client documents with case linking, client details, preview URLs, and search/filters.
+    Strict tenant isolation enforced.
+    """
+    firm_cases = {c.id: c for c in apply_firm_filter(db.query(Case), Case, current_user).all()}
+    firm_clients = {cl.id: cl for cl in apply_firm_filter(db.query(Client), Client, current_user).all()}
+
+    query = db.query(Document).options(
+        joinedload(Document.case),
+        joinedload(Document.client)
+    )
+
+    if unassigned_only:
+        query = query.filter(
+            Document.client_id.is_(None),
+            Document.case_id.is_(None),
+            Document.uploaded_by_id == current_user.id
+        )
+    else:
+        query = query.filter(
+            sql_or(
+                Document.client_id.in_(list(firm_clients.keys())),
+                Document.case_id.in_(list(firm_cases.keys())),
+                Document.uploaded_by_id == current_user.id,
+            )
+        )
+
+    if client_id:
+        try:
+            clid = uuid.UUID(client_id)
+            if clid not in firm_clients:
+                raise HTTPException(status_code=403, detail="Client not found or access denied")
+            query = query.filter(Document.client_id == clid)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid client ID")
+
+    if case_id:
+        try:
+            cid = uuid.UUID(case_id)
+            if cid not in firm_cases:
+                raise HTTPException(status_code=403, detail="Case not found or access denied")
+            query = query.filter(Document.case_id == cid)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid case ID")
+
+    if doc_type and doc_type != "all":
+        query = query.filter(Document.doc_type == doc_type)
+
+    if search and search.strip():
+        term = f"%{search.strip().lower()}%"
+        query = query.filter(
+            sql_or(
+                Document.name.ilike(term),
+                Document.original_filename.ilike(term),
+                Document.description.ilike(term),
+            )
+        )
+
+    total = query.count()
+    docs = query.order_by(Document.created_at.desc()).offset(skip).limit(limit).all()
+
+    items = []
+    for d in docs:
+        token = _make_download_token(str(d.id), str(current_user.id))
+        items.append({
+            "id": str(d.id),
+            "name": d.name,
+            "original_filename": d.original_filename,
+            "doc_type": d.doc_type,
+            "file_size": d.file_size,
+            "mime_type": d.mime_type,
+            "description": d.description,
+            "case_id": str(d.case_id) if d.case_id else None,
+            "case_title": d.case.title if d.case else None,
+            "case_no": d.case.case_no if d.case else None,
+            "client_id": str(d.client_id) if d.client_id else None,
+            "client_name": d.client.name if d.client else None,
+            "client_phone": d.client.phone if d.client else None,
+            "preview_url": f"/api/v1/documents/{d.id}/stream?token={token}&disposition=inline",
+            "download_url": f"/api/v1/documents/{d.id}/stream?token={token}&disposition=attachment",
+            "token": token,
+            "ocr_processed": d.ocr_processed,
+            "hash_sha256": d.hash_sha256,
+            "created_at": d.created_at.isoformat() if d.created_at else None,
+        })
+
+    return {
+        "total": total,
+        "documents": items,
+    }
+
+
+# ── 6. Client-Wise Export ────────────────────────────────────────────────────
+
+@router.get("/export/client-documents")
+async def export_client_documents(
+    client_id: str = Query(...),
+    case_id: Optional[str] = Query(None),
+    doc_ids: Optional[List[str]] = Query(None),
+    request: Request = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    Export all or selected documents for a specific client into a structured ZIP archive
+    with folder categories (KYC, Cases, General) and JSON/CSV manifests.
+    Strict tenant isolation is verified.
+    """
+    ip = extract_ip(request)
+    try:
+        clid = uuid.UUID(client_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid client ID")
+
+    client = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.id == clid).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found or access denied")
+
+    query = db.query(Document).options(
+        joinedload(Document.case),
+        joinedload(Document.client)
+    ).filter(Document.client_id == clid)
+
+    if case_id:
+        try:
+            cid = uuid.UUID(case_id)
+            query = query.filter(Document.case_id == cid)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid case ID")
+
+    if doc_ids:
+        try:
+            parsed_ids = [uuid.UUID(did) for did in doc_ids if did]
+            if parsed_ids:
+                query = query.filter(Document.id.in_(parsed_ids))
+        except ValueError:
+            pass
+
+    docs = query.order_by(Document.created_at.desc()).all()
+    if not docs:
+        raise HTTPException(status_code=404, detail="No documents found for this client matching the criteria")
+
+    zip_bytes, zip_filename, summary = bridge_service.export_client_documents_zip(
+        client=client,
+        docs=docs,
+        current_user=current_user,
+        db=db,
+        case_id=case_id,
+    )
+
+    log_action(
+        db,
+        "DATA_BRIDGE_CLIENT_EXPORT",
+        "CLIENT",
+        str(client.id),
+        user=current_user,
+        ip=ip,
+        details={
+            "client_name": client.name,
+            "documents_count": len(docs),
+            "zip_filename": zip_filename,
+            "total_bytes": len(zip_bytes),
+        }
+    )
+    db.commit()
+
+    return StreamingResponse(
+        io.BytesIO(zip_bytes),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{zip_filename}"',
+            "X-Export-Document-Count": str(len(docs)),
+        }
+    )
+
+
+# ── 7. AI Drafting and Document Improvement ──────────────────────────────────
+
+class AIDraftImproveRequest(BaseModel):
+    doc_id: Optional[str] = None
+    text: Optional[str] = None
+    operation: str = Field(..., description="improve_grammar | make_professional | restructure | summarize | prepare_draft | revise_with_instructions | compare_draft | generate_first_draft")
+    instructions: Optional[str] = None
+    facts: Optional[str] = None
+    save_as_draft: bool = False
+    draft_title: Optional[str] = None
+    category: Optional[str] = "other"
+    language: Optional[str] = "en"
+    client_id: Optional[str] = None
+    case_id: Optional[str] = None
+
+
+@router.post("/ai-draft-improve")
+async def ai_draft_improve(
+    payload: AIDraftImproveRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    AI Drafting and Document Improvement workflow:
+    - Extracts text from imported document (preserving original)
+    - Performs requested operation with strict legal standards (no hallucinated facts/citations)
+    - Returns proposed draft in a separate editable workspace for user review
+    - Fails clearly with 503 if AI service is not configured (no mock success)
+    - If user approves (save_as_draft=True), saves to Drafts table without overwriting the original document
+    """
+    ip = extract_ip(request)
+    doc = None
+    source_text = payload.text or ""
+
+    if payload.doc_id:
+        try:
+            did = uuid.UUID(payload.doc_id)
+            doc = db.query(Document).filter(Document.id == did).first()
+            if not doc:
+                raise HTTPException(status_code=404, detail="Document not found")
+            check_object_firm(doc.case or doc.client, current_user) if (doc.case or doc.client) else None
+            if not source_text:
+                if doc.ocr_text and doc.ocr_text.strip():
+                    source_text = doc.ocr_text.strip()
+                else:
+                    from app.services.data_bridge_service import bridge_service_extract_text
+                    raw_bytes = bridge_service.read_document_bytes(doc)
+                    if raw_bytes:
+                        source_text = bridge_service_extract_text(raw_bytes, doc.name, doc.mime_type)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid document ID")
+
+    if not source_text and not payload.instructions and not payload.facts:
+        raise HTTPException(status_code=400, detail="No document text or facts/instructions provided for AI drafting.")
+
+    # Check AI availability
+    ai_service = AIService()
+    client = ai_service._get_client()
+    if not client:
+        raise HTTPException(
+            status_code=503,
+            detail="AI Service is not configured. Please configure an OpenAI API key in firm settings or system environment (OPENAI_API_KEY) to enable AI document drafting and improvement."
+        )
+
+    system_prompt = (
+        "You are Fastcase AI, an expert Indian legal assistant and senior advocate.\n"
+        "When improving, drafting, or analyzing legal documents:\n"
+        "1. Retain all names, party identities, dates, case numbers, statutory sections, financial amounts, and factual assertions accurately.\n"
+        "2. Do not invent facts, citations, court names, or legal provisions.\n"
+        "3. If information is missing or ambiguous, flag it clearly with [FLAG: missing detail] for the advocate's review.\n"
+        "4. Follow standard Indian court drafting conventions (high court/district court/tribunal).\n"
+        "5. Output clean, well-formatted markdown without conversational chatter."
+    )
+
+    op_prompts = {
+        "improve_grammar": "Review and improve the grammar, sentence structure, punctuation, and clarity of the following legal document while preserving all legal terminology and meaning exactly:\n\n",
+        "make_professional": "Refine the tone of the following document to make it authoritative, formal, and strictly adhering to Indian legal drafting standards:\n\n",
+        "restructure": "Reorganize the following document into standard legal structure with clear headings, numbered paragraphs, distinct facts, grounds, and prayer:\n\n",
+        "summarize": "Provide a comprehensive legal summary of the following document, outlining: (1) Parties & Court, (2) Core Facts, (3) Relevant Dates & Amounts, (4) Statutory Provisions Cited, (5) Relief/Prayer Sought, and (6) Key Issues:\n\n",
+        "prepare_draft": "Based on the provided document and facts, draft a formal legal pleading/document ready for court submission:\n\n",
+        "revise_with_instructions": f"Revise the following document strictly incorporating the advocate's specific instructions:\nInstructions: {payload.instructions or 'Ensure professional legal standard.'}\n\nDocument:\n",
+        "generate_first_draft": f"Generate a comprehensive initial legal draft using the following provided facts and instructions:\nInstructions: {payload.instructions or ''}\nFacts: {payload.facts or ''}\n\n",
+        "compare_draft": "Provide a structured clause-by-clause comparison between the original document and proposed revisions, detailing key changes, legal implications, and recommendations:\n\n",
+    }
+
+    prompt_prefix = op_prompts.get(payload.operation, "Improve and draft the following legal document:\n\n")
+    user_prompt = prompt_prefix + (source_text or payload.facts or payload.instructions or "")
+
+    try:
+        response = await client.chat.completions.create(
+            model=settings.OPENAI_MODEL or "gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt[:12000]}
+            ],
+            temperature=0.2,
+            max_tokens=3000,
+        )
+        proposed_draft = response.choices[0].message.content
+    except Exception as e:
+        logger.error(f"OpenAI API execution error: {e}")
+        raise HTTPException(status_code=502, detail=f"AI service provider error: {str(e)}")
+
+    # Handle explicit save as draft
+    saved_draft_id = None
+    if payload.save_as_draft:
+        cat_enum = DraftCategory.OTHER
+        if payload.category:
+            try:
+                cat_enum = DraftCategory(payload.category.lower())
+            except Exception:
+                pass
+
+        target_case_id = None
+        if payload.case_id:
+            try: target_case_id = uuid.UUID(payload.case_id)
+            except Exception: pass
+        elif doc and doc.case_id:
+            target_case_id = doc.case_id
+
+        target_client_id = None
+        if payload.client_id:
+            try: target_client_id = uuid.UUID(payload.client_id)
+            except Exception: pass
+        elif doc and doc.client_id:
+            target_client_id = doc.client_id
+
+        new_draft = Draft(
+            title=payload.draft_title or f"AI Draft - {doc.name if doc else 'Document'}",
+            content=proposed_draft,
+            category=cat_enum,
+            case_id=target_case_id,
+            client_id=target_client_id,
+            created_by_id=current_user.id,
+            ai_generated=True,
+            ai_prompt=f"{payload.operation}: {payload.instructions or ''}",
+            word_count=len(proposed_draft.split()),
+        )
+        db.add(new_draft)
+        db.commit()
+        db.refresh(new_draft)
+        saved_draft_id = str(new_draft.id)
+
+    log_action(
+        db,
+        "DATA_BRIDGE_AI_DRAFT",
+        "DOCUMENT",
+        str(doc.id) if doc else (saved_draft_id or "adhoc"),
+        user=current_user,
+        ip=ip,
+        details={
+            "operation": payload.operation,
+            "document_id": str(doc.id) if doc else None,
+            "saved_as_draft": payload.save_as_draft,
+            "saved_draft_id": saved_draft_id,
+        }
+    )
+    db.commit()
+
+    return {
+        "operation": payload.operation,
+        "original_text": source_text,
+        "proposed_draft": proposed_draft,
+        "word_count": len(proposed_draft.split()),
+        "saved_as_draft": payload.save_as_draft,
+        "draft_id": saved_draft_id,
+        "document_id": str(doc.id) if doc else None,
     }

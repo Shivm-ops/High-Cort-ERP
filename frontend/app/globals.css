@@ -22,8 +22,8 @@
   --color-accent: #6EE7B7;
   --color-accent-dark: #34D399;
   --color-accent-light: #A7F3D0;
-  --font-family-base: Inter, system-ui, sans-serif;
-  --font-size-base: 13px;
+  --font-family-base: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-size-base: 14px;
   --border-radius-base: 0.75rem;
 }
 
@@ -33,11 +33,35 @@
   margin: 0;
 }
 
-html,
+html {
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 15.5px;
+  }
+}
+
+@media (min-width: 1440px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1920px) {
+  html {
+    font-size: 17px;
+  }
+}
+
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--workspace);
   color: #1F2937;
 }
