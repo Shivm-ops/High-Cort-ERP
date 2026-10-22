@@ -69,7 +69,9 @@ def _verify_download_token(token: str, doc_id: str, user_id: str) -> bool:
 # ── Firm ownership helpers ────────────────────────────────────────────────────
 
 def _doc_firm_check(doc: Document, current_user: User, db: Session):
-    """Verify document belongs to the current user's firm via case or client."""
+    """Verify document belongs to the current user's firm via case, client, or firm membership."""
+    if current_user.is_superadmin:
+        return
     if doc.case_id:
         case = db.query(Case).filter(Case.id == doc.case_id).first()
         if case:
@@ -80,9 +82,14 @@ def _doc_firm_check(doc: Document, current_user: User, db: Session):
         if client:
             check_object_firm(client, current_user)
             return
-    # Document with no parent — only uploader or superadmin
-    if str(doc.uploaded_by_id) != str(current_user.id) and not current_user.is_superadmin:
-        raise HTTPException(status_code=403, detail="Access denied")
+    # Document with no case/client: verify caller is uploader or in same firm
+    if str(doc.uploaded_by_id) == str(current_user.id):
+        return
+    if current_user.firm_id and doc.uploaded_by_id:
+        uploader = db.query(User).filter(User.id == doc.uploaded_by_id).first()
+        if uploader and uploader.firm_id == current_user.firm_id:
+            return
+    raise HTTPException(status_code=403, detail="Access denied")
 
 
 def _verify_case_firm(case_id, current_user, db):

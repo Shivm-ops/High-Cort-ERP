@@ -1011,35 +1011,39 @@ async def list_client_documents(
 ):
     """
     List client documents with case linking, client details, preview URLs, and search/filters.
-    Strict tenant isolation enforced.
+    Strict tenant isolation enforced. Unassigned firm documents are visible to authorized firm members.
     """
     firm_cases = {c.id: c for c in apply_firm_filter(db.query(Case), Case, current_user).all()}
     firm_clients = {cl.id: cl for cl in apply_firm_filter(db.query(Client), Client, current_user).all()}
+    firm_user_ids = [u.id for u in db.query(User).filter(User.firm_id == current_user.firm_id).all()] if current_user.firm_id else ([current_user.id] if not current_user.is_superadmin else [])
 
     query = db.query(Document).options(
         joinedload(Document.case),
         joinedload(Document.client)
-    )
+    ).filter(Document.is_deleted == False)
+
+    if not current_user.is_superadmin:
+        tenant_conds = []
+        if firm_clients:
+            tenant_conds.append(Document.client_id.in_(list(firm_clients.keys())))
+        if firm_cases:
+            tenant_conds.append(Document.case_id.in_(list(firm_cases.keys())))
+        if firm_user_ids:
+            tenant_conds.append(Document.uploaded_by_id.in_(firm_user_ids))
+        else:
+            tenant_conds.append(Document.uploaded_by_id == current_user.id)
+        query = query.filter(sql_or(*tenant_conds))
+
+    # Base counts before specific filters
+    unassigned_count = query.filter(Document.client_id.is_(None)).count()
+    assigned_count = query.filter(Document.client_id.isnot(None)).count()
 
     if unassigned_only:
-        query = query.filter(
-            Document.client_id.is_(None),
-            Document.case_id.is_(None),
-            Document.uploaded_by_id == current_user.id
-        )
-    else:
-        query = query.filter(
-            sql_or(
-                Document.client_id.in_(list(firm_clients.keys())),
-                Document.case_id.in_(list(firm_cases.keys())),
-                Document.uploaded_by_id == current_user.id,
-            )
-        )
-
-    if client_id:
+        query = query.filter(Document.client_id.is_(None))
+    elif client_id:
         try:
             clid = uuid.UUID(client_id)
-            if clid not in firm_clients:
+            if clid not in firm_clients and not current_user.is_superadmin:
                 raise HTTPException(status_code=403, detail="Client not found or access denied")
             query = query.filter(Document.client_id == clid)
         except ValueError:
@@ -1048,7 +1052,7 @@ async def list_client_documents(
     if case_id:
         try:
             cid = uuid.UUID(case_id)
-            if cid not in firm_cases:
+            if cid not in firm_cases and not current_user.is_superadmin:
                 raise HTTPException(status_code=403, detail="Case not found or access denied")
             query = query.filter(Document.case_id == cid)
         except ValueError:
@@ -1097,6 +1101,8 @@ async def list_client_documents(
 
     return {
         "total": total,
+        "unassigned_count": unassigned_count,
+        "assigned_count": assigned_count,
         "documents": items,
     }
 

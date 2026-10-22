@@ -247,7 +247,12 @@ export function useClientDocuments(params: {
       if (params.docType && params.docType !== "all") query.set("doc_type", params.docType);
       if (params.search) query.set("search", params.search);
       if (params.unassignedOnly) query.set("unassigned_only", "true");
-      const { data } = await api.get<{ total: number; documents: ClientDocument[] }>(
+      const { data } = await api.get<{
+        total: number;
+        unassigned_count?: number;
+        assigned_count?: number;
+        documents: ClientDocument[];
+      }>(
         `/data-bridge/client-documents?${query.toString()}`
       );
       return data;
