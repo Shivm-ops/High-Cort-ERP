@@ -3,9 +3,11 @@ node_modules/
 .pnp
 .pnp.js
 venv/
+.venv/
 env/
 __pycache__/
 *.pyc
+*.tsbuildinfo
 
 # Next.js
 .next/

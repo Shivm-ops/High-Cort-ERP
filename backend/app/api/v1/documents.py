@@ -374,12 +374,19 @@ async def stream_document(
         elif ext == "docx":
             mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
+    import urllib.parse
     disp_type = "inline" if disposition == "inline" else "attachment"
+    encoded_filename = urllib.parse.quote(filename)
+    headers = {
+        "Content-Disposition": f'{disp_type}; filename="{filename}"; filename*=UTF-8\'\'{encoded_filename}',
+        "Access-Control-Expose-Headers": "Content-Disposition",
+    }
     return FileResponse(
         path=local_path,
         filename=filename,
         media_type=mime,
         content_disposition_type=disp_type,
+        headers=headers,
     )
 
 
@@ -534,11 +541,11 @@ async def delete_document(
     _doc_firm_check(doc, current_user, db)
 
     doc_name = doc.name
-    db.delete(doc)
+    doc.is_deleted = True
     log_action(db, AuditAction.DOCUMENT_DELETE, "DOCUMENT", doc_id,
                user=current_user, ip=ip, details={"filename": doc_name})
     db.commit()
-    return {"message": "Document deleted"}
+    return {"message": "Document deleted", "id": doc_id, "name": doc_name}
 
 
 @router.post("/{doc_id}/ocr")

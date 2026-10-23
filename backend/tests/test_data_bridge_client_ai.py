@@ -121,6 +121,11 @@ def setup_test_data():
             )
             db.add(case_a2)
             db.flush()
+        else:
+            case_a2.client_id = client_a2.id
+            client_a2.is_deleted = False
+            case_a.client_id = client_a.id
+            db.flush()
 
         # 2. Firm B (Competitor Firm)
         firm_b = db.query(Firm).filter(Firm.name == "Firm Beta Rival").first()
@@ -386,3 +391,61 @@ def test_7_document_patch_and_reassign(setup_test_data):
         json={"client_id": ctx["client_a_id"], "case_id": ctx["case_a2_id"]},
     )
     assert bad_reassign.status_code == 400
+
+
+def test_8_imported_records_search_and_conflict_resolution(setup_test_data):
+    """
+    Verify:
+    1. GET /api/v1/data-bridge/imported-records returns searchable clients, matters, and documents.
+    2. CNR number search returns matching matter.
+    3. POST /api/v1/data-bridge/resolve-conflict handles 'update' / 'merge' of records without duplicate creation.
+    """
+    ctx = setup_test_data
+    headers_a = {"Authorization": f"Bearer {ctx['token_a']}"}
+
+    # Set CNR on Case A
+    client.put(
+        f"/api/v1/cases/{ctx['case_a_id']}",
+        headers=headers_a,
+        json={"ecourts_cnr": "MHHC010099882026"},
+    )
+
+    # 1. Fetch imported records view
+    res = client.get("/api/v1/data-bridge/imported-records?type=all", headers=headers_a)
+    assert res.status_code == 200
+    data = res.json()
+    assert "clients" in data
+    assert "cases" in data
+    assert "documents" in data
+    assert "summary" in data
+
+    # 2. Search by CNR number
+    cnr_res = client.get("/api/v1/data-bridge/imported-records?search=MHHC010099882026", headers=headers_a)
+    assert cnr_res.status_code == 200
+    cnr_cases = cnr_res.json()["cases"]
+    assert any(c["ecourts_cnr"] == "MHHC010099882026" for c in cnr_cases)
+
+    # 3. Create a duplicate imported client to test conflict resolution merge
+    dup_res = client.post(
+        "/api/v1/clients/",
+        headers=headers_a,
+        json={"name": "Alpha Corp Duplicate", "phone": "9998887771", "type": "corporate"},
+    )
+    assert dup_res.status_code == 201
+    dup_client_id = dup_res.json()["id"]
+
+    # Conflict resolution: merge duplicate into Client A
+    conflict_res = client.post(
+        "/api/v1/data-bridge/resolve-conflict",
+        headers=headers_a,
+        json={
+            "entity_type": "client",
+            "target_id": ctx["client_a_id"],
+            "source_id": dup_client_id,
+            "resolution": "merge",
+            "update_data": {"notes": "Merged via Data Bridge conflict resolution"},
+        },
+    )
+    assert conflict_res.status_code == 200
+    assert conflict_res.json()["success"] is True
+

@@ -65,6 +65,15 @@ class MigrationExecuteRequest(BaseModel):
     duplicate_strategy: str = Field("skip", description="skip | update | create_new")
 
 
+class ConflictResolutionRequest(BaseModel):
+    entity_type: str = Field(..., description="client or case")
+    target_id: str = Field(..., description="Target record ID to resolve/update/merge into")
+    source_id: Optional[str] = Field(None, description="Source record ID if merging two existing records")
+    resolution: str = Field("merge", description="update | merge | overwrite")
+    update_data: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Field updates")
+
+
+
 # ── 1. Local File Import & Auto-Classification ────────────────────────────────
 
 @router.post("/upload-file", status_code=status.HTTP_201_CREATED)
@@ -570,6 +579,8 @@ async def execute_migration(
                         if mapping.get("judge"): existing_match.judge = row.get(mapping["judge"])
                         if mapping.get("petitioner"): existing_match.petitioner = row.get(mapping["petitioner"])
                         if mapping.get("respondent"): existing_match.respondent = row.get(mapping["respondent"])
+                        cnr_val = (row.get(mapping.get("ecourts_cnr", "")) or row.get(mapping.get("cnr", "")) or "").strip()
+                        if cnr_val: existing_match.ecourts_cnr = cnr_val
                         updated_count += 1
                         continue
 
@@ -634,11 +645,14 @@ async def execute_migration(
                 filing_d = parse_date(row.get(mapping.get("filing_date", "")))
                 hearing_d = parse_date(row.get(mapping.get("next_hearing_date", "")))
 
+                cnr_val = (row.get(mapping.get("ecourts_cnr", "")) or row.get(mapping.get("cnr", "")) or "").strip() or None
+
                 new_case = Case(
                     case_no=case_no,
                     title=title,
                     court=court,
                     practice_area=practice_area,
+                    ecourts_cnr=cnr_val,
                     client_id=client_target.id,
                     judge=row.get(mapping.get("judge", "")) or None,
                     petitioner=row.get(mapping.get("petitioner", "")) or None,
@@ -993,6 +1007,376 @@ async def get_bridge_history(
             for log in logs
         ]
     }
+
+
+# ── 4b. Imported Records Unified CRUD & Conflict Resolution ──────────────────
+
+@router.get("/imported-records")
+async def get_imported_records(
+    search: Optional[str] = Query(None),
+    type: Optional[str] = Query("all"),  # all | client | case | document
+    client_id: Optional[str] = Query(None),
+    case_id: Optional[str] = Query(None),
+    limit: int = Query(300),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    Unified management view for all imported and existing firm records:
+    Searchable across client names, CNR numbers, matter titles, document names, and tags.
+    Returns structured data for clients, matters, and documents with tenant isolation.
+    """
+    search_term = search.strip() if search else None
+    search_pattern = f"%{search_term}%" if search_term else None
+
+    # Base queries with tenant isolation
+    clients_q = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.is_deleted == False)
+    cases_q = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.is_deleted == False).options(joinedload(Case.client))
+
+    firm_cases = {c.id: c for c in apply_firm_filter(db.query(Case), Case, current_user).all()}
+    firm_clients = {cl.id: cl for cl in apply_firm_filter(db.query(Client), Client, current_user).all()}
+    firm_user_ids = [u.id for u in db.query(User).filter(User.firm_id == current_user.firm_id).all()] if current_user.firm_id else ([current_user.id] if not current_user.is_superadmin else [])
+
+    docs_q = db.query(Document).options(
+        joinedload(Document.case),
+        joinedload(Document.client)
+    ).filter(Document.is_deleted == False)
+
+    if not current_user.is_superadmin:
+        tenant_conds = []
+        if firm_clients:
+            tenant_conds.append(Document.client_id.in_(list(firm_clients.keys())))
+        if firm_cases:
+            tenant_conds.append(Document.case_id.in_(list(firm_cases.keys())))
+        if firm_user_ids:
+            tenant_conds.append(Document.uploaded_by_id.in_(firm_user_ids))
+        else:
+            tenant_conds.append(Document.uploaded_by_id == current_user.id)
+        docs_q = docs_q.filter(sql_or(*tenant_conds))
+
+    # Pre-calculate counts
+    total_clients_all = clients_q.count()
+    total_cases_all = cases_q.count()
+    total_docs_all = docs_q.count()
+    total_unassigned_docs = docs_q.filter(Document.client_id.is_(None)).count()
+
+    # Filter by specific client or case if provided
+    if client_id:
+        try:
+            cid_uuid = uuid.UUID(client_id)
+            clients_q = clients_q.filter(Client.id == cid_uuid)
+            cases_q = cases_q.filter(Case.client_id == cid_uuid)
+            docs_q = docs_q.filter(Document.client_id == cid_uuid)
+        except ValueError:
+            pass
+
+    if case_id:
+        try:
+            case_uuid = uuid.UUID(case_id)
+            cases_q = cases_q.filter(Case.id == case_uuid)
+            docs_q = docs_q.filter(Document.case_id == case_uuid)
+        except ValueError:
+            pass
+
+    # Search filtering
+    if search_pattern:
+        clients_q = clients_q.filter(
+            sql_or(
+                Client.name.ilike(search_pattern),
+                Client.phone.ilike(search_pattern),
+                Client.email.ilike(search_pattern),
+                Client.company_name.ilike(search_pattern),
+                Client.city.ilike(search_pattern),
+                Client.notes.ilike(search_pattern),
+            )
+        )
+        cases_q = cases_q.filter(
+            sql_or(
+                Case.case_no.ilike(search_pattern),
+                Case.title.ilike(search_pattern),
+                Case.ecourts_cnr.ilike(search_pattern),
+                Case.court.ilike(search_pattern),
+                Case.judge.ilike(search_pattern),
+                Case.petitioner.ilike(search_pattern),
+                Case.respondent.ilike(search_pattern),
+            )
+        )
+        docs_q = docs_q.filter(
+            sql_or(
+                Document.name.ilike(search_pattern),
+                Document.original_filename.ilike(search_pattern),
+                Document.description.ilike(search_pattern),
+            )
+        )
+
+    # Calculate relational aggregations (cases per client, docs per client/case)
+    from sqlalchemy import func
+    case_counts = dict(
+        db.query(Case.client_id, func.count(Case.id))
+        .filter(Case.is_deleted == False)
+        .group_by(Case.client_id)
+        .all()
+    )
+    doc_case_counts = dict(
+        db.query(Document.case_id, func.count(Document.id))
+        .filter(Document.is_deleted == False, Document.case_id.isnot(None))
+        .group_by(Document.case_id)
+        .all()
+    )
+    doc_client_counts = dict(
+        db.query(Document.client_id, func.count(Document.id))
+        .filter(Document.is_deleted == False, Document.client_id.isnot(None))
+        .group_by(Document.client_id)
+        .all()
+    )
+
+    out_clients = []
+    if type in ("all", "client"):
+        cl_records = clients_q.order_by(Client.created_at.desc() if hasattr(Client, "created_at") else Client.name).limit(limit).all()
+        for c in cl_records:
+            out_clients.append({
+                "id": str(c.id),
+                "name": c.name,
+                "phone": c.phone,
+                "email": c.email,
+                "type": c.type.value if hasattr(c.type, "value") else str(c.type),
+                "company_name": c.company_name,
+                "address": c.address,
+                "city": c.city,
+                "state": c.state,
+                "pincode": c.pincode,
+                "kyc_verified": c.kyc_verified,
+                "notes": c.notes,
+                "tags": c.tags or [],
+                "cases_count": case_counts.get(c.id, 0),
+                "docs_count": doc_client_counts.get(c.id, 0),
+                "created_at": c.created_at.isoformat() if getattr(c, "created_at", None) else None,
+            })
+
+    out_cases = []
+    if type in ("all", "case"):
+        cs_records = cases_q.order_by(Case.created_at.desc() if hasattr(Case, "created_at") else Case.case_no).limit(limit).all()
+        for cs in cs_records:
+            out_cases.append({
+                "id": str(cs.id),
+                "case_no": cs.case_no,
+                "title": cs.title,
+                "ecourts_cnr": cs.ecourts_cnr,
+                "court": cs.court,
+                "practice_area": cs.practice_area,
+                "judge": cs.judge,
+                "petitioner": cs.petitioner,
+                "respondent": cs.respondent,
+                "status": cs.status.value if hasattr(cs.status, "value") else str(cs.status),
+                "stage": cs.stage.value if hasattr(cs.stage, "value") else str(cs.stage),
+                "priority": cs.priority.value if hasattr(cs.priority, "value") else str(cs.priority),
+                "client_id": str(cs.client_id) if cs.client_id else None,
+                "client_name": cs.client.name if cs.client else None,
+                "tags": cs.tags or [],
+                "docs_count": doc_case_counts.get(cs.id, 0),
+                "created_at": cs.created_at.isoformat() if getattr(cs, "created_at", None) else None,
+            })
+
+    out_documents = []
+    if type in ("all", "document"):
+        doc_records = docs_q.order_by(Document.created_at.desc() if hasattr(Document, "created_at") else Document.name).limit(limit).all()
+        for d in doc_records:
+            token = _make_download_token(str(d.id), str(current_user.id))
+            out_documents.append({
+                "id": str(d.id),
+                "name": d.name,
+                "original_filename": d.original_filename or d.name,
+                "doc_type": d.doc_type.value if hasattr(d.doc_type, "value") else str(d.doc_type),
+                "file_size": d.file_size or 0,
+                "mime_type": d.mime_type or "application/octet-stream",
+                "case_id": str(d.case_id) if d.case_id else None,
+                "case_no": d.case.case_no if d.case else None,
+                "case_title": d.case.title if d.case else None,
+                "client_id": str(d.client_id) if d.client_id else None,
+                "client_name": d.client.name if d.client else None,
+                "tags": d.tags or [],
+                "description": d.description,
+                "ocr_processed": bool(d.ocr_processed),
+                "hash_sha256": d.hash_sha256,
+                "extracted_metadata": d.extracted_metadata or {},
+                "preview_url": f"/api/v1/documents/{d.id}/stream?disposition=inline&token={token}",
+                "download_url": f"/api/v1/documents/{d.id}/stream?disposition=attachment&token={token}",
+                "created_at": d.created_at.isoformat() if getattr(d, "created_at", None) else None,
+            })
+
+    return {
+        "summary": {
+            "total_clients": total_clients_all,
+            "total_cases": total_cases_all,
+            "total_documents": total_docs_all,
+            "unassigned_documents": total_unassigned_docs,
+            "matched_clients": len(out_clients),
+            "matched_cases": len(out_cases),
+            "matched_documents": len(out_documents),
+        },
+        "clients": out_clients,
+        "cases": out_cases,
+        "documents": out_documents,
+    }
+
+
+@router.post("/resolve-conflict")
+async def resolve_record_conflict(
+    payload: ConflictResolutionRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_firm_member),
+):
+    """
+    Resolve conflicts for existing imported records:
+    Allows 'update' (fill missing info), 'merge' (combine records & reassign children),
+    or 'overwrite' (replace existing record data) rather than creating duplicates.
+    """
+    ip = extract_ip(request)
+    entity = payload.entity_type.lower()
+    resolution = payload.resolution.lower()  # update | merge | overwrite
+    target_id_str = payload.target_id
+    update_data = payload.update_data or {}
+
+    try:
+        target_uuid = uuid.UUID(target_id_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid target_id UUID format")
+
+    if entity == "client":
+        target_client = db.query(Client).filter(Client.id == target_uuid, Client.is_deleted == False).first()
+        if not target_client:
+            raise HTTPException(status_code=404, detail="Target client record not found")
+        check_object_firm(target_client, current_user)
+
+        source_client = None
+        if payload.source_id:
+            try:
+                src_uuid = uuid.UUID(payload.source_id)
+                source_client = db.query(Client).filter(Client.id == src_uuid, Client.is_deleted == False).first()
+                if source_client:
+                    check_object_firm(source_client, current_user)
+            except ValueError:
+                pass
+
+        if resolution in ("merge", "update"):
+            # Update fields from update_data or source_client
+            for field in ["phone", "email", "company_name", "address", "city", "state", "pincode", "pan", "notes"]:
+                new_val = update_data.get(field) or (getattr(source_client, field, None) if source_client else None)
+                if new_val and (resolution == "overwrite" or not getattr(target_client, field, None)):
+                    setattr(target_client, field, new_val)
+
+            # Append tags if provided
+            incoming_tags = update_data.get("tags") or (source_client.tags if source_client else [])
+            if incoming_tags:
+                curr_tags = list(target_client.tags or [])
+                for t in incoming_tags:
+                    if t not in curr_tags:
+                        curr_tags.append(t)
+                target_client.tags = curr_tags
+
+            # If merging an existing source client, reassign all cases and documents
+            if source_client and source_client.id != target_client.id:
+                db.query(Case).filter(Case.client_id == source_client.id).update({Case.client_id: target_client.id})
+                db.query(Document).filter(Document.client_id == source_client.id).update({Document.client_id: target_client.id})
+                source_client.is_deleted = True
+
+        elif resolution == "overwrite":
+            for k, v in update_data.items():
+                if hasattr(target_client, k) and k not in ("id", "firm_id", "created_by_id"):
+                    setattr(target_client, k, v)
+            if source_client and source_client.id != target_client.id:
+                db.query(Case).filter(Case.client_id == source_client.id).update({Case.client_id: target_client.id})
+                db.query(Document).filter(Document.client_id == source_client.id).update({Document.client_id: target_client.id})
+                source_client.is_deleted = True
+
+        db.commit()
+        db.refresh(target_client)
+
+        log_action(
+            db,
+            "DATA_BRIDGE_CONFLICT_RESOLUTION",
+            "CLIENT",
+            str(target_client.id),
+            user=current_user,
+            ip=ip,
+            details={"resolution": resolution, "target_id": str(target_client.id), "source_id": payload.source_id}
+        )
+
+        return {
+            "success": True,
+            "message": f"Client record '{target_client.name}' successfully resolved with strategy: {resolution.upper()}",
+            "entity_type": "client",
+            "resolved_id": str(target_client.id),
+        }
+
+    elif entity == "case":
+        target_case = db.query(Case).filter(Case.id == target_uuid, Case.is_deleted == False).first()
+        if not target_case:
+            raise HTTPException(status_code=404, detail="Target case record not found")
+        check_object_firm(target_case, current_user)
+
+        source_case = None
+        if payload.source_id:
+            try:
+                src_uuid = uuid.UUID(payload.source_id)
+                source_case = db.query(Case).filter(Case.id == src_uuid, Case.is_deleted == False).first()
+                if source_case:
+                    check_object_firm(source_case, current_user)
+            except ValueError:
+                pass
+
+        if resolution in ("merge", "update"):
+            for field in ["ecourts_cnr", "court", "judge", "practice_area", "petitioner", "respondent", "opposing_counsel", "description"]:
+                new_val = update_data.get(field) or (getattr(source_case, field, None) if source_case else None)
+                if new_val and (resolution == "overwrite" or not getattr(target_case, field, None)):
+                    setattr(target_case, field, new_val)
+
+            incoming_tags = update_data.get("tags") or (source_case.tags if source_case else [])
+            if incoming_tags:
+                curr_tags = list(target_case.tags or [])
+                for t in incoming_tags:
+                    if t not in curr_tags:
+                        curr_tags.append(t)
+                target_case.tags = curr_tags
+
+            if source_case and source_case.id != target_case.id:
+                db.query(Document).filter(Document.case_id == source_case.id).update({Document.case_id: target_case.id})
+                source_case.is_deleted = True
+
+        elif resolution == "overwrite":
+            for k, v in update_data.items():
+                if hasattr(target_case, k) and k not in ("id", "firm_id", "created_by_id"):
+                    if k == "client_id" and v:
+                        v = uuid.UUID(v)
+                    setattr(target_case, k, v)
+            if source_case and source_case.id != target_case.id:
+                db.query(Document).filter(Document.case_id == source_case.id).update({Document.case_id: target_case.id})
+                source_case.is_deleted = True
+
+        db.commit()
+        db.refresh(target_case)
+
+        log_action(
+            db,
+            "DATA_BRIDGE_CONFLICT_RESOLUTION",
+            "CASE",
+            str(target_case.id),
+            user=current_user,
+            ip=ip,
+            details={"resolution": resolution, "target_id": str(target_case.id), "source_id": payload.source_id}
+        )
+
+        return {
+            "success": True,
+            "message": f"Case record '{target_case.case_no}' successfully resolved with strategy: {resolution.upper()}",
+            "entity_type": "case",
+            "resolved_id": str(target_case.id),
+        }
+
+    else:
+        raise HTTPException(status_code=400, detail="entity_type must be either 'client' or 'case'")
+
 
 
 # ── 5. Client Document Library ───────────────────────────────────────────────

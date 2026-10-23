@@ -298,6 +298,11 @@ export async function updateDocument(docId: string, payload: {
   return data;
 }
 
+export async function deleteDocument(docId: string) {
+  const { data } = await api.delete(`/documents/${docId}`);
+  return data;
+}
+
 export async function exportClientDocuments(clientId: string, caseId?: string, docIds?: string[]) {
   const params = new URLSearchParams();
   params.set("client_id", clientId);
@@ -310,3 +315,124 @@ export async function exportClientDocuments(clientId: string, caseId?: string, d
   });
   return response;
 }
+
+export interface ImportedClient {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  type: string;
+  company_name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  kyc_verified?: boolean;
+  notes?: string;
+  tags?: string[];
+  cases_count: number;
+  docs_count: number;
+  created_at?: string;
+}
+
+export interface ImportedCase {
+  id: string;
+  case_no: string;
+  title: string;
+  ecourts_cnr?: string;
+  court: string;
+  practice_area: string;
+  judge?: string;
+  petitioner?: string;
+  respondent?: string;
+  status: string;
+  stage: string;
+  priority: string;
+  client_id?: string;
+  client_name?: string;
+  tags?: string[];
+  docs_count: number;
+  created_at?: string;
+}
+
+export interface ImportedDocument {
+  id: string;
+  name: string;
+  original_filename: string;
+  doc_type: string;
+  file_size: number;
+  mime_type: string;
+  case_id?: string;
+  case_no?: string;
+  case_title?: string;
+  client_id?: string;
+  client_name?: string;
+  tags?: string[];
+  description?: string;
+  ocr_processed: boolean;
+  hash_sha256?: string;
+  extracted_metadata?: Record<string, any>;
+  preview_url: string;
+  download_url: string;
+  created_at?: string;
+}
+
+export interface ImportedRecordsResponse {
+  summary: {
+    total_clients: number;
+    total_cases: number;
+    total_documents: number;
+    unassigned_documents: number;
+    matched_clients: number;
+    matched_cases: number;
+    matched_documents: number;
+  };
+  clients: ImportedClient[];
+  cases: ImportedCase[];
+  documents: ImportedDocument[];
+}
+
+export function useImportedRecords(params: {
+  search?: string;
+  type?: "all" | "client" | "case" | "document";
+  clientId?: string;
+  caseId?: string;
+}) {
+  return useQuery({
+    queryKey: ["imported_records", params],
+    queryFn: async () => {
+      const q = new URLSearchParams();
+      if (params.search) q.set("search", params.search);
+      if (params.type) q.set("type", params.type);
+      if (params.clientId) q.set("client_id", params.clientId);
+      if (params.caseId) q.set("case_id", params.caseId);
+      const { data } = await api.get<ImportedRecordsResponse>(
+        `/data-bridge/imported-records?${q.toString()}`
+      );
+      return data;
+    },
+    refetchInterval: 20000,
+  });
+}
+
+export async function resolveRecordConflict(payload: {
+  entity_type: "client" | "case";
+  target_id: string;
+  source_id?: string;
+  resolution: "update" | "merge" | "overwrite";
+  update_data?: Record<string, any>;
+}) {
+  const { data } = await api.post("/data-bridge/resolve-conflict", payload);
+  return data;
+}
+
+export async function updateClientRecord(clientId: string, payload: Record<string, any>) {
+  const { data } = await api.put(`/clients/${clientId}`, payload);
+  return data;
+}
+
+export async function updateCaseRecord(caseId: string, payload: Record<string, any>) {
+  const { data } = await api.put(`/cases/${caseId}`, payload);
+  return data;
+}
+

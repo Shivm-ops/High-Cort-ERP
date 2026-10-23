@@ -39,7 +39,12 @@ import {
   Lock,
   FileCheck,
   CornerDownRight,
-  Wand2
+  Wand2,
+  GitMerge,
+  Tag,
+  User,
+  ShieldAlert,
+  UserCheck
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
@@ -65,7 +70,15 @@ import {
   getDocumentContent,
   aiDraftImprove,
   updateDocument,
+  deleteDocument,
   exportClientDocuments,
+  ImportedClient,
+  ImportedCase,
+  ImportedDocument,
+  useImportedRecords,
+  resolveRecordConflict,
+  updateClientRecord,
+  updateCaseRecord,
 } from "@/lib/hooks/useDataBridge";
 import { generateDocx } from "@/lib/exportDocx";
 
@@ -115,8 +128,8 @@ export default function DataBridgePage() {
     "import" | "library" | "export" | "migrate" | "backup" | "history"
   >("import");
 
-  const { data: casesData } = useCases({ limit: 500 });
-  const { data: clientsData } = useClients({ limit: 500 });
+  const { data: casesData, refetch: refetchCases } = useCases({ limit: 500 });
+  const { data: clientsData, refetch: refetchClients } = useClients({ limit: 500 });
   const cases = casesData?.cases || [];
   const clients = clientsData?.clients || [];
 
@@ -143,6 +156,49 @@ export default function DataBridgePage() {
   const selectedClientObj = useMemo(() => {
     return clients.find((c: any) => c.id === selectedClientId);
   }, [clients, selectedClientId]);
+
+  // Handle client selection change and synchronize pending items in upload queue
+  const handleClientSelectChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setSelectedCaseId("");
+    const clientObj = clients.find((c: any) => c.id === clientId);
+    setUploadQueue((prev) =>
+      prev.map((item) => {
+        if (item.status === "pending" || item.status === "error") {
+          return {
+            ...item,
+            clientId: clientId || undefined,
+            clientName: clientObj?.name,
+            caseId: undefined,
+            caseTitle: undefined,
+          };
+        }
+        return item;
+      })
+    );
+    if (clientId && clientObj) {
+      toast.info(`Queued files assigned to client: ${clientObj.name}`);
+    }
+  };
+
+  // Allow setting or changing client on an individual queue item
+  const handleItemClientChange = (itemId: string, clientId: string) => {
+    const clientObj = clients.find((c: any) => c.id === clientId);
+    setUploadQueue((prev) =>
+      prev.map((item) => {
+        if (item.id === itemId) {
+          return {
+            ...item,
+            clientId: clientId || undefined,
+            clientName: clientObj?.name,
+            caseId: undefined,
+            caseTitle: undefined,
+          };
+        }
+        return item;
+      })
+    );
+  };
 
   const handleFilesAdded = async (files: FileList | File[], isFolder = false) => {
     const newItems: BridgeUploadItem[] = [];
@@ -257,6 +313,10 @@ export default function DataBridgePage() {
 
     setIsProcessingQueue(false);
     refetchHistory();
+    refetchLib();
+    refetchImported();
+    refetchClients();
+    refetchCases();
     if (failCount === 0) {
       toast.success(`Successfully imported all ${successCount} document(s)!`);
     } else {
@@ -408,6 +468,10 @@ export default function DataBridgePage() {
       setMigrationResult(res);
       setMigrationStep(4);
       refetchHistory();
+      refetchClients();
+      refetchCases();
+      refetchImported();
+      refetchLib();
       toast.success(`Imported ${res.imported} record(s) successfully!`, { id: "mig-exec" });
     } catch (e: any) {
       toast.error(getErrorMessage(e), { id: "mig-exec" });
@@ -511,6 +575,115 @@ export default function DataBridgePage() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // AUTHENTICATED DOCUMENT DOWNLOAD HANDLER
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [downloadingDocId, setDownloadingDocId] = useState<string | null>(null);
+
+  const handleDownloadDocument = async (doc: {
+    id?: string;
+    docId?: string;
+    name?: string;
+    original_filename?: string;
+    download_url?: string;
+    downloadUrl?: string;
+  }) => {
+    const documentId = doc.id || doc.docId;
+    const fileName = doc.name || doc.original_filename || "document";
+
+    if (!documentId) {
+      toast.error("Document identifier missing for download");
+      return;
+    }
+
+    setDownloadingDocId(documentId);
+    const toastId = toast.loading(`Downloading ${fileName}...`);
+    try {
+      // 1. Fetch file as binary blob with JWT Authentication header attached automatically
+      const res = await api.get(`/documents/${documentId}/stream?disposition=attachment`, {
+        responseType: "blob",
+      });
+
+      // Extract accurate filename from response Content-Disposition header if available
+      let downloadFilename = fileName;
+      const disposition = String(res.headers["content-disposition"] || "");
+      const match = disposition.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?/i);
+      if (match && match[1]) {
+        try {
+          const decoded = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
+          if (decoded && decoded.includes(".")) {
+            downloadFilename = decoded;
+          }
+        } catch (e) {}
+      }
+      if (!downloadFilename.includes(".") && fileName.includes(".")) {
+        downloadFilename += "." + fileName.split(".").pop();
+      }
+
+      const contentType = String(res.headers["content-type"] || "application/octet-stream");
+      const blob = new Blob([res.data], { type: contentType });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.style.display = "none";
+      link.href = blobUrl;
+      link.setAttribute("download", downloadFilename);
+      link.download = downloadFilename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Revoke after delay so browser has full time to read and save file with its actual name
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+        if (link.parentNode) {
+          document.body.removeChild(link);
+        }
+      }, 2500);
+
+      toast.success(`Downloaded: ${downloadFilename}`, { id: toastId });
+    } catch (err: any) {
+      console.warn("Direct blob stream failed, attempting signed download URL fallback:", err);
+      try {
+        const { data } = await api.get<{ download_url?: string }>(`/documents/${documentId}/download`);
+        if (data?.download_url) {
+          const streamUrl = resolveFullStreamUrl(data.download_url);
+          window.open(streamUrl, "_blank");
+          toast.success(`Opening download for ${fileName}`, { id: toastId });
+          return;
+        }
+      } catch (fallbackErr) {}
+      toast.error(`Download failed: ${getErrorMessage(err)}`, { id: toastId });
+    } finally {
+      setDownloadingDocId(null);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DELETE DOCUMENT MODAL STATE
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [deletingDoc, setDeletingDoc] = useState<{ id: string; name: string } | null>(null);
+  const [isDeletingDoc, setIsDeletingDoc] = useState<boolean>(false);
+
+  const handleConfirmDelete = async () => {
+    if (!deletingDoc) return;
+    setIsDeletingDoc(true);
+    try {
+      toast.loading(`Deleting ${deletingDoc.name}...`, { id: "delete-doc" });
+      await deleteDocument(deletingDoc.id);
+      toast.success(`Deleted: ${deletingDoc.name}`, { id: "delete-doc" });
+      setDeletingDoc(null);
+      refetchLib();
+      refetchImported();
+      refetchHistory();
+      refetchClients();
+      refetchCases();
+    } catch (err: any) {
+      toast.error(`Delete failed: ${getErrorMessage(err)}`, { id: "delete-doc" });
+    } finally {
+      setIsDeletingDoc(false);
+    }
   };
 
   const openDocumentPreview = async (doc: ClientDocument | BridgeUploadItem) => {
@@ -696,10 +869,176 @@ export default function DataBridgePage() {
       toast.success("Document updated successfully!");
       setEditingDoc(null);
       refetchLib();
+      refetchImported();
+      refetchHistory();
+      refetchClients();
+      refetchCases();
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {
       setIsUpdatingDoc(false);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TAB 6: AUDIT & RECORD MANAGEMENT STATE
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [auditSubView, setAuditSubView] = useState<"all" | "clients" | "cases" | "documents" | "provenance">("all");
+  const [auditSearch, setAuditSearch] = useState<string>("");
+  const [auditClientId, setAuditClientId] = useState<string>("");
+  const [auditCaseId, setAuditCaseId] = useState<string>("");
+
+  const {
+    data: importedData,
+    isLoading: isImportedLoading,
+    refetch: refetchImported,
+  } = useImportedRecords({
+    search: auditSearch || undefined,
+    type: auditSubView === "provenance" ? "all" : (auditSubView === "all" ? "all" : (auditSubView === "clients" ? "client" : (auditSubView === "cases" ? "case" : "document"))),
+    clientId: auditClientId || undefined,
+    caseId: auditCaseId || undefined,
+  });
+
+  // Client Inline / Modal Editing
+  const [editingClient, setEditingClient] = useState<ImportedClient | null>(null);
+  const [clientForm, setClientForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    company_name: "",
+    city: "",
+    state: "",
+    pincode: "",
+    notes: "",
+  });
+  const [isSavingClient, setIsSavingClient] = useState(false);
+
+  const openEditClientModal = (cl: ImportedClient) => {
+    setEditingClient(cl);
+    setClientForm({
+      name: cl.name || "",
+      phone: cl.phone || "",
+      email: cl.email || "",
+      company_name: cl.company_name || "",
+      city: cl.city || "",
+      state: cl.state || "",
+      pincode: cl.pincode || "",
+      notes: cl.notes || "",
+    });
+  };
+
+  const handleSaveClient = async () => {
+    if (!editingClient) return;
+    if (!clientForm.name.trim() || !clientForm.phone.trim()) {
+      toast.error("Name and Phone number are required");
+      return;
+    }
+    setIsSavingClient(true);
+    try {
+      await updateClientRecord(editingClient.id, {
+        name: clientForm.name.trim(),
+        phone: clientForm.phone.trim(),
+        email: clientForm.email.trim() || undefined,
+        company_name: clientForm.company_name.trim() || undefined,
+        city: clientForm.city.trim() || undefined,
+        state: clientForm.state.trim() || undefined,
+        pincode: clientForm.pincode.trim() || undefined,
+        notes: clientForm.notes.trim() || undefined,
+      });
+      toast.success("Client profile updated successfully!");
+      setEditingClient(null);
+      refetchImported();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingClient(false);
+    }
+  };
+
+  // Case / Matter Inline / Modal Editing (with CNR Number)
+  const [editingCase, setEditingCase] = useState<ImportedCase | null>(null);
+  const [caseForm, setCaseForm] = useState({
+    case_no: "",
+    title: "",
+    ecourts_cnr: "",
+    court: "",
+    practice_area: "",
+    judge: "",
+    client_id: "",
+    status: "active",
+  });
+  const [isSavingCase, setIsSavingCase] = useState(false);
+
+  const openEditCaseModal = (cs: ImportedCase) => {
+    setEditingCase(cs);
+    setCaseForm({
+      case_no: cs.case_no || "",
+      title: cs.title || "",
+      ecourts_cnr: cs.ecourts_cnr || "",
+      court: cs.court || "",
+      practice_area: cs.practice_area || "",
+      judge: cs.judge || "",
+      client_id: cs.client_id || "",
+      status: cs.status || "active",
+    });
+  };
+
+  const handleSaveCase = async () => {
+    if (!editingCase) return;
+    if (!caseForm.case_no.trim() || !caseForm.title.trim()) {
+      toast.error("Case No and Title are required");
+      return;
+    }
+    setIsSavingCase(true);
+    try {
+      await updateCaseRecord(editingCase.id, {
+        case_no: caseForm.case_no.trim(),
+        title: caseForm.title.trim(),
+        ecourts_cnr: caseForm.ecourts_cnr.trim() || null,
+        court: caseForm.court.trim() || undefined,
+        practice_area: caseForm.practice_area.trim() || undefined,
+        judge: caseForm.judge.trim() || undefined,
+        client_id: caseForm.client_id || undefined,
+        status: caseForm.status || undefined,
+      });
+      toast.success("Matter / CNR details updated successfully!");
+      setEditingCase(null);
+      refetchImported();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingCase(false);
+    }
+  };
+
+  // Conflict Resolution Modal ("Update / Merge / Overwrite")
+  const [conflictModal, setConflictModal] = useState<{
+    isOpen: boolean;
+    entityType: "client" | "case";
+    targetRecord: any;
+    sourceRecord?: any;
+    resolution: "update" | "merge" | "overwrite";
+  } | null>(null);
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
+
+  const handleExecuteConflictResolution = async () => {
+    if (!conflictModal) return;
+    setIsResolvingConflict(true);
+    try {
+      await resolveRecordConflict({
+        entity_type: conflictModal.entityType,
+        target_id: conflictModal.targetRecord.id,
+        source_id: conflictModal.sourceRecord?.id || undefined,
+        resolution: conflictModal.resolution,
+      });
+      toast.success(`Conflict resolved successfully using strategy: ${conflictModal.resolution.toUpperCase()}`);
+      setConflictModal(null);
+      refetchImported();
+      refetchHistory();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsResolvingConflict(false);
     }
   };
 
@@ -719,7 +1058,7 @@ export default function DataBridgePage() {
             { id: "export", label: "Client-Wise Export", icon: Download, desc: "Export ZIP & Manifests" },
             { id: "migrate", label: "Legacy Data Migration", icon: FileSpreadsheet, desc: "CSV / Excel Wizard" },
             { id: "backup", label: "Practice Backup & Recovery", icon: ShieldCheck, desc: "Disaster Recovery" },
-            { id: "history", label: "Audit & Migration History", icon: History, desc: "Firm Provenance Log" },
+            { id: "history", label: "Audit & Record Management", icon: History, desc: "CRUD, History & Conflicts" },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -789,10 +1128,7 @@ export default function DataBridgePage() {
                   </label>
                   <select
                     value={selectedClientId}
-                    onChange={(e) => {
-                      setSelectedClientId(e.target.value);
-                      setSelectedCaseId(""); // Reset case when client changes
-                    }}
+                    onChange={(e) => handleClientSelectChange(e.target.value)}
                     className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint bg-white font-medium text-gray-900"
                   >
                     <option value="">-- Choose Client --</option>
@@ -968,8 +1304,24 @@ export default function DataBridgePage() {
                             </div>
                             <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-0.5">
                               <span>{formatBytes(item.size)}</span>
-                              <span className="text-gray-700 font-medium">
-                                Client: <span className="text-sidebar">{item.clientName || selectedClientObj?.name || "Unassigned"}</span>
+                              <span className="text-gray-700 font-medium flex items-center gap-1.5">
+                                <span>Client:</span>
+                                {item.status === "pending" || item.status === "error" ? (
+                                  <select
+                                    value={item.clientId || selectedClientId || ""}
+                                    onChange={(e) => handleItemClientChange(item.id, e.target.value)}
+                                    className="text-[11px] font-semibold py-0.5 px-2 rounded-lg border border-gray-200 bg-white text-sidebar outline-none focus:ring-1 focus:ring-mint"
+                                  >
+                                    <option value="">-- Unassigned (No Client) --</option>
+                                    {clients.map((cl: any) => (
+                                      <option key={cl.id} value={cl.id}>
+                                        {cl.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <span className="text-sidebar font-semibold">{item.clientName || selectedClientObj?.name || "Unassigned"}</span>
+                                )}
                               </span>
                               {item.caseTitle && (
                                 <span className="text-sidebar font-medium">Matter: {item.caseTitle}</span>
@@ -1017,17 +1369,16 @@ export default function DataBridgePage() {
 
                               {/* WORKING DOWNLOAD BUTTON */}
                               {item.downloadUrl && (
-                                <a
-                                  href={resolveFullStreamUrl(item.downloadUrl)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  download={item.name}
-                                  className="px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-all flex items-center gap-1"
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadDocument(item)}
+                                  disabled={downloadingDocId === (item.docId || item.id)}
+                                  className="px-3 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-all flex items-center gap-1 disabled:opacity-50"
                                   title="Download Original File"
                                 >
                                   <Download className="w-3.5 h-3.5" />
-                                  Download
-                                </a>
+                                  {downloadingDocId === (item.docId || item.id) ? "Downloading..." : "Download"}
+                                </button>
                               )}
 
                               {/* AI DRAFT BUTTON */}
@@ -1170,6 +1521,22 @@ export default function DataBridgePage() {
                     </option>
                   ))}
                 </select>
+
+                {/* Unassigned Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setLibUnassignedOnly(!libUnassignedOnly)}
+                  className={cn(
+                    "px-3 py-2 text-xs rounded-xl border transition-all font-semibold flex items-center gap-1.5",
+                    libUnassignedOnly
+                      ? "bg-amber-100 text-amber-900 border-amber-300 shadow-sm"
+                      : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                  )}
+                  title="Toggle unassigned documents without client links"
+                >
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                  Unassigned ({libData?.unassigned_count || 0})
+                </button>
               </div>
 
               <div className="flex items-center gap-3">
@@ -1223,8 +1590,22 @@ export default function DataBridgePage() {
                   <FolderOpen className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                   <p className="text-sm font-semibold text-gray-700">No documents found</p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Try adjusting your filters or import files from the Import Documents tab.
+                    {libUnassignedOnly
+                      ? "No unassigned documents pending client association."
+                      : (libData?.unassigned_count || 0) > 0
+                      ? `You have ${libData?.unassigned_count} unassigned document(s) imported without a client association.`
+                      : "Try adjusting your filters or import files from the Import Documents tab."}
                   </p>
+                  {!libUnassignedOnly && (libData?.unassigned_count || 0) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setLibUnassignedOnly(true)}
+                      className="mt-3 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-semibold hover:bg-amber-100 inline-flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                      View {libData?.unassigned_count} Unassigned Document(s)
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -1262,9 +1643,19 @@ export default function DataBridgePage() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-semibold">
-                                Unassigned
-                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-200">
+                                  Unassigned
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => openEditModal(doc)}
+                                  className="text-[10px] font-bold text-sidebar hover:underline"
+                                  title="Assign this document to a client"
+                                >
+                                  + Assign
+                                </button>
+                              </div>
                             )}
                           </td>
                           <td className="py-3 px-4">
@@ -1298,16 +1689,15 @@ export default function DataBridgePage() {
                               </button>
 
                               {/* DOWNLOAD */}
-                              <a
-                                href={resolveFullStreamUrl(doc.download_url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                download={doc.name}
-                                className="p-1.5 rounded-lg text-gray-600 hover:text-sidebar hover:bg-gray-100 transition-colors"
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadDocument(doc)}
+                                disabled={downloadingDocId === doc.id}
+                                className="p-1.5 rounded-lg text-gray-600 hover:text-sidebar hover:bg-gray-100 transition-colors disabled:opacity-50"
                                 title="Download Original File"
                               >
                                 <Download className="w-4 h-4" />
-                              </a>
+                              </button>
 
                               {/* AI DRAFT */}
                               <button
@@ -1327,6 +1717,16 @@ export default function DataBridgePage() {
                                 title="Rename or Move Document"
                               >
                                 <Edit3 className="w-4 h-4" />
+                              </button>
+
+                              {/* DELETE */}
+                              <button
+                                type="button"
+                                onClick={() => setDeletingDoc({ id: doc.id, name: doc.name })}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Delete Document"
+                              >
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           </td>
@@ -1938,47 +2338,567 @@ export default function DataBridgePage() {
         {/* ─────────────────────────────────────────────────────────────────── */}
         {/* TAB 6: AUDIT & MIGRATION HISTORY */}
         {/* ─────────────────────────────────────────────────────────────────── */}
+        {/* ─────────────────────────────────────────────────────────────────── */}
+        {/* TAB 6: AUDIT & RECORD MANAGEMENT */}
+        {/* ─────────────────────────────────────────────────────────────────── */}
         {activeTab === "history" && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-              <span className="font-bold text-sm text-gray-900">Firm Provenance & Data Bridge Audit Log</span>
-              <button
-                type="button"
-                onClick={() => refetchHistory()}
-                className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+          <div className="space-y-6">
+            {/* Top Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-gray-400 font-medium">Client Profiles</div>
+                  <div className="text-xl font-bold text-gray-900 mt-0.5">
+                    {importedData?.summary.total_clients ?? clients.length}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <FolderOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-gray-400 font-medium">Matters & Court Cases</div>
+                  <div className="text-xl font-bold text-gray-900 mt-0.5">
+                    {importedData?.summary.total_cases ?? cases.length}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-gray-400 font-medium">Ingested Documents</div>
+                  <div className="text-xl font-bold text-gray-900 mt-0.5">
+                    {importedData?.summary.total_documents ?? 0}
+                  </div>
+                </div>
+              </div>
+
+              <div className={cn(
+                "rounded-2xl p-4 border shadow-sm flex items-center gap-3 transition-colors",
+                (importedData?.summary.unassigned_documents || 0) > 0
+                  ? "bg-amber-50/70 border-amber-200"
+                  : "bg-white border-gray-100"
+              )}>
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                  (importedData?.summary.unassigned_documents || 0) > 0
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-gray-100 text-gray-400"
+                )}>
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] text-gray-500 font-medium">Unassigned Files</div>
+                  <div className={cn(
+                    "text-xl font-bold mt-0.5",
+                    (importedData?.summary.unassigned_documents || 0) > 0 ? "text-amber-700" : "text-gray-900"
+                  )}>
+                    {importedData?.summary.unassigned_documents ?? 0}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {!historyItems || historyItems.length === 0 ? (
-              <div className="p-12 text-center text-gray-400">
-                <History className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No migration or export events recorded yet.</p>
+            {/* Filter and View Controls */}
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* Search Bar */}
+                <div className="relative flex-1 min-w-[260px]">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={auditSearch}
+                    onChange={(e) => setAuditSearch(e.target.value)}
+                    placeholder="Search client name, CNR number, matter title, document or tags..."
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
+                  />
+                  {auditSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setAuditSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Client Filter */}
+                <select
+                  value={auditClientId}
+                  onChange={(e) => {
+                    setAuditClientId(e.target.value);
+                    setAuditCaseId("");
+                  }}
+                  className="px-3 py-2 text-xs rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-mint/30 bg-white font-medium text-gray-800"
+                >
+                  <option value="">All Clients</option>
+                  {clients.map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.phone ? `(${c.phone})` : ""}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Case Filter */}
+                <select
+                  value={auditCaseId}
+                  onChange={(e) => setAuditCaseId(e.target.value)}
+                  className="px-3 py-2 text-xs rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-mint/30 bg-white font-medium text-gray-800"
+                >
+                  <option value="">All Matters</option>
+                  {cases
+                    .filter((cs: any) => !auditClientId || cs.client_id === auditClientId)
+                    .map((cs: any) => (
+                      <option key={cs.id} value={cs.id}>
+                        {cs.case_no} — {cs.title}
+                      </option>
+                    ))}
+                </select>
+
+                {/* Refresh */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    refetchImported();
+                    refetchHistory();
+                  }}
+                  className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+                  title="Refresh Audit Data"
+                >
+                  <RefreshCw className={cn("w-4 h-4", isImportedLoading && "animate-spin text-sidebar")} />
+                </button>
               </div>
-            ) : (
-              <div className="divide-y divide-gray-100 max-h-[550px] overflow-y-auto">
-                {historyItems.map((item) => (
-                  <div key={item.id} className="p-4 flex items-start justify-between gap-4 text-xs">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{item.action.replace(/_/g, " ")}</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600">
-                          {item.resource_type}
+
+              {/* Sub-view switcher tabs */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+                {[
+                  { id: "all", label: "All Records", count: (importedData?.summary.matched_clients || 0) + (importedData?.summary.matched_cases || 0) + (importedData?.summary.matched_documents || 0) },
+                  { id: "clients", label: "Client Profiles", count: importedData?.summary.matched_clients || 0 },
+                  { id: "cases", label: "Matters & CNR", count: importedData?.summary.matched_cases || 0 },
+                  { id: "documents", label: "Ingested Documents", count: importedData?.summary.matched_documents || 0 },
+                  { id: "provenance", label: "Provenance Audit Log", count: historyItems?.length || 0 },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setAuditSubView(st.id as any)}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all",
+                      auditSubView === st.id
+                        ? "bg-sidebar text-white shadow-sm"
+                        : "bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    )}
+                  >
+                    <span>{st.label}</span>
+                    <span className={cn(
+                      "text-[10px] px-1.5 py-0.2 rounded-full font-bold",
+                      auditSubView === st.id ? "bg-white/20 text-mint" : "bg-gray-200 text-gray-700"
+                    )}>
+                      {st.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TAB CONTENT: PROVENANCE AUDIT LOG */}
+            {auditSubView === "provenance" && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <span className="font-bold text-sm text-gray-900">Provenance & Data Bridge Action Log</span>
+                  <span className="text-xs text-gray-400">Total Entries: {historyItems?.length || 0}</span>
+                </div>
+                {!historyItems || historyItems.length === 0 ? (
+                  <div className="p-12 text-center text-gray-400">
+                    <History className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No provenance events recorded yet.</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100 max-h-[550px] overflow-y-auto">
+                    {historyItems.map((item) => (
+                      <div key={item.id} className="p-4 flex items-start justify-between gap-4 text-xs hover:bg-gray-50/60 transition-colors">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-gray-900">{item.action.replace(/_/g, " ")}</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600">
+                              {item.resource_type}
+                            </span>
+                            {item.status && (
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {item.status.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-gray-500 font-mono text-[11px]">
+                            ID: {item.resource_id}
+                            {item.details?.filename && ` • File: ${item.details.filename}`}
+                            {item.details?.imported !== undefined && ` • Imported: ${item.details.imported}`}
+                            {item.details?.updated !== undefined && ` • Updated: ${item.details.updated}`}
+                            {item.details?.skipped !== undefined && ` • Skipped: ${item.details.skipped}`}
+                            {item.details?.strategy && ` • Strategy: ${item.details.strategy}`}
+                            {item.details?.resolution && ` • Resolution: ${item.details.resolution}`}
+                            {item.details?.client_name && ` • Client: ${item.details.client_name}`}
+                          </div>
+                        </div>
+                        <span className="text-gray-400 text-[11px] whitespace-nowrap">
+                          {item.created_at ? new Date(item.created_at).toLocaleString() : ""}
                         </span>
                       </div>
-                      <div className="text-gray-500 font-mono text-[11px]">
-                        ID: {item.resource_id}
-                        {item.details?.filename && ` • File: ${item.details.filename}`}
-                        {item.details?.imported && ` • Imported: ${item.details.imported}`}
-                        {item.details?.client_name && ` • Client: ${item.details.client_name}`}
-                      </div>
-                    </div>
-                    <span className="text-gray-400 text-[11px] whitespace-nowrap">
-                      {item.created_at ? new Date(item.created_at).toLocaleString() : ""}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT: CLIENT PROFILES */}
+            {(auditSubView === "all" || auditSubView === "clients") && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <span className="font-bold text-sm text-gray-900">
+                      Imported Client Profiles ({importedData?.clients.length || 0})
                     </span>
                   </div>
-                ))}
+                </div>
+
+                {!importedData?.clients || importedData.clients.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400 text-xs">
+                    No matching client profiles found.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-100">
+                        <tr>
+                          <th className="py-3 px-4">Client Name & Type</th>
+                          <th className="py-3 px-4">Contact Info</th>
+                          <th className="py-3 px-4">Location</th>
+                          <th className="py-3 px-4">Linked Matters / Files</th>
+                          <th className="py-3 px-4">Created / Imported</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {importedData.clients.map((cl) => (
+                          <tr key={cl.id} className="hover:bg-gray-50/70 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="font-bold text-gray-900">{cl.name}</div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-blue-50 text-blue-700">
+                                  {cl.type}
+                                </span>
+                                {cl.company_name && (
+                                  <span className="text-[10px] text-gray-500 truncate max-w-[150px]">
+                                    {cl.company_name}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="font-medium text-gray-800">{cl.phone}</div>
+                              {cl.email && <div className="text-[10px] text-gray-400">{cl.email}</div>}
+                            </td>
+                            <td className="py-3 px-4 text-gray-600">
+                              {cl.city ? `${cl.city}${cl.state ? `, ${cl.state}` : ""}` : "—"}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                  {cl.cases_count} Matter{cl.cases_count !== 1 ? "s" : ""}
+                                </span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-100">
+                                  {cl.docs_count} File{cl.docs_count !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-gray-400 whitespace-nowrap">
+                              {cl.created_at ? new Date(cl.created_at).toLocaleDateString() : "—"}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditClientModal(cl)}
+                                  className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:text-sidebar hover:bg-gray-100 text-[11px] font-semibold flex items-center gap-1"
+                                  title="Edit Client Information"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConflictModal({
+                                    isOpen: true,
+                                    entityType: "client",
+                                    targetRecord: cl,
+                                    resolution: "merge",
+                                  })}
+                                  className="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 text-[11px] font-semibold flex items-center gap-1 border border-amber-200"
+                                  title="Conflict Resolution / Merge with existing"
+                                >
+                                  <GitMerge className="w-3.5 h-3.5 text-amber-600" />
+                                  Conflict / Merge
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT: MATTERS & CNR NUMBERS */}
+            {(auditSubView === "all" || auditSubView === "cases") && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4 text-emerald-600" />
+                    <span className="font-bold text-sm text-gray-900">
+                      Imported Matters & CNR Details ({importedData?.cases.length || 0})
+                    </span>
+                  </div>
+                </div>
+
+                {!importedData?.cases || importedData.cases.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400 text-xs">
+                    No matching court matters found.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-100">
+                        <tr>
+                          <th className="py-3 px-4">Case No & Matter</th>
+                          <th className="py-3 px-4">eCourts CNR Number</th>
+                          <th className="py-3 px-4">Associated Client</th>
+                          <th className="py-3 px-4">Court & Judge</th>
+                          <th className="py-3 px-4">Files</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {importedData.cases.map((cs) => (
+                          <tr key={cs.id} className="hover:bg-gray-50/70 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="font-bold text-gray-900">{cs.case_no}</div>
+                              <div className="text-[11px] text-gray-600 truncate max-w-[220px] font-medium">
+                                {cs.title}
+                              </div>
+                              <span className="text-[9px] px-1.5 py-0.5 rounded font-semibold bg-gray-100 text-gray-600 mt-0.5 inline-block">
+                                {cs.practice_area || "General"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              {cs.ecourts_cnr ? (
+                                <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-mono text-[11px] font-bold border border-emerald-200">
+                                  <span>{cs.ecourts_cnr}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(cs.ecourts_cnr || "");
+                                      toast.success("CNR copied to clipboard!");
+                                    }}
+                                    className="hover:text-emerald-950 ml-1"
+                                    title="Copy CNR"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-semibold border border-amber-200">
+                                  CNR Missing
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              {cs.client_name ? (
+                                <span className="font-semibold text-gray-900">{cs.client_name}</span>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="text-gray-900 font-medium truncate max-w-[160px]">{cs.court}</div>
+                              {cs.judge && <div className="text-[10px] text-gray-400">Judge: {cs.judge}</div>}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-100">
+                                {cs.docs_count} Document{cs.docs_count !== 1 ? "s" : ""}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => openEditCaseModal(cs)}
+                                  className="px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:text-sidebar hover:bg-gray-100 text-[11px] font-semibold flex items-center gap-1"
+                                  title="Edit Case & CNR Number"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  Edit / CNR
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConflictModal({
+                                    isOpen: true,
+                                    entityType: "case",
+                                    targetRecord: cs,
+                                    resolution: "merge",
+                                  })}
+                                  className="px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 text-[11px] font-semibold flex items-center gap-1 border border-amber-200"
+                                  title="Conflict Resolution / Overwrite duplicate matter"
+                                >
+                                  <GitMerge className="w-3.5 h-3.5 text-amber-600" />
+                                  Conflict / Merge
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT: INGESTED DOCUMENTS */}
+            {(auditSubView === "all" || auditSubView === "documents") && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-purple-600" />
+                    <span className="font-bold text-sm text-gray-900">
+                      Ingested Documents & Files ({importedData?.documents.length || 0})
+                    </span>
+                  </div>
+                </div>
+
+                {!importedData?.documents || importedData.documents.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400 text-xs">
+                    No matching ingested documents found.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-100">
+                        <tr>
+                          <th className="py-3 px-4">Document Details</th>
+                          <th className="py-3 px-4">Classification</th>
+                          <th className="py-3 px-4">Client Association</th>
+                          <th className="py-3 px-4">Matter Association</th>
+                          <th className="py-3 px-4">Extraction / Hash</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {importedData.documents.map((doc) => (
+                          <tr key={doc.id} className="hover:bg-gray-50/70 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="font-semibold text-gray-900 truncate max-w-[220px]">{doc.name}</div>
+                              <div className="text-[10px] text-gray-400 mt-0.5">
+                                {formatBytes(doc.file_size)} • {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : ""}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-gray-100 text-gray-700">
+                                {DOC_TYPES.find((t) => t.value === doc.doc_type)?.label || doc.doc_type}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              {doc.client_name ? (
+                                <span className="font-semibold text-gray-900">{doc.client_name}</span>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-200">
+                                    Unassigned
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditModal(doc as any)}
+                                    className="text-[10px] font-bold text-sidebar hover:underline"
+                                    title="Assign this document to a client"
+                                  >
+                                    + Assign
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              {doc.case_title ? (
+                                <div className="truncate max-w-[180px]">
+                                  <span className="font-semibold text-sidebar">{doc.case_no}</span>
+                                  <div className="text-[10px] text-gray-400 truncate">{doc.case_title}</div>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">—</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-[10px] text-gray-400">
+                              {doc.ocr_processed && (
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold mr-1">
+                                  OCR Extracted
+                                </span>
+                              )}
+                              {doc.hash_sha256 ? `${doc.hash_sha256.slice(0, 8)}...` : "—"}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => openDocumentPreview(doc as any)}
+                                  className="p-1.5 rounded-lg text-gray-600 hover:text-sidebar hover:bg-gray-100"
+                                  title="Preview Document"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadDocument(doc)}
+                                  disabled={downloadingDocId === doc.id}
+                                  className="p-1.5 rounded-lg text-gray-600 hover:text-sidebar hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                  title="Download Original"
+                                >
+                                  <Download className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openEditModal(doc as any)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-sidebar/5 hover:bg-sidebar/10 text-sidebar text-[11px] font-semibold flex items-center gap-1 border border-sidebar/10"
+                                  title="Re-assign Association or Change Classification"
+                                >
+                                  <CornerDownRight className="w-3.5 h-3.5 text-mint" />
+                                  Re-assign
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingDoc({ id: doc.id, name: doc.name })}
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                  title="Delete Document"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2023,16 +2943,29 @@ export default function DataBridgePage() {
                     AI Draft / Improve
                   </button>
 
-                  <a
-                    href={resolveFullStreamUrl(previewDoc.download_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={previewDoc.name}
-                    className="px-3 py-1.5 rounded-xl bg-sidebar text-white hover:bg-sidebar-dark text-xs font-semibold flex items-center gap-1"
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadDocument(previewDoc)}
+                    disabled={downloadingDocId === previewDoc.id}
+                    className="px-3 py-1.5 rounded-xl bg-sidebar text-white hover:bg-sidebar-dark text-xs font-semibold flex items-center gap-1 disabled:opacity-50"
+                    title="Download Document"
                   >
                     <Download className="w-3.5 h-3.5 text-mint" />
-                    Download
-                  </a>
+                    {downloadingDocId === previewDoc.id ? "Downloading..." : "Download"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const toDel = { id: previewDoc.id, name: previewDoc.name };
+                      setPreviewDoc(null);
+                      setDeletingDoc(toDel);
+                    }}
+                    className="p-1.5 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    title="Delete Document"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
 
                   <button
                     type="button"
@@ -2078,15 +3011,15 @@ export default function DataBridgePage() {
                         <p className="text-xs text-gray-400 mt-1 mb-4">
                           You can download the original file or use AI Draft to extract and edit its content.
                         </p>
-                        <a
-                          href={resolveFullStreamUrl(previewDoc.download_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={previewDoc.name}
-                          className="px-4 py-2 bg-sidebar text-white text-xs font-semibold rounded-xl inline-flex items-center gap-1.5"
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadDocument(previewDoc)}
+                          disabled={downloadingDocId === previewDoc.id}
+                          className="px-4 py-2 bg-sidebar text-white text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 disabled:opacity-50"
                         >
-                          <Download className="w-3.5 h-3.5 text-mint" /> Download Original File
-                        </a>
+                          <Download className="w-3.5 h-3.5 text-mint" />
+                          {downloadingDocId === previewDoc.id ? "Downloading..." : "Download Original File"}
+                        </button>
                       </div>
                     )}
                   </div>
@@ -2436,6 +3369,493 @@ export default function DataBridgePage() {
                   className="px-4 py-2 rounded-xl bg-sidebar text-white text-xs font-bold hover:bg-sidebar-dark flex items-center gap-1.5 shadow-sm disabled:opacity-50"
                 >
                   {isUpdatingDoc ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* EDIT CLIENT PROFILE MODAL */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editingClient && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-lg p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <User className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-bold text-sm text-gray-900">Edit Client Profile</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingClient(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Client Full Name *</label>
+                    <input
+                      type="text"
+                      value={clientForm.name}
+                      onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. Ramesh Kumar"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Phone Number *</label>
+                    <input
+                      type="text"
+                      value={clientForm.phone}
+                      onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. 9876543210"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={clientForm.email}
+                      onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. ramesh@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Company / Organization</label>
+                    <input
+                      type="text"
+                      value={clientForm.company_name}
+                      onChange={(e) => setClientForm({ ...clientForm, company_name: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. ABC Enterprises"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">City</label>
+                    <input
+                      type="text"
+                      value={clientForm.city}
+                      onChange={(e) => setClientForm({ ...clientForm, city: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="City"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">State</label>
+                    <input
+                      type="text"
+                      value={clientForm.state}
+                      onChange={(e) => setClientForm({ ...clientForm, state: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="State"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Pincode</label>
+                    <input
+                      type="text"
+                      value={clientForm.pincode}
+                      onChange={(e) => setClientForm({ ...clientForm, pincode: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="Pincode"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Notes / Tags</label>
+                  <textarea
+                    rows={2}
+                    value={clientForm.notes}
+                    onChange={(e) => setClientForm({ ...clientForm, notes: e.target.value })}
+                    className="w-full text-xs p-3 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint resize-none"
+                    placeholder="Add client notes or provenance details..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingClient(null)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isSavingClient}
+                  onClick={handleSaveClient}
+                  className="px-4 py-2 rounded-xl bg-sidebar text-white text-xs font-bold hover:bg-sidebar-dark flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  {isSavingClient ? "Saving..." : "Save Client Profile"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* EDIT CASE & CNR DETAILS MODAL */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editingCase && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-lg p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-bold text-sm text-gray-900">Edit Matter & eCourts CNR</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingCase(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Case Number *</label>
+                    <input
+                      type="text"
+                      value={caseForm.case_no}
+                      onChange={(e) => setCaseForm({ ...caseForm, case_no: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. WP/1024/2026"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">eCourts CNR Number</label>
+                    <input
+                      type="text"
+                      value={caseForm.ecourts_cnr}
+                      onChange={(e) => setCaseForm({ ...caseForm, ecourts_cnr: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint font-mono font-medium"
+                      placeholder="e.g. MHHC010099882026"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Matter Title *</label>
+                  <input
+                    type="text"
+                    value={caseForm.title}
+                    onChange={(e) => setCaseForm({ ...caseForm, title: e.target.value })}
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                    placeholder="e.g. State of Maharashtra vs XYZ Corporation"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Court / Forum</label>
+                    <input
+                      type="text"
+                      value={caseForm.court}
+                      onChange={(e) => setCaseForm({ ...caseForm, court: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. Bombay High Court"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Presiding Judge</label>
+                    <input
+                      type="text"
+                      value={caseForm.judge}
+                      onChange={(e) => setCaseForm({ ...caseForm, judge: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. Justice A. K. Patel"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned Client</label>
+                    <select
+                      value={caseForm.client_id}
+                      onChange={(e) => setCaseForm({ ...caseForm, client_id: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint bg-white font-medium"
+                    >
+                      <option value="">-- Select Client --</option>
+                      {clients.map((c: any) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.phone ? `(${c.phone})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Practice Area</label>
+                    <input
+                      type="text"
+                      value={caseForm.practice_area}
+                      onChange={(e) => setCaseForm({ ...caseForm, practice_area: e.target.value })}
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint"
+                      placeholder="e.g. Civil / Corporate / Criminal"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingCase(null)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isSavingCase}
+                  onClick={handleSaveCase}
+                  className="px-4 py-2 rounded-xl bg-sidebar text-white text-xs font-bold hover:bg-sidebar-dark flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  {isSavingCase ? "Saving..." : "Save Matter & CNR"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* CONFLICT RESOLUTION MODAL ("Update / Merge / Overwrite") */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {conflictModal && conflictModal.isOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-lg p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <GitMerge className="w-5 h-5 text-amber-600" />
+                  <h3 className="font-bold text-sm text-gray-900">
+                    Conflict Resolution: {conflictModal.entityType === "client" ? "Client Record" : "Matter / Case"}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setConflictModal(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  Target Record to Resolve:
+                </div>
+                <p className="font-medium">
+                  {conflictModal.entityType === "client"
+                    ? `${conflictModal.targetRecord.name} (${conflictModal.targetRecord.phone})`
+                    : `${conflictModal.targetRecord.case_no} — ${conflictModal.targetRecord.title}`}
+                </p>
+                {conflictModal.targetRecord.ecourts_cnr && (
+                  <p className="text-[11px] font-mono text-emerald-800">
+                    CNR: {conflictModal.targetRecord.ecourts_cnr}
+                  </p>
+                )}
+              </div>
+
+              {/* Optional Secondary Record Selection if merging two existing items */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Merge With Duplicate / Secondary Record (Optional):
+                </label>
+                <select
+                  value={conflictModal.sourceRecord?.id || ""}
+                  onChange={(e) => {
+                    const selId = e.target.value;
+                    const found = conflictModal.entityType === "client"
+                      ? clients.find((c: any) => c.id === selId)
+                      : cases.find((cs: any) => cs.id === selId);
+                    setConflictModal({ ...conflictModal, sourceRecord: found || undefined });
+                  }}
+                  className="w-full text-xs px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-1 focus:ring-mint bg-white font-medium"
+                >
+                  <option value="">-- No secondary record (Apply strategy directly to target) --</option>
+                  {conflictModal.entityType === "client"
+                    ? clients
+                        .filter((c: any) => c.id !== conflictModal.targetRecord.id)
+                        .map((c: any) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({c.phone})
+                          </option>
+                        ))
+                    : cases
+                        .filter((cs: any) => cs.id !== conflictModal.targetRecord.id)
+                        .map((cs: any) => (
+                          <option key={cs.id} value={cs.id}>
+                            {cs.case_no} — {cs.title}
+                          </option>
+                        ))}
+                </select>
+              </div>
+
+              {/* Resolution Strategy Picker */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-gray-700">Choose Resolution Strategy:</label>
+                {[
+                  {
+                    id: "merge",
+                    title: "Update & Merge (Recommended)",
+                    desc: "Fills missing fields without overwriting existing data. Reassigns all linked cases and documents to the target record without duplicates.",
+                  },
+                  {
+                    id: "overwrite",
+                    title: "Overwrite Existing",
+                    desc: "Completely replaces target fields with the incoming or secondary record data, while preserving associations.",
+                  },
+                ].map((strat) => (
+                  <label
+                    key={strat.id}
+                    className={cn(
+                      "block p-3 rounded-xl border cursor-pointer transition-all text-xs",
+                      conflictModal.resolution === strat.id
+                        ? "border-sidebar bg-sidebar/5 ring-1 ring-sidebar"
+                        : "border-gray-200 hover:border-gray-300"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="conflict_strat"
+                        value={strat.id}
+                        checked={conflictModal.resolution === strat.id}
+                        onChange={() => setConflictModal({ ...conflictModal, resolution: strat.id as any })}
+                        className="text-sidebar focus:ring-mint"
+                      />
+                      <span className="font-bold text-gray-900">{strat.title}</span>
+                    </div>
+                    <p className="text-gray-500 text-[11px] mt-1 pl-5">{strat.desc}</p>
+                  </label>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setConflictModal(null)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isResolvingConflict}
+                  onClick={handleExecuteConflictResolution}
+                  className="px-5 py-2.5 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  {isResolvingConflict ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                      Resolving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-white" />
+                      Execute {conflictModal.resolution.toUpperCase()} Resolution
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* DELETE CONFIRMATION MODAL */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {deletingDoc && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-xl border border-gray-100 w-full max-w-md p-6 space-y-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-gray-900">Delete Document?</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">This action will remove the document from your library.</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-red-50/50 rounded-xl border border-red-100 text-xs text-gray-700 space-y-1">
+                <span className="text-[11px] text-gray-500 block uppercase tracking-wider font-semibold">Document Name</span>
+                <span className="font-semibold text-gray-900 break-all">{deletingDoc.name}</span>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeletingDoc(null)}
+                  disabled={isDeletingDoc}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeletingDoc}
+                  className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  {isDeletingDoc ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete Document
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
