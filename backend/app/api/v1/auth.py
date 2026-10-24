@@ -29,7 +29,14 @@ from app.core.config import settings
 from app.models.user import User, UserRole
 from app.models.security import LoginHistory, UserSession
 from app.services.audit_service import log_action, extract_ip, AuditAction
-from app.services.email_service import notify_login, send_login_notification, send_logout_notification
+from app.services.email_service import (
+    notify_login,
+    send_login_notification,
+    send_logout_notification,
+    send_welcome_subscription_email,
+    send_new_device_login_alert,
+    send_otp_verification_email,
+)
 
 router = APIRouter()
 
@@ -479,6 +486,18 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Dispatch Welcome & Subscription activation email (fire-and-forget background task)
+    if user.email:
+        asyncio.create_task(
+            send_welcome_subscription_email(
+                to_email=str(user.email),
+                user_name=str(user.full_name or "Advocate"),
+                plan_name="Advocate 14-Day Pro Chambers Trial",
+                dashboard_url="https://fastcase.in/login",
+            )
+        )
+
     return {"message": "Registration successful", "user_id": str(user.id)}
 
 

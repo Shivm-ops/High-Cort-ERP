@@ -471,3 +471,477 @@ async def send_logout_notification(
 
     await send_email(to_email, subject, html_body, text_body)
 
+
+# ── 1. User Registration & OTP Verification Email ─────────────────────────────
+
+def render_otp_verification_template(otp_code: str, user_name: str = "Advocate", expiry_minutes: int = 10) -> tuple[str, str]:
+    """Render HTML and plain-text templates for 6-digit OTP verification."""
+    # Split digits for stylish tabular rendering
+    otp_digits = [d for d in str(otp_code).strip()[:6]]
+    digit_cells = "".join([
+        f'<td style="width:44px; height:52px; background:#f1f5f9; border:1.5px solid #cbd5e1; border-radius:8px; text-align:center; font-family:\'Courier New\',Courier,monospace; font-size:28px; font-weight:700; color:#0f172a; margin:0 4px;">{d}</td>'
+        for d in otp_digits
+    ])
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <title>Secure Verification Code</title>
+  <style>
+    body {{ margin:0; padding:0; background-color:#0b0f19; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }}
+    table {{ border-collapse:separate; }}
+    .email-container {{ max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.15); }}
+    .header {{ background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding:36px 32px; text-align:center; border-bottom:3px solid #2563eb; }}
+    .brand {{ font-size:22px; font-weight:800; color:#ffffff; letter-spacing:1px; text-transform:uppercase; margin:0; }}
+    .brand-accent {{ color:#38bdf8; }}
+    .content {{ padding:36px 32px; background-color:#ffffff; }}
+    .greeting {{ font-size:18px; font-weight:700; color:#0f172a; margin:0 0 16px; }}
+    .copy {{ font-size:15px; color:#475569; line-height:1.65; margin:0 0 24px; }}
+    .otp-wrapper {{ background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:24px; text-align:center; margin:28px 0; }}
+    .otp-label {{ font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; }}
+    .expiry-note {{ font-size:13px; color:#64748b; margin-top:14px; font-weight:500; }}
+    .expiry-badge {{ display:inline-block; background-color:#fef3c7; color:#92400e; font-weight:700; padding:3px 8px; border-radius:4px; font-size:12px; }}
+    .disclaimer-box {{ background-color:#f1f5f9; border-left:4px solid #64748b; border-radius:4px; padding:14px 16px; margin:24px 0 0; font-size:13px; color:#475569; line-height:1.5; }}
+    .footer {{ background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.6; }}
+    .footer a {{ color:#2563eb; text-decoration:none; }}
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#0b0f19;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0f19; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:12px; overflow:hidden;">
+          <tr>
+            <td class="header" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding:36px 32px; text-align:center; border-bottom:3px solid #2563eb;">
+              <h1 class="brand" style="margin:0; font-size:22px; font-weight:800; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">
+                FASTCASE<span class="brand-accent" style="color:#38bdf8;">.IN</span>
+              </h1>
+              <p style="margin:6px 0 0; color:#94a3b8; font-size:13px; letter-spacing:0.5px;">Advocate & Legal Practice ERP Platform</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="content" style="padding:36px 32px;">
+              <h2 class="greeting" style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 16px;">Hello {user_name},</h2>
+              <p class="copy" style="font-size:15px; color:#475569; line-height:1.65; margin:0 0 20px;">
+                Thank you for registering with <strong>Fastcase</strong>. To complete your account verification and secure your advocate portal, please enter the One-Time Password (OTP) below:
+              </p>
+              
+              <div class="otp-wrapper" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:24px 16px; text-align:center; margin:24px 0;">
+                <div class="otp-label" style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px;">Your 6-Digit One-Time Password</div>
+                <!-- Accessible/Copyable code snippet -->
+                <div style="display:none; font-size:0; max-height:0; line-height:0; mso-hide:all;">{otp_code}</div>
+                <table role="presentation" cellpadding="0" cellspacing="6" align="center" style="margin:0 auto;">
+                  <tr>
+                    {digit_cells}
+                  </tr>
+                </table>
+                <p class="expiry-note" style="font-size:13px; color:#64748b; margin-top:16px; margin-bottom:0;">
+                  ⏳ This verification code expires in <span class="expiry-badge" style="background-color:#fef3c7; color:#92400e; font-weight:700; padding:2px 8px; border-radius:4px;">{expiry_minutes} minutes</span> for security purposes.
+                </p>
+              </div>
+
+              <div class="disclaimer-box" style="background-color:#f8fafc; border-left:4px solid #94a3b8; border-radius:4px; padding:14px 16px; margin:24px 0 0; font-size:13px; color:#475569; line-height:1.5;">
+                <strong>Security Disclaimer:</strong> If you did not initiate this registration or request this verification code, please ignore this email. No changes will be made to your contact details without this OTP.
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="footer" style="background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.6;">
+              &copy; {datetime.now(timezone.utc).year} <a href="https://fastcase.in/" style="color:#2563eb; text-decoration:none; font-weight:600;">Fastcase.in</a> &bull; All Rights Reserved.<br/>
+              High Court & District Court Enterprise Legal Practice Automation.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    text_body = (
+        f"FASTCASE.IN — SECURE VERIFICATION CODE\n"
+        f"====================================================\n\n"
+        f"Hello {user_name},\n\n"
+        f"Thank you for registering with Fastcase (https://fastcase.in/).\n"
+        f"Your 6-digit One-Time Password (OTP) for account verification is:\n\n"
+        f"    >>> {otp_code} <<<\n\n"
+        f"SECURITY NOTICE: This code will expire in {expiry_minutes} minutes.\n\n"
+        f"If you did not request this code, you can safely ignore this email.\n\n"
+        f"-- Fastcase Security Team\n"
+        f"https://fastcase.in"
+    )
+
+    return html_body, text_body
+
+
+async def send_otp_verification_email(
+    to_email: str,
+    otp_code: str,
+    user_name: str = "Advocate",
+    expiry_minutes: int = 10,
+) -> None:
+    """Send OTP email verification for user registration."""
+    subject = "Secure Verification Code for Your Account"
+    html_body, text_body = render_otp_verification_template(otp_code, user_name, expiry_minutes)
+    await send_email(to_email, subject, html_body, text_body)
+
+
+# ── 2. Welcome & Subscription Activation Email ────────────────────────────────
+
+def render_welcome_subscription_template(
+    user_name: str,
+    plan_name: str = "Advocate Pro Practice",
+    dashboard_url: str = "https://fastcase.in/login",
+) -> tuple[str, str]:
+    """Render HTML and plain-text templates for advocate subscription onboarding."""
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Welcome to Fastcase</title>
+  <style>
+    body {{ margin:0; padding:0; background-color:#0b0f19; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }}
+    .email-container {{ max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.15); }}
+    .header {{ background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); padding:40px 32px; text-align:center; border-bottom:3px solid #2563eb; }}
+    .header h1 {{ margin:0 0 8px; font-size:24px; font-weight:800; color:#ffffff; }}
+    .header p {{ margin:0; font-size:14px; color:#93c5fd; font-weight:500; }}
+    .content {{ padding:36px 32px; background-color:#ffffff; }}
+    .pill {{ display:inline-block; padding:4px 12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:700; border-radius:20px; text-transform:uppercase; margin-bottom:16px; }}
+    .feature-card {{ display:flex; margin-bottom:18px; padding:16px; background-color:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; }}
+    .feature-icon {{ font-size:22px; margin-right:16px; min-width:32px; }}
+    .feature-title {{ font-size:15px; font-weight:700; color:#0f172a; margin:0 0 4px; }}
+    .feature-desc {{ font-size:13px; color:#64748b; margin:0; line-height:1.5; }}
+    .cta-button {{ display:inline-block; width:100%; box-sizing:border-box; background-color:#2563eb; color:#ffffff !important; text-decoration:none; padding:14px 28px; font-size:15px; font-weight:700; border-radius:8px; text-align:center; margin:28px 0 20px; }}
+    .compliance-box {{ background-color:#f0fdf4; border-left:4px solid #16a34a; border-radius:6px; padding:16px; margin:24px 0 0; font-size:13px; color:#14532d; line-height:1.55; }}
+    .compliance-title {{ font-weight:700; color:#15803d; margin-bottom:4px; display:flex; align-items:center; }}
+    .footer {{ background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; }}
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#0b0f19;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0f19; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:12px; overflow:hidden;">
+          <tr>
+            <td class="header" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); padding:40px 32px; text-align:center; border-bottom:3px solid #2563eb;">
+              <h1 style="margin:0 0 8px; font-size:24px; font-weight:800; color:#ffffff;">FASTCASE<span style="color:#38bdf8;">.IN</span></h1>
+              <p style="margin:0; font-size:14px; color:#93c5fd; font-weight:500;">Your Legal Practice Platform is Ready</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="content" style="padding:36px 32px;">
+              <span class="pill" style="display:inline-block; padding:4px 12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:700; border-radius:20px; text-transform:uppercase; margin-bottom:16px;">
+                {plan_name} Activated
+              </span>
+              <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 12px;">Dear Advocate {user_name},</h2>
+              <p style="font-size:15px; color:#475569; line-height:1.6; margin:0 0 24px;">
+                Welcome to <strong>Fastcase</strong>! Your subscription has been successfully provisioned. Your digital chambers are now equipped with enterprise-grade litigation automation designed specifically for advocates, law firms, and legal counsels.
+              </p>
+
+              <h3 style="font-size:15px; font-weight:700; color:#0f172a; text-transform:uppercase; letter-spacing:0.8px; margin:0 0 14px;">
+                Core Platform Capabilities
+              </h3>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+                <tr>
+                  <td width="36" valign="top" style="font-size:22px;">⚡</td>
+                  <td valign="top" style="padding-left:12px;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:2px;">CNR Cause List Sync</div>
+                    <div style="font-size:13px; color:#64748b; line-height:1.45;">Automated real-time e-Courts cause list synchronization and court hearing board tracking for High Courts & District Courts.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+                <tr>
+                  <td width="36" valign="top" style="font-size:22px;">⚖️</td>
+                  <td valign="top" style="padding-left:12px;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:2px;">500+ Multilingual Vernacular Drafts</div>
+                    <div style="font-size:13px; color:#64748b; line-height:1.45;">Jurisdiction-vetted pleadings, bail applications, petitions, and legal notices across English and Indian regional languages.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+                <tr>
+                  <td width="36" valign="top" style="font-size:22px;">💳</td>
+                  <td valign="top" style="padding-left:12px;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:2px;">GST-Compliant Fee Invoicing</div>
+                    <div style="font-size:13px; color:#64748b; line-height:1.45;">Automated chamber billing, client trust accounting, GST-compliant tax invoicing, and digital payment collection.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="{dashboard_url}" class="cta-button" style="display:block; width:100%; box-sizing:border-box; background-color:#2563eb; color:#ffffff !important; text-decoration:none; padding:14px 28px; font-size:15px; font-weight:700; border-radius:8px; text-align:center;">
+                      Access Your Chambers Dashboard &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <div class="compliance-box" style="background-color:#f0fdf4; border-left:4px solid #16a34a; border-radius:6px; padding:16px; margin:28px 0 0; font-size:13px; color:#14532d; line-height:1.55;">
+                <strong style="color:#15803d; font-size:14px;">Next Recommended Steps:</strong>
+                <ol style="margin:8px 0 0; padding-left:18px;">
+                  <li style="margin-bottom:6px;"><strong>Add Chamber Associates & Clerks:</strong> Configure granular role-based permissions and case assignment rights.</li>
+                  <li><strong>Setup Section 126 Compliant Client Vaults:</strong> Secure privileged client communications under Section 126 of the Indian Evidence Act / Bharatiya Sakshya Adhiniyam with end-to-end encrypted storage.</li>
+                </ol>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="footer" style="background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.6;">
+              Questions? Contact our legal practice success team at <a href="mailto:support@fastcase.in" style="color:#2563eb; text-decoration:none;">support@fastcase.in</a><br/>
+              &copy; {datetime.now(timezone.utc).year} Fastcase.in &bull; Supreme Court, High Court & District Court Enterprise Legal Solutions.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    text_body = (
+        f"WELCOME TO FASTCASE — YOUR LEGAL PRACTICE PLATFORM IS READY\n"
+        f"============================================================\n\n"
+        f"Dear Advocate {user_name},\n\n"
+        f"Welcome to Fastcase! Your subscription ({plan_name}) has been activated.\n\n"
+        f"CORE PLATFORM BENEFITS:\n"
+        f"1. CNR Cause List Sync: Real-time automated cause list updates across High Courts & District Courts.\n"
+        f"2. 500+ Multilingual Vernacular Drafts: Battle-tested legal notices, petitions, and drafts.\n"
+        f"3. GST-Compliant Fee Invoicing: Professional billing, trust ledgers, and instant tax invoice generation.\n\n"
+        f"GET STARTED:\n"
+        f"Access your dashboard at: {dashboard_url}\n\n"
+        f"RECOMMENDED NEXT STEPS:\n"
+        f"- Add chamber team members (associates & clerks) with role-based access control.\n"
+        f"- Secure client files under Section 126 Indian Evidence Act / BSA privileged client vaults.\n\n"
+        f"Need assistance? Contact us at support@fastcase.in\n\n"
+        f"-- Fastcase Onboarding Team\n"
+        f"https://fastcase.in"
+    )
+
+    return html_body, text_body
+
+
+async def send_welcome_subscription_email(
+    to_email: str,
+    user_name: str,
+    plan_name: str = "Advocate Pro Practice",
+    dashboard_url: str = "https://fastcase.in/login",
+) -> None:
+    """Send welcome onboarding email upon subscription activation."""
+    subject = "Welcome to Fastcase — Your Legal Practice Platform is Ready"
+    html_body, text_body = render_welcome_subscription_template(user_name, plan_name, dashboard_url)
+    await send_email(to_email, subject, html_body, text_body)
+
+
+# ── 3. Login Alert & Security Notification ────────────────────────────────────
+
+def render_security_login_alert_template(
+    user_name: str,
+    ip_address: str | None,
+    user_agent: str | None,
+    location: str | None = None,
+    login_time: datetime | None = None,
+    reset_url: str = "https://fastcase.in/reset-password",
+    support_email: str = "support@fastcase.in",
+) -> tuple[str, str]:
+    """Render automated security notification for new device, browser, or IP login."""
+    login_time = login_time or datetime.now(timezone.utc)
+    time_str = login_time.strftime("%d %b %Y, %I:%M:%S %p UTC")
+    ip_str = ip_address or "Unknown IP"
+    device_str = user_agent or "Unknown Device / Browser"
+    loc_str = location or "Approx. Location from IP"
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Sign-in Alert</title>
+  <style>
+    body {{ margin:0; padding:0; background-color:#0b0f19; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }}
+    .email-container {{ max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.15); }}
+    .header {{ background:linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); padding:32px; text-align:center; border-bottom:3px solid #dc2626; }}
+    .content {{ padding:32px; }}
+    .meta-box {{ background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:18px; margin:20px 0; }}
+    .meta-row {{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #edf2f7; font-size:14px; }}
+    .meta-row:last-child {{ border-bottom:none; }}
+    .meta-key {{ color:#64748b; font-weight:600; }}
+    .meta-val {{ color:#0f172a; font-weight:700; text-align:right; max-width:320px; word-break:break-all; }}
+    .action-box {{ background-color:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:18px; margin:24px 0; }}
+    .btn-reset {{ display:inline-block; background-color:#dc2626; color:#ffffff !important; text-decoration:none; padding:12px 24px; font-size:14px; font-weight:700; border-radius:6px; margin-top:12px; }}
+    .footer {{ background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; }}
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#0b0f19;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0f19; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:12px; overflow:hidden;">
+          <tr>
+            <td class="header" style="background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding:32px; text-align:center; border-bottom:3px solid #f59e0b;">
+              <div style="display:inline-block; padding:4px 12px; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#fbbf24; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Security Alert</div>
+              <h1 style="margin:0; font-size:22px; font-weight:800; color:#ffffff;">New Sign-in Alert for Your Account</h1>
+              <p style="margin:6px 0 0; color:#94a3b8; font-size:13px;">Fastcase Legal Enterprise Protection</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="content" style="padding:32px;">
+              <p style="font-size:15px; color:#334155; line-height:1.6; margin:0 0 16px;">
+                Hello <strong>{user_name}</strong>,
+              </p>
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 20px;">
+                We detected a recent sign-in to your <strong>Fastcase</strong> account from a device, browser, or network location not previously associated with your account:
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin:20px 0;">
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">Timestamp</td>
+                  <td align="right" style="padding:6px 0; color:#0f172a; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">{time_str}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">IP Address</td>
+                  <td align="right" style="padding:6px 0; color:#0f172a; font-size:13px; font-weight:600; font-family:monospace; border-bottom:1px solid #edf2f7;">{ip_str}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">Approx. Location</td>
+                  <td align="right" style="padding:6px 0; color:#0f172a; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">{loc_str}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; color:#64748b; font-size:13px; font-weight:600;">Device / Browser</td>
+                  <td align="right" style="padding:6px 0; color:#0f172a; font-size:13px; font-weight:600; max-width:280px; word-break:break-all;">{device_str}</td>
+                </tr>
+              </table>
+
+              <div style="background-color:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:18px; margin:24px 0;">
+                <div style="font-weight:700; color:#991b1b; font-size:14px; margin-bottom:6px;">Did you not recognize this activity?</div>
+                <p style="font-size:13px; color:#7f1d1d; margin:0 0 12px; line-height:1.5;">
+                  If this was not you, someone else may have gained unauthorized access to your account. Please reset your password immediately and revoke all active sessions.
+                </p>
+                <a href="{reset_url}" style="display:inline-block; background-color:#dc2626; color:#ffffff !important; text-decoration:none; padding:10px 20px; font-size:13px; font-weight:700; border-radius:6px;">
+                  Secure Account & Reset Password &rarr;
+                </a>
+              </div>
+
+              <p style="font-size:13px; color:#64748b; margin:16px 0 0; line-height:1.5;">
+                If this login was authorized by you, no further action is necessary. You can also reach our security operations team directly at <a href="mailto:{support_email}" style="color:#2563eb; text-decoration:none;">{support_email}</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="footer" style="background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.6;">
+              &copy; {login_time.year} Fastcase.in &bull; Automated Security Operations<br/>
+              This is a critical security advisory regarding your advocate credentials.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    text_body = (
+        f"NEW SIGN-IN ALERT FOR YOUR ACCOUNT\n"
+        f"===================================\n\n"
+        f"Hello {user_name},\n\n"
+        f"A sign-in was detected on your Fastcase account with the following details:\n\n"
+        f"Time              : {time_str}\n"
+        f"IP Address        : {ip_str}\n"
+        f"Approx. Location  : {loc_str}\n"
+        f"Device / Browser  : {device_str}\n\n"
+        f"IF THIS WAS NOT YOU:\n"
+        f"1. Reset your password immediately: {reset_url}\n"
+        f"2. Contact Fastcase Security Support at {support_email}\n\n"
+        f"If this was you, you can safely disregard this alert.\n\n"
+        f"-- Fastcase Security Operations\n"
+        f"https://fastcase.in"
+    )
+
+    return html_body, text_body
+
+
+async def send_new_device_login_alert(
+    to_email: str,
+    user_name: str,
+    ip_address: str | None,
+    user_agent: str | None,
+    location: str | None = None,
+    login_time: datetime | None = None,
+    reset_url: str = "https://fastcase.in/reset-password",
+) -> None:
+    """Send high-priority security alert when a sign-in is observed from a new device/IP."""
+    subject = "New Sign-in Alert for Your Account"
+    html_body, text_body = render_security_login_alert_template(
+        user_name=user_name,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        location=location,
+        login_time=login_time,
+        reset_url=reset_url,
+    )
+    await send_email(to_email, subject, html_body, text_body)
+
+
+# ── 4. Centralized Transactional Email Dispatcher ──────────────────────────────
+
+async def send_transactional_email(
+    to: str,
+    subject: str,
+    template: str,
+    data: dict[str, Any] | None = None,
+) -> bool:
+    """
+    Centralized transactional email service function.
+    
+    Compiles templates dynamically based on `template` identifier:
+    - 'otp_verification'
+    - 'welcome_subscription'
+    - 'login_alert'
+    - 'login_notification'
+    - 'logout_notification'
+    """
+    payload = data or {}
+    try:
+        if template in ("otp", "otp_verification"):
+            html_body, text_body = render_otp_verification_template(
+                otp_code=str(payload.get("otp_code", "")),
+                user_name=payload.get("user_name", "Advocate"),
+                expiry_minutes=int(payload.get("expiry_minutes", 10)),
+            )
+        elif template in ("welcome", "welcome_subscription"):
+            html_body, text_body = render_welcome_subscription_template(
+                user_name=payload.get("user_name", "Advocate"),
+                plan_name=payload.get("plan_name", "Advocate Pro Practice"),
+                dashboard_url=payload.get("dashboard_url", "https://fastcase.in/login"),
+            )
+        elif template in ("login_alert", "security_login_alert"):
+            html_body, text_body = render_security_login_alert_template(
+                user_name=payload.get("user_name", "Advocate"),
+                ip_address=payload.get("ip_address"),
+                user_agent=payload.get("user_agent"),
+                location=payload.get("location"),
+                login_time=payload.get("login_time"),
+                reset_url=payload.get("reset_url", "https://fastcase.in/reset-password"),
+            )
+        else:
+            # Direct custom HTML/plain text payload fallback
+            html_body = payload.get("html", "<p>Notification from Fastcase</p>")
+            text_body = payload.get("text", "Notification from Fastcase")
+
+        await send_email(to, subject, html_body, text_body)
+        logger.info("Successfully dispatched transactional email '%s' to %s", template, to)
+        return True
+    except Exception as exc:
+        logger.error("Failed to compile or dispatch transactional email '%s' to %s: %s", template, to, exc, exc_info=True)
+        return False
+
+

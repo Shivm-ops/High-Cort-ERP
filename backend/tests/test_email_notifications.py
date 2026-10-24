@@ -92,7 +92,75 @@ class TestAuthEmailNotifications(unittest.IsolatedAsyncioTestCase):
             self.assertIn("Advocate Sharma", call_args[2])
             self.assertIn("192.168.1.1", call_args[2])
 
+    async def test_send_otp_verification_email(self):
+        from app.services.email_service import send_otp_verification_email
+        with patch("app.services.email_service.send_email", new_callable=AsyncMock) as mock_send:
+            await send_otp_verification_email(
+                to_email="new_advocate@fastcase.in",
+                otp_code="948210",
+                user_name="Pooja Verma",
+                expiry_minutes=10,
+            )
+            self.assertTrue(mock_send.called)
+            args = mock_send.call_args[0]
+            self.assertEqual(args[0], "new_advocate@fastcase.in")
+            self.assertEqual(args[1], "Secure Verification Code for Your Account")
+            self.assertIn("948210", args[2])  # HTML contains OTP
+            self.assertIn("10 minutes", args[2])
+            self.assertIn("948210", args[3])  # Plain text fallback contains OTP
+
+    async def test_send_welcome_subscription_email(self):
+        from app.services.email_service import send_welcome_subscription_email
+        with patch("app.services.email_service.send_email", new_callable=AsyncMock) as mock_send:
+            await send_welcome_subscription_email(
+                to_email="subscriber@fastcase.in",
+                user_name="Rajesh Khanna",
+                plan_name="Advocate Chambers Enterprise",
+                dashboard_url="https://fastcase.in/login",
+            )
+            self.assertTrue(mock_send.called)
+            args = mock_send.call_args[0]
+            self.assertEqual(args[0], "subscriber@fastcase.in")
+            self.assertEqual(args[1], "Welcome to Fastcase — Your Legal Practice Platform is Ready")
+            self.assertIn("CNR Cause List Sync", args[2])
+            self.assertIn("500+ Multilingual Vernacular Drafts", args[2])
+            self.assertIn("GST-Compliant Fee Invoicing", args[2])
+            self.assertIn("Section 126", args[2])
+
+    async def test_send_new_device_login_alert(self):
+        from app.services.email_service import send_new_device_login_alert
+        with patch("app.services.email_service.send_email", new_callable=AsyncMock) as mock_send:
+            await send_new_device_login_alert(
+                to_email="lawyer@fastcase.in",
+                user_name="Advocate Sharma",
+                ip_address="49.37.12.88",
+                user_agent="Firefox 125 on Ubuntu Linux",
+                location="Bengaluru, Karnataka, India",
+                reset_url="https://fastcase.in/reset-password?token=sec_123",
+            )
+            self.assertTrue(mock_send.called)
+            args = mock_send.call_args[0]
+            self.assertEqual(args[0], "lawyer@fastcase.in")
+            self.assertEqual(args[1], "New Sign-in Alert for Your Account")
+            self.assertIn("49.37.12.88", args[2])
+            self.assertIn("Bengaluru, Karnataka, India", args[2])
+            self.assertIn("https://fastcase.in/reset-password?token=sec_123", args[2])
+
+    async def test_send_transactional_email_dispatcher(self):
+        from app.services.email_service import send_transactional_email
+        with patch("app.services.email_service.send_email", new_callable=AsyncMock) as mock_send:
+            res = await send_transactional_email(
+                to="test@fastcase.in",
+                subject="Secure Verification Code for Your Account",
+                template="otp_verification",
+                data={"otp_code": "654321", "user_name": "Advocate Anand"},
+            )
+            self.assertTrue(res)
+            self.assertTrue(mock_send.called)
+            self.assertIn("654321", mock_send.call_args[0][2])
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
