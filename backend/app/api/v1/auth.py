@@ -273,8 +273,9 @@ async def login(
     ip = extract_ip(request)
     user_agent = request.headers.get("User-Agent", "")
 
-    # 1. Lookup user
-    user = db.query(User).filter(User.email == form_data.username).first()
+    # 1. Lookup user (case-insensitive and trimmed)
+    clean_username = form_data.username.strip().lower() if form_data.username else ""
+    user = db.query(User).filter(User.email.ilike(clean_username)).first()
 
     if not user:
         # Don't reveal whether email exists
