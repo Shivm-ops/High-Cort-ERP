@@ -37,6 +37,12 @@ from app.services.email_service import (
     send_new_device_login_alert,
     send_otp_verification_email,
 )
+from app.services.otp_service import (
+    generate_otp,
+    store_registration_otp,
+    verify_and_clear_registration_otp,
+    get_registration_otp_payload,
+)
 
 router = APIRouter()
 
@@ -245,6 +251,15 @@ class ChangePasswordRequest(BaseModel):
 
 class LogoutRequest(BaseModel):
     access_token: Optional[str] = None   # optional: client may pass it explicitly
+
+
+class VerifyOtpRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class ResendOtpRequest(BaseModel):
+    email: EmailStr
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -499,6 +514,197 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
         )
 
     return {"message": "Registration successful", "user_id": str(user.id)}
+
+
+@router.post("/register-initiate")
+async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)):
+    """
+    Step 1 of Registration: Validates details, generates 6-digit OTP,
+    stores pending profile for 10 minutes, and dispatches verification email.
+    """
+    clean_email = data.email.lower().strip()
+    if db.query(User).filter(User.email.ilike(clean_email)).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email address already exists. Please log in instead.",
+        )
+
+    # 1. Generate secure 6-digit OTP
+    otp_code = generate_otp()
+
+    # 2. Store pending payload in Redis/cache for 10 minutes
+    reg_dict = {
+        "email": clean_email,
+        "password": data.password,
+        "full_name": data.full_name,
+        "phone": data.phone,
+        "bar_council_no": data.bar_council_no,
+    }
+    store_registration_otp(clean_email, reg_dict, otp_code, expiry_seconds=600)
+
+    # 3. Dispatch OTP email
+    asyncio.create_task(
+        send_otp_verification_email(
+            to_email=clean_email,
+            otp_code=otp_code,
+            user_name=data.full_name,
+            expiry_minutes=10,
+        )
+    )
+
+    return {
+        "message": f"A 6-digit verification code has been dispatched to {clean_email}.",
+        "email": clean_email,
+        "expires_in_minutes": 10,
+    }
+
+
+@router.post("/register-verify-otp", response_model=LoginResponse)
+async def register_verify_otp(
+    data: VerifyOtpRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Step 2 of Registration: Verifies 6-digit OTP, provisions practice firm,
+    activates 14-day trial, marks account verified, sends welcome email,
+    and automatically logs the user in with access & refresh tokens.
+    """
+    clean_email = data.email.lower().strip()
+    is_valid, reg_dict = verify_and_clear_registration_otp(clean_email, data.otp)
+    if not is_valid or not reg_dict:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification code. Please check your email or click 'Resend Code'.",
+        )
+
+    # Race condition check
+    if db.query(User).filter(User.email.ilike(clean_email)).first():
+        raise HTTPException(status_code=400, detail="An account with this email already exists.")
+
+    from app.models.firm import Firm
+    from app.models.subscription import SubscriptionPlan, TenantSubscription, SubscriptionStatus
+    from app.services.tenant_domain import allocate_unique_subdomain
+
+    full_name = reg_dict.get("full_name") or "Advocate"
+    firm_name = f"{full_name}'s Practice"
+    new_firm = Firm(
+        name=firm_name,
+        type="INDIVIDUAL",
+        phone=reg_dict.get("phone"),
+        is_active=True,
+        subdomain=allocate_unique_subdomain(db, firm_name),
+    )
+    db.add(new_firm)
+    db.flush()
+
+    # Assign 14-day free trial plan
+    trial_plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.tier == "free_trial").first()
+    if trial_plan:
+        sub = TenantSubscription(
+            firm_id=new_firm.id,
+            plan_id=trial_plan.id,
+            status=SubscriptionStatus.ACTIVE,
+            end_date=utc_now() + timedelta(days=14),
+        )
+        db.add(sub)
+
+    user = User(
+        email=clean_email,
+        hashed_password=get_password_hash(reg_dict["password"]),
+        full_name=full_name,
+        phone=reg_dict.get("phone"),
+        bar_council_no=reg_dict.get("bar_council_no"),
+        firm_id=new_firm.id,
+        user_type="admin", # Firm admin
+        is_verified=True,  # Officially verified via 6-digit OTP
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    # Dispatch Welcome & Subscription activation email
+    asyncio.create_task(
+        send_welcome_subscription_email(
+            to_email=clean_email,
+            user_name=full_name,
+            plan_name="Advocate 14-Day Pro Chambers Trial",
+            dashboard_url="https://fastcase.in/login",
+        )
+    )
+
+    # Automatically sign in and issue JWT tokens
+    jti = str(uuid.uuid4())
+    access_token = create_access_token({"sub": str(user.id), "role": user.user_type, "jti": jti})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+
+    setattr(user, "last_login", utc_now())
+    user.login_count = (user.login_count or 0) + 1
+    db.commit()
+
+    ip = extract_ip(request)
+    user_agent = request.headers.get("User-Agent", "")
+    session_rec = UserSession(
+        user_id=user.id,
+        jti=jti,
+        device_info=user_agent[:255] if user_agent else None,
+        ip_address=ip,
+        created_at=utc_now(),
+        last_activity=utc_now(),
+        expires_at=utc_now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        is_revoked=False,
+    )
+    db.add(session_rec)
+    db.commit()
+
+    sub_data = _get_user_subscription(user, db)
+    from app.services.tenant_domain import domain_fields
+    firm_domains = domain_fields(user.firm) if user.firm else {}
+
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user={
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.user_type,
+            "bar_council_no": user.bar_council_no,
+            "is_superadmin": user.is_superadmin,
+            "firm_id": str(user.firm_id) if user.firm_id else None,
+            "firm_name": user.firm.name if user.firm else None,
+            "subscription": sub_data,
+            **firm_domains,
+        },
+    )
+
+
+@router.post("/resend-registration-otp")
+async def resend_registration_otp(data: ResendOtpRequest):
+    """Resend a fresh 6-digit OTP for pending registration."""
+    clean_email = data.email.lower().strip()
+    payload = get_registration_otp_payload(clean_email)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active registration session found. Please fill out the registration form again.",
+        )
+
+    otp_code = generate_otp()
+    store_registration_otp(clean_email, payload.get("data", {}), otp_code, expiry_seconds=600)
+
+    user_name = payload.get("data", {}).get("full_name") or "Advocate"
+    asyncio.create_task(
+        send_otp_verification_email(
+            to_email=clean_email,
+            otp_code=otp_code,
+            user_name=user_name,
+            expiry_minutes=10,
+        )
+    )
+
+    return {"message": "A new 6-digit verification code has been dispatched to your email."}
+
 
 
 @router.post("/refresh")

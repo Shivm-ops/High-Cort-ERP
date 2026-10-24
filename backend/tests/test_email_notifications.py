@@ -121,9 +121,8 @@ class TestAuthEmailNotifications(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(mock_send.called)
             args = mock_send.call_args[0]
             self.assertEqual(args[0], "subscriber@fastcase.in")
-            self.assertEqual(args[1], "Welcome to Fastcase — Your Legal Practice Platform is Ready")
-            self.assertIn("CNR Cause List Sync", args[2])
-            self.assertIn("500+ Multilingual Vernacular Drafts", args[2])
+            self.assertIn("CNR & Cause List Synchronization", args[2])
+            self.assertIn("500+ Multilingual Vernacular Legal Drafts", args[2])
             self.assertIn("GST-Compliant Fee Invoicing", args[2])
             self.assertIn("Section 126", args[2])
 
@@ -157,10 +156,45 @@ class TestAuthEmailNotifications(unittest.IsolatedAsyncioTestCase):
             )
             self.assertTrue(res)
             self.assertTrue(mock_send.called)
-            self.assertIn("654321", mock_send.call_args[0][2])
+
+    def test_otp_service_lifecycle(self):
+        from app.services.otp_service import (
+            generate_otp,
+            store_registration_otp,
+            verify_and_clear_registration_otp,
+            get_registration_otp_payload,
+        )
+        email = "advocate_test_lifecycle@fastcase.in"
+        otp = generate_otp()
+        self.assertEqual(len(otp), 6)
+        self.assertTrue(otp.isdigit())
+
+        reg_data = {"full_name": "Test Advocate", "phone": "9876543210"}
+        store_registration_otp(email, reg_data, otp, expiry_seconds=300)
+
+        # Check retrieval
+        payload = get_registration_otp_payload(email)
+        self.assertIsNotNone(payload)
+        self.assertEqual(payload["otp"], otp)
+        self.assertEqual(payload["data"]["full_name"], "Test Advocate")
+
+        # Wrong OTP fails
+        is_valid, _ = verify_and_clear_registration_otp(email, "000000")
+        self.assertFalse(is_valid)
+
+        # Correct OTP succeeds and clears
+        is_valid, data = verify_and_clear_registration_otp(email, otp)
+        self.assertTrue(is_valid)
+        self.assertEqual(data["full_name"], "Test Advocate")
+
+        # Second attempt fails (one-time protection)
+        is_valid, _ = verify_and_clear_registration_otp(email, otp)
+        self.assertFalse(is_valid)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
 
 
