@@ -597,110 +597,150 @@ def render_welcome_subscription_template(
     dashboard_url: str = "https://fastcase.in/login",
 ) -> tuple[str, str]:
     """Render HTML and plain-text templates for advocate subscription onboarding."""
+    current_year = datetime.now(timezone.utc).year
+
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <title>Welcome to Fastcase</title>
-  <style>
-    body {{ margin:0; padding:0; background-color:#0b0f19; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }}
-    .email-container {{ max-width:600px; margin:40px auto; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.15); }}
-    .header {{ background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); padding:40px 32px; text-align:center; border-bottom:3px solid #2563eb; }}
-    .header h1 {{ margin:0 0 8px; font-size:24px; font-weight:800; color:#ffffff; }}
-    .header p {{ margin:0; font-size:14px; color:#93c5fd; font-weight:500; }}
-    .content {{ padding:36px 32px; background-color:#ffffff; }}
-    .pill {{ display:inline-block; padding:4px 12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:700; border-radius:20px; text-transform:uppercase; margin-bottom:16px; }}
-    .feature-card {{ display:flex; margin-bottom:18px; padding:16px; background-color:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; }}
-    .feature-icon {{ font-size:22px; margin-right:16px; min-width:32px; }}
-    .feature-title {{ font-size:15px; font-weight:700; color:#0f172a; margin:0 0 4px; }}
-    .feature-desc {{ font-size:13px; color:#64748b; margin:0; line-height:1.5; }}
-    .cta-button {{ display:inline-block; width:100%; box-sizing:border-box; background-color:#2563eb; color:#ffffff !important; text-decoration:none; padding:14px 28px; font-size:15px; font-weight:700; border-radius:8px; text-align:center; margin:28px 0 20px; }}
-    .compliance-box {{ background-color:#f0fdf4; border-left:4px solid #16a34a; border-radius:6px; padding:16px; margin:24px 0 0; font-size:13px; color:#14532d; line-height:1.55; }}
-    .compliance-title {{ font-weight:700; color:#15803d; margin-bottom:4px; display:flex; align-items:center; }}
-    .footer {{ background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; }}
-  </style>
 </head>
-<body style="margin:0; padding:0; background-color:#0b0f19;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0f19; padding:24px 12px;">
+<body style="margin:0; padding:0; background-color:#0b1120; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b1120; padding:32px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:12px; overflow:hidden;">
+        <!-- Container -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+          
+          <!-- Header Banner -->
           <tr>
-            <td class="header" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); padding:40px 32px; text-align:center; border-bottom:3px solid #2563eb;">
-              <h1 style="margin:0 0 8px; font-size:24px; font-weight:800; color:#ffffff;">FASTCASE<span style="color:#38bdf8;">.IN</span></h1>
-              <p style="margin:0; font-size:14px; color:#93c5fd; font-weight:500;">Your Legal Practice Platform is Ready</p>
-            </td>
-          </tr>
-          <tr>
-            <td class="content" style="padding:36px 32px;">
-              <span class="pill" style="display:inline-block; padding:4px 12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-size:12px; font-weight:700; border-radius:20px; text-transform:uppercase; margin-bottom:16px;">
-                {plan_name} Activated
-              </span>
-              <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 12px;">Dear Advocate {user_name},</h2>
-              <p style="font-size:15px; color:#475569; line-height:1.6; margin:0 0 24px;">
-                Welcome to <strong>Fastcase</strong>! Your subscription has been successfully provisioned. Your digital chambers are now equipped with enterprise-grade litigation automation designed specifically for advocates, law firms, and legal counsels.
-              </p>
-
-              <h3 style="font-size:15px; font-weight:700; color:#0f172a; text-transform:uppercase; letter-spacing:0.8px; margin:0 0 14px;">
-                Core Platform Capabilities
-              </h3>
-
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
-                <tr>
-                  <td width="36" valign="top" style="font-size:22px;">⚡</td>
-                  <td valign="top" style="padding-left:12px;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:2px;">CNR Cause List Sync</div>
-                    <div style="font-size:13px; color:#64748b; line-height:1.45;">Automated real-time e-Courts cause list synchronization and court hearing board tracking for High Courts & District Courts.</div>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
-                <tr>
-                  <td width="36" valign="top" style="font-size:22px;">⚖️</td>
-                  <td valign="top" style="padding-left:12px;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:2px;">500+ Multilingual Vernacular Drafts</div>
-                    <div style="font-size:13px; color:#64748b; line-height:1.45;">Jurisdiction-vetted pleadings, bail applications, petitions, and legal notices across English and Indian regional languages.</div>
-                  </td>
-                </tr>
-              </table>
-
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
-                <tr>
-                  <td width="36" valign="top" style="font-size:22px;">💳</td>
-                  <td valign="top" style="padding-left:12px;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:2px;">GST-Compliant Fee Invoicing</div>
-                    <div style="font-size:13px; color:#64748b; line-height:1.45;">Automated chamber billing, client trust accounting, GST-compliant tax invoicing, and digital payment collection.</div>
-                  </td>
-                </tr>
-              </table>
-
+            <td style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding:40px 36px; text-align:center; border-bottom:3px solid #2563eb;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="{dashboard_url}" class="cta-button" style="display:block; width:100%; box-sizing:border-box; background-color:#2563eb; color:#ffffff !important; text-decoration:none; padding:14px 28px; font-size:15px; font-weight:700; border-radius:8px; text-align:center;">
-                      Access Your Chambers Dashboard &rarr;
+                    <div style="font-size:24px; font-weight:800; color:#ffffff; letter-spacing:1.5px; text-transform:uppercase;">
+                      FASTCASE<span style="color:#38bdf8;">.IN</span>
+                    </div>
+                    <div style="font-size:13px; color:#94a3b8; font-weight:500; margin-top:6px; letter-spacing:0.5px;">
+                      Enterprise Legal Practice Automation & Chambers ERP
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Content Body -->
+          <tr>
+            <td style="padding:40px 36px; background-color:#ffffff;">
+              
+              <!-- Plan Badge -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                <tr>
+                  <td style="background-color:#eff6ff; border:1px solid #bfdbfe; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:700; color:#1d4ed8; text-transform:uppercase; letter-spacing:0.8px;">
+                    ✓ {plan_name} Activated
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Greeting -->
+              <h2 style="font-size:22px; font-weight:700; color:#0f172a; margin:0 0 16px; line-height:1.3;">
+                Dear Advocate {user_name},
+              </h2>
+
+              <p style="font-size:15px; color:#475569; line-height:1.7; margin:0 0 20px;">
+                Welcome to <strong>Fastcase</strong>. Your legal chambers workspace has been successfully provisioned and configured. Your practice is now equipped with enterprise-grade litigation automation engineered specifically for advocates, law firms, and legal counsels practicing across India.
+              </p>
+
+              <!-- Divider -->
+              <hr style="border:none; border-top:1px solid #e2e8f0; margin:24px 0;"/>
+
+              <!-- Features Header -->
+              <div style="font-size:13px; font-weight:700; color:#0f172a; text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+                Core Platform Capabilities
+              </div>
+
+              <!-- Feature 1: CNR Cause List -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+                <tr>
+                  <td width="40" valign="top" style="font-size:22px; padding-right:12px;">⚡</td>
+                  <td valign="top">
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-bottom:4px;">CNR & Cause List Synchronization</div>
+                    <div style="font-size:13px; color:#64748b; line-height:1.5;">Automated real-time e-Courts tracking, hearing board status, and daily cause list alerts across all High Courts and District Courts.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 2: 500+ Multilingual Drafts -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+                <tr>
+                  <td width="40" valign="top" style="font-size:22px; padding-right:12px;">⚖️</td>
+                  <td valign="top">
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-bottom:4px;">500+ Multilingual Vernacular Legal Drafts</div>
+                    <div style="font-size:13px; color:#64748b; line-height:1.5;">Jurisdiction-vetted pleadings, bail applications, civil & criminal petitions, writ petitions, and legal notices across English and regional languages.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Feature 3: GST Invoicing -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px; background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+                <tr>
+                  <td width="40" valign="top" style="font-size:22px; padding-right:12px;">💳</td>
+                  <td valign="top">
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-bottom:4px;">GST-Compliant Fee Invoicing & Ledgers</div>
+                    <div style="font-size:13px; color:#64748b; line-height:1.5;">Professional chamber billing, client trust accounting, automated tax invoicing, and digital receipting.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Primary CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td align="center">
+                    <a href="{dashboard_url}" target="_blank" style="display:block; width:100%; box-sizing:border-box; background:linear-gradient(135deg, #1e40af 0%, #2563eb 100%); color:#ffffff !important; text-decoration:none; padding:16px 28px; font-size:15px; font-weight:700; border-radius:8px; text-align:center; box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+                      Launch Your Chambers Dashboard &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <div class="compliance-box" style="background-color:#f0fdf4; border-left:4px solid #16a34a; border-radius:6px; padding:16px; margin:28px 0 0; font-size:13px; color:#14532d; line-height:1.55;">
-                <strong style="color:#15803d; font-size:14px;">Next Recommended Steps:</strong>
-                <ol style="margin:8px 0 0; padding-left:18px;">
-                  <li style="margin-bottom:6px;"><strong>Add Chamber Associates & Clerks:</strong> Configure granular role-based permissions and case assignment rights.</li>
-                  <li><strong>Setup Section 126 Compliant Client Vaults:</strong> Secure privileged client communications under Section 126 of the Indian Evidence Act / Bharatiya Sakshya Adhiniyam with end-to-end encrypted storage.</li>
-                </ol>
+              <!-- Recommendations & Compliance Box -->
+              <div style="background-color:#f0fdf4; border-left:4px solid #16a34a; border-radius:6px; padding:18px 20px; font-size:13px; color:#14532d; line-height:1.6;">
+                <div style="font-weight:700; color:#15803d; font-size:14px; margin-bottom:8px;">
+                  Recommended Chamber Setup:
+                </div>
+                <ul style="margin:0; padding-left:18px;">
+                  <li style="margin-bottom:8px;">
+                    <strong>Invite Chamber Associates & Staff:</strong> Delegate cases with role-based access controls for partners, associates, and chamber clerks.
+                  </li>
+                  <li>
+                    <strong>Configure Section 126 Privileged Client Vaults:</strong> Secure confidential client communications and documents under Section 126 of the Indian Evidence Act / Section 132 of the Bharatiya Sakshya Adhiniyam, 2023 with end-to-end encrypted storage.
+                  </li>
+                </ul>
               </div>
+
+              <!-- Sign-off -->
+              <p style="font-size:14px; color:#64748b; line-height:1.6; margin:28px 0 0;">
+                Warm regards,<br/>
+                <strong style="color:#0f172a;">The Fastcase Practice Success Team</strong><br/>
+                <span style="font-size:12px; color:#94a3b8;">Supreme Court, High Court & District Court Practice Automation</span>
+              </p>
+
             </td>
           </tr>
+
+          <!-- Footer -->
           <tr>
-            <td class="footer" style="background-color:#f8fafc; padding:24px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.6;">
-              Questions? Contact our legal practice success team at <a href="mailto:support@fastcase.in" style="color:#2563eb; text-decoration:none;">support@fastcase.in</a><br/>
-              &copy; {datetime.now(timezone.utc).year} Fastcase.in &bull; Supreme Court, High Court & District Court Enterprise Legal Solutions.
+            <td style="background-color:#f8fafc; padding:24px 36px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.6;">
+              Need assistance setting up your chambers? Contact us anytime at 
+              <a href="mailto:support@fastcase.in" style="color:#2563eb; text-decoration:none; font-weight:600;">support@fastcase.in</a><br/>
+              &copy; {current_year} <a href="https://fastcase.in/" style="color:#2563eb; text-decoration:none; font-weight:600;">Fastcase.in</a> &bull; All Rights Reserved.<br/>
+              <span style="font-size:11px; color:#cbd5e1;">This is a privileged transactional notice sent to verified Fastcase practitioners.</span>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
@@ -712,18 +752,20 @@ def render_welcome_subscription_template(
         f"WELCOME TO FASTCASE — YOUR LEGAL PRACTICE PLATFORM IS READY\n"
         f"============================================================\n\n"
         f"Dear Advocate {user_name},\n\n"
-        f"Welcome to Fastcase! Your subscription ({plan_name}) has been activated.\n\n"
-        f"CORE PLATFORM BENEFITS:\n"
-        f"1. CNR Cause List Sync: Real-time automated cause list updates across High Courts & District Courts.\n"
-        f"2. 500+ Multilingual Vernacular Drafts: Battle-tested legal notices, petitions, and drafts.\n"
-        f"3. GST-Compliant Fee Invoicing: Professional billing, trust ledgers, and instant tax invoice generation.\n\n"
-        f"GET STARTED:\n"
-        f"Access your dashboard at: {dashboard_url}\n\n"
+        f"Welcome to Fastcase. Your digital chambers workspace has been successfully\n"
+        f"provisioned under the {plan_name} plan.\n\n"
+        f"CORE PLATFORM CAPABILITIES:\n"
+        f"1. CNR & Cause List Sync: Real-time automated cause list updates across High Courts & District Courts.\n"
+        f"2. 500+ Multilingual Vernacular Drafts: Battle-tested legal notices, petitions, and drafts in English & regional languages.\n"
+        f"3. GST-Compliant Invoicing: Professional billing, client trust ledgers, and automated tax invoices.\n\n"
+        f"ACCESS YOUR ACCOUNT:\n"
+        f"Dashboard Login: {dashboard_url}\n\n"
         f"RECOMMENDED NEXT STEPS:\n"
-        f"- Add chamber team members (associates & clerks) with role-based access control.\n"
-        f"- Secure client files under Section 126 Indian Evidence Act / BSA privileged client vaults.\n\n"
-        f"Need assistance? Contact us at support@fastcase.in\n\n"
-        f"-- Fastcase Onboarding Team\n"
+        f"- Add chamber team members (partners, associates, clerks) with role-based access control.\n"
+        f"- Establish Section 126 privileged client vaults under the Indian Evidence Act / BSA 2023.\n\n"
+        f"Need assistance? Contact our team at support@fastcase.in\n\n"
+        f"Warm regards,\n"
+        f"The Fastcase Practice Success Team\n"
         f"https://fastcase.in"
     )
 
