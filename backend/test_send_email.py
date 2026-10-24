@@ -15,6 +15,7 @@ async def main():
         print("Usage: python test_send_email.py <recipient_email>")
         sys.exit(1)
 
+    target_email = sys.argv[1].strip()
     recipient_name = sys.argv[2].strip() if len(sys.argv) > 2 else "Advocate Sharma"
 
     print(f"[*] Testing Full Fastcase Email Lifecycle for: {target_email} ({recipient_name})")
