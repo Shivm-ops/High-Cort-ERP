@@ -13,6 +13,10 @@ function getApiUrl(): string {
     if (host === "localhost") {
       return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
     }
+    // In production, app and admin portals are proxied directly to backend via Nginx
+    if (host.startsWith("app.") || host.startsWith("admin.")) {
+      return "/api/v1";
+    }
     if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
       return process.env.NEXT_PUBLIC_API_URL;
     }
