@@ -56,13 +56,21 @@ class DocumentService:
             f.write(content)
         return f"local://{local_path}", file_hash
 
+    def _sanitize_text(self, text: Optional[str]) -> Optional[str]:
+        """Strip NUL (0x00) characters which are forbidden in PostgreSQL text/varchar columns."""
+        if not text:
+            return None
+        cleaned = text.replace("\x00", "").replace("\u0000", "").strip()
+        return cleaned if cleaned else None
+
     async def extract_text(self, content: bytes, content_type: str) -> Optional[str]:
         """Extract text from PDF or image using OCR."""
+        text = None
         if content_type == "application/pdf":
-            return await self._extract_from_pdf(content)
+            text = await self._extract_from_pdf(content)
         elif content_type in ["image/jpeg", "image/png", "image/tiff"]:
-            return await self._extract_from_image(content)
-        return None
+            text = await self._extract_from_image(content)
+        return self._sanitize_text(text)
 
     async def _extract_from_pdf(self, content: bytes) -> Optional[str]:
         try:
@@ -72,10 +80,11 @@ class DocumentService:
             for page in doc:
                 text += page.get_text()
             doc.close()
-            if len(text.strip()) < 50:
+            sanitized = self._sanitize_text(text)
+            if not sanitized or len(sanitized) < 50:
                 # Likely scanned PDF — use OCR
                 return await self._ocr_pdf(content)
-            return text.strip()
+            return sanitized
         except ImportError:
             logger.warning("PyMuPDF not installed")
             return None
@@ -90,7 +99,7 @@ class DocumentService:
             import io
             image = Image.open(io.BytesIO(content))
             text = pytesseract.image_to_string(image, lang="eng+hin+mar+guj")
-            return text.strip()
+            return self._sanitize_text(text)
         except ImportError:
             logger.warning("pytesseract/Pillow not installed")
             return None
@@ -115,7 +124,7 @@ class DocumentService:
                 page_text = pytesseract.image_to_string(img, lang="eng+hin+mar+guj")
                 text += page_text + "\n"
             doc.close()
-            return text.strip()
+            return self._sanitize_text(text)
         except Exception as e:
             logger.error(f"PDF OCR error: {e}")
             return None

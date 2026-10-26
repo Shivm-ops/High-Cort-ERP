@@ -147,6 +147,13 @@ async def upload_bridge_file(
         except Exception as e:
             logger.warning(f"OCR text extraction failed: {e}")
 
+    if ocr_text:
+        ocr_text = ocr_text.replace("\x00", "").replace("\u0000", "")
+
+    clean_name = (clean_name or "").replace("\x00", "").replace("\u0000", "")
+    safe_description = (description or "").replace("\x00", "").replace("\u0000", "")
+    safe_rel_path = (relative_path or "").replace("\x00", "").replace("\u0000", "")
+
     # 5. Smart classification & hint extraction if requested
     classified_type = doc_type or "other"
     classification_conf = 1.0 if doc_type and doc_type != "other" else 0.4
@@ -156,13 +163,11 @@ async def upload_bridge_file(
         firm_cases = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.is_deleted == False).limit(200).all()
         firm_clients = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.is_deleted == False).limit(200).all()
         hints = bridge_service.extract_case_and_client_hints(clean_name, ocr_text[:500] if ocr_text else None, firm_cases, firm_clients)
-        # Note: Do NOT silently attach uncertain documents if user didn't specify case/client.
-        # Return suggestions in hints for user review and confirmation.
 
     # 6. Save Document
     doc = Document(
         name=clean_name,
-        original_filename=file.filename,
+        original_filename=(file.filename or "").replace("\x00", "").replace("\u0000", ""),
         file_path=file_url,
         file_size=file_size,
         mime_type=mime_type,
@@ -170,12 +175,12 @@ async def upload_bridge_file(
         case_id=resolved_case.id if resolved_case else None,
         client_id=resolved_client.id if resolved_client else None,
         uploaded_by_id=current_user.id,
-        description=description or (f"Imported via Data Bridge ({relative_path})" if relative_path else "Imported via Data Bridge"),
+        description=safe_description or (f"Imported via Data Bridge ({safe_rel_path})" if safe_rel_path else "Imported via Data Bridge"),
         ocr_text=ocr_text,
         ocr_processed=ocr_text is not None,
         extracted_metadata={
             "source": "data_bridge_local_import",
-            "relative_path": relative_path or "",
+            "relative_path": safe_rel_path,
             "classification_confidence": classification_conf,
             "detected_case_no": hints.get("matched_case_no"),
         },
