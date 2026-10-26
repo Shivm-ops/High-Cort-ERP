@@ -43,8 +43,8 @@ async def main():
     await send_welcome_subscription_email(
         to_email=target_email,
         user_name=recipient_name,
-        plan_name="Advocate Chambers Pro (14-Day Free Trial)",
-        dashboard_url="https://fastcase.in/login",
+        plan_name="Chambers Workspace",
+        dashboard_url="https://app.fastcase.in/login",
     )
     print("  -> Delivered: 'Welcome to Fastcase — Your Legal Practice Platform is Ready'")
 

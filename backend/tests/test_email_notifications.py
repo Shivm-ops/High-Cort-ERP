@@ -121,9 +121,9 @@ class TestAuthEmailNotifications(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(mock_send.called)
             args = mock_send.call_args[0]
             self.assertEqual(args[0], "subscriber@fastcase.in")
-            self.assertIn("CNR & Cause List Synchronization", args[2])
-            self.assertIn("500+ Multilingual Vernacular Legal Drafts", args[2])
-            self.assertIn("GST-Compliant Fee Invoicing", args[2])
+            self.assertIn("Smart Legal Drafting", args[2])
+            self.assertIn("Smart Case Management", args[2])
+            self.assertIn("Document Intelligence", args[2])
             self.assertIn("Section 126", args[2])
 
     async def test_send_new_device_login_alert(self):

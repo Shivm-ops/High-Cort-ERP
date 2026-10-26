@@ -479,10 +479,10 @@ def render_otp_verification_template(otp_code: str, user_name: str = "Advocate",
     current_year = datetime.now(timezone.utc).year
     clean_code = str(otp_code).strip()[:6]
 
-    # Clean spaced digit rendering
+    # Clean spaced digit rendering matching app UI
     otp_digits = [d for d in clean_code]
     digit_cells = "".join([
-        f'<td style="width:46px; height:54px; background:#f0fdf4; border:1.5px solid #86efac; border-radius:8px; text-align:center; font-family:\'Courier New\',Courier,monospace; font-size:28px; font-weight:800; color:#065f46; margin:0 4px;">{d}</td>'
+        f'<td style="width:46px; height:54px; background:#f0fdf4; border:1.5px solid #86efac; border-radius:10px; text-align:center; font-family:\'Courier New\',Courier,monospace; font-size:28px; font-weight:800; color:#014D46; margin:0 4px;">{d}</td>'
         for d in otp_digits
     ])
 
@@ -492,23 +492,23 @@ def render_otp_verification_template(otp_code: str, user_name: str = "Advocate",
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <title>Fastcase Verification Code</title>
+  <title>Verify Your Email</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f1f5f9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9; padding:32px 12px;">
+<body style="margin:0; padding:0; background-color:#f7f8f6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f8f6; padding:32px 12px;">
     <tr>
       <td align="center">
         <!-- Main Card -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px; background-color:#ffffff; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px; background-color:#ffffff; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
           
           <!-- Clean Header -->
           <tr>
-            <td style="background:#064e3b; padding:28px 32px; text-align:center;">
-              <div style="font-size:22px; font-weight:800; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">
-                FASTCASE<span style="color:#6ee7b7;">.IN</span>
+            <td style="background:linear-gradient(160deg, #013B36 0%, #014D46 100%); padding:28px 32px; text-align:center;">
+              <div style="font-size:22px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">
+                Fastcase
               </div>
-              <div style="font-size:12px; color:#a7f3d0; margin-top:4px; letter-spacing:0.5px;">
-                India's Complete Legal Operating System
+              <div style="font-size:11px; color:#6ee7b7; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-top:2px;">
+                Legal Platform
               </div>
             </td>
           </tr>
@@ -516,31 +516,26 @@ def render_otp_verification_template(otp_code: str, user_name: str = "Advocate",
           <!-- Content Body -->
           <tr>
             <td style="padding:36px 32px; background-color:#ffffff;">
-              <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 16px; line-height:1.3;">
-                Verify Your Email Address
+              <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 12px; line-height:1.3;">
+                Verify Your Email
               </h2>
               
-              <p style="font-size:15px; color:#475569; line-height:1.6; margin:0 0 20px;">
+              <p style="font-size:15px; color:#475569; line-height:1.6; margin:0 0 16px;">
                 Hello <strong>{user_name}</strong>,
               </p>
               
               <p style="font-size:15px; color:#475569; line-height:1.6; margin:0 0 24px;">
-                Thank you for registering with Fastcase. Please enter the following 6-digit verification code to activate your account and access your chambers:
+                We sent a 6-digit verification code to activate your chambers:
               </p>
 
               <!-- OTP Code Display -->
-              <div style="background-color:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:10px; padding:24px 16px; text-align:center; margin:24px 0;">
-                <div style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px;">
-                  Your 6-Digit Verification Code
-                </div>
-                
+              <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:24px 16px; text-align:center; margin:20px 0;">
                 <table role="presentation" cellpadding="0" cellspacing="6" align="center" style="margin:0 auto;">
                   <tr>
                     {digit_cells}
                   </tr>
                 </table>
                 
-                <!-- Fallback display -->
                 <div style="display:none; font-size:0; max-height:0; line-height:0; mso-hide:all;">{otp_code}</div>
 
                 <div style="font-size:13px; color:#64748b; margin-top:16px;">
@@ -548,12 +543,16 @@ def render_otp_verification_template(otp_code: str, user_name: str = "Advocate",
                 </div>
               </div>
 
-              <p style="font-size:13px; color:#64748b; line-height:1.6; margin:24px 0 0;">
-                If you did not request this verification code, you can safely ignore this email. No changes will be made to your account.
+              <div style="background-color:#f0fdf4; border-left:3px solid #059669; border-radius:4px; padding:12px 14px; margin:24px 0 0; font-size:12px; color:#065f46; line-height:1.5;">
+                🛡️ Section 126 Privileged Digital Chambers Protection
+              </div>
+
+              <p style="font-size:13px; color:#94a3b8; line-height:1.5; margin:20px 0 0;">
+                If you did not initiate this request, you can safely ignore this email.
               </p>
 
               <!-- Sign-off -->
-              <p style="font-size:14px; color:#475569; line-height:1.6; margin:28px 0 0; padding-top:20px; border-top:1px solid #f1f5f9;">
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:24px 0 0; padding-top:16px; border-top:1px solid #f1f5f9;">
                 Warm regards,<br/>
                 <strong style="color:#0f172a;">The Fastcase Team</strong>
               </p>
@@ -563,8 +562,7 @@ def render_otp_verification_template(otp_code: str, user_name: str = "Advocate",
           <!-- Clean Footer -->
           <tr>
             <td style="background-color:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.5;">
-              &copy; {current_year} Fastcase.in &bull; All Rights Reserved.<br/>
-              Need help? Reach out to <a href="mailto:support@fastcase.in" style="color:#059669; text-decoration:none; font-weight:600;">support@fastcase.in</a>
+              &copy; {current_year} Fastcase &bull; India's Complete Legal Operating System
             </td>
           </tr>
 
@@ -576,17 +574,16 @@ def render_otp_verification_template(otp_code: str, user_name: str = "Advocate",
 </html>"""
 
     text_body = (
-        f"FASTCASE.IN — VERIFICATION CODE\n"
+        f"FASTCASE — VERIFY YOUR EMAIL\n"
         f"====================================================\n\n"
         f"Hello {user_name},\n\n"
-        f"Thank you for registering with Fastcase (https://fastcase.in/).\n\n"
-        f"Your 6-digit verification code is:\n\n"
+        f"We sent a 6-digit verification code to activate your chambers:\n\n"
         f"    >>> {otp_code} <<<\n\n"
-        f"This code will expire in {expiry_minutes} minutes.\n\n"
-        f"If you did not request this verification code, please ignore this email.\n\n"
+        f"This code expires in {expiry_minutes} minutes.\n\n"
+        f"If you did not initiate this request, you can safely ignore this email.\n\n"
         f"Warm regards,\n"
         f"The Fastcase Team\n"
-        f"support@fastcase.in"
+        f"https://app.fastcase.in"
     )
 
     return html_body, text_body
@@ -608,10 +605,10 @@ async def send_otp_verification_email(
 
 def render_welcome_subscription_template(
     user_name: str,
-    plan_name: str = "Advocate Chambers Pro (14-Day Free Trial)",
+    plan_name: str = "Chambers Workspace",
     dashboard_url: str = "https://app.fastcase.in/login",
 ) -> tuple[str, str]:
-    """Render clean, warm, professional HTML and plain-text templates for welcome onboarding."""
+    """Render clean, warm, professional welcome email using exact application language."""
     current_year = datetime.now(timezone.utc).year
 
     html_body = f"""<!DOCTYPE html>
@@ -622,21 +619,21 @@ def render_welcome_subscription_template(
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <title>Welcome to Fastcase</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f1f5f9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9; padding:32px 12px;">
+<body style="margin:0; padding:0; background-color:#f7f8f6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f8f6; padding:32px 12px;">
     <tr>
       <td align="center">
         <!-- Main Card -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px; background-color:#ffffff; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px; background-color:#ffffff; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
           
           <!-- Header Banner -->
           <tr>
-            <td style="background:#064e3b; padding:32px; text-align:center;">
-              <div style="font-size:24px; font-weight:800; color:#ffffff; letter-spacing:1px; text-transform:uppercase;">
-                FASTCASE<span style="color:#6ee7b7;">.IN</span>
+            <td style="background:linear-gradient(160deg, #013B36 0%, #014D46 100%); padding:32px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">
+                Fastcase
               </div>
-              <div style="font-size:12px; color:#a7f3d0; margin-top:4px; letter-spacing:0.5px;">
-                India's Complete Legal Operating System
+              <div style="font-size:11px; color:#6ee7b7; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-top:2px;">
+                Legal Platform
               </div>
             </td>
           </tr>
@@ -644,68 +641,61 @@ def render_welcome_subscription_template(
           <!-- Main Content -->
           <tr>
             <td style="padding:36px 32px; background-color:#ffffff;">
-              
-              <!-- Badge -->
-              <div style="margin-bottom:20px;">
-                <span style="display:inline-block; background-color:#ecfdf5; border:1px solid #a7f3d0; color:#047857; font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px;">
-                  ✓ Workspace Ready &bull; {plan_name}
-                </span>
-              </div>
 
               <!-- Greeting -->
-              <h2 style="font-size:22px; font-weight:700; color:#0f172a; margin:0 0 16px; line-height:1.3;">
+              <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px; line-height:1.3;">
                 Welcome to Fastcase, {user_name}!
               </h2>
 
-              <p style="font-size:15px; color:#475569; line-height:1.65; margin:0 0 16px;">
-                Thank you for joining <strong>Fastcase</strong>. Your legal practice chambers workspace has been successfully created and configured.
+              <p style="font-size:15px; color:#014D46; font-weight:700; line-height:1.5; margin:0 0 8px;">
+                India's Complete Legal Operating System
               </p>
 
-              <p style="font-size:15px; color:#475569; line-height:1.65; margin:0 0 24px;">
-                Fastcase brings all your daily practice operations together into one intuitive platform:
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 24px;">
+                Manage cases, draft documents, track hearings, and run your practice — all in one platform.
               </p>
 
-              <!-- Clean 3-Item Highlights -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <!-- Exact Application Features List -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:24px;">
                 <tr>
-                  <td style="padding:10px 0; font-size:14px; color:#334155; line-height:1.5;">
-                    <strong style="color:#0f172a;">⚡ CNR & Cause List Synchronization</strong><br/>
-                    <span style="color:#64748b;">Real-time hearing tracking and cause list updates across High Courts & District Courts.</span>
+                  <td style="padding:10px 0;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Smart Legal Drafting</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Generate bail applications, writs, notices in seconds</div>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:10px 0; font-size:14px; color:#334155; line-height:1.5; border-top:1px solid #f1f5f9;">
-                    <strong style="color:#0f172a;">⚖️ 500+ Multilingual Vernacular Legal Drafts</strong><br/>
-                    <span style="color:#64748b;">Jurisdiction-vetted petitions, bail applications, and legal notices ready to customize.</span>
+                  <td style="padding:10px 0; border-top:1px solid #edf2f7;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Smart Case Management</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Track every case stage with real-time updates</div>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:10px 0; font-size:14px; color:#334155; line-height:1.5; border-top:1px solid #f1f5f9;">
-                    <strong style="color:#0f172a;">💳 GST-Compliant Fee Invoicing</strong><br/>
-                    <span style="color:#64748b;">Professional chamber billing, client trust ledgers, and automated receipt generation.</span>
+                  <td style="padding:10px 0; border-top:1px solid #edf2f7;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Document Intelligence</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">OCR, search, and analyze any legal document</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; border-top:1px solid #edf2f7;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Secure & Private</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Section 126 Privileged Digital Chambers Protection</div>
                   </td>
                 </tr>
               </table>
 
-              <!-- Security Note -->
-              <div style="background-color:#f8fafc; border-left:3px solid #059669; border-radius:4px; padding:12px 16px; margin:0 0 28px; font-size:13px; color:#475569; line-height:1.5;">
-                🔒 All client files and communications are secured with <strong>Section 126</strong> privileged digital chamber protection.
-              </div>
-
               <!-- Primary CTA Button -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td align="center">
-                    <a href="{dashboard_url}" target="_blank" style="display:inline-block; background-color:#059669; color:#ffffff !important; text-decoration:none; padding:14px 32px; font-size:15px; font-weight:700; border-radius:8px; text-align:center; box-shadow:0 3px 10px rgba(5,150,105,0.25);">
-                      Open Chambers Dashboard &rarr;
+                    <a href="{dashboard_url}" target="_blank" style="display:inline-block; background-color:#014D46; color:#ffffff !important; text-decoration:none; padding:14px 32px; font-size:15px; font-weight:700; border-radius:10px; text-align:center;">
+                      Enter Practice &rarr;
                     </a>
                   </td>
                 </tr>
               </table>
 
-              <!-- Support Note & Sign-off -->
-              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0; padding-top:20px; border-top:1px solid #f1f5f9;">
-                If you have any questions or need help setting up your team, feel free to reply directly or contact us at <a href="mailto:support@fastcase.in" style="color:#059669; text-decoration:none; font-weight:600;">support@fastcase.in</a>.<br/><br/>
+              <!-- Sign-off -->
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0; padding-top:16px; border-top:1px solid #f1f5f9;">
                 Warm regards,<br/>
                 <strong style="color:#0f172a;">The Fastcase Team</strong>
               </p>
@@ -716,7 +706,7 @@ def render_welcome_subscription_template(
           <!-- Footer -->
           <tr>
             <td style="background-color:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.5;">
-              &copy; {current_year} <a href="https://fastcase.in/" style="color:#059669; text-decoration:none; font-weight:600;">Fastcase.in</a> &bull; All Rights Reserved.
+              &copy; {current_year} Fastcase &bull; India's Complete Legal Operating System
             </td>
           </tr>
 
@@ -728,21 +718,20 @@ def render_welcome_subscription_template(
 </html>"""
 
     text_body = (
-        f"WELCOME TO FASTCASE — YOUR LEGAL PRACTICE PLATFORM IS READY\n"
-        f"============================================================\n\n"
-        f"Dear {user_name},\n\n"
-        f"Welcome to Fastcase! Your chambers workspace is now active under the {plan_name} plan.\n\n"
-        f"Fastcase brings all your daily practice operations together:\n"
-        f"- CNR & Cause List Synchronization: Real-time court tracking across High Courts & District Courts.\n"
-        f"- 500+ Multilingual Vernacular Legal Drafts: Jurisdiction-vetted petitions, bail applications, and notices.\n"
-        f"- GST-Compliant Fee Invoicing: Professional billing, ledgers, and automated receipts.\n"
-        f"- Section 126 privileged digital chamber vaults for secure client records.\n\n"
-        f"ACCESS YOUR CHAMBERS DASHBOARD:\n"
+        f"WELCOME TO FASTCASE\n"
+        f"India's Complete Legal Operating System\n"
+        f"====================================================\n\n"
+        f"Hello {user_name},\n\n"
+        f"Manage cases, draft documents, track hearings, and run your practice — all in one platform.\n\n"
+        f"• Smart Legal Drafting: Generate bail applications, writs, notices in seconds\n"
+        f"• Smart Case Management: Track every case stage with real-time updates\n"
+        f"• Document Intelligence: OCR, search, and analyze any legal document\n"
+        f"• Secure & Private: Section 126 Privileged Digital Chambers Protection\n\n"
+        f"Enter Practice:\n"
         f"{dashboard_url}\n\n"
-        f"If you need any assistance getting started, contact our team anytime at support@fastcase.in.\n\n"
         f"Warm regards,\n"
         f"The Fastcase Team\n"
-        f"https://fastcase.in"
+        f"https://app.fastcase.in"
     )
 
     return html_body, text_body
