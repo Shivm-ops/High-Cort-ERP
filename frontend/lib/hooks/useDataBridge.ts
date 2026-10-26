@@ -130,9 +130,7 @@ export function useDataBridgeHistory() {
 export async function analyzeBridgeFile(file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  const { data } = await api.post("/data-bridge/analyze-file", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const { data } = await api.post("/data-bridge/analyze-file", formData);
   return data;
 }
 
@@ -158,7 +156,6 @@ export async function uploadBridgeFile(
   formData.append("auto_classify", options?.autoClassify !== false ? "true" : "false");
 
   const { data } = await api.post("/data-bridge/upload-file", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
     onUploadProgress: (progressEvent) => {
       if (progressEvent.total && options?.onProgress) {
         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
