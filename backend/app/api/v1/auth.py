@@ -510,7 +510,7 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
                 to_email=str(user.email),
                 user_name=str(user.full_name or "Advocate"),
                 plan_name="Advocate 14-Day Pro Chambers Trial",
-                dashboard_url="https://fastcase.in/login",
+                dashboard_url="https://app.fastcase.in/login",
             )
         )
 
@@ -630,7 +630,7 @@ async def register_verify_otp(
             to_email=clean_email,
             user_name=full_name,
             plan_name="Advocate 14-Day Pro Chambers Trial",
-            dashboard_url="https://fastcase.in/login",
+            dashboard_url="https://app.fastcase.in/login",
         )
     )
 
