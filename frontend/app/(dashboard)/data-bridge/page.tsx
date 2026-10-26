@@ -44,11 +44,17 @@ import {
   Tag,
   User,
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  FileEdit,
+  Save,
+  Type,
+  AlignLeft,
+  BookOpen
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { api, API_URL, getErrorMessage } from "@/lib/api";
 import { useCases } from "@/lib/hooks/useCases";
 import { useClients } from "@/lib/hooks/useClients";
@@ -127,6 +133,8 @@ export default function DataBridgePage() {
   const [activeTab, setActiveTab] = useState<
     "import" | "library" | "export" | "migrate" | "backup" | "history"
   >("import");
+
+  const router = useRouter();
 
   const { data: casesData, refetch: refetchCases } = useCases({ limit: 500 });
   const { data: clientsData, refetch: refetchClients } = useClients({ limit: 500 });
@@ -881,6 +889,140 @@ export default function DataBridgePage() {
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // WORD & DOCUMENT IN-APP EDITOR MODAL STATE
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [editorDoc, setEditorDoc] = useState<ClientDocument | null>(null);
+  const [editorDocName, setEditorDocName] = useState<string>("");
+  const [editorText, setEditorText] = useState<string>("");
+  const [isLoadingEditorContent, setIsLoadingEditorContent] = useState<boolean>(false);
+  const [isSavingEditorText, setIsSavingEditorText] = useState<boolean>(false);
+  const [isExportingEditorDocx, setIsExportingEditorDocx] = useState<boolean>(false);
+  const [editorFontFamily, setEditorFontFamily] = useState<"times" | "sans" | "mono">("times");
+  const [editorFontSize, setEditorFontSize] = useState<number>(14);
+  const [editorHasChanges, setEditorHasChanges] = useState<boolean>(false);
+
+  const openFileEditorModal = async (doc: ClientDocument | BridgeUploadItem) => {
+    const docAny = doc as any;
+    const docId = docAny.docId || docAny.id;
+    const clientDoc: ClientDocument = {
+      id: docId,
+      name: docAny.name,
+      original_filename: docAny.original_filename || docAny.name,
+      doc_type: docAny.doc_type || docAny.docType || "other",
+      file_size: docAny.file_size || docAny.size || 0,
+      mime_type: docAny.mime_type || "application/octet-stream",
+      preview_url: docAny.preview_url || docAny.previewUrl || `/api/v1/documents/${docId}/stream?disposition=inline`,
+      download_url: docAny.download_url || docAny.downloadUrl || `/api/v1/documents/${docId}/stream?disposition=attachment`,
+      client_id: docAny.client_id || docAny.clientId,
+      client_name: docAny.client_name || docAny.clientName,
+      case_id: docAny.case_id || docAny.caseId,
+      case_title: docAny.case_title || docAny.caseTitle,
+      created_at: docAny.created_at || new Date().toISOString(),
+    };
+
+    setEditorDoc(clientDoc);
+    setEditorDocName(clientDoc.name);
+    setEditorText("");
+    setEditorHasChanges(false);
+    setIsLoadingEditorContent(true);
+
+    try {
+      const res = await getDocumentContent(docId);
+      if (res.text && res.text.trim()) {
+        setEditorText(res.text.trim());
+      } else {
+        const isWord = clientDoc.name.toLowerCase().endsWith(".docx") || clientDoc.name.toLowerCase().endsWith(".doc");
+        setEditorText(
+          `BEFORE THE HON'BLE COURT\n\n` +
+          `IN THE MATTER OF: ${clientDoc.name.replace(/\.[^/.]+$/, "")}\n` +
+          (clientDoc.client_name ? `Client: ${clientDoc.client_name}\n` : "") +
+          (clientDoc.case_title ? `Matter: ${clientDoc.case_title}\n` : "") +
+          `Date: ${new Date().toLocaleDateString("en-IN")}\n\n` +
+          `1. That the applicant/deponent abovenamed respectfully submits that...\n\n` +
+          (isWord 
+            ? `[Word Document ready for editing. Type or paste your document content, legal grounds, or prayer here]`
+            : `[Document text canvas ready. Type or paste your clauses, facts, or pleadings here]`)
+        );
+      }
+    } catch {
+      toast.error("Could not load document text from storage. Starting new document canvas.");
+      setEditorText("");
+    } finally {
+      setIsLoadingEditorContent(false);
+    }
+  };
+
+  const handleSaveEditorContent = async () => {
+    if (!editorDoc) return;
+    setIsSavingEditorText(true);
+    try {
+      await updateDocument(editorDoc.id, {
+        name: editorDocName.trim() || editorDoc.name,
+        text: editorText,
+      });
+      setEditorHasChanges(false);
+      toast.success("Document and text content saved successfully!");
+      refetchLib();
+      refetchImported();
+      refetchHistory();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsSavingEditorText(false);
+    }
+  };
+
+  const handleExportEditorDocx = async () => {
+    if (!editorText.trim()) {
+      toast.error("Document content is empty.");
+      return;
+    }
+    setIsExportingEditorDocx(true);
+    try {
+      const blob = await generateDocx(editorText, null, "en");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const baseName = (editorDocName || editorDoc?.name || "Document").replace(/\.[^/.]+$/, "");
+      a.download = `${baseName}_Edited.docx`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Downloaded Word (.docx) file");
+    } catch (err: any) {
+      toast.error("Failed to generate Word (.docx): " + err.message);
+    } finally {
+      setIsExportingEditorDocx(false);
+    }
+  };
+
+  const handleExportEditorTxt = () => {
+    if (!editorText.trim()) return;
+    const blob = new Blob([editorText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const baseName = (editorDocName || editorDoc?.name || "Document").replace(/\.[^/.]+$/, "");
+    a.download = `${baseName}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success("Downloaded Text (.txt) file");
+  };
+
+  const handleOpenInDraftWorkspace = () => {
+    if (!editorDoc) return;
+    router.push(`/draft-workspace?documentId=${editorDoc.id}`);
+  };
+
+  const insertTextSnippet = (snippet: string) => {
+    setEditorText((prev) => (prev ? prev + "\n\n" + snippet : snippet));
+    setEditorHasChanges(true);
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // TAB 6: AUDIT & RECORD MANAGEMENT STATE
   // ─────────────────────────────────────────────────────────────────────────────
   const [auditSubView, setAuditSubView] = useState<"all" | "clients" | "cases" | "documents" | "provenance">("all");
@@ -1367,6 +1509,17 @@ export default function DataBridgePage() {
                                 Preview
                               </button>
 
+                              {/* EDIT WORD / FILE BUTTON */}
+                              <button
+                                type="button"
+                                onClick={() => openFileEditorModal(item)}
+                                className="px-3 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition-all flex items-center gap-1 border border-emerald-200"
+                                title="Edit Word Document (.docx) or Text Content"
+                              >
+                                <FileEdit className="w-3.5 h-3.5 text-emerald-600" />
+                                Edit File
+                              </button>
+
                               {/* WORKING DOWNLOAD BUTTON */}
                               {item.downloadUrl && (
                                 <button
@@ -1686,6 +1839,20 @@ export default function DataBridgePage() {
                                 title="Preview Document"
                               >
                                 <Eye className="w-4 h-4" />
+                              </button>
+
+                              {/* EDIT WORD / FILE */}
+                              <button
+                                type="button"
+                                onClick={() => openFileEditorModal(doc)}
+                                className="p-1.5 rounded-lg text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 transition-colors"
+                                title={
+                                  doc.name.toLowerCase().endsWith(".docx") || doc.name.toLowerCase().endsWith(".doc")
+                                    ? "Edit Word Document (.docx)"
+                                    : "Edit Document / File Content"
+                                }
+                              >
+                                <FileEdit className="w-4 h-4" />
                               </button>
 
                               {/* DOWNLOAD */}
@@ -2865,6 +3032,15 @@ export default function DataBridgePage() {
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
+                                {/* EDIT WORD / FILE */}
+                                <button
+                                  type="button"
+                                  onClick={() => openFileEditorModal(doc as any)}
+                                  className="p-1.5 rounded-lg text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 transition-colors"
+                                  title="Edit Word / Document Content"
+                                >
+                                  <FileEdit className="w-4 h-4" />
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDownloadDocument(doc)}
@@ -2934,6 +3110,21 @@ export default function DataBridgePage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* EDIT WORD / FILE BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const docToEdit = previewDoc;
+                      setPreviewDoc(null);
+                      openFileEditorModal(docToEdit);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-sidebar text-white hover:bg-sidebar-dark text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                    title="Edit Word / Document Content"
+                  >
+                    <FileEdit className="w-3.5 h-3.5 text-mint" />
+                    Edit Word / File
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => openAiDraftModal(previewDoc)}
@@ -3003,25 +3194,310 @@ export default function DataBridgePage() {
                 ) : (
                   <div className="w-full h-full p-6 overflow-y-auto bg-white font-serif text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
                     {previewContent ? (
-                      previewContent
+                      <div>
+                        <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 text-xs">
+                          <span className="font-sans text-gray-500">Extracted Document Text</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const docToEdit = previewDoc;
+                              setPreviewDoc(null);
+                              openFileEditorModal(docToEdit);
+                            }}
+                            className="px-3 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-sans font-semibold inline-flex items-center gap-1 border border-emerald-200"
+                          >
+                            <FileEdit className="w-3.5 h-3.5 text-emerald-600" />
+                            Edit Document in Word Editor
+                          </button>
+                        </div>
+                        {previewContent}
+                      </div>
                     ) : (
                       <div className="text-center py-12 text-gray-400 font-sans">
                         <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                         <p className="font-semibold text-gray-700">Preview not natively supported for this format.</p>
                         <p className="text-xs text-gray-400 mt-1 mb-4">
-                          You can download the original file or use AI Draft to extract and edit its content.
+                          You can edit the document content in the in-app editor, download the original file, or use AI Draft.
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadDocument(previewDoc)}
-                          disabled={downloadingDocId === previewDoc.id}
-                          className="px-4 py-2 bg-sidebar text-white text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 disabled:opacity-50"
-                        >
-                          <Download className="w-3.5 h-3.5 text-mint" />
-                          {downloadingDocId === previewDoc.id ? "Downloading..." : "Download Original File"}
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const docToEdit = previewDoc;
+                              setPreviewDoc(null);
+                              openFileEditorModal(docToEdit);
+                            }}
+                            className="px-4 py-2 bg-sidebar text-white text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 shadow-sm"
+                          >
+                            <FileEdit className="w-3.5 h-3.5 text-mint" />
+                            Edit Word / Document Content
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadDocument(previewDoc)}
+                            disabled={downloadingDocId === previewDoc.id}
+                            className="px-4 py-2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            {downloadingDocId === previewDoc.id ? "Downloading..." : "Download Original File"}
+                          </button>
+                        </div>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* WORD & DOCUMENT IN-APP EDITOR MODAL */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {editorDoc && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-[#fcfdfd] shrink-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
+                  <div className="w-10 h-10 rounded-xl bg-sidebar text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <FileEdit className="w-5 h-5 text-mint" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editorDocName}
+                        onChange={(e) => {
+                          setEditorDocName(e.target.value);
+                          setEditorHasChanges(true);
+                        }}
+                        placeholder="Document Name"
+                        className="font-bold text-sm text-gray-900 bg-transparent border-b border-dashed border-gray-300 hover:border-sidebar focus:border-sidebar outline-none px-1 py-0.5 max-w-md w-full transition-colors"
+                        title="Click to rename document"
+                      />
+                      {editorDocName.toLowerCase().endsWith(".docx") || editorDocName.toLowerCase().endsWith(".doc") ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                          WORD (.DOCX)
+                        </span>
+                      ) : editorDocName.toLowerCase().endsWith(".txt") ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                          TEXT (.TXT)
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-700 shrink-0">
+                          DOCUMENT
+                        </span>
+                      )}
+                      {editorHasChanges && (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Unsaved changes" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                      {editorDoc.client_name && (
+                        <span className="font-medium text-sidebar">Client: {editorDoc.client_name}</span>
+                      )}
+                      {editorDoc.case_title && (
+                        <span>&bull; Matter: {editorDoc.case_title}</span>
+                      )}
+                      <span>&bull; {editorText.trim() ? editorText.trim().split(/\s+/).length : 0} words</span>
+                      <span>&bull; {editorText.length} characters</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Download DOCX */}
+                  <button
+                    type="button"
+                    onClick={handleExportEditorDocx}
+                    disabled={isExportingEditorDocx}
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-blue-200 shadow-sm disabled:opacity-50"
+                    title="Export and download formatted Word (.docx) file"
+                  >
+                    <Download className="w-3.5 h-3.5 text-blue-700" />
+                    {isExportingEditorDocx ? "Exporting..." : "Download Word (.docx)"}
+                  </button>
+
+                  {/* Download TXT */}
+                  <button
+                    type="button"
+                    onClick={handleExportEditorTxt}
+                    className="px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-all flex items-center gap-1 shadow-sm"
+                    title="Download Plain Text"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Text (.txt)
+                  </button>
+
+                  {/* Open in Legal Draft Workspace */}
+                  <button
+                    type="button"
+                    onClick={handleOpenInDraftWorkspace}
+                    className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold transition-all flex items-center gap-1 border border-purple-200 shadow-sm"
+                    title="Open in Full Legal Drafting Studio"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                    Draft Studio
+                  </button>
+
+                  {/* Save Changes */}
+                  <button
+                    type="button"
+                    disabled={isSavingEditorText}
+                    onClick={handleSaveEditorContent}
+                    className="px-4 py-1.5 rounded-xl bg-sidebar text-white hover:bg-sidebar-dark text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                  >
+                    {isSavingEditorText ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-mint" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5 text-mint" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+
+                  {/* Close */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editorHasChanges) {
+                        if (confirm("You have unsaved changes. Are you sure you want to close?")) {
+                          setEditorDoc(null);
+                        }
+                      } else {
+                        setEditorDoc(null);
+                      }
+                    }}
+                    className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 ml-1"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Legal Toolbar */}
+              <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                {/* Legal Clause Snippets */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mr-1">Insert Legal Clause:</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      insertTextSnippet(
+                        `BEFORE THE HON'BLE HIGH COURT OF JUDICATURE\n\nIN THE MATTER OF:\n... Petitioner\nVersus\n... Respondent\n\nCase No: `
+                      )
+                    }
+                    className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    + Court Heading
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      insertTextSnippet(
+                        `PRAYER\n\nWHEREFORE, in the facts and circumstances of the case, it is most respectfully prayed that this Hon'ble Court may graciously be pleased to:\n\n(a) Pass an order granting...\n(b) Grant any other relief deemed fit and proper in the interests of justice.`
+                      )
+                    }
+                    className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    + Prayer / Relief
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      insertTextSnippet(
+                        `VERIFICATION\n\nI, the deponent abovenamed, do hereby verify and declare that the contents of the above paragraphs are true and correct to the best of my knowledge and belief, and nothing material has been concealed therefrom.\n\nVerified at Mumbai on this ____ day of ________, 2026.\n\nDEPONENT`
+                      )
+                    }
+                    className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    + Verification Clause
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      insertTextSnippet(
+                        `SYNOPSIS & LIST OF DATES\n\nDate\t\tParticulars\n------------------------------------------------------------\n01.01.2026\tCause of action arose...\n`
+                      )
+                    }
+                    className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    + List of Dates
+                  </button>
+                </div>
+
+                {/* Typography controls */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Font:</span>
+                  <select
+                    value={editorFontFamily}
+                    onChange={(e) => setEditorFontFamily(e.target.value as any)}
+                    className="text-xs px-2 py-1 bg-white border border-gray-200 rounded-lg text-gray-700 outline-none"
+                  >
+                    <option value="times">Court Serif (Times)</option>
+                    <option value="sans">Executive (Inter / Sans)</option>
+                    <option value="mono">Pleading Mono (Courier)</option>
+                  </select>
+
+                  <select
+                    value={editorFontSize}
+                    onChange={(e) => setEditorFontSize(Number(e.target.value))}
+                    className="text-xs px-2 py-1 bg-white border border-gray-200 rounded-lg text-gray-700 outline-none"
+                  >
+                    <option value={12}>12 pt</option>
+                    <option value={14}>14 pt</option>
+                    <option value={16}>16 pt</option>
+                    <option value={18}>18 pt</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Editor Canvas */}
+              <div className="flex-1 bg-gray-100 p-4 sm:p-6 overflow-y-auto flex justify-center relative">
+                {isLoadingEditorContent ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+                    <div className="text-center">
+                      <RefreshCw className="w-8 h-8 animate-spin text-sidebar mx-auto mb-2" />
+                      <p className="text-xs font-medium text-gray-600">Loading document text...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full max-w-4xl bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col p-6 sm:p-10 min-h-[600px]">
+                    <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 text-xs text-gray-400">
+                      <span>Fastcase In-App Document & Word Editor</span>
+                      <span>Format: UTF-8 / Standard Court Margins</span>
+                    </div>
+                    <textarea
+                      value={editorText}
+                      onChange={(e) => {
+                        setEditorText(e.target.value);
+                        setEditorHasChanges(true);
+                      }}
+                      placeholder="Start typing your legal document or Word content here..."
+                      style={{
+                        fontFamily:
+                          editorFontFamily === "times"
+                            ? '"Times New Roman", Times, Georgia, serif'
+                            : editorFontFamily === "mono"
+                            ? 'Courier, "Courier New", monospace'
+                            : "var(--font-sans), system-ui, sans-serif",
+                        fontSize: `${editorFontSize}px`,
+                        lineHeight: 1.7,
+                      }}
+                      className="flex-1 w-full border-0 outline-none resize-none text-gray-900 bg-transparent min-h-[500px]"
+                    />
                   </div>
                 )}
               </div>

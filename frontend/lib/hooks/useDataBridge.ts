@@ -290,6 +290,7 @@ export async function updateDocument(docId: string, payload: {
   client_id?: string;
   case_id?: string;
   description?: string;
+  text?: string;
 }) {
   const { data } = await api.patch(`/documents/${docId}`, payload);
   return data;

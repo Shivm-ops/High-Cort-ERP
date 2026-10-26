@@ -114,6 +114,14 @@ def _verify_client_firm(client_id, current_user, db):
             raise HTTPException(status_code=403, detail="Client not found or access denied")
 
 
+def _sanitize_text(text: Optional[str]) -> Optional[str]:
+    """Strip NUL (0x00) characters which are forbidden in PostgreSQL text/varchar columns."""
+    if not text:
+        return None
+    cleaned = text.replace("\x00", "").replace("\u0000", "").strip()
+    return cleaned if cleaned else None
+
+
 def _safe_doc_dict(d: Document) -> dict:
     """Serialize document WITHOUT exposing internal file_path or storage_key."""
     return {
@@ -448,6 +456,7 @@ class DocumentUpdateRequest(BaseModel):
     description: Optional[str] = None
     is_evidence: Optional[bool] = None
     exhibit_number: Optional[str] = None
+    text: Optional[str] = None
 
 
 @router.patch("/{doc_id}")
@@ -502,6 +511,19 @@ async def update_document(
         doc.is_evidence = payload.is_evidence
     if payload.exhibit_number is not None:
         doc.exhibit_number = payload.exhibit_number
+    if payload.text is not None:
+        clean_text = _sanitize_text(payload.text) or ""
+        doc.ocr_text = clean_text
+        doc.ocr_processed = True
+        doc.version = (doc.version or 1) + 1
+        local_path = doc.file_path.replace("local://", "") if doc.file_path else ""
+        if local_path and os.path.exists(local_path) and doc.name.lower().endswith(".txt"):
+            try:
+                with open(local_path, "w", encoding="utf-8") as f:
+                    f.write(clean_text)
+                doc.file_size = len(clean_text.encode("utf-8"))
+            except Exception as e:
+                logger.warning(f"Could not rewrite text file {doc.id}: {e}")
 
     doc.case_id = target_case_id
     doc.client_id = target_client_id

@@ -25,6 +25,7 @@ import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { generateDocx } from "@/lib/exportDocx";
 import { useLanguageStore } from "@/lib/store/languageStore";
+import { getDocumentContent } from "@/lib/hooks/useDataBridge";
 
 const DRAFT_CATEGORIES = [
   { key: "Applications", label: "Applications", desc: "Interlocutory, bail & interim applications" },
@@ -59,13 +60,14 @@ function DraftWorkspaceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlDraftId = searchParams.get("draftId");
+  const urlDocumentId = searchParams.get("documentId");
   const urlTemplateId = searchParams.get("templateId");
   const urlClientId = searchParams.get("clientId");
   const urlCaseId = searchParams.get("caseId");
 
   // Mode: "drafts_list" | "wizard" | "editor"
   const [activeMode, setActiveMode] = useState<"drafts_list" | "wizard" | "editor">(
-    urlDraftId ? "editor" : urlTemplateId || urlCaseId || urlClientId ? "wizard" : "drafts_list"
+    urlDraftId || urlDocumentId ? "editor" : urlTemplateId || urlCaseId || urlClientId ? "wizard" : "drafts_list"
   );
 
   // Wizard state (steps 1 to 4)
@@ -148,6 +150,27 @@ function DraftWorkspaceContent() {
       setLastSavedTime(new Date(draftDetailData.updated_at));
     }
   }, [draftDetailData, currentDraftId]);
+
+  // Handle URL documentId to load imported file text directly
+  useEffect(() => {
+    if (urlDocumentId) {
+      getDocumentContent(urlDocumentId).then((res) => {
+        setDraftTitle(`Draft - ${res.name.replace(/\.[^/.]+$/, "")}`);
+        setEditorContent(res.text || "");
+        if (res.client_id) {
+          setSelectedClient({ id: res.client_id, name: res.client_name });
+        }
+        if (res.case_id) {
+          setSelectedMatter({ id: res.case_id, case_no: res.case_no, title: res.case_title });
+        }
+        setActiveMode("editor");
+        setIsDirty(false);
+        toast.success("Document loaded into Drafting Studio");
+      }).catch(() => {
+        toast.error("Could not load document text for editing");
+      });
+    }
+  }, [urlDocumentId]);
 
   // Handle URL params for client & case preselection
   useEffect(() => {

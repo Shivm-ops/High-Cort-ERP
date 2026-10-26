@@ -375,14 +375,22 @@ def test_7_document_patch_and_reassign(setup_test_data):
     )
     doc_id = up_res.json()["id"]
 
-    # Rename document
+    # Rename document and update its text content
     patch_res = client.patch(
         f"/api/v1/documents/{doc_id}",
         headers=headers_a,
-        json={"name": "Renamed_Document_Final.txt"},
+        json={
+            "name": "Renamed_Document_Final.txt",
+            "text": "Updated Legal Pleading Text Content for Client Alpha",
+        },
     )
     assert patch_res.status_code == 200
     assert patch_res.json()["name"] == "Renamed_Document_Final.txt"
+
+    # Verify content endpoint returns updated text
+    content_res = client.get(f"/api/v1/documents/{doc_id}/content", headers=headers_a)
+    assert content_res.status_code == 200
+    assert "Updated Legal Pleading Text Content" in content_res.json()["text"]
 
     # Try invalid reassign: Client A + Case A2 (which belongs to Client A2)
     bad_reassign = client.patch(
