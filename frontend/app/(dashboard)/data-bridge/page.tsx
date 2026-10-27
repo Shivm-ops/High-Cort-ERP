@@ -534,7 +534,20 @@ export default function DataBridgePage() {
   const downloadExport = async (endpoint: string, fallbackName: string) => {
     setIsExportingPractice(true);
     try {
-      const res = await api.get(endpoint, { responseType: "blob" });
+      let res;
+      try {
+        res = await api.get(endpoint, { responseType: "blob" });
+      } catch (err: any) {
+        if (err?.response?.status === 404 && endpoint.includes("/export/backup")) {
+          const fallbackUrl = endpoint.replace("/export/backup", "/export/practice-backup");
+          res = await api.get(fallbackUrl, { responseType: "blob" });
+        } else if (err?.response?.status === 404 && endpoint.includes("/export/practice-backup")) {
+          const fallbackUrl = endpoint.replace("/export/practice-backup", "/export/backup");
+          res = await api.get(fallbackUrl, { responseType: "blob" });
+        } else {
+          throw err;
+        }
+      }
       const disposition = res.headers["content-disposition"] || "";
       let filename = fallbackName;
       const match = disposition.match(/filename="?([^"]+)"?/);
@@ -1191,16 +1204,16 @@ export default function DataBridgePage() {
         subtitle="Unified client document management, secure bulk import & export, and AI-assisted drafting."
       />
 
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
-        {/* Navigation Tabs */}
-        <div className="bg-white rounded-2xl p-2 border border-gray-100 shadow-sm flex flex-wrap gap-2">
+      <div className="p-3 sm:p-5 lg:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Navigation Tabs - Responsive Grid */}
+        <div className="bg-white rounded-2xl p-2 border border-gray-100 shadow-sm grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
           {[
-            { id: "import", label: "Import Documents", icon: HardDriveUpload, desc: "Client & Bulk Ingestion" },
-            { id: "library", label: "Client Document Library", icon: FolderOpen, desc: "Search, Reassign & Preview" },
-            { id: "export", label: "Client-Wise Export", icon: Download, desc: "Export ZIP & Manifests" },
-            { id: "migrate", label: "Legacy Data Migration", icon: FileSpreadsheet, desc: "CSV / Excel Wizard" },
-            { id: "backup", label: "Practice Backup & Recovery", icon: ShieldCheck, desc: "Disaster Recovery" },
-            { id: "history", label: "Audit & Record Management", icon: History, desc: "CRUD, History & Conflicts" },
+            { id: "import", label: "Import Documents", icon: HardDriveUpload, desc: "Bulk & Client Files" },
+            { id: "library", label: "Document Library", icon: FolderOpen, desc: "Search & Preview" },
+            { id: "export", label: "Client Export", icon: Download, desc: "ZIP & Manifests" },
+            { id: "migrate", label: "Data Migration", icon: FileSpreadsheet, desc: "Spreadsheet Wizard" },
+            { id: "backup", label: "Backup & Restore", icon: ShieldCheck, desc: "Disaster Recovery" },
+            { id: "history", label: "Audit & Records", icon: History, desc: "History & Conflicts" },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1210,7 +1223,7 @@ export default function DataBridgePage() {
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "flex-1 min-w-[170px] py-3 px-4 rounded-xl text-left transition-all relative flex items-center gap-3",
+                  "w-full py-2.5 px-3 rounded-xl text-left transition-all relative flex items-center gap-2.5",
                   isActive
                     ? "bg-sidebar text-white shadow-md shadow-sidebar/10"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
@@ -1218,17 +1231,17 @@ export default function DataBridgePage() {
               >
                 <div
                   className={cn(
-                    "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
                     isActive ? "bg-white/10 text-mint" : "bg-gray-100 text-gray-500"
                   )}
                 >
                   <Icon className="w-4 h-4" />
                 </div>
-                <div className="min-w-0">
-                  <div className="font-bold text-xs leading-tight truncate">{tab.label}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-xs leading-snug break-words">{tab.label}</div>
                   <div
                     className={cn(
-                      "text-[10px] truncate mt-0.5",
+                      "text-[10px] hidden sm:block truncate mt-0.5",
                       isActive ? "text-gray-300" : "text-gray-400"
                     )}
                   >
@@ -2413,7 +2426,7 @@ export default function DataBridgePage() {
                 disabled={isExportingPractice}
                 onClick={() =>
                   downloadExport(
-                    `/data-bridge/export/backup?include_documents=${includeDocFiles}&passphrase=${encodeURIComponent(
+                    `/data-bridge/export/practice-backup?include_documents=${includeDocFiles}&passphrase=${encodeURIComponent(
                       backupPassphrase.trim()
                     )}`,
                     backupPassphrase.trim() ? "Fastcase_Practice_Backup.fcenc" : "Fastcase_Practice_Backup.zip"

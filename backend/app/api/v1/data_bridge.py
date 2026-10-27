@@ -862,6 +862,7 @@ async def export_cases_csv(
 
 
 @router.get("/export/practice-backup")
+@router.get("/export/backup")
 async def export_practice_backup(
     request: Request,
     passphrase: Optional[str] = Query(None, description="Optional AES-256-GCM encryption passphrase"),

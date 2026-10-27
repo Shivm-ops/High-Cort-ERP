@@ -457,3 +457,31 @@ def test_8_imported_records_search_and_conflict_resolution(setup_test_data):
     assert conflict_res.status_code == 200
     assert conflict_res.json()["success"] is True
 
+
+def test_9_practice_backup_export(setup_test_data):
+    """
+    Verify:
+    1. GET /api/v1/data-bridge/export/practice-backup returns 200 with zip archive.
+    2. GET /api/v1/data-bridge/export/backup alias returns 200 with zip archive.
+    3. Passphrase encryption creates valid encrypted payload (.fcenc).
+    """
+    ctx = setup_test_data
+    headers_a = {"Authorization": f"Bearer {ctx['token_a']}"}
+
+    # 1. Test standard practice-backup endpoint
+    res1 = client.get("/api/v1/data-bridge/export/practice-backup?include_documents=false", headers=headers_a)
+    assert res1.status_code == 200
+    assert "attachment;" in res1.headers.get("content-disposition", "")
+    assert len(res1.content) > 0
+
+    # 2. Test alias /backup endpoint
+    res2 = client.get("/api/v1/data-bridge/export/backup?include_documents=false", headers=headers_a)
+    assert res2.status_code == 200
+    assert "attachment;" in res2.headers.get("content-disposition", "")
+
+    # 3. Test encrypted export
+    res3 = client.get("/api/v1/data-bridge/export/backup?include_documents=false&passphrase=SecureKey123!", headers=headers_a)
+    assert res3.status_code == 200
+    assert res3.headers.get("x-fastcase-encrypted") == "true"
+
+
