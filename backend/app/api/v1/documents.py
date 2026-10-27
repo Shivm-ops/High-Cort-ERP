@@ -285,8 +285,9 @@ async def get_download_url(
         preview_url = download_url
         url_type = "presigned_s3"
     else:
-        preview_url = f"/api/v1/documents/{doc_id}/stream?disposition=inline&token={token}"
-        download_url = f"/api/v1/documents/{doc_id}/stream?disposition=attachment&token={token}"
+        base_url = str(request.base_url).rstrip("/") if request else ""
+        preview_url = f"{base_url}/api/v1/documents/{doc_id}/stream?disposition=inline&token={token}"
+        download_url = f"{base_url}/api/v1/documents/{doc_id}/stream?disposition=attachment&token={token}"
         url_type = "signed_local"
 
     log_action(db, AuditAction.DOCUMENT_DOWNLOAD, "DOCUMENT", doc_id,
@@ -365,6 +366,19 @@ async def stream_document(
     from fastapi.responses import FileResponse
     local_path = doc.file_path.replace("local://", "") if doc.file_path else ""
     if not local_path or not os.path.exists(local_path):
+        if doc.ocr_text and doc.ocr_text.strip():
+            from fastapi.responses import Response
+            fallback_filename = doc.original_filename or doc.name or "document.txt"
+            if not any(fallback_filename.lower().endswith(e) for e in (".txt", ".pdf", ".docx", ".doc")):
+                fallback_filename += ".txt"
+            return Response(
+                content=doc.ocr_text.encode("utf-8"),
+                media_type="text/plain; charset=utf-8",
+                headers={
+                    "Content-Disposition": f'{disp_type}; filename="{fallback_filename}"',
+                    "Access-Control-Expose-Headers": "Content-Disposition",
+                }
+            )
         raise HTTPException(status_code=404, detail="File content not found on server")
 
     filename = doc.original_filename or doc.name or "document"

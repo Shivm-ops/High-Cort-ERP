@@ -85,6 +85,7 @@ import { useWitnesses, useCreateWitness, useDeleteWitness, Witness } from "@/lib
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { downloadDocumentFile } from "@/lib/utils/download";
 
 type TabType =
   | "overview"
@@ -191,18 +192,8 @@ export default function CaseDetailPage() {
     }
   }, [printDraftData]);
 
-  const handleDownloadDocument = async (docId: string) => {
-    try {
-      const response = await api.get(`/documents/${docId}/download`);
-      if (response.data && response.data.download_url) {
-        window.open(response.data.download_url, "_blank");
-      } else {
-        toast.error("Failed to retrieve document download link");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Error retrieving document download link");
-    }
+  const handleDownloadDocument = async (docId: string, fallbackName?: string) => {
+    await downloadDocumentFile(docId, fallbackName || "document");
   };
 
   const handlePrintTab = () => {
@@ -504,10 +495,10 @@ export default function CaseDetailPage() {
       ],
     },
     {
-      group: "FILING",
+      group: "FILING & PRACTICE",
       items: [
         { key: "filings", label: "E-Filing" },
-        { key: "orders", label: "Orders", count: orders.length },
+        { key: "team", label: "Legal Team", count: teamActive.length },
         {
           key: "billing",
           label: "Billing & Ledger",
@@ -1626,11 +1617,11 @@ export default function CaseDetailPage() {
                             </button>
                           )}
                           <button
-                            onClick={() => handleDownloadDocument(d.id)}
-                            title="Download/Print Document"
+                            onClick={() => handleDownloadDocument(d.id, d.name)}
+                            title="Download Document"
                             className="p-2 text-gray-400 hover:text-sidebar rounded-lg hover:bg-white shadow-sm border border-transparent hover:border-gray-200"
                           >
-                            <Printer className="w-4 h-4" />
+                            <Download className="w-4 h-4" />
                           </button>
                         </div>
                       </div>

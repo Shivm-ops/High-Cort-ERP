@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Phone, Mail, MapPin, Briefcase, Plus, ExternalLink, CheckCircle, AlertCircle, FileText, ImageIcon, Video, Music, File, Calendar, Shield, IndianRupee } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, Mail, MapPin, Briefcase, Plus, ExternalLink, CheckCircle, AlertCircle, FileText, ImageIcon, Video, Music, File, Calendar, Shield, IndianRupee, Download } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Modal from "@/components/ui/Modal";
 import CaseForm from "@/components/forms/CaseForm";
@@ -11,6 +11,7 @@ import ClientForm from "@/components/forms/ClientForm";
 import { FormSkeleton } from "@/components/ui/Skeleton";
 import { useClient } from "@/lib/hooks/useClients";
 import { cn } from "@/lib/utils";
+import { downloadDocumentFile } from "@/lib/utils/download";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-50 text-green-700",
@@ -307,6 +308,13 @@ export default function ClientDetailPage() {
                           <div className="text-xs text-gray-400 capitalize">{d.doc_type.replace(/_/g, " ")} {d.file_size ? `· ${formatFileSize(d.file_size)}` : ""}</div>
                         </div>
                         {d.description && <span className="text-xs text-gray-400 truncate max-w-[120px]">{d.description}</span>}
+                        <button
+                          onClick={() => downloadDocumentFile(d.id, d.name)}
+                          title="Download Document"
+                          className="p-1.5 text-gray-400 hover:text-sidebar rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>

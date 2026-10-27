@@ -86,37 +86,37 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
   const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length;
 
   return (
-    <header className="h-16 bg-white/90 backdrop-blur-sm border-b border-gray-100 flex items-center px-6 gap-4 sticky top-0 z-30">
+    <header className="h-16 bg-white/90 backdrop-blur-sm border-b border-gray-100 flex items-center px-3 sm:px-6 gap-2 sm:gap-4 sticky top-0 z-30">
       {/* Mobile Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="md:hidden p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-100 active:scale-95 transition-all mr-1 flex-shrink-0"
+        className="md:hidden p-2 -ml-1 rounded-xl text-gray-500 hover:bg-gray-100 active:scale-95 transition-all mr-1 flex-shrink-0"
       >
         <Menu className="w-5 h-5" />
       </button>
 
       {/* Page title */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 pr-1">
         {title && (
           <div>
-            <h1 className="text-[17px] font-semibold text-charcoal truncate leading-tight">
+            <h1 className="text-[15px] sm:text-[17px] font-semibold text-charcoal truncate leading-tight">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-[12px] text-muted leading-tight">{subtitle}</p>
+              <p className="text-[11px] sm:text-[12px] text-muted truncate leading-tight hidden sm:block">{subtitle}</p>
             )}
           </div>
         )}
       </div>
 
       {/* Actions bar */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {rightContent}
 
         {/* AI Search */}
-        <div className="relative">
+        <div className="relative hidden md:block">
           <motion.div
-            animate={{ width: searchFocused ? 280 : 200 }}
+            animate={{ width: searchFocused ? 260 : 180 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="relative"
           >
