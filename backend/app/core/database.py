@@ -4,11 +4,20 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
 connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
-kwargs = {} if settings.DATABASE_URL.startswith("sqlite") else {"pool_size": 5, "max_overflow": 10}
+kwargs = (
+    {}
+    if settings.DATABASE_URL.startswith("sqlite")
+    else {
+        "pool_size": 20,
+        "max_overflow": 20,
+        "pool_recycle": 300,
+        "pool_timeout": 30,
+        "pool_pre_ping": True,
+    }
+)
 
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,
     connect_args=connect_args,
     **kwargs
 )

@@ -65,7 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
     items: [
-      { label: "Dashboard", href: "/", icon: LayoutDashboard },
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "My Tasks", href: "/tasks", icon: CheckCircle, badge: "Upcoming", badgeColor: "mint" },
     ],
   },

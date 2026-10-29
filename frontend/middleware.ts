@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
 
   // If the user has a valid token cookie and tries to visit /login → send to dashboard
   if (isAuthPage && token && token !== "null" && token !== "undefined") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // All other navigation: let it through.

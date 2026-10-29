@@ -5,6 +5,7 @@ FastAPI Application Entry Point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 import logging
 
@@ -119,6 +120,7 @@ app.add_middleware(
 )
 
 # Register API router
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(api_v1_router, prefix="/api/v1")
 
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 import json
 
@@ -40,171 +40,114 @@ class ResearchRequest(BaseModel):
     include_case_laws: bool = True
 
 
-class ChatMessage(BaseModel):
-    role: str  # user, assistant, system
-    content: str
+class ResearchContextPayload(BaseModel):
+    title: Optional[str] = None
+    court: Optional[str] = None
+    facts: Optional[str] = None
+    acts_involved: Optional[str] = None
+    key_issues: Optional[str] = None
 
 
-class ChatRequest(BaseModel):
-    messages: List[ChatMessage]
-    context: dict = {}
-    language: str = "en"
-
-
-class SummarizeRequest(BaseModel):
-    text: str
-    doc_type: str = "general"  # fir, judgment, contract, general
-    language: str = "en"
-
-
-class TranslateRequest(BaseModel):
-    text: str
-    source_language: str
-    target_language: str
-    doc_type: str = "legal"
-
-
-class LimitationRequest(BaseModel):
-    act: str
-    section: str
-    trigger_date: str
-    case_type: str
-
-
-@router.post("/draft/generate")
-async def generate_draft(
-    data: DraftRequest,
-    db: Session = Depends(get_db),
+@router.post("/draft/stream")
+async def stream_draft(
+    request: DraftRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Generate AI legal draft based on type and context."""
-    try:
-        api_key = get_user_openai_key(current_user)
-        draft_content = await ai_service.generate_draft(
-            draft_type=data.draft_type,
-            language=data.language,
-            context=data.context,
-            prompt=data.prompt,
-            api_key=api_key,
-        )
-        return {
-            "draft": draft_content,
-            "language": data.language,
-            "draft_type": data.draft_type,
-            "word_count": len(draft_content.split()),
+    """Stream AI draft generation SSE."""
+    api_key = get_user_openai_key(current_user)
+
+    async def event_generator():
+        try:
+            async for chunk in ai_service.generate_draft_stream(
+                draft_type=request.draft_type,
+                prompt=request.prompt,
+                context=request.context,
+                language=request.language,
+                api_key=api_key,
+            ):
+                yield f"data: {json.dumps({'content': chunk})}\n\n"
+            yield f"data: {json.dumps({'done': True})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI draft generation failed: {str(e)}")
+    )
 
 
 @router.post("/research")
 async def legal_research(
-    data: ResearchRequest,
-    db: Session = Depends(get_db),
+    request: ResearchRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """AI-powered legal research with RAG."""
-    try:
-        api_key = get_user_openai_key(current_user)
-        results = await ai_service.legal_research(
-            query=data.query,
-            language=data.language,
-            include_acts=data.include_acts,
-            include_case_laws=data.include_case_laws,
-            api_key=api_key,
-        )
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Research failed: {str(e)}")
+    """Semantic legal research across Acts and Case Laws."""
+    api_key = get_user_openai_key(current_user)
+    results = await ai_service.legal_research(
+        query=request.query,
+        language=request.language,
+        include_acts=request.include_acts,
+        include_case_laws=request.include_case_laws,
+        api_key=api_key,
+    )
+    return results
 
 
-@router.post("/chat")
-async def ai_chat(
-    data: ChatRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+@router.post("/analyze-order")
+async def analyze_court_order(
+    order_text: str,
+    current_user: User = Depends(get_current_user)
 ):
-    """AI legal assistant chat endpoint."""
-    try:
-        api_key = get_user_openai_key(current_user)
-        response = await ai_service.chat(
-            messages=[{"role": m.role, "content": m.content} for m in data.messages],
-            context=data.context,
-            language=data.language,
-            api_key=api_key,
-        )
-        return {"response": response, "sources": []}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI chat failed: {str(e)}")
+    """Analyze a court order: extract operative part, directions, next date, compliance items."""
+    api_key = get_user_openai_key(current_user)
+    analysis = await ai_service.analyze_court_order(order_text, api_key=api_key)
+    return analysis
 
 
-@router.post("/summarize")
-async def summarize_document(
-    data: SummarizeRequest,
-    current_user: User = Depends(get_current_user),
+@router.post("/notice-reply-strategy")
+async def generate_reply_strategy(
+    notice_text: str,
+    key_defences: List[str] = [],
+    current_user: User = Depends(get_current_user)
 ):
-    """Summarize legal documents (FIR, judgment, etc.)."""
-    try:
-        api_key = get_user_openai_key(current_user)
-        summary = await ai_service.summarize(
-            text=data.text,
-            doc_type=data.doc_type,
-            language=data.language,
-            api_key=api_key,
-        )
-        return {"summary": summary, "doc_type": data.doc_type}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Summarization failed: {str(e)}")
+    """Generate reply strategy and rebuttal points for a legal notice."""
+    api_key = get_user_openai_key(current_user)
+    strategy = await ai_service.generate_reply_strategy(
+        notice_text=notice_text,
+        key_defences=key_defences,
+        api_key=api_key,
+    )
+    return strategy
 
 
 @router.post("/translate")
-async def translate_document(
-    data: TranslateRequest,
-    current_user: User = Depends(get_current_user),
+async def translate_legal_text(
+    text: str,
+    source_lang: str,
+    target_lang: str,
+    current_user: User = Depends(get_current_user)
 ):
-    """Translate legal documents between Indian languages."""
-    try:
-        api_key = get_user_openai_key(current_user)
-        translated = await ai_service.translate(
-            text=data.text,
-            source=data.source_language,
-            target=data.target_language,
-            doc_type=data.doc_type,
-            api_key=api_key,
-        )
-        return {
-            "original": data.text,
-            "translated": translated,
-            "source_language": data.source_language,
-            "target_language": data.target_language,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
-
-
-@router.post("/limitation/calculate")
-async def calculate_limitation(
-    data: LimitationRequest,
-    current_user: User = Depends(get_current_user),
-):
-    """Calculate limitation period for filing."""
-    try:
-        result = await ai_service.calculate_limitation(
-            act=data.act,
-            section=data.section,
-            trigger_date=data.trigger_date,
-            case_type=data.case_type,
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Calculation failed: {str(e)}")
+    """Translate legal text preserving statutory terms."""
+    translated = await ai_service.translate_legal(
+        text=text,
+        source_lang=source_lang,
+        target_lang=target_lang,
+    )
+    return {"original": text, "translated": translated, "source": source_lang, "target": target_lang}
 
 
 @router.get("/suggestions/clauses")
 async def get_clause_suggestions(
     draft_type: str,
-    context: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    context: str = "",
+    current_user: User = Depends(get_current_user)
 ):
     """Get AI-suggested clauses for a draft type."""
     suggestions = await ai_service.get_clause_suggestions(
@@ -223,12 +166,17 @@ async def get_matter_suggestions(
     """Get AI generated legal research suggestions for a specific case."""
     try:
         case_uuid = uuid.UUID(case_id)
-        case = db.query(Case).filter(Case.id == case_uuid, Case.tenant_id == current_user.tenant_id).first()
+        query = db.query(Case).filter(Case.id == case_uuid)
+        if not current_user.is_superadmin and current_user.firm_id:
+            query = query.filter(Case.firm_id == current_user.firm_id)
+        case = query.first()
         if not case:
             raise HTTPException(status_code=404, detail="Case not found")
         
         # Build context string
-        case_info = f"Title: {case.title}\nType: {case.case_type}\nDescription: {case.description or 'No description provided'}"
+        acts = ", ".join(case.acts_involved or []) if case.acts_involved else ""
+        secs = ", ".join(case.sections_involved or []) if case.sections_involved else ""
+        case_info = f"Title: {case.title}\nType: {case.case_type or 'General'}\nCourt: {case.court or 'High Court'}\nActs: {acts}\nSections: {secs}\nDescription: {case.description or 'No description provided'}"
         
         api_key = get_user_openai_key(current_user)
         suggestions = await ai_service.get_case_suggestions(case_info, api_key=api_key)
@@ -237,3 +185,24 @@ async def get_matter_suggestions(
         raise HTTPException(status_code=400, detail="Invalid case ID format")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate suggestions: {str(e)}")
+
+
+@router.post("/research/context-suggestions")
+async def get_custom_context_suggestions(
+    payload: ResearchContextPayload,
+    current_user: User = Depends(get_current_user)
+):
+    """Get AI generated legal research suggestions for a custom research context."""
+    try:
+        title = payload.title or "General Legal Research"
+        court = payload.court or ""
+        facts = payload.facts or ""
+        acts = payload.acts_involved or ""
+        issues = payload.key_issues or ""
+
+        context_info = f"Title: {title}\nCourt: {court}\nActs & Sections: {acts}\nKey Issues: {issues}\nFacts: {facts}"
+        api_key = get_user_openai_key(current_user)
+        suggestions = await ai_service.get_case_suggestions(context_info, api_key=api_key)
+        return suggestions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate context suggestions: {str(e)}")
