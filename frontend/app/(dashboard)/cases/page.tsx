@@ -98,8 +98,14 @@ export default function CasesPage() {
         {isLoading ? (
           <TableSkeleton rows={8} cols={6} />
         ) : error ? (
-          <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
-            <p className="text-red-600 text-sm">Failed to load cases. Ensure the backend is running at localhost:8000</p>
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center space-y-2">
+            <p className="text-red-600 text-sm font-medium">Failed to load cases. Please check your network connection or try reloading.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">

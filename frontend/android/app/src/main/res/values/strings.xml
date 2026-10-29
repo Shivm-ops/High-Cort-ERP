@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Fastcase</string>
-    <string name="title_activity_main">Fastcase</string>
-    <string name="package_name">com.highcourterp.app</string>
-    <string name="custom_url_scheme">com.highcourterp.app</string>
-</resources>
