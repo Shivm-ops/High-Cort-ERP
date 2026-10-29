@@ -7,14 +7,15 @@ import {
   Pencil, Trash2, ExternalLink, AlertCircle, FileText, CheckCircle, Scale,
   Building2, Upload, FileBox, Search, ChevronDown, X, ListChecks,
   PrinterIcon, Download, Filter, LayoutList, Calendar, RefreshCw,
-  ArrowRight, BookOpen, BadgeAlert, ClipboardCheck, Layers
+  ArrowRight, BookOpen, BadgeAlert, ClipboardCheck, Layers, Mail
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import HearingForm from "@/components/forms/HearingForm";
 import {
-  useHearings, useHearingStats, useUpdateHearing, useDeleteHearing, Hearing,
+  useHearings, useHearingStats, useUpdateHearing, useDeleteHearing,
+  useNotifyHearingClient, useSendUpcomingReminders, Hearing,
 } from "@/lib/hooks/useHearings";
 import { useUpcomingTasks } from "@/lib/hooks/useTasks";
 import { cn } from "@/lib/utils";
@@ -147,6 +148,8 @@ export default function HearingsPage() {
   const stats = useHearingStats();
   const updateHearing = useUpdateHearing();
   const deleteMutation = useDeleteHearing();
+  const notifyClientMutation = useNotifyHearingClient();
+  const sendRemindersMutation = useSendUpcomingReminders();
 
   const allHearings = allData?.hearings || [];
   const hearingDates = new Set((calData?.hearings || []).map(h => h.hearing_date));
@@ -197,6 +200,14 @@ export default function HearingsPage() {
         subtitle="Manage your court hearings, schedules, preparation, and daily appearances."
         rightContent={
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => sendRemindersMutation.mutate(1)}
+              disabled={sendRemindersMutation.isPending}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors shadow-sm disabled:opacity-50"
+              title="Send email reminders for tomorrow's scheduled court hearings"
+            >
+              <Mail className="w-4 h-4" /> {sendRemindersMutation.isPending ? "Sending..." : "Remind Tomorrow"}
+            </button>
             <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
               <PrinterIcon className="w-4 h-4" /> Print
             </button>
@@ -361,8 +372,16 @@ export default function HearingsPage() {
                           </div>
                           <div className="text-sm font-bold text-gray-900 truncate">{h.case_title || "Untitled Matter"}</div>
                           {h.client_name && (
-                            <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                              <User className="w-3 h-3" /> {h.client_name}
+                            <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                              <span className="flex items-center gap-1"><User className="w-3 h-3" /> {h.client_name}</span>
+                              {h.client_email && (
+                                <span className="text-[10px] text-gray-400 font-normal">({h.client_email})</span>
+                              )}
+                              {h.reminder_sent && (
+                                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full" title="Court date email sent to client">
+                                  <CheckCircle className="w-2.5 h-2.5 text-emerald-600" /> Date Emailed
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -432,6 +451,31 @@ export default function HearingsPage() {
 
                         {/* Actions */}
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => {
+                              if (!h.client_email) {
+                                toast.error(`No email found for client ${h.client_name || ""}. Please update client details.`);
+                                return;
+                              }
+                              notifyClientMutation.mutate(h.id);
+                            }}
+                            disabled={notifyClientMutation.isPending}
+                            title={
+                              h.client_email
+                                ? `Email court date to ${h.client_name || "client"} (${h.client_email})`
+                                : "No client email configured"
+                            }
+                            className={cn(
+                              "p-1.5 rounded-lg transition-colors",
+                              h.client_email
+                                ? h.reminder_sent
+                                  ? "text-emerald-600 hover:bg-emerald-50"
+                                  : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
+                                : "text-gray-300 cursor-not-allowed"
+                            )}
+                          >
+                            <Mail className="w-4 h-4" />
+                          </button>
                           <button onClick={() => setPrepHearing(h)} title="Preparation Details"
                             className="p-1.5 text-gray-400 hover:text-sidebar hover:bg-sidebar/10 rounded-lg transition-colors">
                             <ClipboardCheck className="w-4 h-4" />
@@ -720,6 +764,17 @@ export default function HearingsPage() {
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {[
+                      {
+                        label: "Email Court Date",
+                        icon: Mail,
+                        action: () => {
+                          if (!prepHearing.client_email) {
+                            toast.error(`No email configured for client "${prepHearing.client_name || 'Client'}". Please add an email address in Client Management.`);
+                            return;
+                          }
+                          notifyClientMutation.mutate(prepHearing.id);
+                        },
+                      },
                       { label: "Open Case",     icon: ExternalLink, action: () => router.push(`/cases/${prepHearing.case_id}`) },
                       { label: "Upload Order",  icon: Upload,       action: () => router.push(`/cases/${prepHearing.case_id}?tab=documents`) },
                       { label: "View Drafts",   icon: FileText,     action: () => router.push(`/cases/${prepHearing.case_id}?tab=drafts`) },

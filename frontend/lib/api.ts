@@ -113,9 +113,9 @@ api.interceptors.response.use(
   }
 );
 
-export function getErrorMessage(error: unknown): string {
+export function getErrorMessage(error: unknown, fallback: string = "An unexpected error occurred"): string {
   if (axios.isAxiosError(error)) {
-    return error.response?.data?.detail || error.response?.data?.message || error.message;
+    return error.response?.data?.detail || error.response?.data?.message || error.message || fallback;
   }
-  return "An unexpected error occurred";
+  return fallback;
 }

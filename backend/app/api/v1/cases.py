@@ -37,6 +37,7 @@ def serialize_case(c: Case, include_relations: bool = False) -> dict:
         "client_id": str(c.client_id),
         "client_name": c.client.name if c.client else None,
         "client_phone": c.client.phone if c.client else None,
+        "client_email": c.client.email if c.client else None,
         "petitioner": c.petitioner,
         "respondent": c.respondent,
         "opposing_counsel": c.opposing_counsel,

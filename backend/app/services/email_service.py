@@ -939,6 +939,24 @@ async def send_transactional_email(
                 login_time=payload.get("login_time"),
                 reset_url=payload.get("reset_url", "https://fastcase.in/reset-password"),
             )
+        elif template in ("court_hearing", "hearing_notice", "hearing_reminder"):
+            html_body, text_body = render_court_hearing_template(
+                client_name=payload.get("client_name", "Valued Client"),
+                case_title=payload.get("case_title", "Case Proceeding"),
+                case_no=payload.get("case_no", "N/A"),
+                hearing_date=str(payload.get("hearing_date", "")),
+                hearing_time=payload.get("hearing_time"),
+                court=payload.get("court"),
+                courtroom=payload.get("courtroom"),
+                judge=payload.get("judge"),
+                purpose=payload.get("purpose"),
+                notes=payload.get("notes"),
+                advocate_name=payload.get("advocate_name"),
+                firm_name=payload.get("firm_name"),
+                advocate_phone=payload.get("advocate_phone"),
+                advocate_email=payload.get("advocate_email"),
+                notice_type=payload.get("notice_type", "scheduled"),
+            )
         else:
             # Direct custom HTML/plain text payload fallback
             html_body = payload.get("html", "<p>Notification from Fastcase</p>")
@@ -950,5 +968,347 @@ async def send_transactional_email(
     except Exception as exc:
         logger.error("Failed to compile or dispatch transactional email '%s' to %s: %s", template, to, exc, exc_info=True)
         return False
+
+
+# ── 5. Court Hearing Date Notification & Reminder ─────────────────────────────
+
+def render_court_hearing_template(
+    client_name: str,
+    case_title: str,
+    case_no: str,
+    hearing_date: str | date,
+    hearing_time: str | time | None = None,
+    court: str | None = None,
+    courtroom: str | None = None,
+    judge: str | None = None,
+    purpose: str | None = None,
+    notes: str | None = None,
+    advocate_name: str | None = None,
+    firm_name: str | None = None,
+    advocate_phone: str | None = None,
+    advocate_email: str | None = None,
+    notice_type: str = "scheduled",  # "scheduled" | "rescheduled" | "reminder"
+) -> tuple[str, str]:
+    """
+    Render professional branded HTML and plain-text templates for Court Hearing Date
+    notifications and reminders to clients and advocates.
+    """
+    current_year = datetime.now(timezone.utc).year
+    firm_display = firm_name or "Fastcase Chambers"
+    advocate_display = advocate_name or "Your Legal Counsel"
+    court_display = court or "Hon'ble Court"
+    courtroom_display = courtroom or "Check Daily Cause List"
+    purpose_display = purpose or "Hearing / Proceedings"
+
+    # Format hearing date nicely
+    formatted_date_str = str(hearing_date)
+    try:
+        if isinstance(hearing_date, str):
+            dt_obj = datetime.strptime(hearing_date.split("T")[0], "%Y-%m-%d")
+        elif isinstance(hearing_date, date):
+            dt_obj = datetime.combine(hearing_date, datetime.min.time())
+        else:
+            dt_obj = None
+
+        if dt_obj:
+            formatted_date_str = dt_obj.strftime("%A, %d %B %Y")
+    except Exception:
+        formatted_date_str = str(hearing_date)
+
+    # Format hearing time nicely
+    time_display = "10:30 AM onwards (As per Cause List)"
+    if hearing_time:
+        t_str = str(hearing_time)
+        try:
+            parts = t_str.split(":")
+            hr = int(parts[0])
+            minute = int(parts[1]) if len(parts) > 1 else 0
+            am_pm = "AM" if hr < 12 else "PM"
+            hr12 = hr % 12
+            if hr12 == 0:
+                hr12 = 12
+            time_display = f"{hr12:02d}:{minute:02d} {am_pm}"
+        except Exception:
+            time_display = t_str
+
+    # Notice type nuances
+    if notice_type == "reminder":
+        badge_text = "COURT DATE REMINDER"
+        badge_bg = "#eff6ff"
+        badge_border = "#93c5fd"
+        badge_color = "#1d4ed8"
+        headline = "Upcoming Court Hearing Reminder"
+        sub_message = f"This is an automated reminder regarding your upcoming court hearing scheduled on <strong>{formatted_date_str}</strong>."
+    elif notice_type == "rescheduled":
+        badge_text = "COURT DATE RESCHEDULED"
+        badge_bg = "#fffbeb"
+        badge_border = "#fde68a"
+        badge_color = "#b45309"
+        headline = "Court Hearing Date Rescheduled"
+        sub_message = f"Please be informed that the court hearing for your matter has been rescheduled to <strong>{formatted_date_str}</strong>."
+    else:
+        badge_text = "COURT HEARING NOTICE"
+        badge_bg = "#ecfdf5"
+        badge_border = "#a7f3d0"
+        badge_color = "#047857"
+        headline = "Your Court Hearing Date is Scheduled"
+        sub_message = f"Please find below the official details of your scheduled court hearing on <strong>{formatted_date_str}</strong>."
+
+    notes_html = ""
+    if notes and notes.strip():
+        notes_html = f"""
+        <tr>
+          <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; width:35%; border-bottom:1px solid #f1f5f9;">Special Instructions:</td>
+          <td style="padding:10px 14px; font-size:13px; color:#0f172a; border-bottom:1px solid #f1f5f9; line-height:1.4;">{notes}</td>
+        </tr>
+        """
+
+    advocate_contact_rows = []
+    if advocate_phone:
+        advocate_contact_rows.append(f'<strong>Phone:</strong> <a href="tel:{advocate_phone}" style="color:#014D46; text-decoration:none;">{advocate_phone}</a>')
+    if advocate_email:
+        advocate_contact_rows.append(f'<strong>Email:</strong> <a href="mailto:{advocate_email}" style="color:#014D46; text-decoration:none;">{advocate_email}</a>')
+    advocate_contact_str = " &nbsp;|&nbsp; ".join(advocate_contact_rows) if advocate_contact_rows else "Contact your legal chambers for queries."
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <title>{headline}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f8fafc; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px; background-color:#ffffff; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background:linear-gradient(160deg, #013B36 0%, #014D46 100%); padding:28px 32px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">
+                Fastcase
+              </div>
+              <div style="font-size:11px; color:#6ee7b7; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-top:2px;">
+                Chambers &amp; Court Operating System
+              </div>
+            </td>
+          </tr>
+
+          <!-- Main Body -->
+          <tr>
+            <td style="padding:32px; background-color:#ffffff;">
+
+              <!-- Status Badge -->
+              <div style="text-align:center; margin-bottom:16px;">
+                <span style="display:inline-block; padding:5px 14px; background-color:{badge_bg}; border:1px solid {badge_border}; border-radius:20px; font-size:11px; font-weight:800; color:{badge_color}; letter-spacing:1px; text-transform:uppercase;">
+                  {badge_text}
+                </span>
+              </div>
+
+              <!-- Title & Greeting -->
+              <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px; text-align:center; line-height:1.3;">
+                {headline}
+              </h2>
+
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 20px; text-align:center;">
+                Dear <strong>{client_name}</strong>,<br/>
+                {sub_message}
+              </p>
+
+              <!-- Highlighted Court Date Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border:2px solid #10b981; border-radius:14px; margin-bottom:24px; text-align:center; padding:18px;">
+                <tr>
+                  <td>
+                    <div style="font-size:11px; font-weight:800; color:#047857; text-transform:uppercase; letter-spacing:1.5px;">
+                      COURT HEARING DATE
+                    </div>
+                    <div style="font-size:24px; font-weight:900; color:#014D46; margin:6px 0 4px; letter-spacing:-0.2px;">
+                      {formatted_date_str}
+                    </div>
+                    <div style="font-size:13px; font-weight:700; color:#059669;">
+                      ⏰ Scheduled Time: {time_display}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Detailed Case Information Table -->
+              <div style="font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">
+                Case &amp; Courtroom Details
+              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; background-color:#ffffff; margin-bottom:24px;">
+                <tr style="background-color:#f8fafc;">
+                  <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; width:35%; border-bottom:1px solid #f1f5f9;">Case Title:</td>
+                  <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9;">{case_title}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; border-bottom:1px solid #f1f5f9;">Case No. / CNR:</td>
+                  <td style="padding:10px 14px; font-size:13px; color:#0f172a; border-bottom:1px solid #f1f5f9;">{case_no}</td>
+                </tr>
+                <tr style="background-color:#f8fafc;">
+                  <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; border-bottom:1px solid #f1f5f9;">Court:</td>
+                  <td style="padding:10px 14px; font-size:13px; font-weight:600; color:#0f172a; border-bottom:1px solid #f1f5f9;">{court_display}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; border-bottom:1px solid #f1f5f9;">Courtroom / Bench:</td>
+                  <td style="padding:10px 14px; font-size:13px; color:#0f172a; border-bottom:1px solid #f1f5f9;">{courtroom_display}</td>
+                </tr>
+                {f'<tr style="background-color:#f8fafc;"><td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; border-bottom:1px solid #f1f5f9;">Presiding Judge:</td><td style="padding:10px 14px; font-size:13px; color:#0f172a; border-bottom:1px solid #f1f5f9;">{judge}</td></tr>' if judge else ''}
+                <tr>
+                  <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#475569; border-bottom:1px solid #f1f5f9;">Purpose / Stage:</td>
+                  <td style="padding:10px 14px; font-size:13px; color:#014D46; font-weight:700; border-bottom:1px solid #f1f5f9;">{purpose_display}</td>
+                </tr>
+                {notes_html}
+              </table>
+
+              <!-- Action Guidelines for Client -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border-left:4px solid #014D46; border-radius:6px; padding:14px 16px; margin-bottom:24px;">
+                <tr>
+                  <td>
+                    <div style="font-size:13px; font-weight:800; color:#014D46; margin-bottom:6px;">
+                      📋 Important Instructions for Client:
+                    </div>
+                    <ul style="margin:0; padding-left:18px; font-size:12px; color:#475569; line-height:1.7;">
+                      <li>Please arrive at the court premises at least <strong>30 minutes</strong> prior to the scheduled time.</li>
+                      <li>Carry a valid government photo ID card (Aadhaar, Voter ID, or Passport).</li>
+                      <li>Bring any case documents, original receipts, or exhibits requested by your counsel.</li>
+                      <li>Ensure your mobile phone is kept on silent mode inside the courtroom.</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Advocate & Law Firm Contact Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px; text-align:center;">
+                <tr>
+                  <td>
+                    <div style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+                      Legal Counsel
+                    </div>
+                    <div style="font-size:15px; font-weight:800; color:#0f172a;">
+                      {advocate_display}
+                    </div>
+                    <div style="font-size:12px; color:#64748b; margin-top:2px; font-weight:600;">
+                      {firm_display}
+                    </div>
+                    <div style="font-size:12px; color:#475569; margin-top:10px;">
+                      {advocate_contact_str}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px; background-color:#f8fafc; border-top:1px solid #e2e8f0; text-align:center;">
+              <p style="font-size:11px; color:#94a3b8; line-height:1.6; margin:0;">
+                This legal notification was generated automatically on behalf of {firm_display}.<br/>
+                &copy; {current_year} Fastcase. All rights reserved. Confidential &amp; Privileged.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
+
+    text_body = f"""COURT HEARING NOTICE - FASTCASE LEGAL PLATFORM
+--------------------------------------------------
+Notice Type: {badge_text}
+Dear {client_name},
+
+This is an official notice regarding your court case hearing:
+
+COURT HEARING DATE: {formatted_date_str}
+TIME: {time_display}
+
+CASE DETAILS:
+- Case Title: {case_title}
+- Case No.: {case_no}
+- Court: {court_display}
+- Courtroom / Bench: {courtroom_display}
+{f'- Presiding Judge: {judge}' if judge else ''}
+- Purpose / Stage: {purpose_display}
+{f'- Notes: {notes}' if notes else ''}
+
+INSTRUCTIONS FOR CLIENT:
+1. Please reach the court premises at least 30 minutes in advance.
+2. Carry your government photo ID and any documents requested by counsel.
+3. Switch your mobile phone to silent inside the courtroom.
+
+LEGAL COUNSEL:
+Advocate: {advocate_display}
+Firm: {firm_display}
+{advocate_contact_str.replace('&nbsp;|&nbsp;', '|').replace('<strong>', '').replace('</strong>', '')}
+
+(c) {current_year} Fastcase Legal Platform. Confidential.
+"""
+
+    return html_body, text_body
+
+
+async def send_court_hearing_email(
+    to_email: str,
+    client_name: str,
+    case_title: str,
+    case_no: str,
+    hearing_date: str | date,
+    hearing_time: str | time | None = None,
+    court: str | None = None,
+    courtroom: str | None = None,
+    judge: str | None = None,
+    purpose: str | None = None,
+    notes: str | None = None,
+    advocate_name: str | None = None,
+    firm_name: str | None = None,
+    advocate_phone: str | None = None,
+    advocate_email: str | None = None,
+    notice_type: str = "scheduled",
+) -> bool:
+    """Async dispatch helper for court date notification & reminder emails."""
+    try:
+        html_body, text_body = render_court_hearing_template(
+            client_name=client_name,
+            case_title=case_title,
+            case_no=case_no,
+            hearing_date=hearing_date,
+            hearing_time=hearing_time,
+            court=court,
+            courtroom=courtroom,
+            judge=judge,
+            purpose=purpose,
+            notes=notes,
+            advocate_name=advocate_name,
+            firm_name=firm_name,
+            advocate_phone=advocate_phone,
+            advocate_email=advocate_email,
+            notice_type=notice_type,
+        )
+
+        formatted_date = str(hearing_date).split("T")[0]
+        if notice_type == "reminder":
+            subject = f"Court Hearing Reminder: {case_title} on {formatted_date}"
+        elif notice_type == "rescheduled":
+            subject = f"Updated Court Hearing Date: {case_title} - {formatted_date}"
+        else:
+            subject = f"Court Hearing Date Notice: {case_title} on {formatted_date}"
+
+        await send_email(to_email, subject, html_body, text_body)
+        logger.info("Successfully sent court hearing email (%s) to %s for case %s", notice_type, to_email, case_no)
+        return True
+    except Exception as exc:
+        logger.error("Failed to send court hearing email to %s: %s", to_email, exc, exc_info=True)
+        return False
+
 
 

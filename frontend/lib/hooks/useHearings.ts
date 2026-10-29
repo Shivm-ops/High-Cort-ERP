@@ -9,6 +9,7 @@ export interface Hearing {
   case_title?: string;
   client_name?: string;
   client_mobile?: string;
+  client_email?: string;
   hearing_date: string;
   hearing_time?: string;
   court?: string;
@@ -17,6 +18,7 @@ export interface Hearing {
   purpose?: string;
   status: string;
   notes?: string;
+  reminder_sent?: boolean;
   next_date?: string;
   next_purpose?: string;
   order_passed?: string;
@@ -148,5 +150,35 @@ export function useDeleteHearing() {
       toast.success("Hearing removed");
     },
     onError: (e) => toast.error(getErrorMessage(e)),
+  });
+}
+
+export function useNotifyHearingClient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post(`/hearings/${id}/notify-client`);
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: KEYS.all });
+      toast.success(data?.message || "Court hearing date email sent to client");
+    },
+    onError: (e) => toast.error(getErrorMessage(e, "Failed to send court date email")),
+  });
+}
+
+export function useSendUpcomingReminders() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (daysAhead: number = 1) => {
+      const { data } = await api.post(`/hearings/send-upcoming-reminders?days_ahead=${daysAhead}`);
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: KEYS.all });
+      toast.success(data?.message || "Upcoming hearing reminders dispatched");
+    },
+    onError: (e) => toast.error(getErrorMessage(e, "Failed to dispatch reminders")),
   });
 }

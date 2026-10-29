@@ -8,6 +8,7 @@ import { HearingCreate, useCreateHearing, useUpdateHearing, Hearing } from "@/li
 import { useCases } from "@/lib/hooks/useCases";
 import { useRecordFee } from "@/lib/hooks/useBilling";
 import { cn } from "@/lib/utils";
+import { Mail } from "lucide-react";
 
 const schema = z.object({
   case_id: z.string().min(1, "Case is required"),
@@ -51,7 +52,7 @@ export default function HearingForm({ hearing, defaultCaseId, onSuccess }: Props
     (c.client_phone && c.client_phone.replace(/[^0-9]/g, "").includes(caseSearch.replace(/[^0-9]/g, "")))
   );
 
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: hearing
       ? {
@@ -71,6 +72,9 @@ export default function HearingForm({ hearing, defaultCaseId, onSuccess }: Props
           hearing_date: new Date().toISOString().split("T")[0],
         },
   });
+
+  const selectedCaseId = watch("case_id");
+  const selectedCase = casesData?.cases.find((c) => c.id === selectedCaseId);
 
   const onSubmit = async (data: FormData) => {
     if (isEdit) {
@@ -115,6 +119,24 @@ export default function HearingForm({ hearing, defaultCaseId, onSuccess }: Props
             </option>
           ))}
         </select>
+        {selectedCase && (
+          <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 flex items-start gap-2 text-xs text-emerald-900">
+            <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="leading-relaxed">
+              <span className="font-bold text-emerald-800">Automated Court Date Email:</span>{" "}
+              {selectedCase.client_email ? (
+                <span>
+                  An official hearing notice with the court date, time, and instructions will be automatically emailed to{" "}
+                  <strong>{selectedCase.client_name || "client"}</strong> ({selectedCase.client_email}).
+                </span>
+              ) : (
+                <span className="text-amber-800">
+                  Client <strong>{selectedCase.client_name || "Client"}</strong> has no email configured. Add an email in Client details to enable automated emails.
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </Field>
 
       <div className="grid grid-cols-2 gap-4">

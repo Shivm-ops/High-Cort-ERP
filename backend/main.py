@@ -77,6 +77,72 @@ def _backfill_firm_subdomains():
     finally:
         db.close()
 
+import asyncio
+
+async def _hearing_reminder_cron_worker():
+    """Background task running periodically to dispatch upcoming hearing reminders."""
+    from datetime import date, timedelta
+    from sqlalchemy.orm import joinedload
+    from app.core.database import SessionLocal
+    from app.models.hearing import Hearing, HearingStatus
+    from app.models.case import Case
+    from app.services.email_service import send_court_hearing_email
+
+    # Initial delay on startup before running first check
+    await asyncio.sleep(30)
+    while True:
+        try:
+            tomorrow = date.today() + timedelta(days=1)
+            with SessionLocal() as db:
+                upcoming = (
+                    db.query(Hearing)
+                    .options(joinedload(Hearing.case).joinedload(Case.client))
+                    .filter(
+                        Hearing.hearing_date == tomorrow,
+                        Hearing.status == HearingStatus.SCHEDULED,
+                        Hearing.reminder_sent == False,
+                    )
+                    .all()
+                )
+                for h in upcoming:
+                    case = h.case
+                    if case and case.client and case.client.email:
+                        firm_name = "Fastcase Chambers"
+                        if hasattr(case, "firm") and case.firm and hasattr(case.firm, "name"):
+                            firm_name = case.firm.name
+                        try:
+                            await send_court_hearing_email(
+                                to_email=case.client.email,
+                                client_name=case.client.name or "Valued Client",
+                                case_title=case.title or "Legal Matter",
+                                case_no=case.case_no or "N/A",
+                                hearing_date=h.hearing_date.isoformat(),
+                                hearing_time=str(h.hearing_time) if h.hearing_time else None,
+                                court=h.court or case.court or "Hon'ble Court",
+                                courtroom=h.courtroom,
+                                judge=h.judge,
+                                purpose=h.purpose,
+                                notes=h.notes,
+                                advocate_name="Legal Counsel",
+                                firm_name=firm_name,
+                                notice_type="reminder",
+                            )
+                            h.reminder_sent = True
+                        except Exception as e:
+                            logger.error(f"Error in automatic hearing reminder worker for hearing {h.id}: {e}")
+                db.commit()
+        except asyncio.CancelledError:
+            break
+        except Exception as exc:
+            logger.error(f"Error in periodic hearing reminder worker: {exc}")
+
+        # Check every 4 hours
+        try:
+            await asyncio.sleep(14400)
+        except asyncio.CancelledError:
+            break
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("🚀 Fastcase API starting up...")
@@ -93,7 +159,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️ Template seeding notice: {e}")
     logger.info("✅ Database tables created/verified")
+
+    # Start periodic court hearing reminder worker
+    reminder_task = asyncio.create_task(_hearing_reminder_cron_worker())
+    logger.info("📅 Automated Court Date Reminder worker started")
+
     yield
+
+    reminder_task.cancel()
+    try:
+        await reminder_task
+    except (asyncio.CancelledError, Exception):
+        pass
     logger.info("🛑 Fastcase API shutting down...")
 
 
