@@ -9,7 +9,7 @@ asyncio.to_thread so the FastAPI event loop is never blocked.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, time
 from typing import Any
 
 from azure.communication.email import EmailClient
