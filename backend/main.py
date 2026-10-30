@@ -55,6 +55,15 @@ def run_db_migrations():
                 conn.rollback()
                 logger.warning(f"⚠️ Index notice: {e}")
 
+        # Ensure reminder_sent exists on hearings table
+        try:
+            conn.execute(text("ALTER TABLE hearings ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE"))
+            conn.commit()
+            logger.info("✅ Verified reminder_sent column in hearings table")
+        except Exception as e:
+            conn.rollback()
+            logger.warning(f"⚠️ Notice on hearings.reminder_sent: {e}")
+
     _backfill_firm_subdomains()
 
 

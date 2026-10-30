@@ -227,10 +227,12 @@ async def create_hearing(
 @router.post("/send-upcoming-reminders")
 async def send_upcoming_reminders(
     days_ahead: int = 1,
-    background_tasks: BackgroundTasks = BackgroundTasks(),
+    background_tasks: BackgroundTasks = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
+    if background_tasks is None:
+        background_tasks = BackgroundTasks()
     """
     Scan upcoming hearings for tomorrow (or days_ahead) and send automated
     reminder emails to clients who haven't received a reminder yet.
