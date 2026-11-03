@@ -31,7 +31,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_requests_total[1m]))",
+          "expr": "sum(rate(http_request_duration_seconds_count[1m])) or sum(rate(http_requests_total[1m])) or vector(0)",
           "legendFormat": "Requests/sec",
           "range": true,
           "refId": "A"
@@ -78,7 +78,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[1m])) or vector(0)",
+          "expr": "sum(rate(http_request_duration_seconds_count{status=~\"5..|5xx\"}[1m])) or sum(rate(http_requests_total{status=~\"5..\"}[1m])) or vector(0)",
           "legendFormat": "5xx/sec",
           "range": true,
           "refId": "A"
@@ -124,7 +124,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) or vector(0)",
           "legendFormat": "p95 Latency",
           "range": true,
           "refId": "A"
@@ -218,7 +218,7 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (status) (rate(http_requests_total[1m]))",
+          "expr": "sum by (status) (rate(http_request_duration_seconds_count[1m])) or sum by (status) (rate(http_requests_total[1m]))",
           "legendFormat": "Status {{status}}",
           "range": true,
           "refId": "A"
@@ -312,4 +312,3 @@
   "title": "Fastcase ERP — System & API Performance",
   "uid": "fastcase-overview"
 }
-

@@ -211,12 +211,14 @@ app.include_router(api_v1_router, prefix="/api/v1")
 
 # Prometheus Metrics Instrumentation
 try:
-    from prometheus_fastapi_instrumentator import Instrumentator
-    Instrumentator(
+    from prometheus_fastapi_instrumentator import Instrumentator, metrics
+    instrumentator = Instrumentator(
         should_group_status_codes=False,
         should_ignore_untemplated=True,
-        excluded_handlers=["/metrics", "/health", "/docs", "/openapi.json"]
-    ).instrument(app).expose(app, endpoint="/metrics")
+        excluded_handlers=["/metrics", "/health", "/api/v1/health", "/docs", "/openapi.json"]
+    )
+    instrumentator.add(metrics.requests())
+    instrumentator.instrument(app).expose(app, endpoint="/metrics")
     logger.info("📊 Prometheus metrics instrumentation enabled at /metrics")
 except Exception as e:
     logger.warning(f"Prometheus instrumentation notice: {e}")
@@ -233,6 +235,7 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
     return {"status": "healthy", "service": "fastcase-api"}
 
