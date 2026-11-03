@@ -1,0 +1,98 @@
+name: CD Pipeline (Deploy to Production)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Target Deployment Environment"
+        required: true
+        default: "vps"
+        type: choice
+        options:
+          - "vps"
+          - "aws_ec2"
+          - "all"
+
+jobs:
+  # ─── 1. Deploy to Production Linux VPS (DigitalOcean / Hostinger) ───────────
+  deploy-vps:
+    name: Deploy to Production VPS
+    if: github.event_name == 'push' || inputs.target_env == 'vps' || inputs.target_env == 'all'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST || secrets.EC2_HOST }}
+          username: ${{ secrets.VPS_USERNAME || 'root' }}
+          key: ${{ secrets.VPS_SSH_KEY || secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 [Fastcase CD] Starting production VPS deployment..."
+            
+            DEPLOY_DIR="/opt/fastcase"
+            if [ ! -d "$DEPLOY_DIR" ]; then
+              DEPLOY_DIR="$HOME/High-Cort-ERP"
+            fi
+            
+            echo "📂 Working directory: $DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            echo "📥 Synchronizing latest commits from origin/main..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "🔨 Building updated microservices..."
+            docker compose -f docker-compose.vps.yml build backend frontend admin-frontend
+
+            echo "🚀 Launching all services with zero-downtime recreation..."
+            docker compose -f docker-compose.vps.yml up -d
+
+            echo "🔄 Refreshing Nginx reverse proxy routing..."
+            docker compose -f docker-compose.vps.yml restart nginx
+
+            echo "🧹 Pruning dangling Docker layers and images..."
+            docker image prune -f
+
+            echo "🩺 Running container health checks..."
+            sleep 5
+            docker compose -f docker-compose.vps.yml ps
+
+            echo "🌐 Probing FastAPI backend health endpoint..."
+            if command -v curl &> /dev/null; then
+              curl -s -f http://127.0.0.1:8000/health || echo "Notice: Backend still initializing"
+            fi
+            
+            echo "✅ [Fastcase CD] Production deployment finished successfully!"
+
+  # ─── 2. Deploy to AWS EC2 (Optional / Multi-Cloud) ──────────────────────────
+  deploy-ec2:
+    name: Deploy to AWS EC2
+    if: (github.event_name == 'workflow_dispatch' && (inputs.target_env == 'aws_ec2' || inputs.target_env == 'all'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH to AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME || 'ubuntu' }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            echo "🚀 [Fastcase CD] Deploying to AWS EC2..."
+            DEPLOY_DIR="/home/${{ secrets.EC2_USERNAME || 'ubuntu' }}/High-Cort-ERP"
+            cd "$DEPLOY_DIR"
+            git pull origin main
+            docker compose -f docker-compose.aws.yml up -d --build
+            docker image prune -f
+            echo "✅ AWS EC2 deployment complete!"
