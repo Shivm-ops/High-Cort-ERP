@@ -34,3 +34,5 @@ djangorestframework>=3.15.1
 pyotp==2.9.0
 SQLAlchemy-Utils>=0.41.2
 azure-communication-email>=1.0.0
+prometheus-fastapi-instrumentator>=6.1.0
+prometheus-client>=0.20.0

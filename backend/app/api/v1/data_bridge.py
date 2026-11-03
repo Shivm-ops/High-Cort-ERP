@@ -1637,9 +1637,24 @@ async def ai_draft_improve(
     if not source_text and not payload.instructions and not payload.facts:
         raise HTTPException(status_code=400, detail="No document text or facts/instructions provided for AI drafting.")
 
-    # Check AI availability
+    # Check AI availability: check Firm BYOK settings first, then fall back to system OPENAI_API_KEY
+    api_key = None
+    api_base = None
+    model_name = settings.OPENAI_MODEL or "gpt-4o-mini"
+
+    if current_user and current_user.firm:
+        if current_user.firm.ai_provider == "openai" and current_user.firm.ai_api_key:
+            api_key = current_user.firm.ai_api_key
+            if current_user.firm.ai_api_base:
+                api_base = current_user.firm.ai_api_base
+            if current_user.firm.ai_model:
+                model_name = current_user.firm.ai_model
+
+    if not api_key and settings.OPENAI_API_KEY:
+        api_key = settings.OPENAI_API_KEY
+
     ai_service = AIService()
-    client = ai_service._get_client()
+    client = ai_service._get_client(api_key=api_key, base_url=api_base)
     if not client:
         raise HTTPException(
             status_code=503,
@@ -1672,7 +1687,7 @@ async def ai_draft_improve(
 
     try:
         response = await client.chat.completions.create(
-            model=settings.OPENAI_MODEL or "gpt-4o-mini",
+            model=model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt[:12000]}

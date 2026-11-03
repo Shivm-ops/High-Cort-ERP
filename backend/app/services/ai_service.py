@@ -245,11 +245,14 @@ class AIService:
         except ImportError:
             logger.warning("OpenAI package not installed")
 
-    def _get_client(self, api_key: Optional[str] = None):
+    def _get_client(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         if api_key:
             try:
                 from openai import AsyncOpenAI
-                return AsyncOpenAI(api_key=api_key)
+                kwargs = {"api_key": api_key}
+                if base_url and str(base_url).strip():
+                    kwargs["base_url"] = str(base_url).strip()
+                return AsyncOpenAI(**kwargs)
             except Exception as e:
                 logger.error(f"Error initializing custom AsyncOpenAI client: {e}")
         return self.client

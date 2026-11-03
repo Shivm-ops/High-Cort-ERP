@@ -98,22 +98,44 @@ jobs:
           cd fastcase-website
           npm run build
 
-  # ─── Continuous Deployment to AWS EC2 ───────────────────────────────────────
+  # ─── Continuous Deployment to Production VPS ────────────────────────────────
   deploy:
+    name: Deploy to Production VPS
     needs: [backend, frontend, admin-frontend, website]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Deploy to EC2 via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Execute Deployment via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
+          host: ${{ secrets.VPS_HOST || secrets.EC2_HOST }}
+          username: ${{ secrets.VPS_USERNAME || secrets.EC2_USERNAME || 'root' }}
+          key: ${{ secrets.VPS_SSH_KEY || secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script: |
-            cd /home/${{ secrets.EC2_USERNAME }}/High-Cort-ERP
+            set -e
+            DEPLOY_DIR="/opt/fastcase"
+            if [ ! -d "$DEPLOY_DIR" ]; then
+              DEPLOY_DIR="/home/${{ secrets.VPS_USERNAME || secrets.EC2_USERNAME || 'root' }}/High-Cort-ERP"
+            fi
+            echo "🚀 Navigating to $DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            echo "📥 Pulling latest commits from origin/main..."
             git pull origin main
-            docker-compose down
-            docker-compose up -d --build
+
+            echo "🔨 Rebuilding and restarting containers..."
+            docker compose -f docker-compose.vps.yml up -d --build backend frontend admin-frontend prometheus grafana
+
+            echo "🔄 Restarting Nginx reverse proxy..."
+            docker compose -f docker-compose.vps.yml restart nginx
+
+            echo "🧹 Cleaning unused Docker images..."
+            docker image prune -f
+
+            echo "🔍 Verifying running services:"
+            docker compose -f docker-compose.vps.yml ps
 

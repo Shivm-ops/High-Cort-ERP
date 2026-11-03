@@ -209,6 +209,18 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(api_v1_router, prefix="/api/v1")
 
+# Prometheus Metrics Instrumentation
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator(
+        should_group_status_codes=False,
+        should_ignore_untemplated=True,
+        excluded_handlers=["/metrics", "/health", "/docs", "/openapi.json"]
+    ).instrument(app).expose(app, endpoint="/metrics")
+    logger.info("📊 Prometheus metrics instrumentation enabled at /metrics")
+except Exception as e:
+    logger.warning(f"Prometheus instrumentation notice: {e}")
+
 
 @app.get("/")
 async def root():

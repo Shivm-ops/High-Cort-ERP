@@ -72,6 +72,7 @@ services:
       - DOMAIN=${DOMAIN:-fastcase.in}
       - ROOT_DOMAIN=${DOMAIN:-fastcase.in}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-k1cT7yG-QxV8_W9zL1mN3oP5qR7sT9uV1wX3yZ5aB7c=}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -127,9 +128,51 @@ services:
       - admin-frontend
       - backend
 
+  # ─── Prometheus (Metrics Collection) ──────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+    expose:
+      - "9090"
+    depends_on:
+      - backend
+
+  # ─── Grafana (Dashboards & Visualization) ───────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.1
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-fastcase_admin_2026}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+    ports:
+      - "3002:3000"
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   default:
