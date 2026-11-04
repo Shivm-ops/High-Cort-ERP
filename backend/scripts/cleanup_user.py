@@ -2,6 +2,7 @@
 scripts/cleanup_user.py
 =======================
 Clean up user account, associated firm, sessions, and client CRM records by email/keyword.
+Uses raw SQL via engine.connect() to avoid ORM mapper relationship dependencies.
 Usage:
     python scripts/cleanup_user.py <email_or_keyword>
 Example:
@@ -14,21 +15,9 @@ import os
 # Ensure backend root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.core.database import SessionLocal
-from app.models.user import User
-from app.models.firm import Firm
-from app.models.security import UserSession, LoginHistory
-from app.models.subscription import TenantSubscription
-from app.models.case import Case
-from app.models.client import Client
-from app.models.draft import Draft
-from app.models.document import Document
+from sqlalchemy import text
+from app.core.database import engine
 from app.services.otp_service import delete_registration_otp, delete_login_otp
-
-try:
-    from app.models.audit_log import AuditLog
-except ImportError:
-    AuditLog = None
 
 
 def cleanup(keyword: str):
@@ -37,105 +26,100 @@ def cleanup(keyword: str):
         print("Please provide an email or search keyword.")
         return
 
-    db = SessionLocal()
-    try:
-        print(f"🔍 Searching for users matching '{keyword}'...")
-        users = db.query(User).filter(
-            (User.email.ilike(f"%{keyword}%")) | (User.full_name.ilike(f"%{keyword}%"))
-        ).all()
+    pattern = f"%{keyword}%"
+    print(f"🔍 Searching for accounts and clients matching '{keyword}'...")
 
-        if not users:
-            print(f"No user accounts found matching '{keyword}'.")
-        else:
-            for user in users:
-                user_id = user.id
-                user_email = user.email
-                firm_id = user.firm_id
-                print(f"🗑️ Deleting user: {user.full_name} ({user_email}) [ID: {user_id}]")
+    with engine.connect() as conn:
+        trans = conn.begin()
+        try:
+            # 1. Find all users matching keyword
+            users = conn.execute(
+                text("SELECT id, email, full_name, firm_id FROM users WHERE email ILIKE :pat OR full_name ILIKE :pat"),
+                {"pat": pattern}
+            ).fetchall()
 
-                # 1. Clear Redis / in-memory OTPs
-                try:
-                    delete_registration_otp(user_email)
-                    delete_login_otp(user_email)
-                except Exception as ex:
-                    print(f"   (OTP cleanup note: {ex})")
+            if not users:
+                print(f"No user accounts found matching '{keyword}'.")
+            else:
+                for u in users:
+                    uid = str(u[0])
+                    uemail = str(u[1])
+                    ufullname = str(u[2])
+                    ufirm_id = str(u[3]) if u[3] else None
+                    print(f"🗑️ Found user: {ufullname} ({uemail}) [ID: {uid}]")
 
-                # 2. Delete user sessions & login history
-                deleted_sessions = db.query(UserSession).filter(UserSession.user_id == user_id).delete(synchronize_session=False)
-                deleted_history = db.query(LoginHistory).filter(LoginHistory.user_id == user_id).delete(synchronize_session=False)
-                print(f"   - Removed {deleted_sessions} sessions, {deleted_history} login logs.")
-
-                # 3. Clean audit logs
-                if AuditLog:
+                    # Clear OTP caches
                     try:
-                        db.query(AuditLog).filter(AuditLog.user_id == user_id).delete(synchronize_session=False)
+                        delete_registration_otp(uemail)
+                        delete_login_otp(uemail)
                     except Exception:
                         pass
 
-                # 4. Remove drafts created by user
-                try:
-                    db.query(Draft).filter(Draft.created_by == user_id).delete(synchronize_session=False)
-                except Exception:
-                    pass
+                    # Delete dependent records
+                    conn.execute(text("DELETE FROM user_sessions WHERE user_id = :uid"), {"uid": uid})
+                    conn.execute(text("DELETE FROM login_history WHERE user_id = :uid"), {"uid": uid})
+                    try:
+                        conn.execute(text("DELETE FROM audit_logs WHERE user_id = :uid"), {"uid": uid})
+                    except Exception:
+                        pass
+                    try:
+                        conn.execute(text("DELETE FROM drafts WHERE created_by = :uid"), {"uid": uid})
+                    except Exception:
+                        pass
+                    try:
+                        conn.execute(text("DELETE FROM cases WHERE primary_advocate_id = :uid"), {"uid": uid})
+                    except Exception:
+                        pass
 
-                # 5. Remove cases assigned
-                try:
-                    db.query(Case).filter(Case.primary_advocate_id == user_id).delete(synchronize_session=False)
-                except Exception:
-                    pass
+                    # Delete user
+                    conn.execute(text("DELETE FROM users WHERE id = :uid"), {"uid": uid})
+                    print(f"   ✓ Deleted user {uemail}")
 
-                # 6. Delete user
-                db.delete(user)
-                db.commit()
-                print(f"   ✓ User account {user_email} deleted.")
+                    # If firm has no other users, clean up firm and subscription
+                    if ufirm_id:
+                        remaining_users = conn.execute(
+                            text("SELECT count(*) FROM users WHERE firm_id = :fid"),
+                            {"fid": ufirm_id}
+                        ).scalar()
+                        if remaining_users == 0:
+                            try:
+                                conn.execute(text("DELETE FROM tenant_subscriptions WHERE firm_id = :fid"), {"fid": ufirm_id})
+                            except Exception:
+                                pass
+                            conn.execute(text("DELETE FROM firms WHERE id = :fid"), {"fid": ufirm_id})
+                            print(f"   ✓ Deleted firm ID {ufirm_id}")
 
-                # 7. If firm was created exclusively for this user, delete firm & subscription
-                if firm_id:
-                    other_users = db.query(User).filter(User.firm_id == firm_id).count()
-                    if other_users == 0:
-                        try:
-                            db.query(TenantSubscription).filter(TenantSubscription.firm_id == firm_id).delete(synchronize_session=False)
-                        except Exception:
-                            pass
-                        firm = db.query(Firm).filter(Firm.id == firm_id).first()
-                        if firm:
-                            db.delete(firm)
-                            db.commit()
-                            print(f"   ✓ Firm '{firm.name}' & subscription deleted.")
+            # 2. Find and delete CRM Clients matching keyword
+            clients = conn.execute(
+                text("SELECT id, name, email FROM clients WHERE email ILIKE :pat OR name ILIKE :pat"),
+                {"pat": pattern}
+            ).fetchall()
 
-        # Also search and remove matching CRM Clients
-        print(f"\n🔍 Searching for CRM Clients matching '{keyword}'...")
-        clients = db.query(Client).filter(
-            (Client.email.ilike(f"%{keyword}%")) | (Client.name.ilike(f"%{keyword}%"))
-        ).all()
+            if not clients:
+                print(f"No CRM clients found matching '{keyword}'.")
+            else:
+                for cl in clients:
+                    cid = str(cl[0])
+                    cname = str(cl[1])
+                    cemail = str(cl[2])
+                    print(f"🗑️ Found CRM Client: {cname} ({cemail}) [ID: {cid}]")
+                    try:
+                        conn.execute(text("DELETE FROM documents WHERE client_id = :cid"), {"cid": cid})
+                    except Exception:
+                        pass
+                    try:
+                        conn.execute(text("DELETE FROM cases WHERE client_id = :cid"), {"cid": cid})
+                    except Exception:
+                        pass
+                    conn.execute(text("DELETE FROM clients WHERE id = :cid"), {"cid": cid})
+                    print(f"   ✓ Deleted CRM client {cname}")
 
-        if not clients:
-            print(f"No CRM clients found matching '{keyword}'.")
-        else:
-            for cl in clients:
-                cl_id = cl.id
-                cl_name = cl.name
-                cl_email = cl.email
-                print(f"🗑️ Deleting CRM Client: {cl_name} ({cl_email})")
-                try:
-                    db.query(Document).filter(Document.client_id == cl_id).delete(synchronize_session=False)
-                except Exception:
-                    pass
-                try:
-                    db.query(Case).filter(Case.client_id == cl_id).delete(synchronize_session=False)
-                except Exception:
-                    pass
-                db.delete(cl)
-                db.commit()
-                print(f"   ✓ CRM Client {cl_name} deleted.")
+            trans.commit()
+            print("\n✨ Cleanup finished successfully! All matching user accounts, sessions, and CRM clients were deleted.")
 
-        print("\n✨ Cleanup finished! You can now register a brand new account with this email/username.")
-
-    except Exception as e:
-        db.rollback()
-        print(f"❌ Error during cleanup: {e}")
-    finally:
-        db.close()
+        except Exception as e:
+            trans.rollback()
+            print(f"❌ Error during cleanup: {e}")
 
 
 if __name__ == "__main__":
