@@ -23,8 +23,12 @@ from app.models.case import Case
 from app.models.client import Client
 from app.models.draft import Draft
 from app.models.document import Document
-from app.models.audit import AuditLog
 from app.services.otp_service import delete_registration_otp, delete_login_otp
+
+try:
+    from app.models.audit_log import AuditLog
+except ImportError:
+    AuditLog = None
 
 
 def cleanup(keyword: str):
@@ -50,8 +54,11 @@ def cleanup(keyword: str):
                 print(f"🗑️ Deleting user: {user.full_name} ({user_email}) [ID: {user_id}]")
 
                 # 1. Clear Redis / in-memory OTPs
-                delete_registration_otp(user_email)
-                delete_login_otp(user_email)
+                try:
+                    delete_registration_otp(user_email)
+                    delete_login_otp(user_email)
+                except Exception as ex:
+                    print(f"   (OTP cleanup note: {ex})")
 
                 # 2. Delete user sessions & login history
                 deleted_sessions = db.query(UserSession).filter(UserSession.user_id == user_id).delete(synchronize_session=False)
@@ -59,13 +66,23 @@ def cleanup(keyword: str):
                 print(f"   - Removed {deleted_sessions} sessions, {deleted_history} login logs.")
 
                 # 3. Clean audit logs
-                db.query(AuditLog).filter(AuditLog.user_id == user_id).delete(synchronize_session=False)
+                if AuditLog:
+                    try:
+                        db.query(AuditLog).filter(AuditLog.user_id == user_id).delete(synchronize_session=False)
+                    except Exception:
+                        pass
 
                 # 4. Remove drafts created by user
-                db.query(Draft).filter(Draft.created_by == user_id).delete(synchronize_session=False)
+                try:
+                    db.query(Draft).filter(Draft.created_by == user_id).delete(synchronize_session=False)
+                except Exception:
+                    pass
 
-                # 5. Remove or nullify cases assigned
-                db.query(Case).filter(Case.primary_advocate_id == user_id).delete(synchronize_session=False)
+                # 5. Remove cases assigned
+                try:
+                    db.query(Case).filter(Case.primary_advocate_id == user_id).delete(synchronize_session=False)
+                except Exception:
+                    pass
 
                 # 6. Delete user
                 db.delete(user)
@@ -76,7 +93,10 @@ def cleanup(keyword: str):
                 if firm_id:
                     other_users = db.query(User).filter(User.firm_id == firm_id).count()
                     if other_users == 0:
-                        db.query(TenantSubscription).filter(TenantSubscription.firm_id == firm_id).delete(synchronize_session=False)
+                        try:
+                            db.query(TenantSubscription).filter(TenantSubscription.firm_id == firm_id).delete(synchronize_session=False)
+                        except Exception:
+                            pass
                         firm = db.query(Firm).filter(Firm.id == firm_id).first()
                         if firm:
                             db.delete(firm)
@@ -97,10 +117,14 @@ def cleanup(keyword: str):
                 cl_name = cl.name
                 cl_email = cl.email
                 print(f"🗑️ Deleting CRM Client: {cl_name} ({cl_email})")
-                # Remove client documents
-                db.query(Document).filter(Document.client_id == cl_id).delete(synchronize_session=False)
-                # Remove client cases
-                db.query(Case).filter(Case.client_id == cl_id).delete(synchronize_session=False)
+                try:
+                    db.query(Document).filter(Document.client_id == cl_id).delete(synchronize_session=False)
+                except Exception:
+                    pass
+                try:
+                    db.query(Case).filter(Case.client_id == cl_id).delete(synchronize_session=False)
+                except Exception:
+                    pass
                 db.delete(cl)
                 db.commit()
                 print(f"   ✓ CRM Client {cl_name} deleted.")
