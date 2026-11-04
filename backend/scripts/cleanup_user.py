@@ -23,11 +23,11 @@ from app.services.otp_service import delete_registration_otp, delete_login_otp
 def cleanup(keyword: str):
     keyword = keyword.strip().lower()
     if not keyword:
-        print("Please provide an email or search keyword.")
+        print("[ERROR] Please provide an email or search keyword.")
         return
 
     pattern = f"%{keyword}%"
-    print(f"🔍 Searching for accounts and clients matching '{keyword}'...")
+    print(f"[SEARCH] Searching for accounts and clients matching '{keyword}'...")
 
     with engine.connect() as conn:
         trans = conn.begin()
@@ -39,14 +39,14 @@ def cleanup(keyword: str):
             ).fetchall()
 
             if not users:
-                print(f"No user accounts found matching '{keyword}'.")
+                print(f"[INFO] No user accounts found matching '{keyword}'.")
             else:
                 for u in users:
                     uid = str(u[0])
                     uemail = str(u[1])
                     ufullname = str(u[2])
                     ufirm_id = str(u[3]) if u[3] else None
-                    print(f"🗑️ Found user: {ufullname} ({uemail}) [ID: {uid}]")
+                    print(f"[FOUND] User: {ufullname} ({uemail}) [ID: {uid}]")
 
                     # Clear OTP caches
                     try:
@@ -73,7 +73,7 @@ def cleanup(keyword: str):
 
                     # Delete user
                     conn.execute(text("DELETE FROM users WHERE id = :uid"), {"uid": uid})
-                    print(f"   ✓ Deleted user {uemail}")
+                    print(f"   [DONE] Deleted user {uemail}")
 
                     # If firm has no other users, clean up firm and subscription
                     if ufirm_id:
@@ -87,7 +87,7 @@ def cleanup(keyword: str):
                             except Exception:
                                 pass
                             conn.execute(text("DELETE FROM firms WHERE id = :fid"), {"fid": ufirm_id})
-                            print(f"   ✓ Deleted firm ID {ufirm_id}")
+                            print(f"   [DONE] Deleted firm ID {ufirm_id}")
 
             # 2. Find and delete CRM Clients matching keyword
             clients = conn.execute(
@@ -96,13 +96,13 @@ def cleanup(keyword: str):
             ).fetchall()
 
             if not clients:
-                print(f"No CRM clients found matching '{keyword}'.")
+                print(f"[INFO] No CRM clients found matching '{keyword}'.")
             else:
                 for cl in clients:
                     cid = str(cl[0])
                     cname = str(cl[1])
                     cemail = str(cl[2])
-                    print(f"🗑️ Found CRM Client: {cname} ({cemail}) [ID: {cid}]")
+                    print(f"[FOUND] CRM Client: {cname} ({cemail}) [ID: {cid}]")
                     try:
                         conn.execute(text("DELETE FROM documents WHERE client_id = :cid"), {"cid": cid})
                     except Exception:
@@ -112,14 +112,14 @@ def cleanup(keyword: str):
                     except Exception:
                         pass
                     conn.execute(text("DELETE FROM clients WHERE id = :cid"), {"cid": cid})
-                    print(f"   ✓ Deleted CRM client {cname}")
+                    print(f"   [DONE] Deleted CRM client {cname}")
 
             trans.commit()
-            print("\n✨ Cleanup finished successfully! All matching user accounts, sessions, and CRM clients were deleted.")
+            print("\n[SUCCESS] Cleanup finished successfully! All matching user accounts, sessions, and CRM clients were deleted.")
 
         except Exception as e:
             trans.rollback()
-            print(f"❌ Error during cleanup: {e}")
+            print(f"[ERROR] Error during cleanup: {e}")
 
 
 if __name__ == "__main__":
