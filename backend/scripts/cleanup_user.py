@@ -63,7 +63,7 @@ def cleanup(keyword: str):
                     except Exception:
                         pass
                     try:
-                        conn.execute(text("DELETE FROM drafts WHERE created_by = :uid"), {"uid": uid})
+                        conn.execute(text("DELETE FROM drafts WHERE created_by_id = :uid"), {"uid": uid})
                     except Exception:
                         pass
                     try:
