@@ -29,7 +29,7 @@ export default function LoginPage() {
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
   const [otpEmail, setOtpEmail] = useState("");
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(180); // 3 minutes
+  const [timer, setTimer] = useState(60); // 60 seconds
   const [canResend, setCanResend] = useState(false);
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -91,7 +91,7 @@ export default function LoginPage() {
     try {
       const res = await api.post("/auth/login-otp-initiate", { email: otpEmail.trim().toLowerCase() });
       setOtpStep("code");
-      setTimer(180);
+      setTimer(60);
       setCanResend(false);
       setOtpDigits(["", "", "", "", "", ""]);
       setAttemptsRemaining(3);
@@ -339,7 +339,7 @@ export default function LoginPage() {
                         className="w-full rounded-xl border border-gray-200 hover:border-gray-300 px-4 py-3.5 text-sm outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint"
                       />
                       <p className="text-xs text-gray-400 mt-1.5">
-                        We will dispatch a secure 6-digit code valid for 3 minutes (maximum 3 attempts).
+                        We will dispatch a secure 6-digit code valid for 60 seconds (maximum 3 attempts, 12-hour lockout).
                       </p>
                     </div>
 
@@ -361,7 +361,7 @@ export default function LoginPage() {
                       {/* Timer & Attempts */}
                       <div className="flex items-center justify-center gap-4 mt-2">
                         <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-                          timer > 30 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
+                          timer > 15 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"
                         }`}>
                           <Clock className="w-3.5 h-3.5" /> Expires in: {formatTimer(timer)}
                         </span>

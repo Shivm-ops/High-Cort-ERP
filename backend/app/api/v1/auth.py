@@ -44,6 +44,8 @@ from app.services.otp_service import (
     get_registration_otp_payload,
     store_login_otp,
     verify_and_clear_login_otp,
+    is_account_locked,
+    DEFAULT_OTP_EXPIRY_SECONDS,
 )
 
 router = APIRouter()
@@ -541,10 +543,18 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
             detail="An account with this email address already exists. Please log in instead.",
         )
 
+    # Check if locked out
+    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    if is_locked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account is temporarily locked for 12 hours due to 3 failed verification attempts. Please try again after {time_str}.",
+        )
+
     # 1. Generate secure 6-digit OTP
     otp_code = generate_otp()
 
-    # 2. Store pending payload in Redis/cache for 10 minutes
+    # 2. Store pending payload in Redis/cache for 60 seconds
     reg_dict = {
         "email": clean_email,
         "password": data.password,
@@ -552,7 +562,7 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
         "phone": data.phone,
         "bar_council_no": data.bar_council_no,
     }
-    store_registration_otp(clean_email, reg_dict, otp_code, expiry_seconds=180)
+    store_registration_otp(clean_email, reg_dict, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
 
     # 3. Dispatch OTP email
     asyncio.create_task(
@@ -560,14 +570,14 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
             to_email=clean_email,
             otp_code=otp_code,
             user_name=data.full_name,
-            expiry_minutes=3,
+            expiry_minutes=1,
         )
     )
 
     return {
         "message": f"A 6-digit verification code has been dispatched to {clean_email}.",
         "email": clean_email,
-        "expires_in_minutes": 3,
+        "expires_in_seconds": 60,
     }
 
 
@@ -583,10 +593,18 @@ async def register_verify_otp(
     and automatically logs the user in with access & refresh tokens.
     """
     clean_email = data.email.lower().strip()
+    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    if is_locked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account is temporarily locked for 12 hours due to 3 failed attempts. Please try again after {time_str}.",
+        )
+
     res = verify_and_clear_registration_otp(clean_email, data.otp)
     if not res.is_valid or not res.data:
+        err_code = status.HTTP_429_TOO_MANY_REQUESTS if getattr(res, "is_locked", False) else status.HTTP_400_BAD_REQUEST
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=err_code,
             detail=getattr(res, "error_msg", None) or "Invalid or expired verification code. Please check your email or click 'Resend Code'.",
         )
     reg_dict = res.data
@@ -711,6 +729,13 @@ async def register_verify_otp(
 async def resend_registration_otp(data: ResendOtpRequest):
     """Resend a fresh 6-digit OTP for pending registration."""
     clean_email = data.email.lower().strip()
+    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    if is_locked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account is temporarily locked for 12 hours due to 3 failed attempts. Please try again after {time_str}.",
+        )
+
     payload = get_registration_otp_payload(clean_email)
     if not payload:
         raise HTTPException(
@@ -719,7 +744,7 @@ async def resend_registration_otp(data: ResendOtpRequest):
         )
 
     otp_code = generate_otp()
-    store_registration_otp(clean_email, payload.get("data", {}), otp_code, expiry_seconds=180)
+    store_registration_otp(clean_email, payload.get("data", {}), otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
 
     user_name = payload.get("data", {}).get("full_name") or "Advocate"
     asyncio.create_task(
@@ -727,11 +752,11 @@ async def resend_registration_otp(data: ResendOtpRequest):
             to_email=clean_email,
             otp_code=otp_code,
             user_name=user_name,
-            expiry_minutes=3,
+            expiry_minutes=1,
         )
     )
 
-    return {"message": "A new 6-digit verification code has been dispatched to your email."}
+    return {"message": "A new 6-digit verification code has been dispatched to your email.", "expires_in_seconds": 60}
 
 
 
@@ -940,24 +965,31 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
             detail="Account is deactivated. Please contact support.",
         )
 
+    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    if is_locked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account is temporarily locked for 12 hours due to 3 failed attempts. Please try again after {time_str}.",
+        )
+
     _check_account_locked(user)
 
     otp_code = generate_otp()
-    store_login_otp(clean_email, otp_code, expiry_seconds=180)
+    store_login_otp(clean_email, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
 
     asyncio.create_task(
         send_otp_verification_email(
             to_email=clean_email,
             otp_code=otp_code,
             user_name=user.full_name or "Advocate",
-            expiry_minutes=3,
+            expiry_minutes=1,
         )
     )
 
     return {
         "message": f"A 6-digit login verification code has been dispatched to {clean_email}.",
         "email": clean_email,
-        "expires_in_minutes": 3,
+        "expires_in_seconds": 60,
         "max_attempts": 3,
     }
 
@@ -973,10 +1005,18 @@ async def login_otp_verify(
     issues JWT tokens, creates session, and dispatches login security alert.
     """
     clean_email = data.email.lower().strip()
+    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    if is_locked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account is temporarily locked for 12 hours due to 3 failed attempts. Please try again after {time_str}.",
+        )
+
     res = verify_and_clear_login_otp(clean_email, data.otp)
     if not res.is_valid:
+        err_code = status.HTTP_429_TOO_MANY_REQUESTS if getattr(res, "is_locked", False) else status.HTTP_400_BAD_REQUEST
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=err_code,
             detail=getattr(res, "error_msg", None) or "Invalid or expired login verification code.",
         )
 

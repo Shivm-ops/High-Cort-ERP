@@ -593,10 +593,12 @@ async def send_otp_verification_email(
     to_email: str,
     otp_code: str,
     user_name: str = "Advocate",
-    expiry_minutes: int = 10,
+    expiry_minutes: int = 1,
 ) -> None:
-    """Send OTP email verification for user registration."""
+    """Send OTP email verification for user registration (valid for 60 seconds)."""
     subject = "Secure Verification Code for Your Account"
+    logger.info("[OTP DISPATCH] Code for %s is: %s (valid for 60 seconds)", to_email, otp_code)
+    print(f"[OTP DISPATCH] Code for {to_email} is: {otp_code} (valid for 60 seconds)", flush=True)
     html_body, text_body = render_otp_verification_template(otp_code, user_name, expiry_minutes)
     await send_email(to_email, subject, html_body, text_body)
 

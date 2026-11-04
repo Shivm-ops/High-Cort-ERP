@@ -42,7 +42,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState<"form" | "otp">("form");
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(180);
+  const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -85,7 +85,7 @@ export default function RegisterPage() {
       await api.post("/auth/register-initiate", data);
       setRegisteredEmail(data.email.toLowerCase().trim());
       setStep("otp");
-      setTimer(180);
+      setTimer(60);
       setCanResend(false);
       setOtpDigits(["", "", "", "", "", ""]);
       toast.success(`Verification code dispatched to ${data.email}`);
@@ -167,7 +167,7 @@ export default function RegisterPage() {
     try {
       await api.post("/auth/resend-registration-otp", { email: registeredEmail });
       toast.success("A fresh 6-digit verification code has been dispatched!");
-      setTimer(180);
+      setTimer(60);
       setCanResend(false);
       setOtpDigits(["", "", "", "", "", ""]);
       otpInputRefs.current[0]?.focus();
@@ -400,7 +400,7 @@ export default function RegisterPage() {
                     <p className="text-sm lg:text-base text-gray-600 mt-2 leading-relaxed">
                       We sent a 6-digit verification code to{" "}
                       <span className="font-semibold text-gray-900">{registeredEmail}</span>.
-                      Enter the code below to activate your chambers (code valid for 3 minutes).
+                      Enter the code below to activate your chambers (code valid for 60 seconds (max 3 attempts, 12h lockout)).
                     </p>
                   </div>
 
