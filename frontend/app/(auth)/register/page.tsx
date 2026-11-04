@@ -42,9 +42,15 @@ export default function RegisterPage() {
   const [step, setStep] = useState<"form" | "otp">("form");
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(60);
+  const [timer, setTimer] = useState(180);
   const [canResend, setCanResend] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const formatTimer = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const remainingSecs = secs % 60;
+    return `${mins.toString().padStart(2, "0")}:${remainingSecs.toString().padStart(2, "0")}`;
+  };
 
   // Timer countdown for resending OTP
   useEffect(() => {
@@ -79,7 +85,7 @@ export default function RegisterPage() {
       await api.post("/auth/register-initiate", data);
       setRegisteredEmail(data.email.toLowerCase().trim());
       setStep("otp");
-      setTimer(60);
+      setTimer(180);
       setCanResend(false);
       setOtpDigits(["", "", "", "", "", ""]);
       toast.success(`Verification code dispatched to ${data.email}`);
@@ -161,7 +167,7 @@ export default function RegisterPage() {
     try {
       await api.post("/auth/resend-registration-otp", { email: registeredEmail });
       toast.success("A fresh 6-digit verification code has been dispatched!");
-      setTimer(60);
+      setTimer(180);
       setCanResend(false);
       setOtpDigits(["", "", "", "", "", ""]);
       otpInputRefs.current[0]?.focus();
@@ -394,7 +400,7 @@ export default function RegisterPage() {
                     <p className="text-sm lg:text-base text-gray-600 mt-2 leading-relaxed">
                       We sent a 6-digit verification code to{" "}
                       <span className="font-semibold text-gray-900">{registeredEmail}</span>.
-                      Enter the code below to activate your chambers.
+                      Enter the code below to activate your chambers (code valid for 3 minutes).
                     </p>
                   </div>
 
@@ -447,7 +453,7 @@ export default function RegisterPage() {
                       </button>
                     ) : (
                       <span className="text-gray-400 font-medium">
-                        Resend in <span className="font-semibold text-gray-700">{timer}s</span>
+                        Resend in <span className="font-semibold text-gray-700">{formatTimer(timer)}</span>
                       </span>
                     )}
                   </div>

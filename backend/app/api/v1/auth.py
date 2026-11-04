@@ -42,6 +42,8 @@ from app.services.otp_service import (
     store_registration_otp,
     verify_and_clear_registration_otp,
     get_registration_otp_payload,
+    store_login_otp,
+    verify_and_clear_login_otp,
 )
 
 router = APIRouter()
@@ -254,6 +256,15 @@ class LogoutRequest(BaseModel):
 
 
 class VerifyOtpRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class LoginOtpInitiateRequest(BaseModel):
+    email: EmailStr
+
+
+class LoginOtpVerifyRequest(BaseModel):
     email: EmailStr
     otp: str
 
@@ -541,7 +552,7 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
         "phone": data.phone,
         "bar_council_no": data.bar_council_no,
     }
-    store_registration_otp(clean_email, reg_dict, otp_code, expiry_seconds=600)
+    store_registration_otp(clean_email, reg_dict, otp_code, expiry_seconds=180)
 
     # 3. Dispatch OTP email
     asyncio.create_task(
@@ -549,14 +560,14 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
             to_email=clean_email,
             otp_code=otp_code,
             user_name=data.full_name,
-            expiry_minutes=10,
+            expiry_minutes=3,
         )
     )
 
     return {
         "message": f"A 6-digit verification code has been dispatched to {clean_email}.",
         "email": clean_email,
-        "expires_in_minutes": 10,
+        "expires_in_minutes": 3,
     }
 
 
@@ -572,12 +583,13 @@ async def register_verify_otp(
     and automatically logs the user in with access & refresh tokens.
     """
     clean_email = data.email.lower().strip()
-    is_valid, reg_dict = verify_and_clear_registration_otp(clean_email, data.otp)
-    if not is_valid or not reg_dict:
+    res = verify_and_clear_registration_otp(clean_email, data.otp)
+    if not res.is_valid or not res.data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired verification code. Please check your email or click 'Resend Code'.",
+            detail=getattr(res, "error_msg", None) or "Invalid or expired verification code. Please check your email or click 'Resend Code'.",
         )
+    reg_dict = res.data
 
     # Race condition check
     if db.query(User).filter(User.email.ilike(clean_email)).first():
@@ -599,16 +611,31 @@ async def register_verify_otp(
     db.add(new_firm)
     db.flush()
 
-    # Assign 14-day free trial plan
+    # Assign 14-day free trial plan (with auto-fallback to basic/created plan)
     trial_plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.tier == "free_trial").first()
-    if trial_plan:
-        sub = TenantSubscription(
-            firm_id=new_firm.id,
-            plan_id=trial_plan.id,
-            status=SubscriptionStatus.ACTIVE,
-            end_date=utc_now() + timedelta(days=14),
+    if not trial_plan:
+        trial_plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.tier.in_(["basic", "professional"])).first()
+    if not trial_plan:
+        trial_plan = SubscriptionPlan(
+            name="14-Day Pro Chambers Trial",
+            tier="free_trial",
+            price_monthly=0,
+            price_yearly=0,
+            max_users=5,
+            storage_limit_gb=10.0,
+            features="intake, cases, clients, calendar, drafts, billing, ai_tools, mact_management",
+            is_active=True,
         )
-        db.add(sub)
+        db.add(trial_plan)
+        db.flush()
+
+    sub = TenantSubscription(
+        firm_id=new_firm.id,
+        plan_id=trial_plan.id,
+        status=SubscriptionStatus.ACTIVE,
+        end_date=utc_now() + timedelta(days=14),
+    )
+    db.add(sub)
 
     user = User(
         email=clean_email,
@@ -692,7 +719,7 @@ async def resend_registration_otp(data: ResendOtpRequest):
         )
 
     otp_code = generate_otp()
-    store_registration_otp(clean_email, payload.get("data", {}), otp_code, expiry_seconds=600)
+    store_registration_otp(clean_email, payload.get("data", {}), otp_code, expiry_seconds=180)
 
     user_name = payload.get("data", {}).get("full_name") or "Advocate"
     asyncio.create_task(
@@ -700,7 +727,7 @@ async def resend_registration_otp(data: ResendOtpRequest):
             to_email=clean_email,
             otp_code=otp_code,
             user_name=user_name,
-            expiry_minutes=10,
+            expiry_minutes=3,
         )
     )
 
@@ -892,3 +919,123 @@ async def verify_mfa(data: VerifyMFARequest, current_user: User = Depends(get_cu
     db.commit()
     return {"message": "MFA enabled successfully."}
 
+
+
+@router.post("/login-otp-initiate")
+async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depends(get_db)):
+    """
+    Step 1 of Login with OTP: Generates 6-digit OTP (3-minute expiry),
+    stores OTP with 3-attempt limit, and emails the code to user.
+    """
+    clean_email = data.email.lower().strip()
+    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active account found with this email. Please register first.",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated. Please contact support.",
+        )
+
+    _check_account_locked(user)
+
+    otp_code = generate_otp()
+    store_login_otp(clean_email, otp_code, expiry_seconds=180)
+
+    asyncio.create_task(
+        send_otp_verification_email(
+            to_email=clean_email,
+            otp_code=otp_code,
+            user_name=user.full_name or "Advocate",
+            expiry_minutes=3,
+        )
+    )
+
+    return {
+        "message": f"A 6-digit login verification code has been dispatched to {clean_email}.",
+        "email": clean_email,
+        "expires_in_minutes": 3,
+        "max_attempts": 3,
+    }
+
+
+@router.post("/login-otp-verify", response_model=LoginResponse)
+async def login_otp_verify(
+    data: LoginOtpVerifyRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Step 2 of Login with OTP: Verifies 6-digit OTP (3-attempt limit within 3 mins),
+    issues JWT tokens, creates session, and dispatches login security alert.
+    """
+    clean_email = data.email.lower().strip()
+    res = verify_and_clear_login_otp(clean_email, data.otp)
+    if not res.is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=getattr(res, "error_msg", None) or "Invalid or expired login verification code.",
+        )
+
+    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated.")
+
+    ip = extract_ip(request)
+    user_agent = request.headers.get("User-Agent", "")
+
+    # Issue tokens with JTI
+    jti = str(uuid.uuid4())
+    access_token = create_access_token({"sub": str(user.id), "role": user.user_type, "jti": jti})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+
+    # Record login & create session
+    _record_success(user, db, ip, user_agent)
+    _create_session(user, access_token, db, ip, user_agent)
+    db.commit()
+
+    log_action(db, AuditAction.LOGIN_SUCCESS, "AUTH", str(user.id), user=user, ip=ip,
+               details={"login_count": user.login_count, "auth_method": "email_otp"})
+    db.commit()
+
+    # Send login alert notification
+    admin_emails = _get_admin_emails_for_notification(db, user.firm_id)
+    user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
+    asyncio.create_task(
+        notify_login(
+            user_email=str(user.email) if user.email else "",
+            user_name=str(user.full_name or user.email),
+            ip_address=ip,
+            user_agent=user_agent,
+            user_role=user_role_str,
+            firm_name=user.firm.name if user.firm else None,
+            admin_emails=admin_emails,
+            login_time=user.last_login,
+        )
+    )
+
+    sub_data = _get_user_subscription(user, db)
+    from app.services.tenant_domain import domain_fields
+    firm_domains = domain_fields(user.firm) if user.firm else {}
+
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user={
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.user_type,
+            "bar_council_no": user.bar_council_no,
+            "is_superadmin": user.is_superadmin,
+            "firm_id": str(user.firm_id) if user.firm_id else None,
+            "firm_name": user.firm.name if user.firm else None,
+            "subscription": sub_data,
+            **firm_domains,
+        }
+    )

@@ -96,3 +96,4 @@ jobs:
             docker compose -f docker-compose.aws.yml up -d --build
             docker image prune -f
             echo "✅ AWS EC2 deployment complete!"
+
