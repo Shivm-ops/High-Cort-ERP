@@ -83,10 +83,15 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
             if html_body:
                 msg.attach(MIMEText(html_body, "html"))
 
-            port = settings.SMTP_PORT or 587
-            with smtplib.SMTP(smtp_host, port, timeout=10) as server:
+            port = int(settings.SMTP_PORT or 587)
+            if port == 465:
+                server = smtplib.SMTP_SSL(smtp_host, port, timeout=12)
+            else:
+                server = smtplib.SMTP(smtp_host, port, timeout=12)
                 if settings.SMTP_USE_TLS:
                     server.starttls()
+
+            with server:
                 if smtp_username and smtp_password:
                     server.login(smtp_username, smtp_password)
                 server.sendmail(from_email, [to_email], msg.as_string())
