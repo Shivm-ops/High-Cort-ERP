@@ -692,13 +692,12 @@ async def register_verify_otp(
     user_agent = request.headers.get("User-Agent", "")
     session_rec = UserSession(
         user_id=user.id,
-        jti=jti,
+        token_jti=jti,
         device_info=user_agent[:255] if user_agent else None,
         ip_address=ip,
         created_at=utc_now(),
-        last_activity=utc_now(),
         expires_at=utc_now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-        is_revoked=False,
+        is_active=True,
     )
     db.add(session_rec)
     db.commit()

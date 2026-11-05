@@ -26,6 +26,7 @@ _memory_lockout: Dict[str, float] = {}
 DEFAULT_OTP_EXPIRY_SECONDS: int = 60          # 60 seconds (1 minute)
 MAX_OTP_ATTEMPTS: int = 3                     # 3 attempts
 LOCKOUT_DURATION_SECONDS: int = 12 * 3600     # 12 hours (43,200 seconds)
+REG_SESSION_TTL_SECONDS: int = 15 * 60        # 15 minutes (session retention for resend)
 
 
 class OtpResult(tuple):
@@ -180,21 +181,30 @@ def store_registration_otp(
     logger.info("[REGISTRATION OTP] Code for %s is: %s (valid for %ds)", clean_email, otp, expiry_seconds)
     print(f"[REGISTRATION OTP] Code for {clean_email} is: {otp} (valid for {expiry_seconds}s)", flush=True)
 
+    session_key = f"reg_session:{clean_email}"
+    session_payload = {
+        "data": reg_data,
+        "expires_at": time.time() + REG_SESSION_TTL_SECONDS,
+    }
+
     client = _get_redis()
     if client:
         try:
             client.set(key, json.dumps(payload), ex=expiry_seconds)
+            client.set(session_key, json.dumps(session_payload), ex=REG_SESSION_TTL_SECONDS)
             return
         except Exception as exc:
             logger.warning("Failed writing OTP to Redis: %s. Using memory fallback.", exc)
 
     _memory_store[key] = payload
+    _memory_store[session_key] = session_payload
 
 
 def get_registration_otp_payload(email: str) -> Optional[dict]:
     """Retrieve active registration payload for an email if valid and not expired."""
     clean_email = email.lower().strip()
     key = f"reg_otp:{clean_email}"
+    session_key = f"reg_session:{clean_email}"
 
     client = _get_redis()
     if client:
@@ -207,10 +217,35 @@ def get_registration_otp_payload(email: str) -> Optional[dict]:
 
     item = _memory_store.get(key)
     if item:
-        if time.time() > item.get("expires_at", 0):
-            _memory_store.pop(key, None)
-            return None
-        return item
+        if time.time() <= item.get("expires_at", 0):
+            return item
+        _memory_store.pop(key, None)
+
+    # Fallback to persistent 15-minute registration session so Resend Code works without filling form again
+    if client:
+        try:
+            s_val = client.get(session_key)
+            if s_val:
+                s_payload = json.loads(s_val)
+                return {
+                    "otp": "",
+                    "data": s_payload.get("data", {}),
+                    "expires_at": 0,
+                    "attempts": 0,
+                    "max_attempts": MAX_OTP_ATTEMPTS,
+                }
+        except Exception:
+            pass
+
+    s_item = _memory_store.get(session_key)
+    if s_item and time.time() <= s_item.get("expires_at", 0):
+        return {
+            "otp": "",
+            "data": s_item.get("data", {}),
+            "expires_at": 0,
+            "attempts": 0,
+            "max_attempts": MAX_OTP_ATTEMPTS,
+        }
 
     return None
 
@@ -307,18 +342,21 @@ def verify_and_clear_registration_otp(
 
 
 def delete_registration_otp(email: str) -> None:
-    """Delete OTP entry upon verification or cancellation."""
+    """Delete OTP entry and registration session upon verification or cancellation."""
     clean_email = email.lower().strip()
     key = f"reg_otp:{clean_email}"
+    session_key = f"reg_session:{clean_email}"
 
     client = _get_redis()
     if client:
         try:
             client.delete(key)
+            client.delete(session_key)
         except Exception:
             pass
 
     _memory_store.pop(key, None)
+    _memory_store.pop(session_key, None)
 
 
 # ── Login OTP (60s expiry, max 3 attempts, 12h lockout) ───────────────────────

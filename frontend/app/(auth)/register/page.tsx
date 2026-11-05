@@ -52,6 +52,17 @@ export default function RegisterPage() {
     return `${mins.toString().padStart(2, "0")}:${remainingSecs.toString().padStart(2, "0")}`;
   };
 
+  // Restore pending registration session if page is refreshed
+  useEffect(() => {
+    try {
+      const savedEmail = sessionStorage.getItem("fastcase_pending_reg_email");
+      if (savedEmail) {
+        setRegisteredEmail(savedEmail);
+        setStep("otp");
+      }
+    } catch (_) {}
+  }, []);
+
   // Timer countdown for resending OTP
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -83,7 +94,11 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await api.post("/auth/register-initiate", data);
-      setRegisteredEmail(data.email.toLowerCase().trim());
+      const cleanEmail = data.email.toLowerCase().trim();
+      setRegisteredEmail(cleanEmail);
+      try {
+        sessionStorage.setItem("fastcase_pending_reg_email", cleanEmail);
+      } catch (_) {}
       setStep("otp");
       setTimer(60);
       setCanResend(false);
@@ -150,6 +165,9 @@ export default function RegisterPage() {
         if (res.data.user) {
           localStorage.setItem("user", JSON.stringify(res.data.user));
         }
+        try {
+          sessionStorage.removeItem("fastcase_pending_reg_email");
+        } catch (_) {}
         toast.success("Account successfully verified! Welcome to Fastcase.");
         router.push("/dashboard");
       }
@@ -384,7 +402,10 @@ export default function RegisterPage() {
                 >
                   <button
                     type="button"
-                    onClick={() => setStep("form")}
+                    onClick={() => {
+                      try { sessionStorage.removeItem("fastcase_pending_reg_email"); } catch (_) {}
+                      setStep("form");
+                    }}
                     className="inline-flex items-center gap-1.5 text-xs lg:text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors mb-6 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
