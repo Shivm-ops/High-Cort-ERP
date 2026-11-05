@@ -84,10 +84,21 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
                 msg.attach(MIMEText(html_body, "html"))
 
             port = int(settings.SMTP_PORT or 587)
+            # Enforce IPv4 resolution to avoid 'Network is unreachable' on IPv4-only VPS
+            target_host = smtp_host
+            try:
+                import socket
+                addr_infos = socket.getaddrinfo(smtp_host, port, socket.AF_INET, socket.SOCK_STREAM)
+                if addr_infos:
+                    target_host = addr_infos[0][4][0]
+            except Exception:
+                target_host = smtp_host
+
             if port == 465:
-                server = smtplib.SMTP_SSL(smtp_host, port, timeout=12)
+                server = smtplib.SMTP_SSL(target_host, port, timeout=12)
+                server.server_hostname = smtp_host
             else:
-                server = smtplib.SMTP(smtp_host, port, timeout=12)
+                server = smtplib.SMTP(target_host, port, timeout=12)
                 if settings.SMTP_USE_TLS:
                     server.starttls()
 
