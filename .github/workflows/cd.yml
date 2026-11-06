@@ -4,22 +4,15 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
-    inputs:
-      target_env:
-        description: "Target Deployment Environment"
-        required: true
-        default: "vps"
-        type: choice
-        options:
-          - "vps"
-          - "aws_ec2"
-          - "all"
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  # ─── 1. Deploy to Production Linux VPS (DigitalOcean / Hostinger) ───────────
+  # ─── Deploy to DigitalOcean Linux VPS ───────────────────────────────────────
   deploy-vps:
     name: Deploy to Production VPS
-    if: github.event_name == 'push' || inputs.target_env == 'vps' || inputs.target_env == 'all'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -70,30 +63,3 @@ jobs:
             fi
             
             echo "✅ [Fastcase CD] Production deployment finished successfully!"
-
-  # ─── 2. Deploy to AWS EC2 (Optional / Multi-Cloud) ──────────────────────────
-  deploy-ec2:
-    name: Deploy to AWS EC2
-    if: (github.event_name == 'workflow_dispatch' && (inputs.target_env == 'aws_ec2' || inputs.target_env == 'all'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Deploy via SSH to AWS EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME || 'ubuntu' }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            set -e
-            echo "🚀 [Fastcase CD] Deploying to AWS EC2..."
-            DEPLOY_DIR="/home/${{ secrets.EC2_USERNAME || 'ubuntu' }}/High-Cort-ERP"
-            cd "$DEPLOY_DIR"
-            git pull origin main
-            docker compose -f docker-compose.aws.yml up -d --build
-            docker image prune -f
-            echo "✅ AWS EC2 deployment complete!"
-
