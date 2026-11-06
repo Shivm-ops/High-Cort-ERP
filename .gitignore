@@ -38,3 +38,6 @@ logs/
 *.sqlite
 *.sqlite3
 *.dump
+
+.env.secrets
+backend/.env.secrets

@@ -73,6 +73,15 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
     RAZORPAY_WEBHOOK_SECRET: str = ""
 
+    # Billing / Tax invoice (seller details printed on invoices)
+    # Set GST_RATE=0 if you are not GST-registered (invoice becomes a plain receipt).
+    GST_RATE: float = 0.18
+    COMPANY_LEGAL_NAME: str = "Fastcase Legal Technologies"
+    COMPANY_GSTIN: str = ""
+    COMPANY_ADDRESS: str = ""
+    COMPANY_STATE: str = "Maharashtra"
+    COMPANY_SUPPORT_EMAIL: str = "support@fastcase.in"
+
     # Admin Notifications
     ADMIN_EMAIL: str = "admin@fastcase.in"
 

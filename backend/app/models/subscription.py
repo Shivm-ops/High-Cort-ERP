@@ -76,9 +76,20 @@ class PaymentTransaction(Base):
     razorpay_payment_id = Column(String(100), nullable=True, index=True)
     invoice_number = Column(String(50), nullable=True, index=True)
     invoice_url = Column(String(500), nullable=True)
+    # Server-side snapshot of what was ordered (never trust the browser)
+    plan_id = Column(UUID(as_uuid=True), ForeignKey("subscription_plans.id"), nullable=True)
+    billing_cycle = Column(String(20), nullable=True)
+    base_amount = Column(Float, nullable=True)
+    gst_amount = Column(Float, nullable=True)
+    payment_method = Column(String(50), nullable=True)
+    failure_reason = Column(String(500), nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+    period_start = Column(DateTime, nullable=True)
+    period_end = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     firm = relationship("Firm")
+    plan = relationship("SubscriptionPlan")
 
 class RequestStatus(str, enum.Enum):
     PENDING = "pending"

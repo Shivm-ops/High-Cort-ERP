@@ -65,7 +65,9 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
-      - ./backend/.env.production
+      - path: ./backend/.env.production
+      - path: ./backend/.env.secrets   # gitignored: Razorpay/SMTP keys, survives deploys
+        required: false
     environment:
       - DATABASE_URL=postgresql+psycopg2://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
       - REDIS_URL=redis://redis:6379/0

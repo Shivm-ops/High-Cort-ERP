@@ -75,6 +75,15 @@ def run_db_migrations():
             ("payment_transactions", "razorpay_payment_id", "VARCHAR(100)"),
             ("payment_transactions", "invoice_number", "VARCHAR(50)"),
             ("payment_transactions", "invoice_url", "VARCHAR(500)"),
+            ("payment_transactions", "plan_id", "UUID REFERENCES subscription_plans(id)"),
+            ("payment_transactions", "billing_cycle", "VARCHAR(20)"),
+            ("payment_transactions", "base_amount", "FLOAT"),
+            ("payment_transactions", "gst_amount", "FLOAT"),
+            ("payment_transactions", "payment_method", "VARCHAR(50)"),
+            ("payment_transactions", "failure_reason", "VARCHAR(500)"),
+            ("payment_transactions", "paid_at", "TIMESTAMP"),
+            ("payment_transactions", "period_start", "TIMESTAMP"),
+            ("payment_transactions", "period_end", "TIMESTAMP"),
         ]
         for tbl, col, col_def in table_migrations:
             try:
