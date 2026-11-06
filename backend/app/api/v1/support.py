@@ -510,3 +510,4 @@ def get_support_attachment(file_name: str):
     ext = os.path.splitext(clean_name)[1].lower()
     media_type = "application/pdf" if ext == ".pdf" else f"image/{ext.replace('.', '')}"
     return FileResponse(file_path, media_type=media_type, filename=clean_name)
+

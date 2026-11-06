@@ -179,3 +179,4 @@ async def send_ticket_status_notification(
     except Exception as exc:
         logger.error(f"Failed to send ticket status email: {exc}", exc_info=True)
         return False
+

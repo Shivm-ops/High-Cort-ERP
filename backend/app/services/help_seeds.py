@@ -300,3 +300,4 @@ Maintain immaculate financial accounting for your practice with full GST complia
     except Exception as e:
         db.rollback()
         logger.warning(f"Help Center seeding notice: {e}")
+
