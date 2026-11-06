@@ -171,16 +171,19 @@ async def lifespan(app: FastAPI):
         logger.warning(f"⚠️ Template seeding notice: {e}")
     logger.info("✅ Database tables created/verified")
 
-    # Start periodic court hearing reminder worker
+    # Start periodic workers
     reminder_task = asyncio.create_task(_hearing_reminder_cron_worker())
-    logger.info("📅 Automated Court Date Reminder worker started")
+    from app.services.subscription_worker import subscription_lifecycle_cron_worker
+    sub_task = asyncio.create_task(subscription_lifecycle_cron_worker())
+    logger.info("📅 Automated Court Date and Subscription Lifecycle workers active")
 
     yield
 
     reminder_task.cancel()
+    sub_task.cancel()
     try:
-        await reminder_task
-    except (asyncio.CancelledError, Exception):
+        await asyncio.gather(reminder_task, sub_task, return_exceptions=True)
+    except Exception:
         pass
     logger.info("🛑 Fastcase API shutting down...")
 

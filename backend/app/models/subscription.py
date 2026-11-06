@@ -38,6 +38,8 @@ class SubscriptionPlan(Base):
     name = Column(String(100), nullable=False)
     tier = Column(String(50), unique=True, nullable=False)
     price_monthly = Column(Float, nullable=False)
+    price_quarterly = Column(Float, nullable=True, default=0.0)
+    price_half_yearly = Column(Float, nullable=True, default=0.0)
     price_yearly = Column(Float, nullable=False)
     max_users = Column(Integer, nullable=False)
     storage_limit_gb = Column(Float, nullable=False)
@@ -51,10 +53,11 @@ class TenantSubscription(Base):
     firm_id = Column(UUID(as_uuid=True), ForeignKey("firms.id"), nullable=False, unique=True)
     plan_id = Column(UUID(as_uuid=True), ForeignKey("subscription_plans.id"), nullable=False)
     status = Column(Enum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE)
-    billing_cycle = Column(String(20), default="monthly") # monthly, yearly
+    billing_cycle = Column(String(20), default="monthly") # monthly, quarterly, half_yearly, yearly
     start_date = Column(DateTime, default=datetime.utcnow)
     end_date = Column(DateTime, nullable=False)
     auto_renew = Column(Boolean, default=True)
+    last_reminder_type = Column(String(50), nullable=True) # "7_days", "3_days", "0_days", "grace_period", "expired"
 
     firm = relationship("Firm")
     plan = relationship("SubscriptionPlan")
@@ -69,7 +72,10 @@ class PaymentTransaction(Base):
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     gateway = Column(Enum(GatewayProvider), nullable=False)
     gateway_reference = Column(String(255))
-    invoice_url = Column(String(500))
+    razorpay_order_id = Column(String(100), nullable=True, index=True)
+    razorpay_payment_id = Column(String(100), nullable=True, index=True)
+    invoice_number = Column(String(50), nullable=True, index=True)
+    invoice_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     firm = relationship("Firm")

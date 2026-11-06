@@ -1,91 +1,66 @@
 from pydantic_settings import BaseSettings
-from typing import List
-import json
+from typing import List, Optional
+import os
 
 
 class Settings(BaseSettings):
     APP_NAME: str = "Fastcase"
     APP_ENV: str = "development"
     DEBUG: bool = True
-    SECRET_KEY: str = "fastcase-development-secret-change-in-production-2025"
     DOMAIN: str = "fastcase.in"
+    SECRET_KEY: str = "supersecretkey"
+
+    # Database
+    DATABASE_URL: str = "postgresql+psycopg2://postgres:password@localhost:5432/lagalos_db"
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # JWT
+    JWT_SECRET_KEY: str = "jwtsecretkey"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # CORS
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-        "http://127.0.0.1:3002",
-        "http://139.59.73.77",
-        "http://139.59.73.77:3000",
-        "http://139.59.73.77:3001",
-        "http://139.59.73.77:3002",
-        "http://43.204.229.196",
-        "http://43.204.229.196:3000",
-        "http://15.206.205.114",
-        "http://15.206.205.114:3000",
-        "http://15.206.205.114:3001",
-        "http://15.206.205.114:3002",
-        "http://fastcase.in",
-        "http://www.fastcase.in",
-        "http://app.fastcase.in",
-        "http://admin.fastcase.in",
-        "http://api.fastcase.in",
         "https://fastcase.in",
         "https://www.fastcase.in",
         "https://app.fastcase.in",
         "https://admin.fastcase.in",
-        "https://api.fastcase.in",
     ]
 
-    def all_allowed_origins(self) -> List[str]:
-        origins = list(self.ALLOWED_ORIGINS)
-        domain = (self.DOMAIN or "").strip().lower()
-        if domain:
-            for proto in ("http://", "https://"):
-                for prefix in ("", "www.", "app.", "admin.", "api."):
-                    origin = f"{proto}{prefix}{domain}"
-                    if origin not in origins:
-                        origins.append(origin)
-        return origins
-
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/fastcase_db"
-    REDIS_URL: str = "redis://localhost:6379/0"
-
-    # JWT
-    JWT_SECRET_KEY: str = "fastcase-jwt-secret-dev-2025"
-    JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-
     # OpenAI
-    OPENAI_API_KEY: str = ""
+    OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4o"
-    OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-large"
 
-    # Storage (AWS S3 / DigitalOcean Spaces)
-    AWS_ACCESS_KEY_ID: str = ""
-    AWS_SECRET_ACCESS_KEY: str = ""
+    # AWS
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_REGION: str = "ap-south-1"
-    AWS_S3_BUCKET: str = "fastcase-documents"
+    AWS_S3_BUCKET: str = "lagalos-documents"
+
+    # Azure Blob Storage
+    AZURE_STORAGE_CONNECTION_STRING: Optional[str] = None
+    AZURE_CONTAINER_NAME: str = "documents"
 
     # Elasticsearch
-    ELASTICSEARCH_URL: str = "http://localhost:9200"
+    ELASTICSEARCH_URL: Optional[str] = None
 
-    # Email — Azure Communication Services
-    AZURE_COMMUNICATION_CONNECTION_STRING: str = ""
-    AZURE_EMAIL_FROM_ADDRESS: str = "noreply@fastcase.in"
-    AZURE_EMAIL_FROM_NAME: str = "Fastcase ERP"
-
-    # Email — SMTP (Amazon SES / Gmail / Mailtrap / Custom SMTP)
+    # Email — SMTP (Amazon SES / Gmail / Brevo / Custom SMTP)
     SMTP_HOST: str = ""
-    SMTP_PORT: int = 587
+    SMTP_PORT: int = 2525
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM_EMAIL: str = "noreply@fastcase.in"
+    SMTP_FROM_EMAIL: str = "support@fastcase.in"
     SMTP_FROM_NAME: str = "Fastcase ERP"
     SMTP_USE_TLS: bool = True
+
+    # Razorpay Payment Gateway
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_WEBHOOK_SECRET: str = ""
 
     # Admin Notifications
     ADMIN_EMAIL: str = "admin@fastcase.in"
