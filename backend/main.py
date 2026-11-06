@@ -64,6 +64,36 @@ def run_db_migrations():
             conn.rollback()
             logger.warning(f"⚠️ Notice on hearings.reminder_sent: {e}")
 
+        # Subscription & Payment transaction columns
+        table_migrations = [
+            ("tenant_subscriptions", "last_reminder_type", "VARCHAR(50)"),
+            ("tenant_subscriptions", "billing_cycle", "VARCHAR(20) DEFAULT 'monthly'"),
+            ("tenant_subscriptions", "auto_renew", "BOOLEAN DEFAULT TRUE"),
+            ("subscription_plans", "price_quarterly", "FLOAT DEFAULT 0.0"),
+            ("subscription_plans", "price_half_yearly", "FLOAT DEFAULT 0.0"),
+            ("payment_transactions", "razorpay_order_id", "VARCHAR(100)"),
+            ("payment_transactions", "razorpay_payment_id", "VARCHAR(100)"),
+            ("payment_transactions", "invoice_number", "VARCHAR(50)"),
+            ("payment_transactions", "invoice_url", "VARCHAR(500)"),
+        ]
+        for tbl, col, col_def in table_migrations:
+            try:
+                conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN IF NOT EXISTS {col} {col_def}"))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.warning(f"⚠️ Column notice on {tbl}.{col}: {e}")
+
+        for extra_idx in [
+            "CREATE INDEX IF NOT EXISTS ix_payment_transactions_razorpay_order_id ON payment_transactions (razorpay_order_id)",
+            "CREATE INDEX IF NOT EXISTS ix_payment_transactions_invoice_number ON payment_transactions (invoice_number)",
+        ]:
+            try:
+                conn.execute(text(extra_idx))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+
     _backfill_firm_subdomains()
 
 

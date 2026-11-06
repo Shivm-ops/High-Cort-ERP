@@ -31,6 +31,17 @@ class Settings(BaseSettings):
         "https://admin.fastcase.in",
     ]
 
+    def all_allowed_origins(self) -> List[str]:
+        origins = list(self.ALLOWED_ORIGINS)
+        domain = (self.DOMAIN or "").strip().lower()
+        if domain:
+            for proto in ("http://", "https://"):
+                for prefix in ("", "www.", "app.", "admin.", "api."):
+                    origin = f"{proto}{prefix}{domain}"
+                    if origin not in origins:
+                        origins.append(origin)
+        return origins
+
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4o"
