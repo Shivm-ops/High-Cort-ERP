@@ -39,6 +39,7 @@ import {
   Car,
   FileText,
   HardDriveUpload,
+  HelpCircle,
   X
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
@@ -119,6 +120,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "System",
     items: [
+      { label: "Help & Support", href: "/support", icon: HelpCircle },
       { label: "Settings", href: "/settings", icon: Settings },
     ],
   },

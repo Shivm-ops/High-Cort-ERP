@@ -163,8 +163,10 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.template_seeds import seed_master_templates
         from app.core.database import SessionLocal
+        from app.services.help_seeds import seed_help_center
         with SessionLocal() as db_session:
             seed_master_templates(db_session)
+            seed_help_center(db_session)
     except Exception as e:
         logger.warning(f"⚠️ Template seeding notice: {e}")
     logger.info("✅ Database tables created/verified")

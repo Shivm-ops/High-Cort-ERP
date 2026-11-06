@@ -55,3 +55,5 @@ router.include_router(analyzer.router, prefix="/analyzer", tags=["Court Order An
 from . import data_bridge
 router.include_router(data_bridge.router, prefix="/data-bridge", tags=["Data Bridge"])
 
+from . import support
+router.include_router(support.router, prefix="/support", tags=["Support & Help Center"])
