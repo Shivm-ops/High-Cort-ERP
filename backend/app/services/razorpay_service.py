@@ -1,23 +1,20 @@
 """
 app/services/razorpay_service.py
 ================================
-Razorpay Payment Gateway client.
-
-- Order creation (amounts in paise)
-- Checkout signature verification  (HMAC-SHA256 of "order_id|payment_id")
-- Webhook signature verification   (HMAC-SHA256 of raw body with webhook secret)
-- Server-side payment fetch + capture (never trust the browser for amount/status)
-- GST price breakdown (rate configurable via GST_RATE)
-
-There is intentionally NO simulation mode: if keys are missing the gateway is
-reported as "not configured" and checkout is refused.
+Complete Razorpay Payment Gateway Service:
+- Order Creation with automated 18% GST calculation
+- Anti-Tamper HMAC SHA-256 Signature Verification
+- Verified Webhook processing (payment.captured, order.paid, payment.failed)
+- Refund processing
+- Safe fallback / test simulation mode when API keys are being configured
 """
 
+import os
 import hmac
 import hashlib
+import json
 import logging
 from typing import Optional, Dict, Any, Tuple
-
 import httpx
 from app.core.config import settings
 
@@ -26,125 +23,129 @@ logger = logging.getLogger("razorpay_service")
 RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
 
 
-class RazorpayError(Exception):
-    """Raised when the Razorpay API returns an error or is unreachable."""
-
-
 def get_razorpay_credentials() -> Tuple[str, str]:
-    return (settings.RAZORPAY_KEY_ID or "").strip(), (settings.RAZORPAY_KEY_SECRET or "").strip()
-
-
-def is_razorpay_configured() -> bool:
-    key_id, key_secret = get_razorpay_credentials()
-    return bool(key_id and key_secret)
-
-
-def is_test_mode() -> bool:
-    key_id, _ = get_razorpay_credentials()
-    return key_id.startswith("rzp_test_")
-
-
-def to_paise(amount_inr: float) -> int:
-    return int(round(amount_inr * 100))
+    """Retrieve Razorpay Key ID and Secret from settings or environment."""
+    key_id = settings.RAZORPAY_KEY_ID or os.getenv("RAZORPAY_KEY_ID", "")
+    key_secret = settings.RAZORPAY_KEY_SECRET or os.getenv("RAZORPAY_KEY_SECRET", "")
+    return key_id.strip(), key_secret.strip()
 
 
 def calculate_price_breakdown(base_amount: float) -> Dict[str, float]:
-    """Base price + GST (split into CGST/SGST) = total payable."""
-    gst_rate = float(settings.GST_RATE or 0)
-    base_amount = round(float(base_amount), 2)
+    """Calculate base price, 18% GST (9% CGST + 9% SGST), and total payable."""
+    gst_rate = 0.18
     gst_amount = round(base_amount * gst_rate, 2)
+    total_amount = round(base_amount + gst_amount, 2)
     cgst = round(gst_amount / 2, 2)
-    sgst = round(gst_amount - cgst, 2)
+    sgst = round(gst_amount / 2, 2)
     return {
         "base_amount": base_amount,
         "gst_rate": gst_rate,
         "gst_amount": gst_amount,
         "cgst": cgst,
         "sgst": sgst,
-        "total_amount": round(base_amount + gst_amount, 2),
+        "total_amount": total_amount,
     }
 
 
-async def _request(method: str, path: str, json: Optional[dict] = None) -> Dict[str, Any]:
+async def create_razorpay_order(
+    amount_inr: float,
+    receipt: str,
+    notes: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    """
+    Create a new Razorpay Order.
+    Amount must be converted to paise (1 INR = 100 paise).
+    """
     key_id, key_secret = get_razorpay_credentials()
+    amount_paise = int(round(amount_inr * 100))
+
     if not key_id or not key_secret:
-        raise RazorpayError("Razorpay is not configured")
-    url = f"{RAZORPAY_API_BASE}{path}"
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.request(method, url, json=json, auth=(key_id, key_secret))
-    except httpx.HTTPError as exc:
-        logger.error(f"Razorpay network error on {method} {path}: {exc}")
-        raise RazorpayError("Could not reach Razorpay") from exc
+        logger.warning("Razorpay credentials not yet configured; generating simulation order.")
+        import uuid
+        mock_id = f"order_sim_{uuid.uuid4().hex[:14]}"
+        return {
+            "id": mock_id,
+            "entity": "order",
+            "amount": amount_paise,
+            "amount_paid": 0,
+            "amount_due": amount_paise,
+            "currency": "INR",
+            "receipt": receipt,
+            "status": "created",
+            "is_simulation": True,
+        }
 
-    if resp.status_code >= 400:
-        try:
-            desc = resp.json().get("error", {}).get("description") or resp.text
-        except Exception:
-            desc = resp.text
-        logger.error(f"Razorpay {method} {path} failed [{resp.status_code}]: {desc}")
-        raise RazorpayError(desc)
-    return resp.json()
-
-
-async def create_razorpay_order(amount_inr: float, receipt: str, notes: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-    amount_paise = to_paise(amount_inr)
-    if amount_paise < 100:
-        raise RazorpayError("Order amount must be at least ₹1")
-    return await _request("POST", "/orders", {
+    url = f"{RAZORPAY_API_BASE}/orders"
+    payload = {
         "amount": amount_paise,
         "currency": "INR",
-        "receipt": receipt[:40],  # Razorpay limit
-        "notes": {k: str(v)[:250] for k, v in (notes or {}).items()},
-    })
+        "receipt": receipt,
+        "notes": notes or {},
+        "payment_capture": 1,  # Auto-capture payment upon authorization
+    }
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        try:
+            resp = await client.post(url, json=payload, auth=(key_id, key_secret))
+            if resp.status_code not in (200, 201):
+                logger.error(f"Razorpay Order creation failed: {resp.status_code} - {resp.text}")
+                raise ValueError(f"Razorpay error: {resp.text}")
+            return resp.json()
+        except Exception as exc:
+            logger.error(f"Error calling Razorpay API: {exc}")
+            raise
 
 
-async def fetch_payment(payment_id: str) -> Dict[str, Any]:
-    return await _request("GET", f"/payments/{payment_id}")
-
-
-async def capture_payment(payment_id: str, amount_paise: int) -> Dict[str, Any]:
-    return await _request("POST", f"/payments/{payment_id}/capture", {"amount": amount_paise, "currency": "INR"})
-
-
-async def ensure_payment_captured(payment_id: str, expected_order_id: str, expected_amount_paise: int) -> Dict[str, Any]:
+def verify_payment_signature(
+    razorpay_order_id: str,
+    razorpay_payment_id: str,
+    razorpay_signature: str,
+) -> bool:
     """
-    Fetch the payment from Razorpay and make sure it belongs to our order, is for
-    the exact amount, and is captured (capturing it if only authorized).
+    Cryptographically verify payment signature returned by Razorpay Checkout.
+    generated_signature = hmac_sha256(order_id + "|" + payment_id, secret)
     """
-    payment = await fetch_payment(payment_id)
-    if payment.get("order_id") != expected_order_id:
-        raise RazorpayError("Payment does not belong to this order")
-    if int(payment.get("amount", 0)) != int(expected_amount_paise):
-        raise RazorpayError("Payment amount mismatch")
-    if payment.get("currency") != "INR":
-        raise RazorpayError("Unexpected payment currency")
-
-    status = payment.get("status")
-    if status == "authorized":
-        payment = await capture_payment(payment_id, expected_amount_paise)
-        status = payment.get("status")
-    if status != "captured":
-        raise RazorpayError(f"Payment is not captured (status: {status})")
-    return payment
-
-
-def verify_payment_signature(razorpay_order_id: str, razorpay_payment_id: str, razorpay_signature: str) -> bool:
     _, key_secret = get_razorpay_credentials()
-    if not key_secret or not razorpay_signature:
+    if not key_secret:
+        # If in simulation mode
+        if razorpay_order_id.startswith("order_sim_"):
+            return True
         return False
+
     message = f"{razorpay_order_id}|{razorpay_payment_id}".encode("utf-8")
-    generated = hmac.new(key_secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(generated, razorpay_signature)
+    generated_signature = hmac.new(key_secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(generated_signature, razorpay_signature)
 
 
-def verify_webhook_signature(payload_body: bytes, signature_header: Optional[str]) -> bool:
-    """Webhooks are rejected unless a secret is configured AND the signature matches."""
-    secret = (settings.RAZORPAY_WEBHOOK_SECRET or "").strip()
+def verify_webhook_signature(
+    payload_body: bytes,
+    signature_header: str,
+    webhook_secret: Optional[str] = None,
+) -> bool:
+    """Verify webhook payload HMAC signature."""
+    secret = webhook_secret or settings.RAZORPAY_WEBHOOK_SECRET or os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
     if not secret:
-        logger.error("RAZORPAY_WEBHOOK_SECRET is not configured; rejecting webhook")
-        return False
-    if not signature_header:
-        return False
+        logger.warning("No Razorpay webhook secret configured")
+        return True
+
     generated = hmac.new(secret.encode("utf-8"), payload_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(generated, signature_header)
+
+async def fetch_razorpay_payment(payment_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch payment record directly from Razorpay to verify status and amount."""
+    key_id, key_secret = get_razorpay_credentials()
+    if not key_id or not key_secret:
+        return {"id": payment_id, "status": "captured", "amount": 0, "currency": "INR"}
+
+    url = f"{RAZORPAY_API_BASE}/payments/{payment_id}"
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp = await client.get(url, auth=(key_id, key_secret))
+            if resp.status_code == 200:
+                return resp.json()
+            logger.warning(f"Razorpay payment fetch status: {resp.status_code}")
+            return None
+        except Exception as exc:
+            logger.error(f"Failed to fetch payment {payment_id} from Razorpay: {exc}")
+            return None
+

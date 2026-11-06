@@ -73,12 +73,8 @@ export default function SubscriptionProfile() {
   };
 
   const handleRazorpayCheckout = async (plan: any) => {
-    if (getPlanPrice(plan) <= 0) {
-      toast.info("This plan is free — no payment needed.");
-      return;
-    }
-    if (!data?.payments_enabled) {
-      toast.error("Online payments are not enabled yet. Please contact support@fastcase.in.");
+    if (plan.price_monthly === 0) {
+      toast.info("You are already eligible for the free basic tier.");
       return;
     }
 
@@ -87,56 +83,59 @@ export default function SubscriptionProfile() {
     try {
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        toast.error("Failed to load Razorpay. Please check your internet connection.");
+        toast.error("Failed to load Razorpay payment SDK. Please check your internet connection.");
         setProcessingPlanId(null);
         return;
       }
 
-      // 1. Server prices the plan and creates the Razorpay order
+      // 1. Create order on backend
       const orderRes = await api.post("/subscriptions/checkout-order", {
         plan_id: plan.id,
         billing_cycle: billingCycle,
       });
-      const { order_id, amount, currency, key_id, prefill, breakdown, firm_name } = orderRes.data;
 
-      // 2. Open Razorpay Checkout
+      const { order_id, amount, currency, key_id, prefill, breakdown } = orderRes.data;
+
+      // 2. Open Razorpay Checkout modal
       const options = {
-        key: key_id,
-        amount,
-        currency,
-        order_id,
-        name: "Fastcase",
-        description: `${plan.name} — ${billingCycle.replace("_", " ")}`,
+        key: key_id || "rzp_test_placeholder",
+        amount: amount,
+        currency: currency,
+        name: "Fastcase Legal Platform",
+        description: `${plan.name} (${billingCycle.replace("_", " ").toUpperCase()})`,
         image: "https://fastcase.in/favicon.ico",
-        prefill,
-        notes: { firm: firm_name, plan: plan.tier, cycle: billingCycle },
-        theme: { color: "#059669" },
-        retry: { enabled: true, max_count: 3 },
+        order_id: order_id,
+        prefill: {
+          name: prefill.name,
+          email: prefill.email,
+          contact: prefill.contact,
+        },
+        theme: {
+          color: "#059669", // Fastcase emerald green
+        },
         handler: async function (response: any) {
-          const toastId = toast.loading("Confirming payment with Razorpay...");
           try {
+            toast.loading("Verifying payment and activating your chambers...");
             const verifyRes = await api.post("/subscriptions/verify-payment", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              plan_id: plan.id,
+              billing_cycle: billingCycle,
             });
-            toast.success(verifyRes.data.message || "Subscription activated!", { id: toastId });
+
+            toast.dismiss();
+            toast.success(verifyRes.data.message || "Subscription activated successfully!");
             setSuccessInvoice({
-              plan_name: verifyRes.data.plan_name,
+              plan_name: plan.name,
               invoice_number: verifyRes.data.invoice_number,
               valid_until: verifyRes.data.valid_until,
-              amount: verifyRes.data.amount ?? breakdown.total_amount,
-              transaction_id: verifyRes.data.transaction_id,
+              amount: breakdown.total_amount,
             });
-          } catch (err: any) {
-            toast.error(
-              (err.response?.data?.detail || "We could not confirm the payment right now.") +
-                " If money was debited, your plan will activate automatically within a few minutes.",
-              { id: toastId, duration: 10000 }
-            );
-          } finally {
-            setProcessingPlanId(null);
             fetchSubscriptionData();
+          } catch (err: any) {
+            toast.dismiss();
+            toast.error(err.response?.data?.detail || "Payment verification failed.");
           }
         },
         modal: {
@@ -148,14 +147,8 @@ export default function SubscriptionProfile() {
 
       const razorpayInstance = new (window as any).Razorpay(options);
       razorpayInstance.on("payment.failed", function (resp: any) {
-        toast.error(`Payment failed: ${resp.error?.description || "Unknown error"}`);
-        api
-          .post("/subscriptions/payment-failed", {
-            razorpay_order_id: resp.error?.metadata?.order_id || order_id,
-            razorpay_payment_id: resp.error?.metadata?.payment_id,
-            reason: resp.error?.description,
-          })
-          .catch(() => {});
+        toast.error(`Payment failed: ${resp.error.description}`);
+        setProcessingPlanId(null);
       });
       razorpayInstance.open();
     } catch (err: any) {
@@ -163,29 +156,6 @@ export default function SubscriptionProfile() {
       toast.error(err.response?.data?.detail || "Failed to initiate payment. Please try again.");
       setProcessingPlanId(null);
     }
-  };
-
-  const downloadInvoice = async (txnId: string) => {
-    // Open the window synchronously so popup blockers allow it
-    const win = window.open("", "_blank");
-    try {
-      const res = await api.get(`/subscriptions/invoices/${txnId}/download`, { responseType: "text" });
-      if (win) {
-        win.document.open();
-        win.document.write(res.data);
-        win.document.close();
-      }
-    } catch (err: any) {
-      win?.close();
-      toast.error(err.response?.data?.detail || "Could not load invoice");
-    }
-  };
-
-  const STATUS_STYLE: Record<string, string> = {
-    success: "bg-emerald-100 text-emerald-800",
-    pending: "bg-amber-100 text-amber-800",
-    failed: "bg-red-100 text-red-700",
-    refunded: "bg-slate-200 text-slate-700",
   };
 
   if (loading) {
@@ -202,18 +172,6 @@ export default function SubscriptionProfile() {
 
   return (
     <div className="space-y-6">
-      {data && !data.payments_enabled && (
-        <div className="flex items-start gap-2 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>Online payments are being set up. To upgrade now, please contact <strong>support@fastcase.in</strong>.</span>
-        </div>
-      )}
-      {data?.payments_enabled && data?.test_mode && (
-        <div className="flex items-start gap-2 p-3 rounded-xl border border-blue-200 bg-blue-50 text-blue-800 text-xs">
-          <ShieldCheck className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span><strong>Razorpay TEST mode</strong> — no real money is charged. Use UPI <code>success@razorpay</code> or card 4111 1111 1111 1111.</span>
-        </div>
-      )}
       {/* ── Active Subscription Header Card ── */}
       <div className="bg-gradient-to-r from-emerald-900 to-teal-950 text-white rounded-2xl p-6 md:p-8 shadow-md relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -323,9 +281,7 @@ export default function SubscriptionProfile() {
                     <span className="text-3xl font-black text-slate-900">₹{price.toLocaleString("en-IN")}</span>
                     <span className="text-xs text-slate-500 font-medium">{getCycleLabel()}</span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    {data?.gst_rate > 0 ? `+ ${Math.round(data.gst_rate * 100)}% GST (Tax Invoice provided)` : "Receipt provided"}
-                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">+ 18% GST (Tax Invoice provided)</p>
                 </div>
 
                 <ul className="space-y-3 mb-6 text-xs text-slate-700">
@@ -351,22 +307,20 @@ export default function SubscriptionProfile() {
               <div>
                 <button
                   onClick={() => handleRazorpayCheckout(plan)}
-                  disabled={price <= 0 || isProcessing || !!processingPlanId}
+                  disabled={isCurrent || isProcessing}
                   className={cn(
                     "w-full py-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm",
-                    price <= 0
+                    isCurrent
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
+                      : "bg-emerald-600 hover:bg-emerald-700 text-white"
                   )}
                 >
                   {isProcessing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" /> Processing Payment...
                     </>
-                  ) : price <= 0 ? (
-                    isCurrent ? "Current Plan" : "Free Plan"
                   ) : isCurrent ? (
-                    <>Renew / Extend Plan &rarr;</>
+                    "Current Plan Active"
                   ) : (
                     <>Pay with Razorpay (UPI / Cards / NetBanking) &rarr;</>
                   )}
@@ -398,41 +352,33 @@ export default function SubscriptionProfile() {
                 <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase">
                   <th className="py-2.5">Invoice #</th>
                   <th className="py-2.5">Date</th>
-                  <th className="py-2.5">Plan</th>
                   <th className="py-2.5">Amount</th>
                   <th className="py-2.5">Status</th>
-                  <th className="py-2.5">Payment ID</th>
-                  <th className="py-2.5 text-right">Invoice</th>
+                  <th className="py-2.5">Gateway Reference</th>
+                  <th className="py-2.5 text-right">Tax Invoice</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {invoices.map((inv) => (
                   <tr key={inv.id}>
-                    <td className="py-3 font-mono font-bold text-emerald-700">{inv.invoice_number || "—"}</td>
-                    <td className="py-3">{new Date(inv.paid_at || inv.created_at).toLocaleDateString()}</td>
-                    <td className="py-3 capitalize">
-                      {inv.plan_name || "—"}
-                      {inv.billing_cycle && <span className="text-slate-400"> · {inv.billing_cycle.replace("_", " ")}</span>}
-                    </td>
-                    <td className="py-3 font-semibold">₹{Number(inv.amount || 0).toLocaleString("en-IN")}</td>
+                    <td className="py-3 font-mono font-bold text-emerald-700">{inv.invoice_number}</td>
+                    <td className="py-3">{new Date(inv.created_at).toLocaleDateString()}</td>
+                    <td className="py-3 font-semibold">₹{inv.amount.toLocaleString("en-IN")}</td>
                     <td className="py-3">
-                      <span
-                        title={inv.failure_reason || ""}
-                        className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", STATUS_STYLE[inv.status] || "bg-slate-100 text-slate-600")}
-                      >
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">
                         {inv.status}
                       </span>
-                      {inv.failure_reason && <div className="text-[10px] text-red-500 mt-0.5">{inv.failure_reason}</div>}
                     </td>
-                    <td className="py-3 font-mono text-slate-400">{inv.gateway_reference || "—"}</td>
+                    <td className="py-3 font-mono text-slate-400">{inv.gateway_reference || "Razorpay"}</td>
                     <td className="py-3 text-right">
-                      {inv.invoice_url ? (
-                        <button onClick={() => downloadInvoice(inv.id)} className="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline">
-                          <Download className="w-3.5 h-3.5" /> View
-                        </button>
-                      ) : (
-                        <span className="text-slate-300">—</span>
-                      )}
+                      <a
+                        href={inv.invoice_url || `/api/v1/subscriptions/invoices/${inv.invoice_number}/download`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 font-bold hover:underline"
+                      >
+                        <Download className="w-3.5 h-3.5" /> PDF
+                      </a>
                     </td>
                   </tr>
                 ))}
@@ -468,15 +414,6 @@ export default function SubscriptionProfile() {
                 <span className="text-slate-700 font-medium">Your registered email</span>
               </div>
             </div>
-
-            {successInvoice.transaction_id && (
-              <button
-                onClick={() => downloadInvoice(successInvoice.transaction_id)}
-                className="w-full py-2.5 border border-emerald-600 text-emerald-700 font-bold text-xs rounded-xl hover:bg-emerald-50 transition flex items-center justify-center gap-1.5"
-              >
-                <Download className="w-4 h-4" /> View / Print Invoice
-              </button>
-            )}
 
             <button
               onClick={() => setSuccessInvoice(null)}
