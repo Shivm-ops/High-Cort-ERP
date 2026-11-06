@@ -219,3 +219,4 @@ async def send_subscription_expired_email(
     except Exception as exc:
         logger.error(f"Failed to send subscription expired email: {exc}", exc_info=True)
         return False
+

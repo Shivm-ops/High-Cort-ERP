@@ -11,6 +11,7 @@ FastCase One-Click Citizen Legal Help & Grievance Assistance API:
 
 import uuid
 import logging
+import html as html_lib
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
@@ -84,6 +85,9 @@ def get_legal_categories(language: str = Query("en", pattern="^(en|mr|hi)$")):
         categories_list.append({
             "id": cat_id,
             "icon": data["icon"],
+            "is_emergency": data.get("is_emergency", False),
+            "emergency_hotline": data.get("emergency_hotline", ""),
+            "limitation_period": data.get("limitation_period", {}).get(language, data.get("limitation_period", {}).get("en", "")),
             "name": data["names"].get(language, data["names"]["en"]),
             "tagline": data["taglines"].get(language, data["taglines"]["en"]),
             "target_authority": data["target_authority"].get(language, data["target_authority"]["en"]),
@@ -108,6 +112,9 @@ def classify_problem(payload: ProblemClassifyRequest):
     return {
         "category_id": result["category_id"],
         "confidence": result["confidence"],
+        "is_emergency": cat_data.get("is_emergency", False),
+        "emergency_hotline": cat_data.get("emergency_hotline", ""),
+        "limitation_period": cat_data.get("limitation_period", {}).get(lang, cat_data.get("limitation_period", {}).get("en", "")),
         "name": cat_data["names"].get(lang, cat_data["names"]["en"]),
         "tagline": cat_data["taglines"].get(lang, cat_data["taglines"]["en"]),
         "target_authority": cat_data["target_authority"].get(lang, cat_data["target_authority"]["en"]),
@@ -145,6 +152,9 @@ def generate_application(payload: GenerateApplicationRequest):
         "application_text": doc_text,
         "category_id": payload.category_id,
         "language": lang,
+        "is_emergency": cat.get("is_emergency", False),
+        "emergency_hotline": cat.get("emergency_hotline", ""),
+        "limitation_period": cat.get("limitation_period", {}).get(lang, cat.get("limitation_period", {}).get("en", "")),
         "category_name": cat["names"].get(lang, cat["names"]["en"]),
         "target_authority": cat["target_authority"].get(lang, cat["target_authority"]["en"]),
         "applicable_laws": cat["default_laws"],
@@ -247,24 +257,46 @@ def get_user_grievances(
 @router.get("/applications/{grievance_id}/print-view", response_class=HTMLResponse)
 def get_clean_print_view(
     grievance_id: uuid.UUID,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     """
     Render a clean, office-ready A4 document view configured specifically
     for direct browser printing or saving as PDF without web headers/navbars.
+    Enforces firm-level data isolation if the application belongs to an advocate firm.
     """
     grievance = db.query(CitizenGrievance).filter(CitizenGrievance.id == grievance_id).first()
     if not grievance:
         raise HTTPException(status_code=404, detail="Application record not found.")
 
-    doc_text = grievance.generated_application or "No content available."
+    # Multi-tenant security check: If grievance is tied to a specific firm, verify tenant access
+    if grievance.firm_id is not None:
+        auth_header = request.headers.get("Authorization")
+        user_firm_id = None
+        if auth_header and auth_header.startswith("Bearer "):
+            try:
+                from app.core.security import decode_token
+                token = auth_header.split(" ")[1]
+                token_data = decode_token(token)
+                if token_data and "sub" in token_data:
+                    u = db.query(User).filter(User.id == uuid.UUID(token_data["sub"])).first()
+                    if u:
+                        user_firm_id = u.firm_id
+            except Exception:
+                pass
+        if user_firm_id != grievance.firm_id:
+            raise HTTPException(status_code=403, detail="Unauthorized access to this firm's confidential grievance record.")
+
+    doc_text = html_lib.escape(grievance.generated_application or "No content available.")
+    applicant_name = html_lib.escape(grievance.applicant_name or "Applicant")
+    opposite_party = html_lib.escape(grievance.opposite_party or "Opposite Party")
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Citizen Legal Application - {grievance.applicant_name} vs {grievance.opposite_party or 'Opposite Party'}</title>
+    <title>Citizen Legal Application - {applicant_name} vs {opposite_party}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Marathi:ital@0;1&family=Mukta:wght@400;600;700&family=Noto+Serif+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">

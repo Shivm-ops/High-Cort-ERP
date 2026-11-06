@@ -66,3 +66,4 @@ class CitizenGrievance(Base):
     # Relationships
     user = relationship("User", foreign_keys=[user_id])
     firm = relationship("Firm", foreign_keys=[firm_id])
+

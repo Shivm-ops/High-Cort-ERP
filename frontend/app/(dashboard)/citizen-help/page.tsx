@@ -43,6 +43,9 @@ interface LegalCategory {
   name: string;
   tagline: string;
   target_authority: string;
+  is_emergency?: boolean;
+  emergency_hotline?: string;
+  limitation_period?: string;
   default_laws: Array<{ act: string; section: string; desc: string }>;
   official_portals: Array<{ name: string; url: string; helpline?: string }>;
   evidence_checklist: string[];
@@ -371,25 +374,45 @@ export default function CitizenHelpPage() {
             ))}
           </div>
 
-          {/* Language Switch Buttons */}
-          <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl self-end md:self-auto">
-            <span className="text-[11px] font-bold text-gray-500 px-2 flex items-center gap-1">
-              <Globe className="w-3.5 h-3.5" /> Language:
-            </span>
-            {(["en", "mr", "hi"] as Language[]).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                className={cn(
-                  "px-3 py-1 text-xs font-bold rounded-lg transition",
-                  lang === l
-                    ? "bg-white text-emerald-800 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                {l === "en" ? "English" : l === "mr" ? "मराठी" : "हिंदी"}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 self-end md:self-auto">
+            {/* Saved Applications Trigger */}
+            <button
+              onClick={() => {
+                loadSavedHistory();
+                setShowHistory(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-emerald-600 rounded-xl text-xs font-bold text-gray-700 hover:text-emerald-800 shadow-sm transition"
+              title="View saved complaints & applications"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-emerald-700" />
+              <span>{t.savedTitle}</span>
+              {savedRecords.length > 0 && (
+                <span className="w-5 h-5 rounded-full bg-emerald-800 text-white text-[10px] font-bold flex items-center justify-center">
+                  {savedRecords.length}
+                </span>
+              )}
+            </button>
+
+            {/* Language Switch Buttons */}
+            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+              <span className="text-[11px] font-bold text-gray-500 px-1.5 flex items-center gap-1">
+                <Globe className="w-3 h-3" /> Lang:
+              </span>
+              {(["en", "mr", "hi"] as Language[]).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-bold rounded-lg transition",
+                    lang === l
+                      ? "bg-white text-emerald-800 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  )}
+                >
+                  {l === "en" ? "EN" : l === "mr" ? "मराठी" : "हिंदी"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -527,6 +550,37 @@ export default function CitizenHelpPage() {
                 Change Category
               </button>
             </div>
+
+            {/* Emergency SOS Banner (Urgent Assistance) */}
+            {selectedCategory.is_emergency && (
+              <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-red-950 shadow-sm animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                    🚨
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-red-900">
+                      {lang === "mr" ? "तातडीची मदत / आपत्कालीन हेल्पलाईन" : lang === "hi" ? "आपातकालीन सहायता / हेल्पलाइन" : "Urgent / Emergency Helpline"}
+                    </h4>
+                    <p className="text-xs text-red-800 mt-0.5">
+                      {lang === "mr" 
+                        ? "आपण किंवा कोणी तात्काळ धोक्यात असल्यास त्वरित संपर्क साधा:"
+                        : lang === "hi"
+                        ? "यदि आप या कोई व्यक्ति तात्कालिक खतरे में है, तो तुरंत संपर्क करें:"
+                        : "If you or someone is in immediate danger or financial distress, contact immediately:"}
+                      {" "}
+                      <strong className="underline text-red-950 font-extrabold">{selectedCategory.emergency_hotline}</strong>
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={`tel:${selectedCategory.emergency_hotline?.split(" ")[0] || "112"}`}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition whitespace-nowrap self-end sm:self-auto"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" /> Call {selectedCategory.emergency_hotline?.split(" ")[0] || "112"}
+                </a>
+              </div>
+            )}
 
             {/* Form Container */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 space-y-6 shadow-sm">
@@ -705,6 +759,42 @@ export default function CitizenHelpPage() {
                 </div>
               </div>
 
+              {/* Statutory Limitation Period Card */}
+              {selectedCategory.limitation_period && (
+                <div className="p-4 bg-amber-50/80 border border-amber-300 rounded-xl flex items-start gap-3 text-amber-950">
+                  <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-amber-900">
+                      {lang === "mr" ? "कायदेशीर मुदत मर्यादा (Statutory Limitation Period)" : lang === "hi" ? "विधिक समय-सीमा (Statutory Limitation Period)" : "Statutory Limitation Period"}
+                    </h4>
+                    <p className="text-xs text-amber-900 mt-1 leading-relaxed font-medium">
+                      {selectedCategory.limitation_period}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Urgent Emergency Warning in Step 3 */}
+              {selectedCategory.is_emergency && (
+                <div className="p-4 bg-red-50 border border-red-300 rounded-xl flex items-start gap-3 text-red-950">
+                  <div className="w-7 h-7 rounded-lg bg-red-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                    🚨
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-red-900">
+                      {lang === "mr" ? "तातडीची मदत (Emergency Action)" : lang === "hi" ? "आपातकालीन सूचना" : "Immediate Action Required"}
+                    </h4>
+                    <p className="text-xs text-red-800 mt-0.5 leading-relaxed">
+                      {lang === "mr" 
+                        ? `तातडीच्या मदतीसाठी किंवा आर्थिक व्यवहार फ्रीझ करण्यासाठी तात्काळ संपर्क साधा: ${selectedCategory.emergency_hotline}`
+                        : lang === "hi"
+                        ? `आपातकालीन स्थिति में त्वरित कार्रवाई हेतु कॉल करें: ${selectedCategory.emergency_hotline}`
+                        : `For immediate help or fund freeze, call the 24x7 emergency helpline immediately: ${selectedCategory.emergency_hotline}`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Applicable Statutory Sections */}
               <div className="space-y-3 pt-2">
                 <h4 className="font-bold text-xs text-gray-900 uppercase flex items-center gap-2">
@@ -862,6 +952,88 @@ export default function CitizenHelpPage() {
         )}
       </div>
 
+      {/* ── Saved Applications History Modal ── */}
+      {showHistory && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-[#F7F8F6]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-gray-900">{t.savedTitle}</h3>
+                  <p className="text-xs text-gray-500">Previously drafted citizen legal applications</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-3 flex-1">
+              {savedRecords.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <FileText className="w-12 h-12 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm font-semibold">No saved applications found yet.</p>
+                  <p className="text-xs mt-1">Generated applications will automatically appear here.</p>
+                </div>
+              ) : (
+                savedRecords.map((rec) => (
+                  <div
+                    key={rec.id}
+                    className="p-4 bg-gray-50 hover:bg-emerald-50/50 border border-gray-200 hover:border-emerald-300 rounded-2xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase">
+                          {rec.category}
+                        </span>
+                        <span className="text-[11px] text-gray-400">
+                          {new Date(rec.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-sm text-gray-900">
+                        {rec.applicant_name} {rec.opposite_party ? `vs. ${rec.opposite_party}` : ""}
+                      </h4>
+                      <p className="text-xs text-gray-500 truncate max-w-md">
+                        {rec.target_authority || "Formal Grievance"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <a
+                        href={`/api/v1/citizen-help/applications/${rec.id}/print-view`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 bg-white border border-gray-200 hover:border-emerald-600 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-sm transition"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-emerald-700" /> Print
+                      </a>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-100 bg-[#F7F8F6] flex justify-end">
+              <button
+                onClick={() => setShowHistory(false)}
+                className="px-5 py-2 bg-gray-200 hover:bg-gray-300 rounded-xl text-xs font-bold text-gray-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Dedicated CSS for Perfect Court A4 Output on Paper / PDF ── */}
       <style jsx global>{`
         @media print {
@@ -891,3 +1063,4 @@ export default function CitizenHelpPage() {
     </div>
   );
 }
+

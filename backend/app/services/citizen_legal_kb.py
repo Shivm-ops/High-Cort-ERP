@@ -4,7 +4,8 @@ app/services/citizen_legal_kb.py
 FastCase Citizen Legal Help & Grievance Knowledge Base & Drafting Engine.
 Covers 9 core public law domains with authentic statutory provisions,
 multilingual guidance (English, Marathi, Hindi), verified official government portals,
-evidence checklists, and formal court/department-ready legal application generators.
+evidence checklists, limitation periods, emergency hotlines, and formal
+court/department-ready legal application generators.
 """
 
 from typing import Dict, Any, List, Optional
@@ -15,6 +16,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "police_fir": {
         "id": "police_fir",
         "icon": "ShieldAlert",
+        "is_emergency": True,
+        "emergency_hotline": "112 / 100",
+        "limitation_period": {
+            "en": "Immediate for cognizable offenses; Zero FIR can be lodged at any police station across India irrespective of jurisdiction.",
+            "mr": "दखलपात्र गुन्ह्यांसाठी तात्काळ; कोणत्याही पोलीस ठाण्यात 'झिरो एफआयआर' (Zero FIR) नोंदवण्याचा नागरिकाला कायदेशीर अधिकार आहे.",
+            "hi": "संज्ञेय अपराध में तत्काल; किसी भी थाने में क्षेत्राधिकार की बाध्यता के बिना 'जीरो एफआईआर' दर्ज कराने का अधिकार है।",
+        },
         "names": {
             "en": "Police & FIR",
             "mr": "पोलीस आणि एफआयआर (FIR)",
@@ -76,6 +84,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "women_child": {
         "id": "women_child",
         "icon": "HeartHandshake",
+        "is_emergency": True,
+        "emergency_hotline": "112 / 1091 / 181 / 1098",
+        "limitation_period": {
+            "en": "No limitation period for criminal domestic cruelty; Workplace sexual harassment complaint must be filed within 3 months (90 days) under Section 9 POSH Act.",
+            "mr": "कौटुंबिक क्रूरतेसाठी कोणतीही मुदत मर्यादा नाही; कामाच्या ठिकाणच्या छळासाठी POSH कायद्यातील कलम ९ नुसार ३ महिन्यांत (९० दिवस) तक्रार करणे आवश्यक.",
+            "hi": "घरेलू हिंसा/क्रूरता हेतु कोई समय सीमा नहीं; कार्यस्थल पर प्रताड़ना हेतु POSH एक्ट की धारा ९ के तहत ३ माह (९० दिन) के भीतर शिकायत अनिवार्य।",
+        },
         "names": {
             "en": "Women & Child Protection",
             "mr": "महिला आणि बाल संरक्षण",
@@ -134,6 +149,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "labour": {
         "id": "labour",
         "icon": "Briefcase",
+        "is_emergency": False,
+        "emergency_hotline": "14449",
+        "limitation_period": {
+            "en": "Application for delayed wages within 12 months under Payment of Wages Act Sec 15(2); Gratuity claim within 30 days of leaving employment under Payment of Gratuity Act Sec 7.",
+            "mr": "वेतन थकबाकीसाठी १२ महिन्यांच्या आत अर्ज करणे आवश्यक (कलम १५(२)); ग्रॅच्युइटीसाठी नोकरी सोडल्यापासून ३० दिवसांत मागणी करणे आवश्यक.",
+            "hi": "बकाया वेतन हेतु १२ माह के भीतर आवेदन अनिवार्य (धारा १५(२)); ग्रेच्युटी दावा कार्यमुक्ति के ३० दिनों के भीतर प्रस्तुत करें।",
+        },
         "names": {
             "en": "Labour & Employment Grievances",
             "mr": "कामगार तक्रारी आणि वेतन विवाद",
@@ -192,6 +214,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "consumer": {
         "id": "consumer",
         "icon": "ShoppingCart",
+        "is_emergency": False,
+        "emergency_hotline": "1915",
+        "limitation_period": {
+            "en": "Must be filed within 2 years from the date on which the cause of action arose under Section 69 of the Consumer Protection Act, 2019.",
+            "mr": "ग्राहक संरक्षण कायदा २०१९ च्या कलम ६९ नुसार फसवणूक/त्रुटी घडल्याच्या दिनांकापासून २ वर्षांच्या आत तक्रार दाखल करणे आवश्यक.",
+            "hi": "उपभोक्ता संरक्षण अधिनियम २०१९ की धारा ६९ के अनुसार कारण उत्पन्न होने की तिथि से २ वर्ष के भीतर परिवाद दायर करना अनिवार्य।",
+        },
         "names": {
             "en": "Consumer Complaints & Disputes",
             "mr": "ग्राहक तक्रार आणि फसवणूक निवारण",
@@ -210,6 +239,7 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
         "default_laws": [
             {"act": "Consumer Protection Act, 2019", "section": "Section 35", "desc": "Filing of consumer complaint before District Commission for claim up to ₹50 Lakhs"},
             {"act": "Consumer Protection Act, 2019", "section": "Section 2(11) & 2(47)", "desc": "Definition of deficiency in service and unfair trade practices"},
+            {"act": "Consumer Protection Act, 2019", "section": "Section 69", "desc": "2-Year Limitation period for admitting consumer complaints"},
             {"act": "Real Estate (Regulation and Development) Act, 2016 (RERA)", "section": "Section 18 & 31", "desc": "Compensation with interest for delay in handing over apartment / property"},
         ],
         "official_portals": [
@@ -249,6 +279,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "municipal": {
         "id": "municipal",
         "icon": "Building2",
+        "is_emergency": False,
+        "emergency_hotline": "1800 120 8040",
+        "limitation_period": {
+            "en": "Time-bound redressal within 15 to 30 days under Maharashtra Right to Public Services Act, 2015.",
+            "mr": "महाराष्ट्र लोकसेवा हक्क कायदा २०१५ नुसार १५ ते ३० दिवसांच्या विहित मुदतीत नागरी तक्रार निवारण बंधनकारक.",
+            "hi": "महाराष्ट्र लोकसेवा गारंटी कानून के तहत १५ से ३० दिनों के भीतर नागरिक समस्या निवारण अनिवार्य।",
+        },
         "names": {
             "en": "Municipal Corporation & Civic Grievances",
             "mr": "महानगरपालिका आणि नागरी समस्या",
@@ -305,6 +342,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "rti_govt": {
         "id": "rti_govt",
         "icon": "FileText",
+        "is_emergency": False,
+        "emergency_hotline": "1800 120 8040",
+        "limitation_period": {
+            "en": "Public Information Officer (PIO) must supply information within 30 days (48 hours for life/liberty). First Appeal within 30 days under Sec 19(1). Second Appeal within 90 days under Sec 19(3).",
+            "mr": "माहिती अधिकाऱ्याने ३० दिवसांत (जीवित व व्यक्तीस्वातंत्र्याबाबत ४८ तासांत) माहिती देणे बंधनकारक. प्रथम अपील ३० दिवसांत व द्वितीय अपील ९० दिवसांत करणे आवश्यक.",
+            "hi": "जन सूचना अधिकारी द्वारा ३० दिनों (जीवन व स्वतंत्रता से जुड़े मामलों में ४८ घंटों) में सूचना देना अनिवार्य। प्रथम अपील ३० दिनों व द्वितीय अपील ९० दिनों के भीतर।",
+        },
         "names": {
             "en": "RTI & Public Department Grievances",
             "mr": "माहितीचा अधिकार (RTI) आणि शासकीय विभाग",
@@ -322,8 +366,9 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
         },
         "default_laws": [
             {"act": "Right to Information Act, 2005", "section": "Section 6(1)", "desc": "Application for obtaining certified information / government records within 30 days"},
-            {"act": "Right to Information Act, 2005", "section": "Section 7(1)", "desc": "Provision of information concerning life and liberty within 48 hours"},
+            {"act": "Right to Information Act, 2005", "section": "Section 7(1)", "desc": "Provision of information concerning life and liberty within 48 hours, otherwise within 30 days"},
             {"act": "Right to Information Act, 2005", "section": "Section 19(1)", "desc": "First Appeal before Appellate Authority within 30 days if information denied or delayed"},
+            {"act": "Right to Information Act, 2005", "section": "Section 20", "desc": "Penalties of ₹250 per day up to ₹25,000 on PIO for willful delay"},
         ],
         "official_portals": [
             {"name": "Central RTI Online Portal", "url": "https://rtionline.gov.in", "helpline": "011-24622691"},
@@ -362,6 +407,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "property": {
         "id": "property",
         "icon": "Home",
+        "is_emergency": False,
+        "emergency_hotline": "1800 120 8040",
+        "limitation_period": {
+            "en": "Suit under Section 6 Specific Relief Act within 6 months of illegal dispossession; Rent control eviction immediately upon expiry of registered Leave & License.",
+            "mr": "बेकायदेशीर बेदखल केल्यास ६ महिन्यांच्या आत विशिष्ट साहाय्य कायद्याच्या कलम ६ अन्वये दावा दाखल करावा लागतो.",
+            "hi": "अवैध बेदखली के ६ माह के भीतर विशिष्ट अनुतोष अधिनियम की धारा ६ के तहत वाद दायर करना अनिवार्य।",
+        },
         "names": {
             "en": "Property & Tenancy Disputes",
             "mr": "मालमत्ता, जमीन आणि भाडेकरार विवाद",
@@ -420,6 +472,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "cybercrime": {
         "id": "cybercrime",
         "icon": "Laptop",
+        "is_emergency": True,
+        "emergency_hotline": "1930 (Golden Hour Helpline)",
+        "limitation_period": {
+            "en": "Call 1930 immediately within the first 2-3 hours ('Golden Hour') to freeze funds; Notify your bank within 3 working days for 100% Zero Liability under RBI guidelines.",
+            "mr": "फसवणूक झाल्यानंतर पहिल्या २-३ तासांत (गोल्डन अवर) १९३० वर कॉल करावा; आरबीआय नियमांनुसार ३ दिवसांच्या आत बँकेस कळवल्यास ग्राहकावर शून्य दायित्व (Zero Liability) राहते.",
+            "hi": "धोखाधड़ी के तुरंत बाद पहले २-३ घंटों ('गोल्डन ऑवर') में १९३० पर कॉल करें; आरबीआई दिशानिर्देशों के अनुसार ३ दिनों के भीतर बैंक को सूचित करने पर ग्राहक की कोई देनदारी नहीं होती।",
+        },
         "names": {
             "en": "Cybercrime & Online Financial Fraud",
             "mr": "सायबर गुन्हे आणि ऑनलाईन आर्थिक फसवणूक",
@@ -478,6 +537,13 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
     "legal_aid": {
         "id": "legal_aid",
         "icon": "Scale",
+        "is_emergency": False,
+        "emergency_hotline": "15100",
+        "limitation_period": {
+            "en": "No limitation. Free legal assistance is available at all stages: pre-litigation, trial, appeal, and execution.",
+            "mr": "कोणतीही मुदत मर्यादा नाही. खटल्यापूर्वी, सुनावणीदरम्यान अथवा अपीलाच्या कोणत्याही टप्प्यावर मोफत विधी सेवा उपलब्ध आहे.",
+            "hi": "कोई समय सीमा नहीं। वाद-पूर्व, विचारण, अपील अथवा निष्पादन के किसी भी चरण में निशुल्क सहायता उपलब्ध है।",
+        },
         "names": {
             "en": "Free Legal Aid & Lok Adalat",
             "mr": "मोफत कायदेशीर मदत (विधी सेवा) व लोक न्यायालय",
@@ -532,47 +598,124 @@ LEGAL_CATEGORIES: Dict[str, Dict[str, Any]] = {
 }
 
 
-# ─── Problem Classification Keywords Engine ───────────────────────────────────
+# ─── Enhanced Problem Classification Keywords Engine ──────────────────────────
 
 def classify_citizen_problem(query_text: str) -> Dict[str, Any]:
     """
     Intelligently match free-text description (in English, Marathi, or Hindi)
     to the correct legal category, applicable laws, forum, and key actions.
+    Uses comprehensive synonym weights across official and colloquial terminology.
     """
     q = (query_text or "").lower()
 
-    # Rule-based weighted scoring for maximum accuracy
     scores = {cat: 0 for cat in LEGAL_CATEGORIES}
 
-    # Cybercrime keywords
-    if any(k in q for k in ["cyber", "online", "upi", "gpay", "phonepe", "paytm", "hack", "otp", "phishing", "fraud", "पैसे कापले", "ओटीपी", "सायबर", "फसवणूक", "ऑनलाइन", "खाते रिकामे", "धोखाधड़ी"]):
-        scores["cybercrime"] += 10
-    # Women & Child keywords
-    if any(k in q for k in ["domestic violence", "husband", "in-laws", "cruelty", "498a", "posh", "sexual harassment", "child", "custody", "maintenance", "पोटगी", "छळ", "कौटुंबिक हिंसाचार", "नवरा", "सासरचे", "घरेलू हिंसा", "दहेज", "भरण-पोषण"]):
-        scores["women_child"] += 10
-    # Labour keywords
-    if any(k in q for k in ["salary", "unpaid", "wages", "fired", "terminated", "gratuity", "pf", "provident fund", "labour", "boss", "company not paying", "पगार", "वेतन", "कामावरून काढले", "ग्रॅच्युइटी", "मालक पगार देत नाही", "नौकरी", "बर्खास्त"]):
-        scores["labour"] += 10
-    # Consumer keywords
-    if any(k in q for k in ["consumer", "defective", "refund", "builder", "flat", "possession", "warranty", "flipkart", "amazon", "insurance claim", "ग्राहक", "खराब वस्तू", "परतावा", "फ्लॅट", "बिल्डर", "विमा", "उपभोक्ता"]):
-        scores["consumer"] += 10
-    # Municipal keywords
-    if any(k in q for k in ["drainage", "garbage", "pothole", "illegal construction", "gutter", "water supply", "encroachment", "municipal", "bmc", "pmc", "कचरा", "गटार", "रस्ता", "खड्डे", "अनधिकृत बांधकाम", "अतिक्रमण", "महानगरपालिका", "नगर निगम"]):
-        scores["municipal"] += 10
-    # RTI keywords
-    if any(k in q for k in ["rti", "information act", "file delay", "records", "certified copy", "collector", "government office", "माहिती अधिकार", "माहिती अर्ज", "शासकीय काम", "दिरंगाई", "सरकारी विभाग", "सूचना का अधिकार"]):
-        scores["rti_govt"] += 10
-    # Property keywords
-    if any(k in q for k in ["property", "tenant", "rent", "landlord", "eviction", "land", "deposit", "7/12", "satbara", "trespass", "मालमत्ता", "जमीन", "भाडेकरू", "घरमालक", "डिपॉझिट", "७/१२", "फेरफार", "कब्जा", "किराया"]):
-        scores["property"] += 10
-    # Legal aid keywords
-    if any(k in q for k in ["legal aid", "free lawyer", "poor", "free advocate", "lok adalat", "cant afford", "मोफत वकील", "विधी सेवा", "लोक न्यायालय", "गरीब", "मुफ्त वकील"]):
-        scores["legal_aid"] += 10
-    # Police keywords
-    if any(k in q for k in ["police", "fir", "complaint", "threat", "assault", "fight", "nc", "station", "थाना", "पोलीस", "एफआयआर", "तक्रार", "मारहाण", "धमकी"]):
-        scores["police_fir"] += 8
+    # 1. Cybercrime keywords
+    cyber_keys = [
+        "cyber", "online", "upi", "gpay", "google pay", "phonepe", "paytm", "hack", "otp", "phishing",
+        "fraud", "पैसे कापले", "ओटीपी", "सायबर", "फसवणूक", "ऑनलाइन", "खाते रिकामे", "धोखाधड़ी",
+        "खाता हैक", "साइबर क्राइम", "युपीआय", "ब्लॅकमेल", "अज्ञात व्यक्ती", "अज्ञात व्यक्ति", "अज्ञात",
+        "बनावट कॉल", "apk", "लूट", "फोन पे", "फोनपे", "गूगल पे", "गुगल पे", "पेटीएम", "फर्जी लिंक",
+        "बनावट लिंक", "लिंक", "link", "पैसे उड़ा", "खाते से पैसे", "खात्यातून पैसे", "रुपये कटले",
+        "पैसे ट्रान्सफर", "क्रेडिट कार्ड", "डेबिट कार्ड", "एटीएम", "केवायसी", "kyc", "लॉटरी फ्रॉड"
+    ]
+    for k in cyber_keys:
+        if k in q:
+            scores["cybercrime"] += 6
 
-    # Pick category with highest score; default to police_fir if neutral
+    # 2. Women & Child keywords
+    wc_keys = [
+        "domestic violence", "husband", "in-laws", "cruelty", "498a", "posh", "sexual harassment",
+        "child", "custody", "maintenance", "पोटगी", "छळ", "कौटुंबिक हिंसाचार", "नवरा", "सासरचे",
+        "घरेलू हिंसा", "दहेज", "भरण-पोषण", "सासरे", "सासू", "दीर", "पती", "स्त्रीधन", "हुंडा", "मारहाण सासर",
+        "प्रताड़ना", "ससुराल"
+    ]
+    for k in wc_keys:
+        if k in q:
+            scores["women_child"] += 6
+
+    # 3. Labour keywords
+    labour_keys = [
+        "salary", "unpaid", "wages", "fired", "terminated", "gratuity", "pf", "provident fund",
+        "labour", "boss", "company not paying", "पगार", "वेतन", "कामावरून काढले", "ग्रॅच्युइटी",
+        "मालक पगार देत नाही", "नौकरी", "बर्खास्त", "वेतन नहीं", "नौकरी से निकाला", "बकाया वेतन", "कंत्राटी",
+        "वेतन रोक", "कर्मचारी", "कामगार"
+    ]
+    for k in labour_keys:
+        if k in q:
+            scores["labour"] += 6
+
+    # 4. Consumer keywords
+    consumer_keys = [
+        "consumer", "defective", "refund", "builder", "flat", "possession", "warranty", "flipkart",
+        "amazon", "insurance claim", "ग्राहक", "खराब वस्तू", "परतावा", "फ्लॅट", "बिल्डर", "विमा",
+        "उपभोक्ता", "दुकानदार", "पजेशन", "ताबा देत नाही", "नकली सामान", "क्लेम रिजेक्ट", "वॉरंटी",
+        "replacement", "ग्राहकमंच", "खराब सामान"
+    ]
+    for k in consumer_keys:
+        if k in q:
+            scores["consumer"] += 6
+
+    # 5. Municipal keywords
+    municipal_keys = [
+        "drainage", "garbage", "pothole", "illegal construction", "gutter", "water supply", "encroachment",
+        "municipal", "bmc", "pmc", "कचरा", "गटार", "रस्ता", "खड्डे", "अनधिकृत बांधकाम", "अतिक्रमण",
+        "महानगरपालिका", "नगर निगम", "दूषित पाणी", "गंदगी", "सीवर", "नाली", "सड़क", "वार्ड"
+    ]
+    for k in municipal_keys:
+        if k in q:
+            scores["municipal"] += 6
+
+    # 6. RTI & Public Department keywords (Strong domain anchors: rti, माहिती अधिकार, सूचना का अधिकार, जन माहिती)
+    rti_keys = [
+        "rti", "information act", "file delay", "records", "certified copy", "collector", "government office",
+        "माहिती अधिकार", "माहिती अर्ज", "शासकीय काम", "दिरंगाई", "सरकारी विभाग", "सूचना का अधिकार",
+        "जिल्हाधिकारी", "प्रमाणित प्रत", "नस्ती", "अभिलेख", "दप्तर", "प्रशासकीय", "कलेक्ट्रेट", "सरकारी योजना",
+        "तलाठी", "तहसीलदार", "दाखला मिळत नाही", "public information officer", "pio", "tender files",
+        "जन सूचना अधिकारी", "प्रथम अपील"
+    ]
+    for k in rti_keys:
+        if k in q:
+            scores["rti_govt"] += 6
+    # Core RTI explicit anchors get decisive bonus
+    if any(k in q for k in ["rti", "माहिती अधिकार", "सूचना का अधिकार", "certified copies", "certified copy", "प्रमाणित प्रत"]):
+        scores["rti_govt"] += 12
+
+    # 7. Property keywords
+    prop_keys = [
+        "property", "tenant", "rent", "landlord", "eviction", "land", "deposit", "7/12", "satbara",
+        "trespass", "मालमत्ता", "जमीन", "भाडेकरू", "घरमालक", "डिपॉझिट", "७/१२", "फेरफार", "कब्जा",
+        "किराया", "किरायेदार", "खाली करत नाही", "अनामत रक्कम", "सामान बाहेर फेकले", "बंटवारा",
+        "मकान खाली", "ताला लगाया"
+    ]
+    for k in prop_keys:
+        if k in q:
+            scores["property"] += 6
+
+    # 8. Legal aid keywords
+    aid_keys = [
+        "legal aid", "free lawyer", "poor", "free advocate", "lok adalat", "cant afford",
+        "मोफत वकील", "विधी सेवा", "लोक न्यायालय", "गरीब", "मुफ्त वकील", "विधिक सहायता",
+        "फीस देने के पैसे नहीं", "मोफत कायदेशीर मदत", "dlsa", "nalsa", "मुफ्त कानूनी मदद",
+        "सरकारी वकील"
+    ]
+    for k in aid_keys:
+        if k in q:
+            scores["legal_aid"] += 6
+    if any(k in q for k in ["legal aid", "मोफत वकील", "मुफ्त वकील", "मुफ्त कानूनी मदद", "विधी सेवा", "dlsa", "nalsa"]):
+        scores["legal_aid"] += 12
+
+    # 9. Police keywords (Lower baseline so specific offenses take precedence)
+    police_keys = [
+        "police", "fir", "complaint", "threat", "assault", "fight", "nc", "station", "थाना",
+        "पोलीस", "एफआयआर", "तक्रार", "मारहाण", "धमकी", "थानेदार", "दखलपात्र", "गुन्हा", "चोरी",
+        "शिकायत लेने से मना"
+    ]
+    for k in police_keys:
+        if k in q:
+            scores["police_fir"] += 4
+
+    # Pick category with highest score; default to police_fir if zero
     best_cat = max(scores, key=scores.get)
     if scores[best_cat] == 0:
         best_cat = "police_fir"
@@ -583,6 +726,56 @@ def classify_citizen_problem(query_text: str) -> Dict[str, Any]:
         "category_data": cat_data,
         "confidence": "high" if scores[best_cat] > 0 else "default",
     }
+
+
+# ─── Category-Specific Statutory Relief Synthesizer ────────────────────────────
+
+def get_specific_statutory_relief(category_id: str, lang: str, user_relief: Optional[str] = None) -> str:
+    """Produce precise, statutory prayers customized to the specific grievance domain."""
+    if user_relief and user_relief.strip():
+        return user_relief.strip()
+
+    if lang == "mr":
+        prayers = {
+            "police_fir": "संबंधित गैरअर्जदाराविरुद्ध BNSS २०२३ चे कलम १७३ अन्वये तात्काळ प्रथम माहिती अहवाल (FIR) दाखल करण्यात यावा, सखोल तपास सुरू करून दोषींवर अटकेची कायदेशीर कारवाई करावी व अर्जदारास रीतसर विनामूल्य एफआयआरची प्रत देण्यात यावी.",
+            "women_child": "कौटुंबिक हिंसाचार प्रतिबंधक कायदा २००५ चे कलम १८ अन्वये तात्काळ संरक्षण आदेश (Protection Order), कलम १९ अन्वये निवास आदेश आणि कलम २० अन्वये अंतरिम आर्थिक मदत/पोटगी अर्जदारास व बालकास मंजूर करण्यात यावी.",
+            "labour": "वेतन प्रदान कायदा १९३६ चे कलम १५ व औद्योगिक विवाद कायदा कलम ३३C(२) अन्वये कंपनी व्यवस्थापनाकडून थकीत वेतनाची संपूर्ण रक्कम १० पट दंडासह व कायदेशीर व्याजासह तात्काळ वसूल करून अर्जदारास देण्यात यावी व कार्यमुक्ती प्रमाणपत्र (Relieving Letter) देण्यात यावे.",
+            "consumer": "ग्राहक संरक्षण कायदा २०१९ च्या कलम ३९ अन्वये गैरअर्जदारास सदोष वस्तू/सेवा बदलून देण्याचा किंवा सव्याज संपूर्ण परतावा देण्याचा आदेश व्हावा, तसेच मानसिक त्रासाबद्दल योग्य ती नुकसानभरपाई व दावा खर्च मंजूर करण्यात यावा.",
+            "municipal": "महानगरपालिका कायद्यातील कलम २६० व २६७ अन्वये तातडीने जागेची पाहणी करून अनधिकृत बांधकाम थांबवून पाडण्याचे आदेश व्हावेत / सार्वजनिक गटार व कचरा समस्या तत्काळ दूर करून अहवाल देण्यात यावा.",
+            "rti_govt": "माहिती अधिकार कायदा २००५ च्या कलम ७(१) अन्वये नमूद माहितीच्या सर्व पृष्ठांच्या प्रमाणित सत्यप्रती विहित ३० दिवसांच्या मुदतीत उपलब्ध करून द्याव्यात; मुदतीत माहिती न दिल्यास माहिती अधिकाऱ्यावर कलम २० अन्वये दंडात्मक कारवाई करावी.",
+            "property": "विशिष्ट साहाय्य कायदा १९६३ चे कलम ६ व भाडे नियंत्रण कायद्यान्वये अर्जदाराचा शांततापूर्ण व कायदेशीर ताबा बेकायदेशीरपणे हिरावून न घेण्याबाबत गैरअर्जदारास मनाई आदेश (Injunction) द्यावा, अनामत रक्कम परत द्यावी व पोलीस संरक्षण देण्यात यावे.",
+            "cybercrime": "BNSS २०२३ चे कलम ९४ व माहिती तंत्रज्ञान कायदा कलम ६६D अन्वये संबंधित बँक नोडल अधिकाऱ्यास त्वरित पत्र देऊन फसवणूक झालेली रक्कम जमा असलेले गैरअर्जदाराचे बँक खाते/युपीआय वॉलेट तात्काळ गोठवण्यात (Freeze) यावे व रक्कम अर्जदाराच्या खात्यात परत जमा करावी.",
+            "legal_aid": "विधी सेवा प्राधिकरण कायदा १९८७ चे कलम १२ व संविधानाचे अनुच्छेद ३९A अन्वये अर्जदारास मोफत सक्षम पॅनेल वकिलाची नियुक्ती करून देण्यात यावी व कोर्ट फी आणि सर्व दावा खर्चास माफी देण्यात यावी.",
+        }
+        return prayers.get(category_id, "सदर प्रकरणी तात्काळ कायदेशीर चौकशी करून दोषींवर कठोर कायदेशीर कार्यवाही करण्यात यावी व अर्जदारास योग्य ती दाद मिळवून देण्यात यावी.")
+
+    elif lang == "hi":
+        prayers = {
+            "police_fir": "विपक्षी के विरुद्ध बीएनएसएस २०२३ की धारा १७३ के अंतर्गत तत्काल प्राथमिकी (FIR) दर्ज कर विधिसम्मत विवेचना प्रारंभ की जाए तथा प्रार्थी को निःशुल्क एफआईआर प्रति उपलब्ध कराई जाए।",
+            "women_child": "घरेलू हिंसा से महिलाओं का संरक्षण अधिनियम २००५ की धारा १८ के तहत संरक्षण आदेश, धारा १९ के तहत निवास आदेश एवं धारा २० के तहत अंतरिम भरण-पोषण/आर्थिक सहायता तत्काल प्रदान की जाए।",
+            "labour": "वेतन संदाय अधिनियम १९३६ की धारा १५ एवं औद्योगिक विवाद अधिनियम के तहत नियोक्ता से संपूर्ण बकाया वेतन १० गुना अर्थदंड व ब्याज सहित वसूल कर प्रार्थी को दिलाया जाए तथा कार्यमुक्ति प्रमाणपत्र जारी किया जाए।",
+            "consumer": "उपभोक्ता संरक्षण अधिनियम २०१९ की धारा ३९ के तहत विपक्षी को दोषपूर्ण उत्पाद/सेवा बदलने अथवा ब्याज सहित पूर्ण धनवापसी का आदेश दिया जाए, एवं मानसिक क्षतिपूर्ति व वाद व्यय प्रदान किया जाए।",
+            "municipal": "नगर निगम अधिनियम के तहत तत्काल स्थल निरीक्षण कर अवैध निर्माण को ध्वस्त करने/सीवर व गंदगी की समस्या का स्थायी समाधान करने हेतु आदेश पारित किए जाएं।",
+            "rti_govt": "सूचना का अधिकार अधिनियम २००५ की धारा ७(१) के अंतर्गत वांछित सूचनाओं की प्रमाणित प्रतियां ३० दिनों की समयसीमा में उपलब्ध कराई जाएं, एवं जानबूझकर विलंब करने पर धारा २० के तहत दंडात्मक कार्रवाई की जाए।",
+            "property": "विशिष्ट अनुतोष अधिनियम १९६३ की धारा ६ एवं किराया नियंत्रण विधि के तहत प्रार्थी के शांतिपूर्ण आधिपत्य में हस्तक्षेप न करने का आदेश दिया जाए, सिक्योरिटी डिपॉजिट वापस कराई जाए एवं पुलिस सुरक्षा प्रदान की जाए।",
+            "cybercrime": "बीएनएसएस २०२३ की धारा ९४ एवं आईटी एक्ट की धारा ६६डी के तहत संबंधित बैंक के नोडल अधिकारी को तत्काल आदेशित कर फर्जीवाड़ा किए गए खाते/वॉलेट को फ्रीज कराया जाए तथा राशि प्रार्थी के मूल खाते में वापस कराई जाए।",
+            "legal_aid": "विधिक सेवा प्राधिकरण अधिनियम १९८७ की धारा १२ एवं संविधान के अनुच्छेद ३९ए के तहत प्रार्थी को निःशुल्क सक्षम पैनल अधिवक्ता नियुक्त किया जाए तथा समस्त अदालती व्यय से छूट प्रदान की जाए।",
+        }
+        return prayers.get(category_id, "उक्त मामले की निष्पक्ष जांच कर दोषी के विरुद्ध नियमानुसार कठोर कानूनी कार्रवाई की जाए तथा प्रार्थी को न्याय दिलाया जाए।")
+
+    else:
+        prayers = {
+            "police_fir": "To forthwith register a formal First Information Report (FIR) under Section 173 of Bharatiya Nagarik Suraksha Sanhita, 2023, initiate prompt investigation, secure evidence, and provide a free authenticated copy of the FIR to the Applicant.",
+            "women_child": "To pass an immediate ex-parte Protection Order under Section 18, Residence Order under Section 19, and Monetary Interim Maintenance under Section 20 of the Protection of Women from Domestic Violence Act, 2005 for the Applicant and dependent children.",
+            "labour": "To direct the Employer under Section 15 of the Payment of Wages Act, 1936 and Section 33C(2) of the Industrial Disputes Act to release the entire unpaid salary dues with statutory compensation, interest, and immediate issuance of the Relieving/Experience Letter.",
+            "consumer": "To direct the Respondent under Section 39 of the Consumer Protection Act, 2019 to replace the defective product/service or refund the full consideration with 18% statutory interest, together with punitive compensation for mental harassment and litigation costs.",
+            "municipal": "To conduct an immediate spot inspection, issue stop-work and demolition notices against the unauthorized construction under Section 260 of the Municipal Corporation Act, and restore civic health and sanitation forthwith.",
+            "rti_govt": "To provide certified true copies of the requested official records within the mandatory statutory period of 30 days under Section 7(1) of the RTI Act, 2005, failing which penal proceedings under Section 20 be initiated against the PIO.",
+            "property": "To restrain the Respondent from dispossessing the Applicant without due process of law under Section 6 of the Specific Relief Act, 1963, direct immediate refund of the security deposit, and provide necessary police protection.",
+            "cybercrime": "To issue an immediate requisition under Section 94 of BNSS, 2023 to the concerned Bank Nodal Officer to freeze the fraudulent beneficiary account/UPI wallet, trace the money trail, and facilitate prompt refund to the Applicant's bank account.",
+            "legal_aid": "To assign a competent Panel Advocate under Section 12 of the Legal Services Authorities Act, 1987 and Article 39A of the Constitution of India, and grant complete waiver of court fees and procedural expenses.",
+        }
+        return prayers.get(category_id, "To take immediate cognizance of this matter, initiate prompt investigation in accordance with law, and secure adequate redressal and protection for the Applicant.")
 
 
 # ─── Multi-lingual Document Generator Engine ──────────────────────────────────
@@ -611,6 +804,7 @@ def generate_citizen_application(
     auth_name = cat["target_authority"].get(lang, cat["target_authority"]["en"])
     laws = cat["default_laws"]
     laws_citations = ", ".join([f"{l['section']} of {l['act']}" for l in laws])
+    specific_relief = get_specific_statutory_relief(category_id, lang, relief_sought)
 
     # Clean facts into numbered paragraphs
     raw_facts = [f.strip() for f in facts_summary.replace("\r", "").split("\n") if f.strip()]
@@ -622,7 +816,6 @@ def generate_citizen_application(
     # ─────────────────────────────────────────────────────────────────────────
     if lang == "mr":
         facts_numbered = "\n".join([f"    ({i+1}) {fact}" for i, fact in enumerate(raw_facts)])
-        default_relief = relief_sought or "सदर प्रकरणी तात्काळ कायदेशीर चौकशी करून दोषींवर कठोर कायदेशीर कार्यवाही करण्यात यावी व अर्जदारास योग्य ती दाद मिळवून देण्यात यावी."
 
         doc = f"""तक्रार अर्ज (Complaint Application)
 
@@ -663,8 +856,8 @@ def generate_citizen_application(
 
 ५. दाद व विनंती (Prayer / Relief Sought):
     म्हणून अर्जदाराची आपल्याकडे नम्र विनंती आहे की:
-    (अ) या तक्रार अर्जाची तात्काळ गंभीर दखल घेऊन संबंधित गैरअर्जदाराविरुद्ध रीतसर कायदेशीर गुन्हा / कार्यवाही नोंदवण्यात यावी.
-    (ब) {default_relief}
+    (अ) या तक्रार अर्जाची तात्काळ गंभीर दखल घेऊन संबंधित गैरअर्जदाराविरुद्ध रीतसर गुन्हा / कायदेशीर कार्यवाही नोंदवण्यात यावी.
+    (ब) {specific_relief}
     (क) अर्जदाराच्या जीवितास, मालमत्तेस अथवा अधिकारास कोणत्याही प्रकारची हानी पोहोचणार नाही याकरिता आवश्यक ते कायदेशीर संरक्षण देण्यात यावे.
 
 सत्यप्रतिज्ञा (Declaration / Verification):
@@ -691,7 +884,6 @@ def generate_citizen_application(
     # ─────────────────────────────────────────────────────────────────────────
     elif lang == "hi":
         facts_numbered = "\n".join([f"    ({i+1}) {fact}" for i, fact in enumerate(raw_facts)])
-        default_relief = relief_sought or "उक्त मामले की निष्पक्ष जांच कर दोषी के विरुद्ध नियमानुसार कठोर कानूनी कार्रवाई की जाए तथा प्रार्थी को न्याय दिलाया जाए।"
 
         doc = f"""शिकायत प्रार्थना-पत्र (Formal Complaint Application)
 
@@ -733,7 +925,7 @@ def generate_citizen_application(
 ५. प्रार्थना / अनुतोष (Prayer / Relief Sought):
     अतः श्रीमान से विनम्र प्रार्थना है कि:
     (क) इस शिकायत पत्र पर संज्ञान लेते हुए विपक्षी के विरुद्ध तत्काल प्राथमिकी (FIR) / कानूनी कार्रवाई दर्ज की जाए।
-    (ख) {default_relief}
+    (ख) {specific_relief}
     (ग) प्रार्थी एवं उसके परिजनों को आवश्यक कानूनी सुरक्षा प्रदान की जाए।
 
 सत्यापन / घोषणा (Verification):
@@ -760,7 +952,6 @@ def generate_citizen_application(
     # ─────────────────────────────────────────────────────────────────────────
     else:
         facts_numbered = "\n".join([f"    ({i+1}) {fact}" for i, fact in enumerate(raw_facts)])
-        default_relief = relief_sought or "To take immediate cognizance of this matter, initiate prompt investigation in accordance with law, and secure adequate redressal and protection for the Applicant."
 
         doc = f"""FORMAL LEGAL COMPLAINT APPLICATION
 
@@ -802,7 +993,7 @@ The Applicant above-named respectfully submits this formal legal representation 
 5. PRAYER / RELIEF SOUGHT:
     In the premises aforesaid, the Applicant humbly prays that this Hon'ble Authority may be pleased to:
     (a) Take immediate official cognizance of this complaint and register an FIR / statutory inquiry forthwith;
-    (b) {default_relief}
+    (b) {specific_relief}
     (c) Grant necessary protection to the Applicant and witnesses against any harassment or reprisal from the Respondent;
     (d) Pass such further or other relief as this Hon'ble Authority may deem fit and proper in the interest of justice.
 

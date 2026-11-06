@@ -138,3 +138,4 @@ async def subscription_lifecycle_cron_worker():
         except Exception as exc:
             logger.error(f"Subscription worker loop error: {exc}", exc_info=True)
             await asyncio.sleep(600)
+

@@ -23,6 +23,7 @@ import {
   Users2,
   Globe,
   ShieldCheck,
+  ShieldAlert,
   Settings,
   Bot,
   BookMarked,
