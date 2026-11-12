@@ -101,7 +101,7 @@ export default function Home() {
                 <a href={`${getErpUrl()}/login`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
                   Advocate Login
                 </a>
-                <a href={`${getErpUrl()}/consumer`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
+                <a href={`${getErpUrl()}/citizen-portal`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
                   Consumer Portal
                 </a>
               </div>
