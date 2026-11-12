@@ -38,7 +38,7 @@ export default function ConsumerPortal() {
   const portalUrl = `${getErpUrl()}/citizen-portal`;
   const [inputVal, setInputVal] = useState('');
 
-  const handleLaunch = (q?: string) => {
+  const handleLaunch = (q) => {
     window.location.href = portalUrl;
   };
 
