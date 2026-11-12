@@ -80,9 +80,18 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             {/* Left Content */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5 mb-6">
-                <Gavel className="w-3.5 h-3.5 text-amber-500" />
-                Legal ERP for Indian Advocates
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5">
+                  <Gavel className="w-3.5 h-3.5 text-amber-500" />
+                  Legal ERP for Indian Advocates
+                </div>
+                <Link
+                  to="/consumer-portal"
+                  className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5 hover:bg-emerald-100 transition-colors"
+                >
+                  <Shield className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  Consumer Portal (नागरिक कक्ष) →
+                </Link>
               </div>
 
               <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.32] sm:leading-[1.28] lg:leading-[1.24] tracking-tight mb-5 text-balance">
@@ -100,6 +109,13 @@ export default function Home() {
                 </a>
                 <a href={`${getErpUrl()}/login`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
                   Advocate Login
+                </a>
+                <a
+                  href={`${getErpUrl()}/consumer`}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                >
+                  <Shield className="w-4 h-4" />
+                  Consumer Portal
                 </a>
               </div>
 
@@ -224,7 +240,89 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── COMPACT FAQ (3 Essential Questions) ─────────────────────── */}
+      {/* ── CITIZEN & CONSUMER PORTAL SHOWCASE ───────────────────────── */}
+      <section className="py-16 bg-gradient-to-b from-emerald-950 via-[#013B36] to-slate-900 text-white relative overflow-hidden">
+        <div className="section-container relative z-10">
+          <div className="grid lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1 mb-4">
+                <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                Dedicated Citizen & Consumer Module
+              </div>
+              <h2 className="font-heading font-[900] text-2xl sm:text-3xl lg:text-4xl leading-tight mb-4 text-white">
+                नागरिक व ग्राहक विधी तक्रार निवारण कक्ष
+              </h2>
+              <p className="text-emerald-100/90 text-sm sm:text-base leading-relaxed mb-6 max-w-xl">
+                Ordinary citizens can now understand their legal rights, pinpoint the exact competent authority, and generate professionally formatted, court-ready complaint applications in Marathi, Hindi, and English.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 mb-6 text-xs text-emerald-100/90 font-medium">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Consumer Forum Complaints (CPA 2019)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Police & FIR Guidance (BNSS 2023)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>1930 Cyber Financial Fraud Recovery</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Municipal & RTI Applications</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <a
+                  href={`${getErpUrl()}/consumer`}
+                  className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm py-2.5 px-6 rounded-xl flex items-center gap-2 shadow-md transition-all"
+                >
+                  <Shield className="w-4 h-4 text-slate-950" />
+                  तक्रार अर्ज तयार करा (Open Consumer Portal) <ArrowRight className="w-4 h-4" />
+                </a>
+                <Link
+                  to="/consumer-portal"
+                  className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-sm py-2.5 px-5 rounded-xl transition-all"
+                >
+                  Learn More (सविस्तर माहिती)
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-white">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/15">
+                <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  1-Click Assistance
+                </span>
+                <span className="text-[11px] font-semibold bg-emerald-500/30 text-emerald-200 px-2.5 py-0.5 rounded-full">
+                  100% Free for Citizens
+                </span>
+              </div>
+              <ul className="space-y-3 text-xs text-emerald-100/90 leading-relaxed">
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/30 text-emerald-300 font-bold flex items-center justify-center flex-shrink-0 text-[11px]">1</span>
+                  <span>Select from 9 core grievance categories without needing legal knowledge.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/30 text-emerald-300 font-bold flex items-center justify-center flex-shrink-0 text-[11px]">2</span>
+                  <span>System identifies the applicable Act, Section, and competent authority.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-500/30 text-emerald-300 font-bold flex items-center justify-center flex-shrink-0 text-[11px]">3</span>
+                  <span>Generates signed A4 PDF complaints with proper verification clauses ready for submission.</span>
+                </li>
+              </ul>
+              <div className="mt-5 pt-4 border-t border-white/15 flex items-center justify-between text-[11px] text-emerald-300/80">
+                <span>Helplines: 1930 Cyber · 112 Police · 1915 Consumer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section className="py-12 bg-slate-50 border-b border-slate-200">
         <div className="section-container max-w-2xl">
           <div className="text-center mb-8">

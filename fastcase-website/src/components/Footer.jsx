@@ -6,6 +6,7 @@ import {
 const footerLinks = {
   Product: [
     { label: 'Features', to: '/features' },
+    { label: 'Consumer Portal (नागरिक कक्ष)', to: '/consumer-portal' },
     { label: 'Practice Areas', to: '/practice-areas' },
     { label: 'Pricing', to: '/pricing' },
     { label: 'Why Fastcase', to: '/why-Fastcase' },
