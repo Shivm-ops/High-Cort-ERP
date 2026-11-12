@@ -18,6 +18,7 @@ import CookiePolicy from './pages/CookiePolicy';
 import Contact from './pages/Contact';
 import GrievanceOfficer from './pages/GrievanceOfficer';
 import PracticeAreas from './pages/PracticeAreas';
+import ConsumerPortal from './pages/ConsumerPortal';
 
 export default function App() {
   // Deter inspecting shortcuts and right-click
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/why-Fastcase" element={<WhyChoose />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/consumer-portal" element={<ConsumerPortal />} />
           <Route path="/practice-areas" element={<PracticeAreas />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
