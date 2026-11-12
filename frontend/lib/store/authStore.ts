@@ -32,6 +32,15 @@ interface AuthState {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   clientLogin: (email: string, password: string) => Promise<void>;
+  citizenLogin: (email: string, password: string) => Promise<AuthUser>;
+  citizenRegister: (payload: {
+    full_name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    city_or_district?: string;
+    preferred_language?: string;
+  }) => Promise<AuthUser>;
   logout: () => void;
   setUser: (user: AuthUser) => void;
 }
@@ -81,6 +90,53 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           isLoading: false,
         });
+      },
+
+      citizenLogin: async (email: string, password: string) => {
+        set({ isLoading: true });
+        try {
+          const { data } = await api.post("/auth/citizen-login", {
+            email: email.trim().toLowerCase(),
+            password,
+          });
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+          if (typeof document !== "undefined") {
+            document.cookie = `access_token=${data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          }
+          set({
+            user: data.user,
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return data.user;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      citizenRegister: async (payload) => {
+        set({ isLoading: true });
+        try {
+          const { data } = await api.post("/auth/citizen-register", payload);
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+          if (typeof document !== "undefined") {
+            document.cookie = `access_token=${data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          }
+          set({
+            user: data.user,
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          return data.user;
+        } finally {
+          set({ isLoading: false });
+        }
       },
 
       logout: async () => {

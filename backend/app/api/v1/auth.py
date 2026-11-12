@@ -219,6 +219,34 @@ class LoginResponse(BaseModel):
     user: dict
 
 
+class CitizenRegisterRequest(BaseModel):
+    full_name: str
+    email: EmailStr
+    password: str
+    phone: Optional[str] = None
+    city_or_district: Optional[str] = None
+    preferred_language: Optional[str] = "mr"
+
+    @field_validator("password")
+    @classmethod
+    def password_len(cls, v):
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters")
+        return v
+
+    @field_validator("full_name")
+    @classmethod
+    def full_name_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("Full name cannot be empty")
+        return v.strip()
+
+
+class CitizenLoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
@@ -469,6 +497,88 @@ async def client_login(
         }
     )
 
+
+
+@router.post("/citizen-register", response_model=LoginResponse, status_code=status.HTTP_201_CREATED)
+async def citizen_register(
+    payload: CitizenRegisterRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Dedicated registration for ordinary citizens / normal users.
+    No chamber, firm, or Bar Council number required.
+    """
+    ip = extract_ip(request)
+    user_agent = request.headers.get("User-Agent", "")
+
+    existing = db.query(User).filter(User.email == payload.email.lower().strip()).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email already exists. Please login instead."
+        )
+
+    citizen_user = User(
+        email=payload.email.lower().strip(),
+        hashed_password=get_password_hash(payload.password),
+        full_name=payload.full_name.strip(),
+        user_type=UserRole.CITIZEN,
+        phone=payload.phone.strip() if payload.phone else None,
+        address=payload.city_or_district.strip() if payload.city_or_district else None,
+        preferred_language=payload.preferred_language or "mr",
+        is_active=True,
+        is_verified=True,
+        firm_id=None,
+    )
+    db.add(citizen_user)
+    db.commit()
+    db.refresh(citizen_user)
+
+    return await _build_login_response(citizen_user, db, ip, user_agent)
+
+
+@router.post("/citizen-login", response_model=LoginResponse)
+async def citizen_login(
+    payload: CitizenLoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Dedicated login for citizens accessing the Citizen Legal Help & Grievance Portal.
+    """
+    ip = extract_ip(request)
+    user_agent = request.headers.get("User-Agent", "")
+
+    user = db.query(User).filter(User.email == payload.email.lower().strip()).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    _check_account_locked(user)
+
+    if not verify_password(payload.password, user.hashed_password):
+        _record_failed_attempt(user, db, ip, user_agent)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is deactivated")
+
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    user.last_login = utc_now()
+    user.login_count = (user.login_count or 0) + 1
+    db.commit()
+
+    return await _build_login_response(user, db, ip, user_agent)
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)

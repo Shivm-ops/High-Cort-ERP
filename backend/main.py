@@ -93,6 +93,14 @@ def run_db_migrations():
                 conn.rollback()
                 logger.warning(f"⚠️ Column notice on {tbl}.{col}: {e}")
 
+        # Ensure CITIZEN value in userrole enum if running PostgreSQL
+        try:
+            conn.execute(text("ALTER TYPE userrole ADD VALUE IF NOT EXISTS 'CITIZEN'"))
+            conn.commit()
+            logger.info("✅ Verified CITIZEN in userrole enum")
+        except Exception:
+            conn.rollback()
+
         for extra_idx in [
             "CREATE INDEX IF NOT EXISTS ix_payment_transactions_razorpay_order_id ON payment_transactions (razorpay_order_id)",
             "CREATE INDEX IF NOT EXISTS ix_payment_transactions_invoice_number ON payment_transactions (invoice_number)",

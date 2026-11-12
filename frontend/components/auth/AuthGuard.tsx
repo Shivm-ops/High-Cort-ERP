@@ -8,28 +8,31 @@ import { useAuthStore } from "@/lib/store/authStore";
  * Wraps protected dashboard pages.
  * Waits for Zustand's persist middleware to rehydrate from localStorage
  * before checking auth — prevents the flash-redirect on first load.
+ * Also checks role: If user is a citizen, redirects to /citizen-portal.
  */
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    // Zustand persist rehydrates synchronously in the same tick on the client.
-    // Setting hydrated in a useEffect gives it one render cycle to settle.
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
     if (hydrated && !isAuthenticated && !hasToken) {
-      // Also clear the cookie so middleware doesn't loop
       document.cookie = "access_token=; path=/; max-age=0";
       router.replace("/login");
+      return;
     }
-  }, [hydrated, isAuthenticated, router]);
 
-  // While rehydrating, show nothing (avoids flash of dashboard for unauthed users)
+    // Role boundary: Ordinary citizens access the dedicated Citizen Portal, not advocate ERP
+    if (hydrated && (isAuthenticated || hasToken) && user?.role === "citizen") {
+      router.replace("/citizen-portal");
+    }
+  }, [hydrated, isAuthenticated, user, router]);
+
   if (!hydrated) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F7F8F6]">
@@ -39,11 +42,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
-  // Authenticated — render children
-  if (isAuthenticated || hasToken) {
+  if ((isAuthenticated || hasToken) && user?.role !== "citizen") {
     return <>{children}</>;
   }
 
-  // Not authenticated — redirect in progress, show nothing
   return null;
 }

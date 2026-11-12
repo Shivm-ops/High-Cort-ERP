@@ -232,10 +232,14 @@ def get_user_grievances(
 ):
     """
     List previously created citizen legal applications for the current chamber/user.
+    Strictly isolates citizen users (firm_id is None) to their own applications.
     """
-    records = db.query(CitizenGrievance).filter(
-        (CitizenGrievance.firm_id == current_user.firm_id) | (CitizenGrievance.user_id == current_user.id)
-    ).order_by(CitizenGrievance.created_at.desc()).limit(50).all()
+    if current_user.firm_id:
+        filter_condition = (CitizenGrievance.firm_id == current_user.firm_id) | (CitizenGrievance.user_id == current_user.id)
+    else:
+        filter_condition = (CitizenGrievance.user_id == current_user.id)
+
+    records = db.query(CitizenGrievance).filter(filter_condition).order_by(CitizenGrievance.created_at.desc()).limit(50).all()
 
     return [
         {
@@ -247,6 +251,8 @@ def get_user_grievances(
             "opposite_party": r.opposite_party,
             "incident_date": r.incident_date,
             "target_authority": r.target_authority,
+            "facts_summary": r.facts_summary,
+            "generated_application": r.generated_application,
             "created_at": r.created_at.isoformat(),
             "status": r.status.value if hasattr(r.status, "value") else str(r.status),
         }

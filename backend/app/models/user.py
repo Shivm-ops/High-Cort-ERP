@@ -16,6 +16,7 @@ class UserRole(str, enum.Enum):
     JUNIOR_ADVOCATE = "junior_advocate"
     PARALEGAL = "paralegal"
     CLERK = "clerk"
+    CITIZEN = "citizen"
 
 
 class User(Base):

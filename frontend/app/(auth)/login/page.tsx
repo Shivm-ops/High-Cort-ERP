@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -72,7 +73,14 @@ export default function LoginPage() {
         document.cookie = `access_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
       toast.success("Welcome back!");
-      window.location.href = "/dashboard";
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.role === "citizen") {
+        toast.success("Welcome to Citizen Legal Help Portal!");
+        window.location.href = "/citizen-portal";
+      } else {
+        toast.success("Welcome back!");
+        window.location.href = "/dashboard";
+      }
     } catch (e) {
       toast.error(getErrorMessage(e));
     } finally {
@@ -236,6 +244,29 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/80 p-8 sm:p-10 lg:p-12 xl:p-14">
+            {/* ── Citizen Portal Quick Access Pill ── */}
+            <div className="mb-6 p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200/80 rounded-2xl flex items-center justify-between gap-3 text-emerald-950 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Scale className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-emerald-950">
+                    नागरिक विधी सहाय्य कक्ष (Citizen Portal)
+                  </h4>
+                  <p className="text-[11px] text-emerald-700 font-medium">
+                    Not an advocate? Ordinary citizen filing a complaint?
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/citizen-login"
+                className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1 shadow-sm"
+              >
+                <span>Citizen Login</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
             <div className="mb-6">
               <h2 className="text-2xl lg:text-3xl xl:text-4xl font-extrabold text-gray-900 tracking-tight">Welcome back</h2>
               <p className="text-sm lg:text-base text-gray-500 mt-2">Sign in to your Fastcase practice</p>
