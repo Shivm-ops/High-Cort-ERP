@@ -363,9 +363,14 @@ async def login(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
 
+    return await _build_login_response(user, db, ip, user_agent)
+
+
+async def _build_login_response(user: User, db: Session, ip: str, user_agent: str) -> LoginResponse:
     # 4. Issue tokens with JTI
     jti = str(uuid.uuid4())
-    access_token = create_access_token({"sub": str(user.id), "role": user.user_type, "jti": jti})
+    user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
+    access_token = create_access_token({"sub": str(user.id), "role": user_role_str, "jti": jti})
     refresh_token = create_refresh_token({"sub": str(user.id)})
 
     # 5. Record success + session
@@ -379,21 +384,23 @@ async def login(
 
     # 6. Send login notification email to user and admin (fire-and-forget — does not block response)
     admin_emails = _get_admin_emails_for_notification(db, user.firm_id)
-    user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
     firm_name_str = user.firm.name if user.firm else None
 
-    asyncio.create_task(
-        notify_login(
-            user_email=str(user.email) if user.email else "",
-            user_name=str(user.full_name or user.email),
-            ip_address=ip,
-            user_agent=user_agent,
-            user_role=user_role_str,
-            firm_name=firm_name_str,
-            admin_emails=admin_emails,
-            login_time=user.last_login,  # type: ignore[arg-type]
+    try:
+        asyncio.create_task(
+            notify_login(
+                user_email=str(user.email) if user.email else "",
+                user_name=str(user.full_name or user.email),
+                ip_address=ip,
+                user_agent=user_agent,
+                user_role=user_role_str,
+                firm_name=firm_name_str,
+                admin_emails=admin_emails,
+                login_time=user.last_login,
+            )
         )
-    )
+    except Exception:
+        pass
 
     sub_data = _get_user_subscription(user, db)
     from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
@@ -520,6 +527,7 @@ async def citizen_register(
         )
 
     citizen_user = User(
+        id=uuid.uuid4(),
         email=payload.email.lower().strip(),
         hashed_password=get_password_hash(payload.password),
         full_name=payload.full_name.strip(),
