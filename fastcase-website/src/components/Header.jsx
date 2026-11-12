@@ -84,12 +84,6 @@ const featuresMenu = [
 const primaryNav = [
   { label: 'Features', to: '/features', hasMenu: true },
   { label: 'Practice Areas', to: '/practice-areas' },
-  {
-    label: 'Consumer Portal',
-    to: '/consumer-portal',
-    badge: 'नागरिक कक्ष',
-    isConsumer: true,
-  },
   { label: 'Pricing', to: '/pricing' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
@@ -295,22 +289,11 @@ export default function Header() {
               ) : (
                 <NavLink key={item.label} to={item.to}
                   className={({ isActive }) =>
-                    `flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg text-[14px] font-medium transition-all duration-150 ${
-                      item.isConsumer
-                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-700/80 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 font-semibold shadow-2xs'
-                        : isActive
-                        ? 'text-primary bg-primary/5 font-semibold'
-                        : 'text-ink/70 hover:text-ink hover:bg-surface'
-                    }`
+                    `px-3.5 py-2 rounded-lg text-[14px] font-medium transition-colors duration-150
+                    ${isActive ? 'text-primary bg-primary/5' : 'text-ink/70 hover:text-ink hover:bg-surface'}`
                   }
                 >
-                  {item.isConsumer && <Shield className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                  <span>{item.label}</span>
-                  {item.badge && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-600 text-white leading-none tracking-tight">
-                      {item.badge}
-                    </span>
-                  )}
+                  {item.label}
                 </NavLink>
               )
             )}
@@ -332,22 +315,20 @@ export default function Header() {
               )}
             </button>
 
-            {/* Consumer Portal Action Button */}
+            {/* Consumer Portal Button (exact match to Login button) */}
             <a
               href={`${getErpUrl()}/consumer`}
-              className="hidden xl:inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold py-2 px-3.5 rounded-lg shadow-2xs hover:shadow-xs transition-all"
-              title="नागरिक व ग्राहक तक्रार कक्ष"
+              className="hidden sm:inline-flex items-center btn-secondary text-[14px] py-2 px-4 rounded-lg border border-line font-medium hover:border-primary/40 hover:text-primary transition-colors whitespace-nowrap"
             >
-              <Shield className="w-3.5 h-3.5 text-white" />
-              <span>Consumer Portal</span>
+              Consumer Portal
             </a>
 
             {/* Direct Login Button */}
             <a
               href={`${getErpUrl()}/login`}
-              className="hidden sm:inline-flex items-center btn-secondary text-[14px] py-2 px-3 sm:px-4 rounded-lg border border-line font-medium hover:border-primary/40 hover:text-primary transition-colors"
+              className="hidden sm:inline-flex items-center btn-secondary text-[14px] py-2 px-4 rounded-lg border border-line font-medium hover:border-primary/40 hover:text-primary transition-colors whitespace-nowrap"
             >
-              Advocate Login
+              Login
             </a>
 
             {/* Direct Registration Button */}
@@ -415,49 +396,22 @@ export default function Header() {
               </div>
             </div>
 
-            {/* Mobile Consumer Portal Highlight Card */}
-            <div className="p-3 my-2 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border border-emerald-200 dark:border-emerald-800">
-              <div className="flex items-center gap-2 mb-1">
-                <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-[13px] font-bold text-emerald-900 dark:text-emerald-200">नागरिक व ग्राहक विधी कक्ष</span>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white uppercase">Citizen</span>
-              </div>
-              <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80 mb-2">
-                ग्राहक तक्रार मंच, पोलीस एफआयआर, १९३० सायबर फ्रॉड व आरटीआय अर्ज.
-              </p>
-              <a
-                href={`${getErpUrl()}/consumer`}
-                className="w-full py-2 px-3 rounded-lg bg-emerald-600 text-white text-[12px] font-bold flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                Launch Consumer Portal <ArrowRight className="w-3 h-3" />
-              </a>
-            </div>
-
             {primaryNav.filter(item => !item.hasMenu).map((item) => (
               <NavLink key={item.label} to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-4 py-3 rounded-xl text-[15px] font-medium transition-colors
-                  ${item.isConsumer
-                    ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 font-semibold border border-emerald-200/80 dark:border-emerald-800'
-                    : isActive 
-                    ? 'text-primary bg-primary/5 font-semibold' 
-                    : 'text-ink/70 hover:text-ink hover:bg-surface'}`
+                  `block px-4 py-3 rounded-xl text-[15px] font-medium transition-colors
+                  ${isActive ? 'text-primary bg-primary/5' : 'text-ink/70 hover:text-ink hover:bg-surface'}`
                 }
               >
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
-                    {item.badge}
-                  </span>
-                )}
+                {item.label}
               </NavLink>
             ))}
             <div className="pt-3 border-t border-line space-y-2">
-              <a href={`${getErpUrl()}/consumer`} className="w-full rounded-xl block text-center py-2.5 px-4 font-bold bg-emerald-600 text-white shadow-xs">
-                Consumer Portal (तक्रार कक्ष)
+              <a href={`${getErpUrl()}/consumer`} className="btn-secondary w-full rounded-xl block text-center py-2.5 px-4 font-medium">
+                Consumer Portal
               </a>
               <a href={`${getErpUrl()}/login`} className="btn-secondary w-full rounded-xl block text-center py-2.5 px-4 font-medium">
-                Advocate Login
+                Login
               </a>
               <a href={`${getErpUrl()}/register`} className="btn-primary w-full rounded-xl block text-center py-2.5 px-4">
                 Registration
