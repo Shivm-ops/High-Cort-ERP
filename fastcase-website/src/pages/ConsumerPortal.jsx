@@ -36,7 +36,7 @@ const COMMON_ISSUES = [
 ];
 
 export default function ConsumerPortal() {
-  const portalUrl = `${getErpUrl()}/citizen-portal`;
+  const portalUrl = `${getErpUrl()}/citizen-login`;
   const [inputVal, setInputVal] = useState('');
 
   const handleLaunch = (q) => {

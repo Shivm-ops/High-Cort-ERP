@@ -317,7 +317,7 @@ export default function Header() {
 
             {/* Consumer Portal Button (exact match to Login button) */}
             <a
-              href={`${getErpUrl()}/citizen-portal`}
+              href={`${getErpUrl()}/citizen-login`}
               className="hidden sm:inline-flex items-center btn-secondary text-[14px] py-2 px-4 rounded-lg border border-line font-medium hover:border-primary/40 hover:text-primary transition-colors whitespace-nowrap"
             >
               Consumer Portal
@@ -407,7 +407,7 @@ export default function Header() {
               </NavLink>
             ))}
             <div className="pt-3 border-t border-line space-y-2">
-              <a href={`${getErpUrl()}/citizen-portal`} className="btn-secondary w-full rounded-xl block text-center py-2.5 px-4 font-medium">
+              <a href={`${getErpUrl()}/citizen-login`} className="btn-secondary w-full rounded-xl block text-center py-2.5 px-4 font-medium">
                 Consumer Portal
               </a>
               <a href={`${getErpUrl()}/login`} className="btn-secondary w-full rounded-xl block text-center py-2.5 px-4 font-medium">

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Scale,
   Search,
@@ -39,7 +40,22 @@ type Language = "mr" | "hi" | "en";
 type ActiveTab = "solve" | "draft" | "saved";
 
 export default function SimpleCitizenPortalPage() {
+  const router = useRouter();
   const { user, isAuthenticated, logout, citizenLogin, citizenRegister } = useAuthStore();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
+    if (!isAuthenticated && !hasToken) {
+      router.replace("/citizen-login");
+    }
+  }, [hydrated, isAuthenticated, router]);
+
   const [lang, setLang] = useState<Language>("mr");
 
   // ── 3 Main Navigation Tabs ────────────────────────────────────────────────
@@ -396,6 +412,16 @@ ${template.relief}
       otpInputRefs.current[index + 1]?.focus();
     }
   };
+
+  const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
+  if (!hydrated || (!isAuthenticated && !hasToken)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F6F8F5]">
+        <div className="w-9 h-9 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin mb-3" />
+        <p className="text-xs font-semibold text-gray-500">नागरिक लॉगिन कक्षात पुनर्निर्देशित करत आहे...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F6F8F5] text-gray-900 font-sans flex flex-col antialiased">

@@ -42,7 +42,20 @@ type CitizenRegisterFormData = z.infer<typeof citizenRegisterSchema>;
 
 export default function CitizenLoginPage() {
   const router = useRouter();
-  const { citizenLogin, citizenRegister } = useAuthStore();
+  const { user, isAuthenticated, citizenLogin, citizenRegister } = useAuthStore();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
+    if (isAuthenticated && hasToken && user?.role === "citizen") {
+      router.replace("/citizen-portal");
+    }
+  }, [hydrated, isAuthenticated, user, router]);
 
   // Mode: "login" vs "register"
   const [view, setView] = useState<"login" | "register">("login");
