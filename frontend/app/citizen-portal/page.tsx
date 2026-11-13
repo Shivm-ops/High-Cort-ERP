@@ -409,21 +409,6 @@ ${template.relief}
 
   return (
     <div className="min-h-screen bg-[#F4F6F5] text-gray-900 font-sans flex flex-col antialiased">
-      {/* ── Compact 24x7 Emergency SOS Notification Strip ── */}
-      <div className="bg-[#991B1B] text-white px-3 py-1.5 text-[11px] font-bold flex flex-wrap items-center justify-between gap-2 shadow-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-          <span>आपत्कालीन कायदेशीर मदत (२४x७):</span>
-        </div>
-        <div className="flex items-center flex-wrap gap-3 sm:gap-4 text-[11px] font-bold">
-          <a href="tel:112" className="hover:underline">📞 पोलीस: ११२</a>
-          <a href="tel:1930" className="hover:underline">💳 सायबर: १९३०</a>
-          <a href="tel:1915" className="hover:underline">🛒 ग्राहक: १९१५</a>
-          <a href="tel:1091" className="hover:underline">👩 महिला: १०९१</a>
-          <a href="tel:15100" className="hover:underline">⚖ मोफत विधी: १५१००</a>
-        </div>
-      </div>
-
       {/* ── Compact Top Header ── */}
       <header className="bg-white border-b border-gray-200/90 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">

@@ -45,21 +45,6 @@ export default function ConsumerPortal() {
 
   return (
     <div className="min-h-screen bg-surface">
-      {/* ── Emergency SOS Top Notification ── */}
-      <div className="bg-[#991B1B] text-white px-4 py-2 text-xs font-bold text-center flex flex-wrap items-center justify-center gap-3">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-          आपत्कालीन विधी हेल्पलाईन (२४x७):
-        </span>
-        <span className="text-red-200">पोलीस: <strong className="text-white">११२</strong></span>
-        <span className="text-red-200">|</span>
-        <span className="text-red-200">सायबर फ्रॉड: <strong className="text-white">१९३०</strong></span>
-        <span className="text-red-200">|</span>
-        <span className="text-red-200">महिला: <strong className="text-white">१०९१</strong></span>
-        <span className="text-red-200">|</span>
-        <span className="text-red-200">मोफत विधी सेवा: <strong className="text-white">१५१००</strong></span>
-      </div>
-
       {/* ── Clean Hero Section ── */}
       <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-[#0B251E] via-[#0D3027] to-[#081C16] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">

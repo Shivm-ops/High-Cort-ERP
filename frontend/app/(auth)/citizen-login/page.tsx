@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Eye,
   EyeOff,
@@ -17,9 +17,8 @@ import {
   ShieldCheck,
   FileText,
   Sparkles,
-  PhoneCall,
   User,
-  CheckCircle2,
+  Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { toast } from "sonner";
@@ -28,18 +27,18 @@ import { cn } from "@/lib/utils";
 
 // Citizen Password login schema
 const passwordSchema = z.object({
-  email: z.string().email("वैध ईमेल आयडी प्रविष्ट करा (Enter valid email)"),
-  password: z.string().min(6, "पासवर्ड किमान ६ अक्षरे असावा (Minimum 6 characters)"),
+  email: z.string().email("Enter a valid email address (वैध ईमेल प्रविष्ट करा)"),
+  password: z.string().min(6, "Password must be at least 6 characters (किमान ६ अक्षरे)"),
 });
 type PasswordFormData = z.infer<typeof passwordSchema>;
 
 // Citizen Registration schema
 const citizenRegisterSchema = z.object({
-  fullName: z.string().min(2, "आपले पूर्ण नाव प्रविष्ट करा (Full name is required)"),
-  email: z.string().email("वैध ईमेल आयडी प्रविष्ट करा (Enter valid email)"),
-  phone: z.string().min(10, "१० अंकी वैध मोबाईल नंबर प्रविष्ट करा").optional().or(z.literal("")),
+  fullName: z.string().min(2, "Full name is required (आपले पूर्ण नाव प्रविष्ट करा)"),
+  email: z.string().email("Enter a valid email address (वैध ईमेल प्रविष्ट करा)"),
+  phone: z.string().min(10, "Enter valid 10-digit mobile number").optional().or(z.literal("")),
   city: z.string().optional().or(z.literal("")),
-  password: z.string().min(6, "पासवर्ड किमान ६ अक्षरे असावा (Minimum 6 characters)"),
+  password: z.string().min(6, "Password must be at least 6 characters (किमान ६ अक्षरे)"),
 });
 type CitizenRegisterFormData = z.infer<typeof citizenRegisterSchema>;
 
@@ -112,7 +111,7 @@ export default function CitizenLoginPage() {
     setLoading(true);
     try {
       const u = await citizenLogin(data.email, data.password);
-      toast.success(`स्वागत आहे, ${u.full_name || "नागरिक"}!`);
+      toast.success(`Welcome back, ${u.full_name || "Citizen"}!`);
       router.push("/citizen-portal");
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -133,7 +132,7 @@ export default function CitizenLoginPage() {
         city_or_district: data.city?.trim() || undefined,
         preferred_language: "mr",
       });
-      toast.success(`नोंदणी यशस्वी! स्वागत आहे, ${u.full_name}.`);
+      toast.success(`Account created successfully! Welcome, ${u.full_name}.`);
       router.push("/citizen-portal");
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -146,13 +145,13 @@ export default function CitizenLoginPage() {
   const onSendLoginOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!otpEmail.trim()) {
-      toast.error("कृपया आपला ईमेल आयडी प्रविष्ट करा");
+      toast.error("Please enter your email address");
       return;
     }
     setLoading(true);
     try {
       await api.post("/auth/login-otp/send", { email: otpEmail.trim().toLowerCase() });
-      toast.success("आपल्या ईमेलवर ६ अंकी ओटीपी पाठवला आहे");
+      toast.success("6-digit verification OTP sent to your email");
       setOtpStep("code");
       setTimer(60);
       setCanResend(false);
@@ -169,7 +168,7 @@ export default function CitizenLoginPage() {
   const onVerifyLoginOtp = async () => {
     const code = otpDigits.join("");
     if (code.length !== 6) {
-      toast.error("कृपया पूर्ण ६ अंकी ओटीपी प्रविष्ट करा");
+      toast.error("Please enter complete 6-digit OTP");
       return;
     }
     setLoading(true);
@@ -184,13 +183,13 @@ export default function CitizenLoginPage() {
       if (typeof document !== "undefined") {
         document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
-      toast.success("लॉगिन यशस्वी!");
+      toast.success("Login successful!");
       window.location.href = "/citizen-portal";
     } catch (err: any) {
       const detail = err.response?.data?.detail;
       if (typeof detail === "object" && detail.attempts_remaining !== undefined) {
         setAttemptsRemaining(detail.attempts_remaining);
-        toast.error(`चुकीचा ओटीपी. ${detail.attempts_remaining} प्रयत्न शिल्लक.`);
+        toast.error(`Invalid OTP. ${detail.attempts_remaining} attempts remaining.`);
       } else {
         toast.error(getErrorMessage(err));
       }
@@ -230,104 +229,104 @@ export default function CitizenLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#08201A] via-[#0B2C24] to-[#061814] text-gray-900 font-sans antialiased flex flex-col justify-between">
-      {/* ── Top 24x7 Emergency Legal SOS Banner ── */}
-      <div className="bg-[#B91C1C] text-white px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-center sm:justify-between gap-3 shadow-md z-20">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-          <span>आपत्कालीन कायदेशीर मदत (२४x७):</span>
-        </div>
-        <div className="flex items-center flex-wrap justify-center gap-3 sm:gap-5 text-xs font-bold">
-          <a href="tel:112" className="underline hover:text-red-200">📞 पोलीस: ११२</a>
-          <a href="tel:1930" className="underline hover:text-red-200">💳 सायबर फ्रॉड: १९३०</a>
-          <a href="tel:1915" className="underline hover:text-red-200">🛒 ग्राहक तक्रार: १९१५</a>
-          <a href="tel:1091" className="underline hover:text-red-200">👩 महिला: १०९१</a>
-          <a href="tel:15100" className="underline hover:text-red-200">⚖ मोफत विधी सेवा: १५१००</a>
-        </div>
-      </div>
-
-      {/* ── Main Centered Civic Auth Container (Totally Different Design) ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="w-full max-w-lg relative z-10 space-y-4">
-          {/* Back to Main Website Button */}
-          <div className="flex items-center justify-between">
-            <a
-              href="https://fastcase.in"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition cursor-pointer shadow-xs"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-emerald-400" />
-              <span>← मुख्य वेबसाइट (Back to fastcase.in)</span>
-            </a>
-          </div>
-
-          {/* Civic Header Title */}
-          <div className="text-center space-y-2 text-white">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold shadow-sm">
-              <Scale className="w-4 h-4 text-emerald-400" />
-              <span>सामान्य नागरिक व ग्राहक विधी सहाय्य कक्ष</span>
+    <div className="min-h-screen bg-[#F8FAFB] text-gray-900 font-sans antialiased flex flex-col justify-between">
+      {/* ── Clean Top Navigation Bar ── */}
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shadow-xs">
+              <Scale className="w-5 h-5 text-emerald-300" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
-              नागरिक पोर्टल प्रवेश
-            </h1>
-            <p className="text-xs sm:text-sm text-emerald-100/80 max-w-md mx-auto">
-              आपली समस्या सांगा, कायदेशीर मार्गदर्शन मिळवा व कोर्ट-मान्य अधिकृत अर्ज डाऊनलोड करा.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base tracking-tight text-gray-900 leading-none">
+                  Fastcase
+                </span>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 uppercase">
+                  नागरिक विधी कक्ष
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-500 font-medium">
+                Citizen & Consumer Legal Portal
+              </p>
+            </div>
           </div>
 
-          {/* ── Dedicated Consumer Auth Card ── */}
+          <a
+            href="https://fastcase.in"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-gray-500" />
+            <span>Back to fastcase.in</span>
+          </a>
+        </div>
+      </header>
+
+      {/* ── Main Centered Clean Card ── */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+        <div className="w-full max-w-md space-y-4">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-3xl shadow-2xl border border-white/20 p-6 sm:p-8 space-y-6"
+            className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-200/80 p-6 sm:p-8 space-y-6"
           >
-            {/* Prominent Dual Tabs: Sign In vs Create Account */}
-            <div className="grid grid-cols-2 p-1.5 bg-gray-100/90 rounded-2xl gap-1">
+            {/* Header */}
+            <div className="text-center space-y-1">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                {view === "register" ? "Create Citizen Account" : "Citizen Sign In"}
+              </h2>
+              <p className="text-xs text-gray-500">
+                {view === "register"
+                  ? "नोंदणी करा व १-क्लिक कायदेशीर मार्गदर्शन मिळवा"
+                  : "नागरिक व ग्राहक विधी सहाय्य कक्षात प्रवेश करा"}
+              </p>
+            </div>
+
+            {/* Segmented Dual Tabs */}
+            <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl gap-1">
               <button
                 type="button"
                 onClick={() => setView("login")}
                 className={cn(
-                  "py-2.5 px-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  "py-2 px-3 text-xs font-black rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer",
                   view === "login"
-                    ? "bg-white text-emerald-950 shadow-md border border-gray-200/60"
+                    ? "bg-white text-emerald-950 shadow-xs"
                     : "text-gray-600 hover:text-gray-900"
                 )}
               >
-                <KeyRound className="w-4 h-4 text-emerald-700" />
+                <KeyRound className="w-3.5 h-3.5 text-emerald-700" />
                 <span>लॉगिन (Sign In)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setView("register")}
                 className={cn(
-                  "py-2.5 px-3 text-xs sm:text-sm font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  "py-2 px-3 text-xs font-black rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer",
                   view === "register"
-                    ? "bg-white text-emerald-950 shadow-md border border-gray-200/60"
+                    ? "bg-white text-emerald-950 shadow-xs"
                     : "text-gray-600 hover:text-gray-900"
                 )}
               >
-                <Sparkles className="w-4 h-4 text-emerald-700" />
+                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
                 <span>नवीन नोंदणी (Register)</span>
               </button>
             </div>
 
-            {/* ── VIEW 1: CITIZEN SIGN IN ── */}
+            {/* ── VIEW 1: SIGN IN ── */}
             {view === "login" && (
-              <div className="space-y-5">
-                {/* Auth Mode Toggle: Password vs OTP */}
-                <div className="flex items-center justify-center gap-2 p-1 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs font-bold text-gray-700">
+              <div className="space-y-4">
+                {/* Auth Mode Toggle */}
+                <div className="flex items-center justify-center gap-2 p-1 bg-gray-50 border border-gray-200/70 rounded-xl text-xs font-bold text-gray-600">
                   <button
                     type="button"
                     onClick={() => setAuthMode("password")}
                     className={cn(
                       "flex-1 py-1.5 rounded-lg transition cursor-pointer text-center",
-                      authMode === "password" ? "bg-emerald-800 text-white shadow-xs font-black" : "hover:text-emerald-900"
+                      authMode === "password" ? "bg-white text-emerald-950 shadow-2xs font-black border border-gray-200" : "hover:text-gray-900"
                     )}
                   >
-                    🔑 पासवर्डद्वारे (Password)
+                    🔑 Password
                   </button>
                   <button
                     type="button"
@@ -337,46 +336,46 @@ export default function CitizenLoginPage() {
                     }}
                     className={cn(
                       "flex-1 py-1.5 rounded-lg transition cursor-pointer text-center",
-                      authMode === "otp" ? "bg-emerald-800 text-white shadow-xs font-black" : "hover:text-emerald-900"
+                      authMode === "otp" ? "bg-white text-emerald-950 shadow-2xs font-black border border-gray-200" : "hover:text-gray-900"
                     )}
                   >
-                    ✉️ ओटीपीद्वारे (Sign in with OTP)
+                    ✉️ Sign in with OTP
                   </button>
                 </div>
 
                 {/* Password Form */}
                 {authMode === "password" && (
-                  <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
+                  <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
                         ईमेल आयडी (Email Address)
                       </label>
                       <input
                         {...registerPassword("email")}
                         type="email"
-                        placeholder="उदा. citizen@example.com"
+                        placeholder="citizen@example.com"
                         autoComplete="email"
                         className={cn(
-                          "w-full rounded-xl border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600",
-                          passwordErrors.email ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300"
+                          "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium",
+                          passwordErrors.email ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
                         )}
                       />
                       {passwordErrors.email && (
-                        <p className="text-xs text-red-500 mt-1 font-semibold">{passwordErrors.email.message}</p>
+                        <p className="text-[11px] text-red-500 mt-1 font-semibold">{passwordErrors.email.message}</p>
                       )}
                     </div>
 
                     <div>
-                      <div className="flex justify-between items-center mb-1.5">
+                      <div className="flex justify-between items-center mb-1">
                         <label className="block text-xs font-bold text-gray-700">
                           पासवर्ड (Password)
                         </label>
                         <button
                           type="button"
                           onClick={() => setShowForgotModal(true)}
-                          className="text-xs font-bold text-emerald-800 hover:underline cursor-pointer"
+                          className="text-[11px] font-bold text-emerald-800 hover:underline cursor-pointer"
                         >
-                          पासवर्ड विसरलात?
+                          Forgot password?
                         </button>
                       </div>
                       <div className="relative">
@@ -386,37 +385,37 @@ export default function CitizenLoginPage() {
                           placeholder="••••••••"
                           autoComplete="current-password"
                           className={cn(
-                            "w-full rounded-xl border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 pr-11",
-                            passwordErrors.password ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300"
+                            "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 pr-10 font-medium",
+                            passwordErrors.password ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
                           )}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                         >
                           {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                       {passwordErrors.password && (
-                        <p className="text-xs text-red-500 mt-1 font-semibold">{passwordErrors.password.message}</p>
+                        <p className="text-[11px] text-red-500 mt-1 font-semibold">{passwordErrors.password.message}</p>
                       )}
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full rounded-xl bg-gradient-to-r from-emerald-800 to-teal-900 py-3.5 text-sm font-black text-white shadow-lg hover:from-emerald-900 hover:to-teal-950 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>लॉगिन होत आहे...</span>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Signing In...</span>
                         </>
                       ) : (
                         <>
-                          <span>लॉगिन करा व कंझ्युमर पोर्टल उघडा</span>
-                          <ArrowRight className="w-4 h-4" />
+                          <span>Sign In to Citizen Portal</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </>
                       )}
                     </button>
@@ -425,43 +424,43 @@ export default function CitizenLoginPage() {
 
                 {/* OTP Form */}
                 {authMode === "otp" && (
-                  <div className="space-y-4">
+                  <div className="space-y-3.5">
                     {otpStep === "email" ? (
-                      <form onSubmit={onSendLoginOtp} className="space-y-4">
+                      <form onSubmit={onSendLoginOtp} className="space-y-3.5">
                         <div>
-                          <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                            आपला ईमेल आयडी टाका (Email Address)
+                          <label className="block text-xs font-bold text-gray-700 mb-1">
+                            ईमेल आयडी टाका (Email Address)
                           </label>
                           <input
                             type="email"
                             value={otpEmail}
                             onChange={(e) => setOtpEmail(e.target.value)}
                             placeholder="citizen@example.com"
-                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
+                            className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-gray-50/50 focus:bg-white font-medium"
                           />
                         </div>
                         <button
                           type="submit"
                           disabled={loading || !otpEmail.trim()}
-                          className="w-full rounded-xl bg-gradient-to-r from-emerald-800 to-teal-900 py-3.5 text-sm font-black text-white shadow-lg hover:from-emerald-900 hover:to-teal-950 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                          className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         >
                           {loading ? (
                             <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              <span>ओटीपी पाठवत आहे...</span>
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>Sending OTP...</span>
                             </>
                           ) : (
                             <>
-                              <span>६ अंकी ओटीपी कोड पाठवा</span>
-                              <ArrowRight className="w-4 h-4" />
+                              <span>Send 6-Digit OTP</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
                             </>
                           )}
                         </button>
                       </form>
                     ) : (
-                      <div className="space-y-4 text-center">
+                      <div className="space-y-3.5 text-center">
                         <p className="text-xs text-gray-600">
-                          <strong className="text-gray-900">{otpEmail}</strong> वर पाठवलेला ६ अंकी कोड प्रविष्ट करा:
+                          Enter 6-digit OTP sent to <strong className="text-gray-900">{otpEmail}</strong>:
                         </p>
                         <div className="flex justify-center gap-2">
                           {otpDigits.map((digit, idx) => (
@@ -476,14 +475,14 @@ export default function CitizenLoginPage() {
                               value={digit}
                               onChange={(e) => handleOtpChange(idx, e.target.value)}
                               onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                              className="w-11 h-12 rounded-xl border-2 border-gray-200 text-center text-lg font-black text-gray-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
+                              className="w-10 h-11 rounded-xl border-2 border-gray-200 text-center text-base font-black text-gray-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
                             />
                           ))}
                         </div>
 
                         {attemptsRemaining !== null && (
-                          <p className="text-xs text-amber-600 font-bold">
-                            {attemptsRemaining} प्रयत्न शिल्लक आहेत
+                          <p className="text-[11px] text-amber-600 font-bold">
+                            {attemptsRemaining} attempts remaining
                           </p>
                         )}
 
@@ -491,9 +490,9 @@ export default function CitizenLoginPage() {
                           type="button"
                           onClick={onVerifyLoginOtp}
                           disabled={loading || otpDigits.join("").length !== 6}
-                          className="w-full rounded-xl bg-gradient-to-r from-emerald-800 to-teal-900 py-3.5 text-sm font-black text-white shadow-lg hover:from-emerald-900 hover:to-teal-950 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                          className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         >
-                          {loading ? "ओटीपी तपासत आहे..." : "ओटीपी तपासा व पोर्टल उघडा →"}
+                          {loading ? "Verifying..." : "Verify & Sign In →"}
                         </button>
 
                         <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
@@ -505,7 +504,7 @@ export default function CitizenLoginPage() {
                             }}
                             className="hover:underline cursor-pointer font-bold text-gray-600"
                           >
-                            ईमेल बदला
+                            Change Email
                           </button>
                           <button
                             type="button"
@@ -513,7 +512,7 @@ export default function CitizenLoginPage() {
                             disabled={!canResend || loading}
                             className={`font-bold ${canResend ? "text-emerald-800 hover:underline cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
                           >
-                            {canResend ? "पुन्हा ओटीपी पाठवा" : `पुन्हा पाठवा (${timer}s)`}
+                            {canResend ? "Resend OTP" : `Resend in ${timer}s`}
                           </button>
                         </div>
                       </div>
@@ -523,31 +522,29 @@ export default function CitizenLoginPage() {
               </div>
             )}
 
-            {/* ── VIEW 2: CITIZEN REGISTRATION ── */}
+            {/* ── VIEW 2: REGISTRATION ── */}
             {view === "register" && (
-              <form onSubmit={handleCitizenRegisterSubmit(onCitizenRegister)} className="space-y-4">
-                {/* Full Name */}
+              <form onSubmit={handleCitizenRegisterSubmit(onCitizenRegister)} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    आपले पूर्ण नाव <span className="text-red-500">*</span> (Full Name)
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    पूर्ण नाव <span className="text-red-500">*</span> (Full Name)
                   </label>
                   <input
                     {...registerCitizen("fullName")}
                     type="text"
                     placeholder="उदा. रमेश शंकर पाटील"
                     className={cn(
-                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600",
-                      citizenErrors.fullName ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300"
+                      "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium",
+                      citizenErrors.fullName ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
                     )}
                   />
                   {citizenErrors.fullName && (
-                    <p className="text-xs text-red-500 mt-1 font-semibold">{citizenErrors.fullName.message}</p>
+                    <p className="text-[11px] text-red-500 mt-1 font-semibold">{citizenErrors.fullName.message}</p>
                   )}
                 </div>
 
-                {/* Email Address */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
                     ईमेल आयडी <span className="text-red-500">*</span> (Email Address)
                   </label>
                   <input
@@ -556,45 +553,43 @@ export default function CitizenLoginPage() {
                     placeholder="citizen@example.com"
                     autoComplete="email"
                     className={cn(
-                      "w-full rounded-xl border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600",
-                      citizenErrors.email ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300"
+                      "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium",
+                      citizenErrors.email ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
                     )}
                   />
                   {citizenErrors.email && (
-                    <p className="text-xs text-red-500 mt-1 font-semibold">{citizenErrors.email.message}</p>
+                    <p className="text-[11px] text-red-500 mt-1 font-semibold">{citizenErrors.email.message}</p>
                   )}
                 </div>
 
-                {/* Mobile & City */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                      मोबाईल नंबर (Mobile)
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      मोबाईल (Mobile)
                     </label>
                     <input
                       {...registerCitizen("phone")}
                       type="tel"
-                      placeholder="उदा. ९८२२००११२२"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 hover:border-gray-300"
+                      placeholder="९८२२००११२२"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-gray-50/50 focus:bg-white font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                      शहर / जिल्हा (City)
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      शहर (City)
                     </label>
                     <input
                       {...registerCitizen("city")}
                       type="text"
-                      placeholder="उदा. पुणे / मुंबई"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 hover:border-gray-300"
+                      placeholder="पुणे / मुंबई"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-gray-50/50 focus:bg-white font-medium"
                     />
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    पासवर्ड सेट करा <span className="text-red-500">*</span> (Password - किमान ६ अक्षरे)
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    पासवर्ड <span className="text-red-500">*</span> (Password - min 6 chars)
                   </label>
                   <div className="relative">
                     <input
@@ -603,78 +598,69 @@ export default function CitizenLoginPage() {
                       placeholder="••••••••"
                       autoComplete="new-password"
                       className={cn(
-                        "w-full rounded-xl border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 pr-11",
-                        citizenErrors.password ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300"
+                        "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 pr-10 font-medium",
+                        citizenErrors.password ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
                       )}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPass(!showPass)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
                     >
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {citizenErrors.password && (
-                    <p className="text-xs text-red-500 mt-1 font-semibold">{citizenErrors.password.message}</p>
+                    <p className="text-[11px] text-red-500 mt-1 font-semibold">{citizenErrors.password.message}</p>
                   )}
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-emerald-800 to-teal-900 py-3.5 text-sm font-black text-white shadow-lg hover:from-emerald-900 hover:to-teal-950 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>नोंदणी होत आहे...</span>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Creating Account...</span>
                     </>
                   ) : (
                     <>
-                      <span>नवीन खाते तयार करा व पोर्टल उघडा</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span>Create Account & Continue</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
                 </button>
               </form>
             )}
 
-            {/* Bottom 3 Trust Badges */}
-            <div className="pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center text-[11px] font-bold text-gray-600">
-              <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                <span>१००% मोफत मार्गदर्शन</span>
-              </div>
-              <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-amber-700" />
-                <span>कोर्ट अर्ज (₹४९)</span>
-              </div>
-              <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
-                <span>सुरक्षित व गोपनीय</span>
-              </div>
+            {/* Bottom Security Note */}
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-center gap-2 text-[11px] font-semibold text-gray-400">
+              <Lock className="w-3 h-3 text-emerald-700" />
+              <span>256-bit SSL encrypted • Fastcase Verified Citizen Hub</span>
             </div>
           </motion.div>
         </div>
       </main>
 
+      {/* ── Clean Footer ── */}
+      <footer className="py-4 text-center text-xs text-gray-400 border-t border-gray-200/60 bg-white">
+        © Fastcase Legal Operating System &bull; Dedicated Civic & Consumer Legal Assistance
+      </footer>
+
       {/* Forgot Password Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-gray-100"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
-                <Scale className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-2xs p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
+                <Scale className="w-4 h-4" />
               </div>
-              <h3 className="text-base font-extrabold text-gray-900">पासवर्ड रीसेट कसा करावा?</h3>
+              <h3 className="text-sm font-extrabold text-gray-900">Reset Password</h3>
             </div>
-            <p className="text-xs text-gray-600 leading-relaxed mb-5">
-              नागरिक सुरक्षिततेसाठी आपण पासवर्ड विसरल्यास <strong>"ओटीपीद्वारे (Sign in with OTP)"</strong> पर्याय निवडून आपल्या ईमेलवर आलेल्या ६ अंकी कोडने थेट लॉगिन करू शकता. किंवा मदतीसाठी <strong>support@fastcase.in</strong> वर संपर्क साधावा.
+            <p className="text-xs text-gray-600 leading-relaxed">
+              If you forgot your password, simply select <strong>"Sign in with OTP"</strong> to log in instantly with a 6-digit code sent to your email.
             </p>
             <button
               type="button"
@@ -682,11 +668,11 @@ export default function CitizenLoginPage() {
                 setShowForgotModal(false);
                 setAuthMode("otp");
               }}
-              className="w-full rounded-xl bg-emerald-800 py-3 text-xs font-bold text-white hover:bg-emerald-900 transition cursor-pointer"
+              className="w-full rounded-xl bg-emerald-800 py-2.5 text-xs font-bold text-white hover:bg-emerald-900 transition cursor-pointer"
             >
-              ओटीपीने लॉगिन करा (Sign in with OTP)
+              Sign in with OTP
             </button>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>
