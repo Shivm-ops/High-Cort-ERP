@@ -12,6 +12,7 @@ import {
   Building2,
   Lock,
   Search,
+  User,
 } from 'lucide-react';
 
 const getErpUrl = () => {
@@ -75,11 +76,21 @@ export default function ConsumerPortal() {
             पोलीस ठाणे, सायबर सेल, ग्राहक मंच किंवा सरकारी कार्यालयात तक्रार कशी करावी हे सोप्या भाषेत समजून घ्या आणि कोर्ट-मान्य अधिकृत तक्रार अर्ज काही सेकंदांत मिळवा.
           </p>
 
-          {/* Pricing Highlight Pill */}
-          <div className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-300/40 text-amber-200 px-4 py-1.5 rounded-full text-xs font-bold">
-            <span>💡 कायदेशीर मार्गदर्शन मोफत</span>
-            <span>&bull;</span>
-            <span className="text-amber-100 font-black">अधिकृत कोर्ट अर्ज: केवळ ₹४९/-</span>
+          {/* Pricing Highlight Pill & Citizen Login */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-300/40 text-amber-200 px-4 py-1.5 rounded-full text-xs font-bold">
+              <span>💡 कायदेशीर मार्गदर्शन मोफत</span>
+              <span>&bull;</span>
+              <span className="text-amber-100 font-black">अधिकृत कोर्ट अर्ज: केवळ ₹४९/-</span>
+            </div>
+
+            <a
+              href={`${getErpUrl()}/citizen-login`}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition cursor-pointer"
+            >
+              <User className="w-3.5 h-3.5 text-emerald-400" />
+              <span>नागरिक लॉगिन / नोंदणी</span>
+            </a>
           </div>
 
           {/* Quick Problem Launch Box */}

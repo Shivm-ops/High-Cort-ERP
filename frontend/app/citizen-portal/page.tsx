@@ -245,6 +245,31 @@ ${template.relief}
                 </span>
               )}
             </button>
+
+            {/* Auth status: User badge or Login button */}
+            {isAuthenticated && user ? (
+              <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-semibold">
+                  <User className="w-3.5 h-3.5 text-emerald-700" />
+                  <span className="truncate max-w-[120px]">{user.full_name || user.email}</span>
+                </div>
+                <button
+                  onClick={logout}
+                  className="px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                  title="Logout"
+                >
+                  बाहेर पडा
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/citizen-login"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#013B36] hover:bg-[#022A26] text-white text-xs font-bold transition shadow-xs"
+              >
+                <User className="w-3.5 h-3.5 text-mint" />
+                <span>लॉगिन / नोंदणी</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>

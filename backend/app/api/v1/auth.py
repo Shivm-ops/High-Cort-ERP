@@ -1064,6 +1064,7 @@ async def verify_mfa(data: VerifyMFARequest, current_user: User = Depends(get_cu
 
 
 @router.post("/login-otp-initiate")
+@router.post("/login-otp/send")
 async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depends(get_db)):
     """
     Step 1 of Login with OTP: Generates 6-digit OTP (3-minute expiry),
@@ -1112,6 +1113,7 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
 
 
 @router.post("/login-otp-verify", response_model=LoginResponse)
+@router.post("/login-otp/verify", response_model=LoginResponse)
 async def login_otp_verify(
     data: LoginOtpVerifyRequest,
     request: Request,
