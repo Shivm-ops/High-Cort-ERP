@@ -13,6 +13,7 @@ import {
   KeyRound,
   Mail,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   FileText,
   Sparkles,
@@ -250,7 +251,18 @@ export default function CitizenLoginPage() {
         {/* Subtle decorative glow */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-full max-w-lg relative z-10 space-y-6">
+        <div className="w-full max-w-lg relative z-10 space-y-4">
+          {/* Back to Main Website Button */}
+          <div className="flex items-center justify-between">
+            <a
+              href="https://fastcase.in"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition cursor-pointer shadow-xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-emerald-400" />
+              <span>← मुख्य वेबसाइट (Back to fastcase.in)</span>
+            </a>
+          </div>
+
           {/* Civic Header Title */}
           <div className="text-center space-y-2 text-white">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold shadow-sm">

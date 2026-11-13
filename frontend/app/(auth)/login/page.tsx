@@ -16,6 +16,7 @@ import {
   KeyRound,
   Mail,
   ArrowRight,
+  ArrowLeft,
   FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -246,6 +247,17 @@ export default function AdvocateLoginPage() {
 
           <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/80 p-6 sm:p-9 lg:p-11 xl:p-12">
             
+            {/* Back to Main Website */}
+            <div className="mb-5">
+              <a
+                href="https://fastcase.in"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-sidebar transition cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to fastcase.in</span>
+              </a>
+            </div>
+
             {/* Header */}
             <div className="mb-6">
               <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Welcome back</h2>

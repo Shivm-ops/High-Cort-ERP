@@ -13,6 +13,7 @@ import {
   Download,
   PhoneCall,
   ArrowRight,
+  ArrowLeft,
   Building2,
   Sparkles,
   Lock,
@@ -445,8 +446,17 @@ ${template.relief}
             </div>
           </div>
 
-          {/* User Auth Status Button */}
+          {/* User Auth Status Button & Back Link */}
           <div className="flex items-center gap-2">
+            <a
+              href="https://fastcase.in"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-gray-600 hover:text-emerald-800 hover:bg-emerald-50 transition cursor-pointer border border-gray-200"
+              title="मुख्य वेबसाइटवर जा"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-emerald-700" />
+              <span className="hidden sm:inline">मुख्य वेबसाइट</span>
+            </a>
+
             {isAuthenticated && user && (
               <div className="flex items-center gap-1.5 pl-2">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200/80 text-xs font-bold">
