@@ -28,6 +28,7 @@ import {
   Mail,
   ChevronRight,
   ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -140,7 +141,6 @@ export default function SimpleCitizenPortalPage() {
   }, [showAuthModal, authMode, authOtpStep, authOtpTimer]);
 
   // ── Authentication Protection Trigger ─────────────────────────────────────
-  // If user is not authenticated, pops up modal and stores the pending action
   const requireAuth = (action: "solve" | "draft" | "pay" | "tab_draft" | "tab_saved", callback?: () => void) => {
     if (!isAuthenticated) {
       setPendingAction(action);
@@ -178,16 +178,12 @@ export default function SimpleCitizenPortalPage() {
     }
     const matched = findMatchingProblem(query);
     setActiveProblem(matched);
-    toast.success("कायदेशीर उपाय व मार्गदर्शन तयार आहे!");
-    setTimeout(() => {
-      document.getElementById("solution-card")?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    toast.success("कायदेशीर उपाय तयार आहे!");
   };
 
   const handleSolveProblem = (customQuery?: string) => {
     const query = customQuery !== undefined ? customQuery : problemText;
     setProblemText(query);
-    // Pop up sign in modal if user not logged in
     if (!isAuthenticated) {
       setPendingAction("solve");
       setShowAuthModal(true);
@@ -249,11 +245,7 @@ ${template.relief}
       setGeneratedDoc(draft);
       setIsDrafting(false);
       toast.success("अधिकृत तक्रार अर्ज तयार झाला!");
-
-      setTimeout(() => {
-        document.getElementById("document-preview-section")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    }, 400);
+    }, 350);
   };
 
   const handleGenerateDocument = () => {
@@ -288,7 +280,7 @@ ${template.relief}
       try {
         localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
       } catch (e) {}
-    }, 1200);
+    }, 1000);
   };
 
   // ── Modal Auth Submit Handlers ────────────────────────────────────────────
@@ -312,16 +304,8 @@ ${template.relief}
 
   const handleModalRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authFullName.trim()) {
-      toast.error("Please enter your full name.");
-      return;
-    }
-    if (!authEmail.trim()) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-    if (authPassword.length < 6) {
-      toast.error("Password must be at least 6 characters.");
+    if (!authFullName.trim() || !authEmail.trim() || !authPassword) {
+      toast.error("Please fill all required fields.");
       return;
     }
     setAuthLoading(true);
@@ -333,7 +317,7 @@ ${template.relief}
         phone: authPhone.trim() || undefined,
         preferred_language: "mr",
       });
-      toast.success(`Account created successfully! Welcome, ${u.full_name}.`);
+      toast.success(`Account created! Welcome, ${u.full_name}.`);
       resumePendingAction();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -342,20 +326,19 @@ ${template.relief}
     }
   };
 
-  const handleModalSendOtp = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleModalSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!authEmail.trim()) {
-      toast.error("Please enter your email to receive OTP.");
+      toast.error("Enter your email address.");
       return;
     }
     setAuthLoading(true);
     try {
       await api.post("/auth/login-otp/send", { email: authEmail.trim().toLowerCase() });
-      toast.success("Login OTP sent to your email");
+      toast.success("OTP sent to your email!");
       setAuthOtpStep("code");
       setAuthOtpTimer(60);
       setAuthCanResend(false);
-      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -366,7 +349,7 @@ ${template.relief}
   const handleModalVerifyOtp = async () => {
     const code = authOtpDigits.join("");
     if (code.length !== 6) {
-      toast.error("Please enter the complete 6-digit OTP");
+      toast.error("Enter complete 6-digit OTP.");
       return;
     }
     setAuthLoading(true);
@@ -381,7 +364,7 @@ ${template.relief}
       if (typeof document !== "undefined") {
         document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
-      toast.success("Welcome back!");
+      toast.success("Login successful!");
       resumePendingAction();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -416,102 +399,91 @@ ${template.relief}
   const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
   if (!hydrated || (!isAuthenticated && !hasToken)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F6F8F5]">
-        <div className="w-9 h-9 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin mb-3" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F6F5]">
+        <div className="w-8 h-8 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin mb-3" />
         <p className="text-xs font-semibold text-gray-500">नागरिक लॉगिन कक्षात पुनर्निर्देशित करत आहे...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F8F5] text-gray-900 font-sans flex flex-col antialiased">
-      {/* ── 24x7 Emergency SOS Notification Strip ── */}
-      <div className="bg-[#B91C1C] text-white px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between gap-2 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+    <div className="min-h-screen bg-[#F4F6F5] text-gray-900 font-sans flex flex-col antialiased">
+      {/* ── Compact 24x7 Emergency SOS Notification Strip ── */}
+      <div className="bg-[#991B1B] text-white px-3 py-1.5 text-[11px] font-bold flex flex-wrap items-center justify-between gap-2 shadow-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
           <span>आपत्कालीन कायदेशीर मदत (२४x७):</span>
         </div>
-        <div className="flex items-center gap-4 text-xs font-bold">
-          <a href="tel:112" className="underline hover:text-red-200">📞 पोलीस: ११२</a>
-          <a href="tel:1930" className="underline hover:text-red-200">💳 सायबर फ्रॉड: १९३०</a>
-          <a href="tel:1915" className="underline hover:text-red-200">🛒 ग्राहक तक्रार: १९१५</a>
-          <a href="tel:1091" className="underline hover:text-red-200">👩 महिला: १०९१</a>
-          <a href="tel:15100" className="underline hover:text-red-200">⚖ मोफत विधी सेवा: १५१००</a>
+        <div className="flex items-center flex-wrap gap-3 sm:gap-4 text-[11px] font-bold">
+          <a href="tel:112" className="hover:underline">📞 पोलीस: ११२</a>
+          <a href="tel:1930" className="hover:underline">💳 सायबर: १९३०</a>
+          <a href="tel:1915" className="hover:underline">🛒 ग्राहक: १९१५</a>
+          <a href="tel:1091" className="hover:underline">👩 महिला: १०९१</a>
+          <a href="tel:15100" className="hover:underline">⚖ मोफत विधी: १५१००</a>
         </div>
       </div>
 
-      {/* ── Clean Top Header ── */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-800 to-teal-900 text-white flex items-center justify-center shadow-md">
-              <Scale className="w-5 h-5 text-mint" />
+      {/* ── Compact Top Header ── */}
+      <header className="bg-white border-b border-gray-200/90 sticky top-0 z-30 shadow-2xs">
+        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-800 text-white flex items-center justify-center shadow-xs">
+              <Scale className="w-4 h-4 text-emerald-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-black text-gray-900 tracking-tight">
-                  फास्टकेस ग्राहक व नागरिक विधी कक्ष
+                <h1 className="text-sm font-extrabold text-gray-900 tracking-tight">
+                  फास्टकेस नागरिक विधी कक्ष
                 </h1>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase">
-                  १-क्लिक विधी सहाय्य
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 uppercase">
+                  १-क्लिक सहाय्य
                 </span>
               </div>
-              <p className="text-[11px] text-gray-500 font-medium">
-                समस्या सांगा &bull; काय करावे ते समजून घ्या &bull; अधिकृत अर्ज डाऊनलोड करा (केवळ ₹४९/-)
+              <p className="text-[10px] text-gray-500 font-medium">
+                समस्या सांगा • कायदेशीर उपाय जाणून घ्या • कोर्ट अर्ज (₹४९)
               </p>
             </div>
           </div>
 
           {/* User Auth Status Button */}
           <div className="flex items-center gap-2">
-            {isAuthenticated && user ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold">
-                  <User className="w-3.5 h-3.5 text-emerald-700" />
-                  <span className="truncate max-w-[130px]">{user.full_name || user.email}</span>
+            {isAuthenticated && user && (
+              <div className="flex items-center gap-1.5 pl-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200/80 text-xs font-bold">
+                  <User className="w-3 h-3 text-emerald-700" />
+                  <span className="truncate max-w-[120px]">{user.full_name || user.email}</span>
                 </div>
                 <button
                   onClick={logout}
-                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                  className="px-2 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
                   title="Logout"
                 >
                   बाहेर पडा
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => {
-                  setAuthModalTab("login");
-                  setShowAuthModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#013B36] hover:bg-[#022A26] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5 text-mint" />
-                <span>लॉगिन / नोंदणी</span>
-              </button>
             )}
           </div>
         </div>
       </header>
 
-      {/* ── 3 SMALL ATTRACTIVE TABS ── */}
-      <div className="max-w-5xl w-full mx-auto px-4 pt-6 pb-2">
-        <div className="flex p-1.5 bg-white/90 backdrop-blur-md rounded-2xl border border-gray-200 shadow-sm max-w-2xl mx-auto gap-1.5">
+      {/* ── 3 SMALL ATTRACTIVE TABS (Compact Segmented Control) ── */}
+      <div className="max-w-4xl w-full mx-auto px-4 pt-4 pb-2">
+        <div className="flex p-1 bg-white rounded-xl border border-gray-200 shadow-2xs max-w-xl mx-auto gap-1">
           {/* Tab 1: समस्या व उपाय */}
           <button
             onClick={() => setActiveTab("solve")}
             className={cn(
-              "flex-1 py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm font-extrabold cursor-pointer",
+              "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer",
               activeTab === "solve"
-                ? "bg-gradient-to-r from-emerald-800 to-teal-900 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
+                ? "bg-emerald-800 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <Sparkles className="w-4 h-4 shrink-0 text-amber-300" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>१. समस्या व उपाय</span>
           </button>
 
-          {/* Tab 2: अधिकृत अर्ज जनरेटर (₹४९) */}
+          {/* Tab 2: अर्ज जनरेटर (₹४९) */}
           <button
             onClick={() => {
               if (!isAuthenticated) {
@@ -521,13 +493,13 @@ ${template.relief}
               }
             }}
             className={cn(
-              "flex-1 py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm font-extrabold cursor-pointer",
+              "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer",
               activeTab === "draft"
-                ? "bg-gradient-to-r from-emerald-800 to-teal-900 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
+                ? "bg-emerald-800 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <FileText className="w-4 h-4 shrink-0 text-emerald-400" />
+            <FileText className="w-3.5 h-3.5 text-emerald-300" />
             <span>२. अर्ज जनरेटर (₹४९)</span>
           </button>
 
@@ -541,16 +513,16 @@ ${template.relief}
               }
             }}
             className={cn(
-              "flex-1 py-2.5 px-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs sm:text-sm font-extrabold cursor-pointer relative",
+              "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer relative",
               activeTab === "saved"
-                ? "bg-gradient-to-r from-emerald-800 to-teal-900 text-white shadow-md"
-                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70"
+                ? "bg-emerald-800 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <FileCheck className="w-4 h-4 shrink-0 text-cyan-300" />
+            <FileCheck className="w-3.5 h-3.5 text-cyan-300" />
             <span>३. माझे अर्ज</span>
             {savedDocs.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500 text-white text-[10px] font-black">
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500 text-white text-[9px] font-black">
                 {savedDocs.length}
               </span>
             )}
@@ -559,182 +531,169 @@ ${template.relief}
       </div>
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="max-w-5xl w-full mx-auto px-4 py-4 flex-1 space-y-6">
+      <main className="max-w-4xl w-full mx-auto px-4 py-3 flex-1 space-y-4">
 
         {/* ═══════════════════════════════════════════════════════════════════
-            TAB 1: समस्या व कायदेशीर उपाय (PROBLEM & LEGAL REMEDY)
+            TAB 1: समस्या व कायदेशीर उपाय (SMALL, SIMPLE & ATTRACTIVE)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === "solve" && (
-          <div className="space-y-6">
-            {/* ── Main Input Box & 1-Tap Chips Card ── */}
-            <div className="bg-white rounded-3xl border border-gray-200/90 p-6 sm:p-9 shadow-sm space-y-6">
-              <div className="space-y-2 text-center max-w-xl mx-auto">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[11px] font-black uppercase tracking-wider">
+          <div className="space-y-4">
+            {/* ── Compact Search & Problem Box ── */}
+            <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                  पायरी १: आपली समस्या सांगा
+                  आपली कायदेशीर समस्या सांगा:
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                  आपल्यासोबत काय घडले आहे?
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  साध्या भाषेत लिहा किंवा खालीलपैकी आपल्या समस्येवर १-क्लिक करा.
-                </p>
+                <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
+                  साध्या भाषेत लिहा किंवा खालीलपैकी निवडा
+                </span>
               </div>
 
-              {/* Textarea Input with Emerald Focus */}
-              <div className="max-w-2xl mx-auto space-y-3">
-                <div className="relative">
-                  <textarea
-                    rows={3}
+              {/* Compact Unified Search Bar */}
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="relative w-full">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
                     value={problemText}
                     onChange={(e) => setProblemText(e.target.value)}
-                    placeholder="उदा. ऑनलाइन बँकेतून पैसे कापले गेले, कंपनीने पगार दिला नाही, पोलिसांनी तक्रार घेतली नाही, दुकानातील वस्तू खराब निघाली..."
-                    className="w-full p-4 text-sm bg-gray-50/80 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-emerald-700 focus:bg-white transition leading-relaxed resize-none font-medium shadow-inner"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSolveProblem();
+                    }}
+                    placeholder="उदा. ऑनलाइन पैसे कापले, पगार दिला नाही, पोलिसांनी FIR नाकारली..."
+                    className="w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white transition font-medium text-gray-900"
                   />
                   {problemText && (
                     <button
                       onClick={() => setProblemText("")}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 text-xs px-2 py-1 rounded-md bg-gray-200/60"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs p-1"
                     >
-                      हटवा ✕
+                      ✕
                     </button>
                   )}
                 </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => handleSolveProblem()}
-                    className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-emerald-800 to-teal-900 hover:from-emerald-900 hover:to-teal-950 text-white text-xs sm:text-sm font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Search className="w-4 h-4 text-amber-300" />
-                    <span>कायदेशीर उपाय व मार्गदर्शन मिळवा →</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleSolveProblem()}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+                >
+                  <span>उपाय मिळवा</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
 
-              {/* 1-Tap Quick Issue Chips */}
-              <div className="pt-4 border-t border-gray-100 max-w-3xl mx-auto space-y-3">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider text-center">
-                  किंवा वारंवार विचारल्या जाणाऱ्या तक्रारींवर क्लिक करा:
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  {QUICK_PROBLEMS.map((prob) => {
-                    const isSelected = activeProblem?.id === prob.id;
-                    return (
-                      <button
-                        key={prob.id}
-                        onClick={() => {
-                          setProblemText(prob.title_mr);
-                          handleSolveProblem(prob.title_mr);
-                        }}
-                        className={cn(
-                          "px-3.5 py-2 rounded-full text-xs font-bold border transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer",
-                          isSelected
-                            ? "bg-[#013B36] text-white border-[#013B36] shadow-sm scale-102"
-                            : "bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-900 border-gray-200/90"
-                        )}
-                      >
-                        <span>{prob.title_mr}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Compact Issue Chips */}
+              <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-1.5">
+                {QUICK_PROBLEMS.map((prob) => {
+                  const isSelected = activeProblem?.id === prob.id;
+                  return (
+                    <button
+                      key={prob.id}
+                      onClick={() => {
+                        setProblemText(prob.title_mr);
+                        handleSolveProblem(prob.title_mr);
+                      }}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg text-[11px] font-bold border transition flex items-center gap-1 cursor-pointer",
+                        isSelected
+                          ? "bg-emerald-800 text-white border-emerald-800 shadow-2xs"
+                          : "bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-900 border-gray-200/80"
+                      )}
+                    >
+                      <span>{prob.title_mr.split("(")[0].trim()}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* ── Problem Solution Breakdown Card ── */}
+            {/* ── Compact, Clean & Attractive Remedy Card (Light & Beautiful) ── */}
             {activeProblem && (
-              <div id="solution-card" className="space-y-6">
-                <div className="bg-gradient-to-br from-[#013B36] via-[#022A26] to-[#011F1C] text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-black uppercase tracking-wider">
-                      कायदेशीर उपाय व मार्गदर्शन
-                    </span>
-                    <span className="text-xs bg-emerald-500 text-slate-950 px-3 py-1 rounded-full font-black">
+              <div className="bg-white rounded-2xl border border-emerald-200/90 p-4 sm:p-5 shadow-xs space-y-4">
+                {/* Header Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900">
                       {activeProblem.category_name_mr}
                     </span>
+                    <h3 className="text-base sm:text-lg font-black text-gray-900 tracking-tight">
+                      {activeProblem.title_mr}
+                    </h3>
                   </div>
 
-                  <h3 className="text-xl sm:text-2xl font-black">
-                    {activeProblem.title_mr}
-                  </h3>
+                  <a
+                    href={`tel:${activeProblem.helpline}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition"
+                  >
+                    <PhoneCall className="w-3 h-3 text-red-600" />
+                    <span>{activeProblem.helpline_label}</span>
+                  </a>
+                </div>
 
-                  {/* Legal Right Banner */}
-                  <div className="bg-white/10 border border-white/20 rounded-2xl p-4 text-xs sm:text-sm text-emerald-100 leading-relaxed flex items-start gap-3">
-                    <Scale className="w-5 h-5 text-mint shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-white block font-black mb-1">तुमचा मुख्य कायदेशीर हक्क:</strong>
-                      {activeProblem.short_rights_mr}
+                {/* Key Legal Right (Clean Emerald Tint Box) */}
+                <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-950 leading-relaxed font-medium">
+                  <Scale className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-extrabold text-emerald-900">मुख्य कायदेशीर हक्क: </strong>
+                    {activeProblem.short_rights_mr}
+                  </div>
+                </div>
+
+                {/* 3 Compact Clean Answer Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* 1. Where to go */}
+                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-200/80 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-emerald-900 font-extrabold text-xs">
+                      <Building2 className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>कोठे जावे? (Where to Go)</span>
                     </div>
+                    <p className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                      {activeProblem.where_to_go_mr}
+                    </p>
                   </div>
 
-                  {/* 3 Crisp Answer Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                    {/* 1. Where to go */}
-                    <div className="bg-white/10 rounded-2xl p-4 space-y-2 border border-white/10">
-                      <div className="flex items-center gap-2 text-mint font-bold text-xs">
-                        <Building2 className="w-4 h-4" />
-                        <span>कोठे जावे? (Where to Go)</span>
-                      </div>
-                      <p className="text-xs text-white leading-relaxed font-medium">
-                        {activeProblem.where_to_go_mr}
-                      </p>
+                  {/* 2. How to do it */}
+                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-200/80 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+                      <span>कसे करावे? (३ सोप्या पायऱ्या)</span>
                     </div>
-
-                    {/* 2. How to do it */}
-                    <div className="bg-white/10 rounded-2xl p-4 space-y-2 border border-white/10">
-                      <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>कसे करावे? (३ सोप्या पायऱ्या)</span>
-                      </div>
-                      <ul className="text-[11px] text-white/90 space-y-1 pl-3 list-disc leading-relaxed">
-                        {activeProblem.simple_steps_mr.map((st, i) => (
-                          <li key={i}>{st}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* 3. Documents needed */}
-                    <div className="bg-white/10 rounded-2xl p-4 space-y-2 border border-white/10">
-                      <div className="flex items-center gap-2 text-cyan-300 font-bold text-xs">
-                        <FileCheck className="w-4 h-4" />
-                        <span>आवश्यक कागदपत्रे</span>
-                      </div>
-                      <ul className="text-[11px] text-white/90 space-y-1 pl-3 list-disc leading-relaxed">
-                        {activeProblem.required_docs_mr.map((doc, i) => (
-                          <li key={i}>{doc}</li>
-                        ))}
-                      </ul>
-                    </div>
+                    <ul className="text-[11px] text-gray-700 space-y-1 pl-3.5 list-disc leading-relaxed font-medium">
+                      {activeProblem.simple_steps_mr.map((st, i) => (
+                        <li key={i}>{st}</li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {/* Helpline & Action Next Step */}
-                  <div className="pt-3 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-200">तातडीची मदत:</span>
-                      <a
-                        href={`tel:${activeProblem.helpline}`}
-                        className="px-3.5 py-1.5 bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl flex items-center gap-1.5 transition"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5 text-mint" />
-                        <span>{activeProblem.helpline_label}</span>
-                      </a>
+                  {/* 3. Documents needed */}
+                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-200/80 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-teal-900 font-extrabold text-xs">
+                      <FileCheck className="w-3.5 h-3.5 text-teal-700" />
+                      <span>लागणारी कागदपत्रे</span>
                     </div>
-
-                    {/* Big Button to Tab 2 */}
-                    <button
-                      onClick={() => {
-                        setActiveTab("draft");
-                        setTimeout(() => {
-                          document.getElementById("drafting-form-card")?.scrollIntoView({ behavior: "smooth" });
-                        }, 100);
-                      }}
-                      className="w-full sm:w-auto px-6 py-3 bg-mint hover:bg-emerald-400 text-slate-950 font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>पुढील पायरी: कोर्ट-मान्य अधिकृत अर्ज तयार करा (केवळ ₹४९) →</span>
-                    </button>
+                    <ul className="text-[11px] text-gray-700 space-y-1 pl-3.5 list-disc leading-relaxed font-medium">
+                      {activeProblem.required_docs_mr.map((doc, i) => (
+                        <li key={i}>{doc}</li>
+                      ))}
+                    </ul>
                   </div>
+                </div>
+
+                {/* Direct Action: Jump to Tab 2 */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                  <span className="text-[11px] text-gray-500 font-medium">
+                    वकिलांशिवाय कोर्ट-मान्य अधिकृत तक्रार अर्ज झटपट तयार करा.
+                  </span>
+                  <button
+                    onClick={() => {
+                      setActiveTab("draft");
+                      if (!applicantName && user?.full_name) setApplicantName(user.full_name);
+                    }}
+                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>कोर्ट-मान्य अर्ज तयार करा (केवळ ₹४९) →</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -742,97 +701,90 @@ ${template.relief}
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════
-            TAB 2: अधिकृत तक्रार अर्ज जनरेटर (COURT-READY DRAFTER - ₹49)
+            TAB 2: अधिकृत तक्रार अर्ज जनरेटर (COMPACT DRAFTER - ₹49)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === "draft" && (
-          <div className="space-y-6">
-            {/* Selected Problem Context Banner */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0">
-                  <Scale className="w-5 h-5 text-mint" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                    निवडलेली तक्रार / समस्या:
-                  </span>
-                  <h4 className="text-sm font-black text-gray-900">
-                    {activeProblem?.title_mr || "तक्रार अर्ज मसुदा"}
-                  </h4>
-                </div>
+          <div className="space-y-4">
+            {/* Context Badge */}
+            <div className="bg-white rounded-xl border border-gray-200/90 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 font-medium">निवडलेली तक्रार:</span>
+                <strong className="text-emerald-900 font-bold">{activeProblem?.title_mr || "तक्रार अर्ज"}</strong>
               </div>
               <button
                 onClick={() => setActiveTab("solve")}
                 className="text-xs font-bold text-emerald-800 hover:underline cursor-pointer"
               >
-                समस्या बदला ✎
+                तक्रार बदला ↻
               </button>
             </div>
 
-            {/* Essential Details Form */}
-            <div id="drafting-form-card" className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
-              <div className="space-y-1">
-                <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[11px] font-black uppercase">
-                  पायरी २: अर्जासाठी आवश्यक तपशील
-                </span>
-                <h3 className="text-xl font-black text-gray-900">
-                  या समस्येसाठी कोर्ट-मान्य अधिकृत अर्ज तयार करा
+            {/* Compact Drafting Form */}
+            <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-emerald-700" />
+                  <span>तक्रार अर्जाची माहिती प्रविष्ट करा:</span>
                 </h3>
-                <p className="text-xs text-gray-500">
-                  केवळ ४ साध्या गोष्टी भरा — सिस्टीम योग्य कायदेशीर कलमांसह अधिकृत नमुना तयार करेल.
-                </p>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
+                  शुल्क: ₹४९/-
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Applicant Name */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    आपले पूर्ण नाव * (अर्जदार)
+                  <label className="block font-bold text-gray-700 mb-1">
+                    तक्रारदार / अर्जदाराचे पूर्ण नाव <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={applicantName}
                     onChange={(e) => setApplicantName(e.target.value)}
-                    placeholder="उदा. रमेश विलास शिंदे"
-                    className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
+                    placeholder="उदा. रमेश शंकर पाटील"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
                   />
                 </div>
 
+                {/* Phone */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    मोबाईल नंबर
+                  <label className="block font-bold text-gray-700 mb-1">
+                    मोबाईल क्रमांक
                   </label>
                   <input
                     type="tel"
                     value={applicantPhone}
                     onChange={(e) => setApplicantPhone(e.target.value)}
                     placeholder="उदा. ९८२२००११२२"
-                    className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
                   />
                 </div>
 
+                {/* Opposite Party */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    ज्यांच्याविरुद्ध तक्रार आहे (विरोधी पक्ष / कंपनी / बँक)
+                  <label className="block font-bold text-gray-700 mb-1">
+                    ज्यांच्याविरुद्ध तक्रार आहे (कंपनी / व्यक्तीचे नाव)
                   </label>
                   <input
                     type="text"
                     value={oppositeParty}
                     onChange={(e) => setOppositeParty(e.target.value)}
-                    placeholder="उदा. स्टेट बँक शाखा / एक्स वाय झेड कंपनी"
-                    className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
+                    placeholder="उदा. ABC प्रायव्हेट लि. / बँक शाखा मॅनेजर"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
                   />
                 </div>
 
+                {/* Place / City */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    घटनेचे ठिकाण / आपले शहर किंवा तालुका
+                  <label className="block font-bold text-gray-700 mb-1">
+                    घटना ठिकाण व शहर
                   </label>
                   <input
                     type="text"
                     value={incidentPlace}
                     onChange={(e) => setIncidentPlace(e.target.value)}
-                    placeholder="उदा. कोल्हापूर / शिवाजीनगर पोलीस ठाणे हद्द"
-                    className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
+                    placeholder="उदा. शिवाजीनगर, पुणे"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
                   />
                 </div>
               </div>
@@ -841,125 +793,69 @@ ${template.relief}
                 <button
                   onClick={handleGenerateDocument}
                   disabled={isDrafting}
-                  className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-800 to-teal-900 hover:from-emerald-900 hover:to-teal-950 text-white text-xs sm:text-sm font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>{isDrafting ? "अर्ज तयार होत आहे..." : "कोर्ट-मान्य अधिकृत तक्रार अर्ज तयार करा ✨"}</span>
+                  {isDrafting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>अर्ज तयार होत आहे...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>अधिकृत अर्ज तयार करा</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Generated Document Preview & ₹49 Checkout */}
+            {/* Generated Document Preview Card */}
             {generatedDoc && (
-              <div id="document-preview-section" className="space-y-6">
-                {/* Pricing Banner */}
-                <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white rounded-3xl p-6 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-400 text-emerald-950 text-[10px] font-black uppercase">
-                        नागरिक मदत शुल्क
-                      </span>
-                      <span className="text-xs text-emerald-200">वकिलांमार्फत ड्राफ्टिंग खर्च: ₹१,५००</span>
-                    </div>
-                    <h4 className="text-lg sm:text-xl font-black">
-                      अधिकृत कोर्ट-मान्य A4 तक्रार अर्ज &bull; फी केवळ ₹४९/-
-                    </h4>
-                    <p className="text-xs text-emerald-100">
-                      कायदेशीर सल्ला व मार्गदर्शन मोफत आहे. अधिकृत A4 PDF व प्रिंट डाऊनलोडसाठी प्रति अर्ज नाममात्र ₹४९/- आकारले जातात.
-                    </p>
+              <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-black text-gray-900">अधिकृत तक्रार अर्ज पूर्वावलोकन (Preview)</span>
                   </div>
 
-                  <div className="shrink-0 text-center sm:text-right">
-                    <div className="text-3xl font-black text-amber-300">
-                      ₹४९<span className="text-xs text-white font-normal"> / दस्तऐवज</span>
-                    </div>
-                    <span className="text-[10px] text-emerald-200 block font-medium">१००% कायदेशीर व कोर्ट-मान्य</span>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    {isPaid ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedDoc);
+                            toast.success("अर्जाचा मजकूर कॉपी केला!");
+                          }}
+                          className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 hover:bg-gray-50 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3 text-gray-600" />
+                          <span>कॉपी</span>
+                        </button>
+                        <button
+                          onClick={() => window.print()}
+                          className="px-3 py-1 text-xs font-black rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1 cursor-pointer"
+                        >
+                          <Printer className="w-3 h-3 text-emerald-300" />
+                          <span>प्रिंट / PDF</span>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setShowPayModal(true)}
+                        className="px-3.5 py-1.5 text-xs font-black rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer animate-pulse"
+                      >
+                        <CreditCard className="w-3.5 h-3.5 text-amber-300" />
+                        <span>₹४९ भरणा करा व डाऊनलोड करा →</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Preview Box */}
-                <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
-                  <div className="p-4 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-emerald-800" />
-                      <span className="text-xs font-bold text-gray-800">
-                        अधिकृत अर्जाचा मसुदा (Draft Preview)
-                      </span>
-                      {isPaid && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-extrabold flex items-center gap-1">
-                          <Check className="w-3 h-3 text-emerald-700" />
-                          पेमेंट यशस्वी (पावती #{receiptId})
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          if (!isPaid) {
-                            setShowPayModal(true);
-                            return;
-                          }
-                          navigator.clipboard.writeText(generatedDoc);
-                          toast.success("अर्जाचा मजकूर कॉपी झाला!");
-                        }}
-                        className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg flex items-center gap-1 transition cursor-pointer"
-                      >
-                        <Copy className="w-3.5 h-3.5" /> मजकूर कॉपी करा
-                      </button>
-
-                      {isPaid ? (
-                        <button
-                          onClick={() => {
-                            const printWin = window.open("", "_blank");
-                            if (printWin) {
-                              printWin.document.write(`
-                                <html>
-                                  <head>
-                                    <title>FastCase Official Complaint Application</title>
-                                    <style>
-                                      body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; line-height: 1.6; }
-                                      pre { white-space: pre-wrap; font-family: inherit; font-size: 13px; }
-                                      .footer { margin-top: 50px; font-size: 11px; color: #666; border-top: 1px solid #ccc; padding-top: 8px; }
-                                    </style>
-                                  </head>
-                                  <body>
-                                    <pre>${generatedDoc}</pre>
-                                    <div class="footer">FastCase Verified Legal Application • Paid Document Receipt #${receiptId} • Date: ${new Date().toLocaleDateString()}</div>
-                                  </body>
-                                </html>
-                              `);
-                              printWin.document.close();
-                              printWin.print();
-                            }
-                          }}
-                          className="px-4 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-                        >
-                          <Printer className="w-3.5 h-3.5" /> A4 प्रिंट / PDF डाऊनलोड
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => setShowPayModal(true)}
-                          className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-sm transition animate-pulse cursor-pointer"
-                        >
-                          <Lock className="w-3.5 h-3.5" /> A4 PDF डाऊनलोड करा (₹४९)
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <textarea
-                      rows={16}
-                      value={generatedDoc}
-                      onChange={(e) => setGeneratedDoc(e.target.value)}
-                      className="w-full font-mono text-xs text-gray-800 leading-relaxed bg-[#FCFDFB] border border-gray-100 rounded-xl p-4 focus:outline-none focus:border-emerald-700 resize-y"
-                    />
-                    <p className="text-[11px] text-gray-400 mt-2">
-                      💡 टीप: आपण अर्जातील कोणतीही माहिती आवश्यकतेनुसार प्रत्यक्ष एडिट करू शकता.
-                    </p>
-                  </div>
+                {/* Preformatted Paper View */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 font-mono text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-96 overflow-y-auto">
+                  {generatedDoc}
                 </div>
               </div>
             )}
@@ -967,72 +863,60 @@ ${template.relief}
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════
-            TAB 3: माझे जतन केलेले अर्ज (MY SAVED APPLICATIONS)
+            TAB 3: माझे अर्ज (SAVED DOCUMENTS)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === "saved" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black text-gray-900">माझे डाऊनलोड केलेले अर्ज</h2>
-                <p className="text-xs text-gray-500">आपण तयार केलेले सर्व अधिकृत कायदेशीर अर्ज येथे सुरक्षित आहेत.</p>
-              </div>
-              <button
-                onClick={() => setActiveTab("solve")}
-                className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold cursor-pointer"
-              >
-                + नवीन तक्रार अर्ज तयार करा
-              </button>
-            </div>
+          <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+            <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+              <FileCheck className="w-4 h-4 text-emerald-700" />
+              <span>माझे जतन केलेले अर्ज ({savedDocs.length})</span>
+            </h3>
 
             {savedDocs.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-gray-200 p-12 text-center space-y-3 shadow-xs">
-                <div className="w-12 h-12 bg-emerald-50 text-emerald-800 rounded-2xl flex items-center justify-center mx-auto">
-                  <FileText className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-gray-800 text-sm">कोणताही अर्ज जतन केलेला नाही</h3>
-                <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                  आपण समस्या सोडवून अर्ज जनरेट केल्यानंतर तो येथे कायमस्वरूपी जतन होईल.
-                </p>
+              <div className="text-center py-8 text-gray-400 space-y-2">
+                <FileText className="w-8 h-8 mx-auto opacity-40" />
+                <p className="text-xs font-semibold">अद्याप कोणताही अर्ज जतन केलेला नाही.</p>
                 <button
                   onClick={() => setActiveTab("solve")}
-                  className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black rounded-xl cursor-pointer"
+                  className="text-xs font-bold text-emerald-800 hover:underline cursor-pointer"
                 >
-                  तक्रार अर्ज तयार करा →
+                  नवीन अर्ज तयार करा →
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {savedDocs.map((doc) => (
-                  <div key={doc.id} className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3 shadow-xs hover:border-emerald-300 transition">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-emerald-800">{doc.title}</span>
-                      <span className="text-gray-400">{doc.date}</span>
+              <div className="space-y-2">
+                {savedDocs.map((doc, i) => (
+                  <div
+                    key={doc.id || i}
+                    className="p-3 bg-gray-50 rounded-xl border border-gray-200/80 flex flex-wrap items-center justify-between gap-2 text-xs"
+                  >
+                    <div>
+                      <strong className="text-gray-900 font-bold block">{doc.title}</strong>
+                      <span className="text-[10px] text-gray-500 font-medium">
+                        तारीख: {doc.date} &bull; पावती क्र.: {doc.id}
+                      </span>
                     </div>
-                    <div className="text-[11px] text-gray-500 font-medium">
-                      पावती क्र: {doc.id} &bull; शुल्क: {doc.fee} (यशस्वी भरणा)
-                    </div>
-                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(doc.content);
-                          toast.success("अर्जाचा मजकूर कॉपी झाला!");
+                          toast.success("मजकूर कॉपी केला!");
                         }}
-                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                        className="px-2 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-gray-100 flex items-center gap-1 cursor-pointer"
                       >
-                        <Copy className="w-3 h-3" /> मजकूर कॉपी करा
+                        <Copy className="w-3 h-3 text-gray-600" />
+                        <span>कॉपी</span>
                       </button>
                       <button
                         onClick={() => {
-                          const w = window.open("", "_blank");
-                          if (w) {
-                            w.document.write(`<pre style="font-family:sans-serif; white-space:pre-wrap; padding:30px;">${doc.content}</pre>`);
-                            w.document.close();
-                            w.print();
-                          }
+                          setGeneratedDoc(doc.content);
+                          setActiveTab("draft");
+                          setIsPaid(true);
                         }}
-                        className="px-3 py-1 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-lg flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-800 text-white flex items-center gap-1 cursor-pointer"
                       >
-                        <Printer className="w-3 h-3" /> प्रिंट / PDF
+                        <Printer className="w-3 h-3 text-emerald-300" />
+                        <span>पहा / प्रिंट</span>
                       </button>
                     </div>
                   </div>
@@ -1043,483 +927,51 @@ ${template.relief}
         )}
       </main>
 
-      {/* ── POPUP SIGN IN / CREATE NEW USER MODAL ── */}
-      <AnimatePresence>
-        {showAuthModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-100 relative max-h-[90vh] overflow-y-auto"
-            >
-              {/* Close Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAuthModal(false);
-                  setPendingAction(null);
-                }}
-                className="absolute right-4 top-4 p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Brand Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-800 to-teal-900 text-white flex items-center justify-center shadow-md">
-                  <Scale className="w-5 h-5 text-mint" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-gray-900 text-lg leading-tight">
-                    नागरिक व ग्राहक विधी कक्ष
-                  </h3>
-                  <p className="text-[11px] text-emerald-800 font-bold uppercase tracking-wider">
-                    Fastcase Legal Help Portal
-                  </p>
-                </div>
-              </div>
-
-              {/* Tab Switcher: Sign In vs Create New User */}
-              <div className="flex p-1 bg-gray-100 rounded-xl mb-5">
-                <button
-                  type="button"
-                  onClick={() => setAuthModalTab("login")}
-                  className={cn(
-                    "flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
-                    authModalTab === "login"
-                      ? "bg-white text-emerald-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-900"
-                  )}
-                >
-                  <KeyRound className="w-3.5 h-3.5" /> Sign In (लॉगिन)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuthModalTab("register")}
-                  className={cn(
-                    "flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
-                    authModalTab === "register"
-                      ? "bg-white text-emerald-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-900"
-                  )}
-                >
-                  <Sparkles className="w-3.5 h-3.5" /> Create Account (नवीन नोंदणी)
-                </button>
-              </div>
-
-              {/* ── SIGN IN VIEW ── */}
-              {authModalTab === "login" ? (
-                <div className="space-y-4">
-                  {/* Mode Pill: Password vs OTP */}
-                  <div className="flex p-1 bg-gray-50 border border-gray-200 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => setAuthMode("password")}
-                      className={cn(
-                        "flex-1 py-1.5 text-xs font-bold rounded-md transition",
-                        authMode === "password" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-800"
-                      )}
-                    >
-                      Password
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode("otp");
-                        setAuthOtpStep("email");
-                      }}
-                      className={cn(
-                        "flex-1 py-1.5 text-xs font-bold rounded-md transition",
-                        authMode === "otp" ? "bg-white text-gray-900 shadow-xs" : "text-gray-500 hover:text-gray-800"
-                      )}
-                    >
-                      Sign in with OTP
-                    </button>
-                  </div>
-
-                  {authMode === "password" ? (
-                    <form onSubmit={handleModalLogin} className="space-y-3.5">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Email Address (ईमेल आयडी)
-                        </label>
-                        <input
-                          type="email"
-                          value={authEmail}
-                          onChange={(e) => setAuthEmail(e.target.value)}
-                          placeholder="citizen@example.com"
-                          required
-                          className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="block text-xs font-semibold text-gray-700">
-                            Password (पासवर्ड)
-                          </label>
-                        </div>
-                        <div className="relative">
-                          <input
-                            type={showAuthPass ? "text" : "password"}
-                            value={authPassword}
-                            onChange={(e) => setAuthPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium pr-9"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowAuthPass(!showAuthPass)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                          >
-                            {showAuthPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={authLoading}
-                        className="w-full py-3 bg-[#013B36] hover:bg-[#022A26] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
-                      >
-                        {authLoading ? (
-                          <>
-                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            Signing in...
-                          </>
-                        ) : (
-                          "Sign In (लॉगिन करा)"
-                        )}
-                      </button>
-                    </form>
-                  ) : (
-                    /* OTP Sign In Form */
-                    <div className="space-y-3.5">
-                      {authOtpStep === "email" ? (
-                        <form onSubmit={handleModalSendOtp} className="space-y-3">
-                          <div>
-                            <label className="block text-xs font-semibold text-gray-700 mb-1">
-                              Email Address (ईमेल आयडी)
-                            </label>
-                            <input
-                              type="email"
-                              value={authEmail}
-                              onChange={(e) => setAuthEmail(e.target.value)}
-                              placeholder="citizen@example.com"
-                              required
-                              className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
-                            />
-                          </div>
-                          <button
-                            type="submit"
-                            disabled={authLoading}
-                            className="w-full py-2.5 bg-[#013B36] hover:bg-[#022A26] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                          >
-                            {authLoading ? "Sending OTP..." : "Send Login OTP →"}
-                          </button>
-                        </form>
-                      ) : (
-                        <div className="space-y-4">
-                          <p className="text-xs text-gray-500 text-center">
-                            Enter the 6-digit code sent to <strong className="text-gray-700">{authEmail}</strong>
-                          </p>
-                          <div className="flex justify-center gap-2">
-                            {authOtpDigits.map((digit, i) => (
-                              <input
-                                key={i}
-                                ref={(el) => {
-                                  otpInputRefs.current[i] = el;
-                                }}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleOtpChange(i, e.target.value)}
-                                className="w-9 h-11 text-center text-base font-bold rounded-xl border border-gray-200 outline-none focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700"
-                              />
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={handleModalVerifyOtp}
-                            disabled={authLoading || authOtpDigits.join("").length !== 6}
-                            className="w-full py-2.5 bg-[#013B36] hover:bg-[#022A26] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                          >
-                            {authLoading ? "Verifying..." : "Verify & Continue"}
-                          </button>
-
-                          <div className="flex items-center justify-between text-[11px] text-gray-500">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAuthOtpStep("email");
-                                setAuthOtpDigits(["", "", "", "", "", ""]);
-                              }}
-                              className="hover:underline cursor-pointer"
-                            >
-                              Change Email
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleModalSendOtp}
-                              disabled={!authCanResend || authLoading}
-                              className={cn(
-                                "font-bold",
-                                authCanResend ? "text-emerald-800 hover:underline cursor-pointer" : "text-gray-400"
-                              )}
-                            >
-                              Resend Code {authOtpTimer > 0 && `(${authOtpTimer}s)`}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Switch to Register */}
-                  <div className="pt-3 border-t border-gray-100 text-center text-xs text-gray-500">
-                    नवीन नागरिक आहात?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setAuthModalTab("register")}
-                      className="font-bold text-emerald-800 hover:underline cursor-pointer"
-                    >
-                      नवीन खाते तयार करा (Sign Up)
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* ── CREATE NEW USER (REGISTRATION) VIEW ── */
-                <form onSubmit={handleModalRegister} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Full Name * (आपले पूर्ण नाव)
-                    </label>
-                    <input
-                      type="text"
-                      value={authFullName}
-                      onChange={(e) => setAuthFullName(e.target.value)}
-                      placeholder="उदा. रमेश शंकर पाटील"
-                      required
-                      className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Email Address * (ईमेल आयडी)
-                    </label>
-                    <input
-                      type="email"
-                      value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
-                      placeholder="citizen@example.com"
-                      required
-                      className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Mobile Number (मोबाईल क्रमांक)
-                    </label>
-                    <input
-                      type="tel"
-                      value={authPhone}
-                      onChange={(e) => setAuthPhone(e.target.value)}
-                      placeholder="उदा. ९८२२००११२२"
-                      className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Password * (पासवर्ड - किमान ६ अक्षरे)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showAuthPass ? "text" : "password"}
-                        value={authPassword}
-                        onChange={(e) => setAuthPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 focus:bg-white font-medium pr-9"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowAuthPass(!showAuthPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      >
-                        {showAuthPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full py-3 bg-[#013B36] hover:bg-[#022A26] text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
-                  >
-                    {authLoading ? (
-                      <>
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        खाते तयार होत आहे...
-                      </>
-                    ) : (
-                      "Create Account / खाते तयार करा ✨"
-                    )}
-                  </button>
-
-                  {/* Switch to Sign In */}
-                  <div className="pt-3 border-t border-gray-100 text-center text-xs text-gray-500">
-                    आधीच खाते आहे?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setAuthModalTab("login")}
-                      className="font-bold text-emerald-800 hover:underline cursor-pointer"
-                    >
-                      लॉगिन करा (Sign In)
-                    </button>
-                  </div>
-                </form>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ── ₹49 PAYMENT MODAL (UPI & QR) ── */}
+      {/* ── Simulated ₹49 Payment Modal ── */}
       {showPayModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-gray-100">
-            {/* Modal Header */}
-            <div className="p-5 bg-gradient-to-r from-emerald-800 to-teal-900 text-white flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/20 text-emerald-200">
-                  अधिकृत अर्ज डाऊनलोड शुल्क
-                </span>
-                <h3 className="text-base font-black mt-1">फास्टकेस सुरक्षित पेमेंट</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-2xs p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-700" />
+                <h4 className="text-sm font-black text-gray-900">अधिकृत अर्ज डाऊनलोड शुल्क</h4>
               </div>
-              <div className="text-right">
-                <div className="text-2xl font-black text-amber-300">₹४९</div>
-                <span className="text-[10px] text-white/70">सर्व कर समाविष्ट</span>
-              </div>
+              <button
+                onClick={() => setShowPayModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xs p-1"
+              >
+                ✕
+              </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-4">
-              <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-1">
-                <p className="font-bold text-gray-800">दस्तऐवज तपशील:</p>
-                <p>&bull; {activeProblem?.title_mr || "अधिकृत तक्रार अर्ज"}</p>
-                <p>&bull; A4 कोर्ट-रेडी फॉरमॅट &bull; अमर्यादित प्रिंट हक्क</p>
-              </div>
+            <div className="p-3 bg-emerald-50 rounded-xl text-center space-y-1">
+              <span className="text-[11px] text-emerald-900 font-bold">एकवेळ अधिकृत ड्राफ्टिंग फी:</span>
+              <div className="text-2xl font-black text-emerald-950">₹४९/-</div>
+              <p className="text-[10px] text-emerald-800 font-medium">वकिलांचे ₹१,५०० वाचवा • कोर्ट-मान्य अधिकृत A4 PDF</p>
+            </div>
 
-              {/* Payment Method Selector */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPayMethod("upi")}
-                  className={cn(
-                    "p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer",
-                    payMethod === "upi"
-                      ? "border-emerald-700 bg-emerald-50 text-emerald-900"
-                      : "border-gray-200 hover:bg-gray-50 text-gray-600"
-                  )}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>UPI / ॲप्स (GPay/Paytm)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPayMethod("qr")}
-                  className={cn(
-                    "p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer",
-                    payMethod === "qr"
-                      ? "border-emerald-700 bg-emerald-50 text-emerald-900"
-                      : "border-gray-200 hover:bg-gray-50 text-gray-600"
-                  )}
-                >
-                  <QrCode className="w-4 h-4" />
-                  <span>QR कोड स्कॅन करा</span>
-                </button>
-              </div>
-
-              {payMethod === "qr" ? (
-                /* QR Code Display */
-                <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                  <div className="w-40 h-40 bg-white p-2 mx-auto rounded-xl border border-gray-300 shadow-xs flex items-center justify-center">
-                    <svg viewBox="0 0 100 100" className="w-full h-full text-gray-900">
-                      <rect width="100" height="100" fill="#fff" />
-                      <rect x="10" y="10" width="25" height="25" fill="#000" />
-                      <rect x="15" y="15" width="15" height="15" fill="#fff" />
-                      <rect x="18" y="18" width="9" height="9" fill="#000" />
-                      <rect x="65" y="10" width="25" height="25" fill="#000" />
-                      <rect x="70" y="15" width="15" height="15" fill="#fff" />
-                      <rect x="73" y="18" width="9" height="9" fill="#000" />
-                      <rect x="10" y="65" width="25" height="25" fill="#000" />
-                      <rect x="15" y="70" width="15" height="15" fill="#fff" />
-                      <rect x="18" y="73" width="9" height="9" fill="#000" />
-                      <rect x="42" y="15" width="16" height="6" fill="#000" />
-                      <rect x="42" y="27" width="10" height="8" fill="#000" />
-                      <rect x="42" y="42" width="16" height="16" fill="#000" />
-                      <rect x="65" y="42" width="12" height="8" fill="#000" />
-                      <rect x="80" y="42" width="10" height="16" fill="#000" />
-                      <rect x="42" y="65" width="12" height="10" fill="#000" />
-                      <rect x="65" y="65" width="25" height="25" fill="#000" />
-                      <rect x="70" y="70" width="15" height="15" fill="#fff" />
-                      <rect x="73" y="73" width="9" height="9" fill="#000" />
-                    </svg>
-                  </div>
-                  <p className="text-[11px] font-bold text-gray-700">
-                    PhonePe / GooglePay / Paytm ने स्कॅन करा
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-mono">
-                    UPI ID: fastcase@icici
-                  </p>
-                </div>
-              ) : (
-                /* UPI ID Direct */
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-gray-700">
-                    आपला UPI ID प्रविष्ट करा (किंवा थेट पेमेंट करा)
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="citizen@okaxis"
-                    placeholder="उदा. 98xxxxxxxx@upi"
-                    className="w-full px-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-700 font-medium"
-                  />
-                  <div className="flex items-center justify-between text-[11px] text-gray-400 px-1">
-                    <span>समर्थित: GPay &bull; PhonePe &bull; Paytm &bull; BHIM</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Pay Action Button */}
+            <div className="space-y-2">
               <button
-                type="button"
                 onClick={handleCompletePayment}
                 disabled={isProcessingPay}
-                className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isProcessingPay ? (
-                  <span>पेमेंट पडताळणी सुरू आहे...</span>
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>भरणा होत आहे...</span>
+                  </>
                 ) : (
                   <>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>₹४९/- भरा व PDF त्वरित मिळवा</span>
+                    <span>UPI द्वारे ₹४९ भरणा करा (Instant Pay)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
               </button>
-
               <button
                 type="button"
                 onClick={() => setShowPayModal(false)}
-                className="w-full py-2 text-center text-xs text-gray-400 hover:text-gray-600 transition font-medium cursor-pointer"
+                className="w-full py-2 text-xs font-bold text-gray-500 hover:text-gray-800"
               >
                 रद्द करा
               </button>
@@ -1528,15 +980,106 @@ ${template.relief}
         </div>
       )}
 
-      {/* ── Footer ── */}
-      <footer className="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 mt-auto">
-        <p className="font-semibold text-gray-700">
-          फास्टकेस &bull; सामान्य नागरिकांसाठी १-क्लिक विधी सहाय्य व अधिकृत तक्रार निवारण मंच
-        </p>
-        <p className="text-[11px] text-gray-400 mt-1">
-          कायदेशीर मार्गदर्शन मोफत &bull; अधिकृत कोर्ट-मान्य अर्ज फी: केवळ ₹४९/- &bull; भारत सरकारच्या अधिकृत कायद्यांवर आधारित
-        </p>
-      </footer>
+      {/* ── Sign In / Register Modal (if session expires or needed) ── */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-2xs p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <h4 className="text-sm font-black text-gray-900">नागरिक लॉगिन / नोंदणी</h4>
+              <button onClick={() => setShowAuthModal(false)} className="text-gray-400 hover:text-gray-600 text-xs p-1">
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl gap-1 text-xs font-bold">
+              <button
+                onClick={() => setAuthModalTab("login")}
+                className={cn("py-1.5 rounded-lg", authModalTab === "login" ? "bg-white text-emerald-900 shadow-2xs font-black" : "text-gray-600")}
+              >
+                लॉगिन
+              </button>
+              <button
+                onClick={() => setAuthModalTab("register")}
+                className={cn("py-1.5 rounded-lg", authModalTab === "register" ? "bg-white text-emerald-900 shadow-2xs font-black" : "text-gray-600")}
+              >
+                नवीन नोंदणी
+              </button>
+            </div>
+
+            {authModalTab === "login" ? (
+              <form onSubmit={handleModalLogin} className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">ईमेल आयडी</label>
+                  <input
+                    type="email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="citizen@example.com"
+                    className="w-full px-3 py-2 border rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">पासवर्ड</label>
+                  <input
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border rounded-xl"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-2.5 bg-emerald-800 text-white font-black text-xs rounded-xl"
+                >
+                  {authLoading ? "लॉगिन होत आहे..." : "लॉगिन करा →"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleModalRegister} className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">पूर्ण नाव</label>
+                  <input
+                    type="text"
+                    value={authFullName}
+                    onChange={(e) => setAuthFullName(e.target.value)}
+                    placeholder="आपले नाव"
+                    className="w-full px-3 py-2 border rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">ईमेल आयडी</label>
+                  <input
+                    type="email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="citizen@example.com"
+                    className="w-full px-3 py-2 border rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">पासवर्ड</label>
+                  <input
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border rounded-xl"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-2.5 bg-emerald-800 text-white font-black text-xs rounded-xl"
+                >
+                  {authLoading ? "नोंदणी होत आहे..." : "खाते तयार करा →"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

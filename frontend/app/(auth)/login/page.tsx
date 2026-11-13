@@ -460,19 +460,6 @@ export default function AdvocateLoginPage() {
               </button>
             </div>
 
-            {/* Discreet Link to Consumer Portal for Citizens */}
-            <div className="mt-4 pt-3 border-t border-gray-100/60 text-center">
-              <p className="text-xs text-gray-400">
-                Ordinary citizen filing a grievance or complaint?{" "}
-                <Link
-                  href="/citizen-login"
-                  className="text-emerald-700 hover:text-emerald-900 font-semibold hover:underline"
-                >
-                  Citizen & Consumer Portal →
-                </Link>
-              </p>
-            </div>
-
           </div>
         </motion.div>
       </div>
