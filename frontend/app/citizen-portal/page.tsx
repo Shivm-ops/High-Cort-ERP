@@ -93,6 +93,17 @@ export default function SimpleCitizenPortalPage() {
   const [isProcessingPay, setIsProcessingPay] = useState<boolean>(false);
   const [isEditingDetails, setIsEditingDetails] = useState<boolean>(false);
 
+  // ── Step-by-Step Flow States ──────────────────────────────────────────────
+  // Step 1: select case (selectedCategoryId)
+  // Step 2: view solution (showSolution)
+  // Step 3: open document (showDocument)
+  // Step 4: pay & download (isPaid)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showSolution, setShowSolution] = useState<boolean>(false);
+  const [showDocument, setShowDocument] = useState<boolean>(false);
+  const solutionRef = useRef<HTMLDivElement>(null);
+  const documentRef = useRef<HTMLDivElement>(null);
+
   // ── Saved Documents State ─────────────────────────────────────────────────
   const [savedDocs, setSavedDocs] = useState<any[]>([]);
 
@@ -393,18 +404,24 @@ ${template.relief}
     return draft;
   };
 
-  // ── Problem Solver (Instant Solution + Instant Document Generation) ────────
+  // ── Problem Solver (Step 2: Opens Solution Card) ──────────────────────────
   const executeSolve = (customQuery?: string) => {
     const query = customQuery !== undefined ? customQuery : problemText;
     if (!query.trim()) {
-      toast.info("कृपया आपली समस्या थोडक्यात लिहा किंवा खालीलपैकी आपल्या समस्येवर १-क्लिक करा.");
+      toast.info("कृपया आधी आपली कायदेशीर समस्या निवडा किंवा वर शोधा.");
       return;
     }
     const matched = findMatchingProblem(query);
     setActiveProblem(matched);
-    // Automatically generate the document draft immediately!
+    setSelectedCategoryId(matched.id);
+    setShowSolution(true);
+    setShowDocument(false); // Keeps document closed until user clicks to view/open it
+    // Prepare document template in background
     generateDraftForProblem(matched);
-    toast.success("कायदेशीर उपाय व अधिकृत अर्ज तयार झाला आहे!");
+    toast.success("कायदेशीर उपाय तयार आहे!");
+    setTimeout(() => {
+      solutionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
   };
 
   const handleSolveProblem = (customQuery?: string) => {
@@ -716,19 +733,54 @@ ${template.relief}
       <main className="max-w-4xl w-full mx-auto px-4 py-3 flex-1 space-y-4">
 
         {/* ═══════════════════════════════════════════════════════════════════
-            TAB 1: समस्या व कायदेशीर उपाय (SMALL, SIMPLE & ATTRACTIVE)
+            TAB 1: समस्या व कायदेशीर उपाय (4-STEP GUIDED WORKFLOW)
+            Step 1: केस निवडा (Select Case)
+            Step 2: उपाय पहा (View Solution)
+            Step 3: कोर्ट अर्ज उघडा (Open Court Draft)
+            Step 4: ₹३० भरणा व PDF डाऊनलोड (Pay ₹30 & Download PDF)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === "solve" && (
           <div className="space-y-4">
-            {/* ── Compact Search & Problem Box ── */}
+            {/* ── 4-Step Interactive Visual Stepper ── */}
+            <div className="flex items-center justify-between max-w-xl mx-auto px-3 py-2 bg-white rounded-xl border border-gray-200/90 text-[11px] font-bold text-gray-500 shadow-2xs">
+              <div className={cn("flex items-center gap-1.5 transition-colors", (selectedCategoryId || problemText) ? "text-emerald-900 font-black" : "text-gray-400")}>
+                <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", (selectedCategoryId || problemText) ? "bg-emerald-800 text-white" : "bg-gray-100 text-gray-500")}>
+                  १
+                </span>
+                <span>१. केस निवडा</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+              <div className={cn("flex items-center gap-1.5 transition-colors", (showSolution && activeProblem) ? "text-emerald-900 font-black" : "text-gray-400")}>
+                <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", (showSolution && activeProblem) ? "bg-emerald-800 text-white" : "bg-gray-100 text-gray-500")}>
+                  २
+                </span>
+                <span>२. कायदेशीर उपाय</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+              <div className={cn("flex items-center gap-1.5 transition-colors", (showDocument && activeProblem) ? "text-emerald-900 font-black" : "text-gray-400")}>
+                <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", (showDocument && activeProblem) ? "bg-emerald-800 text-white" : "bg-gray-100 text-gray-500")}>
+                  ३
+                </span>
+                <span>३. कोर्ट अर्ज</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+              <div className={cn("flex items-center gap-1.5 transition-colors", isPaid ? "text-emerald-900 font-black" : "text-gray-400")}>
+                <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", isPaid ? "bg-emerald-800 text-white" : "bg-gray-100 text-gray-500")}>
+                  ४
+                </span>
+                <span>४. ₹३० भरणा व PDF</span>
+              </div>
+            </div>
+
+            {/* ── Step 1: Compact Search & Problem Selection Box ── */}
             <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-black text-gray-900 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                  आपली कायदेशीर समस्या सांगा:
+                  पायरी १: आपली कायदेशीर समस्या निवडा किंवा शोधा:
                 </span>
                 <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
-                  साध्या भाषेत लिहा किंवा खालीलपैकी निवडा
+                  विषयावर १-क्लिक करा व नंतर 'उपाय पहा' वर क्लिक करा
                 </span>
               </div>
 
@@ -739,7 +791,11 @@ ${template.relief}
                   <input
                     type="text"
                     value={problemText}
-                    onChange={(e) => setProblemText(e.target.value)}
+                    onChange={(e) => {
+                      setProblemText(e.target.value);
+                      setShowSolution(false);
+                      setShowDocument(false);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSolveProblem();
                     }}
@@ -748,7 +804,12 @@ ${template.relief}
                   />
                   {problemText && (
                     <button
-                      onClick={() => setProblemText("")}
+                      onClick={() => {
+                        setProblemText("");
+                        setSelectedCategoryId(null);
+                        setShowSolution(false);
+                        setShowDocument(false);
+                      }}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs p-1"
                     >
                       ✕
@@ -759,15 +820,15 @@ ${template.relief}
                   onClick={() => handleSolveProblem()}
                   className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
                 >
-                  <span>उपाय मिळवा</span>
+                  <span>कायदेशीर उपाय पहा (View Solution)</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* User-Friendly Quick Category Cards */}
+              {/* User-Friendly Quick Category Cards (Click to Select Case) */}
               <div className="pt-2 border-t border-gray-100">
                 <p className="text-[11px] font-bold text-gray-500 mb-2">
-                  किंवा वारंवार विचारल्या जाणाऱ्या विषयावर १-क्लिक करा:
+                  किंवा खालील ८ प्रमुख विषयांमधून आपली केस निवडा:
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
@@ -781,21 +842,23 @@ ${template.relief}
                     { id: "lost_document", icon: "🔍", label: "कागदपत्रे / फोन गहाळ", desc: "आधार, पॅन किंवा फोन हरवला" },
                   ].map((topic) => {
                     const prob = QUICK_PROBLEMS.find((p) => p.id === topic.id);
-                    const isSelected = activeProblem?.id === topic.id;
+                    const isSelected = selectedCategoryId === topic.id;
                     return (
                       <button
                         key={topic.id}
                         type="button"
                         onClick={() => {
                           if (prob) {
+                            setSelectedCategoryId(topic.id);
                             setProblemText(prob.title_mr);
-                            handleSolveProblem(prob.title_mr);
+                            setShowSolution(false);
+                            setShowDocument(false);
                           }
                         }}
                         className={cn(
                           "p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer",
                           isSelected
-                            ? "bg-emerald-800 text-white border-emerald-800 shadow-sm"
+                            ? "bg-emerald-800 text-white border-emerald-800 shadow-sm ring-2 ring-emerald-600/30"
                             : "bg-gray-50/80 hover:bg-emerald-50/60 text-gray-800 border-gray-200/90 hover:border-emerald-300"
                         )}
                       >
@@ -815,9 +878,9 @@ ${template.relief}
               </div>
             </div>
 
-            {/* ── Visual, Friendly & Easy-to-Understand Remedy Card ── */}
-            {activeProblem && (
-              <div className="bg-white rounded-2xl border border-emerald-200/90 p-4 sm:p-5 shadow-xs space-y-4">
+            {/* ── Step 2: Visual, Friendly & Easy-to-Understand Solution Card ── */}
+            {showSolution && activeProblem && (
+              <div ref={solutionRef} className="bg-white rounded-2xl border border-emerald-200/90 p-4 sm:p-5 shadow-xs space-y-4 animate-in fade-in duration-200">
                 {/* Header Row */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
                   <div className="space-y-1">
@@ -901,200 +964,232 @@ ${template.relief}
                   </div>
                 </div>
 
-                {/* ── Generated Official Court Petition Document & ₹30 Download Action ── */}
-                <div className="pt-2 border-t border-gray-100 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-800 text-white flex items-center justify-center text-xs shadow-2xs">
-                        <FileText className="w-3.5 h-3.5 text-emerald-300" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h4 className="text-xs sm:text-sm font-black text-gray-900">
-                            अधिकृत कोर्ट / कार्यालयीन तक्रार अर्ज (Court Petition Draft)
-                          </h4>
-                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900">
-                            तयार आहे
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-gray-500 font-medium">
-                          कायदेशीररित्या वैध &bull; A4 कोर्ट फॉरमॅट &bull; वकील फी ₹१,५०० वाचवा
-                        </p>
-                      </div>
+                {/* ── Step 3 Trigger: Open Court Document Action Banner ── */}
+                <div className="pt-2 bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-200/90 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs sm:text-sm font-black text-emerald-950">
+                        या समस्येचा अधिकृत कोर्ट अर्ज तयार करू इच्छिता?
+                      </span>
+                      <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-emerald-800 text-white">
+                        कोर्ट-मान्य A4
+                      </span>
                     </div>
+                    <p className="text-[11px] text-emerald-800 font-medium">
+                      वकिलांशिवाय ५ मिनिटांत कोर्ट-मान्य अधिकृत A4 अर्ज तात्काळ पहा व डाऊनलोड करा.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDocument(true);
+                      setTimeout(() => {
+                        documentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 120);
+                    }}
+                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>अधिकृत कोर्ट अर्ज उघडा (Open Court Draft) →</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingDetails(!isEditingDetails)}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200/80 bg-emerald-50/50 hover:bg-emerald-50 transition cursor-pointer"
-                    >
-                      {isEditingDetails ? (
-                        <>
-                          <ChevronUp className="w-3.5 h-3.5" />
-                          <span>तपशील लपवा</span>
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                          <span>✏️ अर्जाचे तपशील बदला (नाव / पत्ता)</span>
-                        </>
-                      )}
-                    </button>
+            {/* ── Step 3 & 4: Official Court Petition Document & Payment Download Card ── */}
+            {showDocument && activeProblem && (
+              <div ref={documentRef} className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-800 text-white flex items-center justify-center shadow-2xs">
+                      <FileText className="w-4 h-4 text-emerald-300" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-black text-gray-900">
+                          अधिकृत कोर्ट / कार्यालयीन तक्रार अर्ज (Court Petition Draft)
+                        </h4>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900">
+                          तयार आहे
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        कायदेशीररित्या वैध &bull; A4 कोर्ट फॉरमॅट &bull; वकील फी ₹१,५०० वाचवा
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Optional Expandable Details Form */}
-                  {isEditingDetails && (
-                    <div className="bg-gray-50/90 border border-gray-200 rounded-xl p-3.5 space-y-3 text-xs animate-in fade-in duration-200">
-                      <span className="font-bold text-gray-700 block">
-                        आपली माहिती प्रविष्ट करा (अर्जात आपोआप अपडेट होईल):
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingDetails(!isEditingDetails)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200/80 bg-emerald-50/50 hover:bg-emerald-50 transition cursor-pointer"
+                  >
+                    {isEditingDetails ? (
+                      <>
+                        <ChevronUp className="w-3.5 h-3.5" />
+                        <span>तपशील लपवा</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3.5 h-3.5" />
+                        <span>✏️ अर्जाचे तपशील बदला (नाव / पत्ता)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Optional Expandable Details Form */}
+                {isEditingDetails && (
+                  <div className="bg-gray-50/90 border border-gray-200 rounded-xl p-3.5 space-y-3 text-xs animate-in fade-in duration-200">
+                    <span className="font-bold text-gray-700 block">
+                      आपली माहिती प्रविष्ट करा (अर्जात आपोआप अपडेट होईल):
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                          अर्जदाराचे पूर्ण नाव
+                        </label>
+                        <input
+                          type="text"
+                          value={applicantName}
+                          onChange={(e) => setApplicantName(e.target.value)}
+                          placeholder="उदा. रमेश शंकर पाटील"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                          मोबाईल क्रमांक
+                        </label>
+                        <input
+                          type="tel"
+                          value={applicantPhone}
+                          onChange={(e) => setApplicantPhone(e.target.value)}
+                          placeholder="उदा. ९८२२००११२२"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                          ज्यांच्याविरुद्ध तक्रार (कंपनी / व्यक्तीचे नाव)
+                        </label>
+                        <input
+                          type="text"
+                          value={oppositeParty}
+                          onChange={(e) => setOppositeParty(e.target.value)}
+                          placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                          घटना ठिकाण व शहर
+                        </label>
+                        <input
+                          type="text"
+                          value={incidentPlace}
+                          onChange={(e) => setIncidentPlace(e.target.value)}
+                          placeholder="उदा. शिवाजीनगर, पुणे"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (activeProblem) {
+                            generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
+                            toast.success("अर्जाचा मजकूर अपडेट झाला!");
+                          }
+                        }}
+                        className="px-4 py-1.5 bg-emerald-800 text-white font-bold text-xs rounded-lg hover:bg-emerald-900 transition cursor-pointer"
+                      >
+                        अर्ज अपडेट करा
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Preformatted Generated Court Application Preview */}
+                <div className="relative">
+                  <div className="p-4 bg-gray-50/90 rounded-xl border border-gray-200/90 font-mono text-[11.5px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-80 overflow-y-auto select-all shadow-2xs">
+                    {generatedDoc || "अर्ज तयार होत आहे..."}
+                  </div>
+                </div>
+
+                {/* Action & Payment Bar (Step 4: Pay & Download) */}
+                <div>
+                  {isPaid ? (
+                    <div className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                         <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                            अर्जदाराचे पूर्ण नाव
-                          </label>
-                          <input
-                            type="text"
-                            value={applicantName}
-                            onChange={(e) => setApplicantName(e.target.value)}
-                            placeholder="उदा. रमेश शंकर पाटील"
-                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                            मोबाईल क्रमांक
-                          </label>
-                          <input
-                            type="tel"
-                            value={applicantPhone}
-                            onChange={(e) => setApplicantPhone(e.target.value)}
-                            placeholder="उदा. ९८२२००११२२"
-                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                            ज्यांच्याविरुद्ध तक्रार (कंपनी / व्यक्तीचे नाव)
-                          </label>
-                          <input
-                            type="text"
-                            value={oppositeParty}
-                            onChange={(e) => setOppositeParty(e.target.value)}
-                            placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
-                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                            घटना ठिकाण व शहर
-                          </label>
-                          <input
-                            type="text"
-                            value={incidentPlace}
-                            onChange={(e) => setIncidentPlace(e.target.value)}
-                            placeholder="उदा. शिवाजीनगर, पुणे"
-                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
-                          />
+                          <span className="text-xs font-black text-emerald-950 block">
+                            भरणा यशस्वी झाला आहे (पावती क्र: {receiptId})
+                          </span>
+                          <span className="text-[10px] text-emerald-800 font-medium">
+                            आपला कोर्ट-मान्य अधिकृत अर्ज डाऊनलोड किंवा प्रिंटसाठी तयार आहे.
+                          </span>
                         </div>
                       </div>
-                      <div className="flex justify-end pt-1">
+
+                      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                         <button
                           type="button"
                           onClick={() => {
-                            if (activeProblem) {
-                              generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
-                              toast.success("अर्जाचा मजकूर अपडेट झाला!");
-                            }
+                            navigator.clipboard.writeText(generatedDoc);
+                            toast.success("अर्जाचा मजकूर कॉपी केला!");
                           }}
-                          className="px-4 py-1.5 bg-emerald-800 text-white font-bold text-xs rounded-lg hover:bg-emerald-900 transition cursor-pointer"
+                          className="flex-1 sm:flex-initial px-3 py-2 text-xs font-bold rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
                         >
-                          अर्ज अपडेट करा
+                          <Copy className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>कॉपी करा</span>
                         </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Preformatted Generated Court Application Preview */}
-                  <div className="relative">
-                    <div className="p-4 bg-gray-50/90 rounded-xl border border-gray-200/90 font-mono text-[11.5px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-72 overflow-y-auto select-all shadow-2xs">
-                      {generatedDoc || "अर्ज तयार होत आहे..."}
-                    </div>
-                  </div>
-
-                  {/* Action & Payment Bar */}
-                  <div className="pt-1">
-                    {isPaid ? (
-                      <div className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                          <div>
-                            <span className="text-xs font-black text-emerald-950 block">
-                              भरणा यशस्वी झाला आहे (पावती क्र: {receiptId})
-                            </span>
-                            <span className="text-[10px] text-emerald-800 font-medium">
-                              आपला कोर्ट-मान्य अधिकृत अर्ज डाऊनलोड किंवा प्रिंटसाठी तयार आहे.
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(generatedDoc);
-                              toast.success("अर्जाचा मजकूर कॉपी केला!");
-                            }}
-                            className="flex-1 sm:flex-initial px-3 py-2 text-xs font-bold rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
-                          >
-                            <Copy className="w-3.5 h-3.5 text-emerald-700" />
-                            <span>कॉपी करा</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => printOfficialA4Document(generatedDoc, activeProblem.title_mr, receiptId)}
-                            className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl border border-emerald-700 bg-emerald-800 hover:bg-emerald-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
-                          >
-                            <Printer className="w-3.5 h-3.5 text-emerald-300" />
-                            <span>🖨️ प्रिंट / Save as PDF</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => downloadPetitionPdf(generatedDoc, activeProblem.title_mr, receiptId)}
-                            className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-teal-800 hover:bg-teal-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
-                          >
-                            <Download className="w-3.5 h-3.5 text-teal-300" />
-                            <span>📥 PDF डाऊनलोड</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-200 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-                        <div className="space-y-0.5 text-center sm:text-left">
-                          <div className="flex items-center justify-center sm:justify-start gap-2">
-                            <span className="text-xs sm:text-sm font-black text-emerald-950">
-                              हा अधिकृत कोर्ट अर्ज डाऊनलोड करा
-                            </span>
-                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-800 text-white shadow-2xs">
-                              केवळ ₹३०/-
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-emerald-800 font-medium">
-                            वकिलांचे ₹१,५०० वाचवा &bull; तात्काळ UPI द्वारे भरणा &bull; कोर्ट-मान्य A4 PDF
-                          </p>
-                        </div>
-
                         <button
                           type="button"
-                          onClick={() => setShowPayModal(true)}
-                          className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                          onClick={() => printOfficialA4Document(generatedDoc, activeProblem.title_mr, receiptId)}
+                          className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl border border-emerald-700 bg-emerald-800 hover:bg-emerald-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
                         >
-                          <CreditCard className="w-4 h-4 text-amber-300" />
-                          <span>₹३० भरणा करा व अधिकृत PDF डाऊनलोड करा →</span>
+                          <Printer className="w-3.5 h-3.5 text-emerald-300" />
+                          <span>🖨️ प्रिंट / Save as PDF</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => downloadPetitionPdf(generatedDoc, activeProblem.title_mr, receiptId)}
+                          className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-teal-800 hover:bg-teal-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
+                        >
+                          <Download className="w-3.5 h-3.5 text-teal-300" />
+                          <span>📥 PDF डाऊनलोड</span>
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-200 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                      <div className="space-y-0.5 text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                          <span className="text-xs sm:text-sm font-black text-emerald-950">
+                            हा अधिकृत कोर्ट अर्ज डाऊनलोड करा
+                          </span>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-800 text-white shadow-2xs">
+                            केवळ ₹३०/-
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-emerald-800 font-medium">
+                          वकिलांचे ₹१,५०० वाचवा &bull; तात्काळ UPI द्वारे भरणा &bull; कोर्ट-मान्य A4 PDF
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPayModal(true)}
+                        className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                      >
+                        <CreditCard className="w-4 h-4 text-amber-300" />
+                        <span>₹३० भरणा करा व अधिकृत PDF डाऊनलोड करा →</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
