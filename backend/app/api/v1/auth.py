@@ -34,6 +34,7 @@ from app.services.email_service import (
     send_login_notification,
     send_logout_notification,
     send_welcome_subscription_email,
+    send_citizen_welcome_email,
     send_new_device_login_alert,
     send_otp_verification_email,
 )
@@ -543,6 +544,17 @@ async def citizen_register(
     db.commit()
     db.refresh(citizen_user)
 
+    # Dispatch Welcome & Services Overview email for Citizen
+    if citizen_user.email:
+        asyncio.create_task(
+            send_citizen_welcome_email(
+                to_email=str(citizen_user.email),
+                user_name=str(citizen_user.full_name or "Citizen"),
+                dashboard_url="https://app.fastcase.in/citizen-portal",
+                preferred_language=str(citizen_user.preferred_language or "mr"),
+            )
+        )
+
     return await _build_login_response(citizen_user, db, ip, user_agent)
 
 
@@ -640,8 +652,9 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
             send_welcome_subscription_email(
                 to_email=str(user.email),
                 user_name=str(user.full_name or "Advocate"),
-                plan_name="Advocate 14-Day Pro Chambers Trial",
-                dashboard_url="https://app.fastcase.in/login",
+                plan_name="Advocate Chambers Pro (14-Day Free Trial)",
+                dashboard_url="https://app.fastcase.in/dashboard",
+                trial_days=14,
             )
         )
 
@@ -792,8 +805,9 @@ async def register_verify_otp(
         send_welcome_subscription_email(
             to_email=clean_email,
             user_name=full_name,
-            plan_name="Advocate 14-Day Pro Chambers Trial",
-            dashboard_url="https://app.fastcase.in/login",
+            plan_name="Advocate Chambers Pro (14-Day Free Trial)",
+            dashboard_url="https://app.fastcase.in/dashboard",
+            trial_days=14,
         )
     )
 
@@ -819,6 +833,22 @@ async def register_verify_otp(
     )
     db.add(session_rec)
     db.commit()
+
+    # Dispatch login notification email for newly provisioned session
+    admin_emails = _get_admin_emails_for_notification(db, user.firm_id)
+    user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
+    asyncio.create_task(
+        notify_login(
+            user_email=clean_email,
+            user_name=full_name,
+            ip_address=ip,
+            user_agent=user_agent,
+            user_role=user_role_str,
+            firm_name=new_firm.name,
+            admin_emails=admin_emails,
+            login_time=user.last_login,
+        )
+    )
 
     sub_data = _get_user_subscription(user, db)
     from app.services.tenant_domain import domain_fields

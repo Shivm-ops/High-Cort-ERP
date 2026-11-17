@@ -134,89 +134,159 @@ async def send_login_notification(
     ip_address: str | None,
     user_agent: str | None,
     login_time: datetime | None = None,
+    user_role: str = "User",
+    firm_name: str | None = None,
 ) -> None:
-    """Send a 'New login detected' email to the user."""
+    """Send a professional, branded sign-in security notification email to the user."""
+    from datetime import timedelta
     login_time = login_time or datetime.now(timezone.utc)
-    time_str = login_time.strftime("%d %b %Y, %I:%M %p UTC")
-    ip_str = ip_address or "Unknown"
-    device_str = (user_agent[:120] + "...") if user_agent and len(user_agent) > 120 else (user_agent or "Unknown")
+    if login_time.tzinfo is None:
+        login_time = login_time.replace(tzinfo=timezone.utc)
 
-    subject = "New Login Detected - Fastcase ERP"
+    ist_tz = timezone(timedelta(hours=5, minutes=30))
+    time_ist_str = login_time.astimezone(ist_tz).strftime("%d %b %Y, %I:%M %p IST")
+    time_utc_str = login_time.astimezone(timezone.utc).strftime("%d %b %Y, %I:%M %p UTC")
+
+    ip_str = ip_address or "Unknown IP"
+    device_str = (user_agent[:140] + "...") if user_agent and len(user_agent) > 140 else (user_agent or "Standard Web Browser")
+
+    # Format role and account type cleanly
+    role_lower = str(user_role).lower()
+    if role_lower == "citizen":
+        role_display = "Citizen / Consumer Portal (नागरिक विधी कक्ष)"
+    elif role_lower in ("admin", "advocate"):
+        role_display = "Advocate Chambers (विधिज्ञ प्रॅक्टिस)"
+    elif role_lower == "client":
+        role_display = "Client Matter Portal"
+    elif role_lower == "superadmin":
+        role_display = "System Administrator"
+    else:
+        role_display = str(user_role).replace("_", " ").title()
+
+    firm_row = ""
+    if firm_name:
+        firm_row = f"""
+        <tr>
+          <td style="padding:8px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">Practice / Firm</td>
+          <td align="right" style="padding:8px 0; color:#0f172a; font-size:13px; font-weight:700; border-bottom:1px solid #edf2f7;">{firm_name}</td>
+        </tr>
+        """
+
+    current_year = datetime.now(timezone.utc).year
+    subject = "Security Alert: Successful Sign-in to Your Fastcase Account"
 
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login Notification</title>
-  <style>
-    body {{ margin:0; padding:0; background:#f4f6fb; font-family:'Segoe UI',Arial,sans-serif; }}
-    .wrapper {{ max-width:560px; margin:40px auto; background:#ffffff; border-radius:12px;
-                box-shadow:0 4px 20px rgba(0,0,0,0.08); overflow:hidden; }}
-    .header {{ background:linear-gradient(135deg,#0078d4 0%,#005a9e 100%);
-               padding:36px 32px; text-align:center; }}
-    .header h1 {{ color:#ffffff; margin:0; font-size:22px; font-weight:700; letter-spacing:0.5px; }}
-    .header p  {{ color:#cce4f7; margin:6px 0 0; font-size:13px; }}
-    .body {{ padding:32px; }}
-    .body p {{ color:#374151; font-size:15px; line-height:1.6; margin:0 0 16px; }}
-    .info-box {{ background:#f0f7ff; border-left:4px solid #0078d4; border-radius:6px;
-                 padding:16px 20px; margin:20px 0; }}
-    .info-row {{ display:flex; justify-content:space-between; padding:6px 0;
-                 border-bottom:1px solid #dde4f0; font-size:14px; }}
-    .info-row:last-child {{ border-bottom:none; }}
-    .info-label {{ color:#6b7280; font-weight:600; }}
-    .info-value {{ color:#111827; text-align:right; max-width:280px; word-break:break-all; }}
-    .alert-box {{ background:#fff8e1; border-left:4px solid #f59e0b; border-radius:6px;
-                  padding:14px 18px; margin:20px 0; font-size:13px; color:#78350f; }}
-    .footer {{ background:#f9fafb; padding:20px 32px; text-align:center;
-               font-size:12px; color:#9ca3af; border-top:1px solid #e5e7eb; }}
-  </style>
+  <title>Successful Sign-in Alert</title>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="header">
-      <h1>New Login Detected</h1>
-      <p>Fastcase ERP Security Alert</p>
-    </div>
-    <div class="body">
-      <p>Hi <strong>{full_name}</strong>,</p>
-      <p>We noticed a new login to your <strong>Fastcase ERP</strong> account. Here are the details:</p>
-      <div class="info-box">
-        <div class="info-row">
-          <span class="info-label">Time</span>
-          <span class="info-value">{time_str}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">IP Address</span>
-          <span class="info-value">{ip_str}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Device / Browser</span>
-          <span class="info-value">{device_str}</span>
-        </div>
-      </div>
-      <div class="alert-box">
-        <strong>Not you?</strong> If you did not perform this login, please
-        <strong>change your password immediately</strong> and contact your system administrator.
-      </div>
-      <p>If this was you, no action is needed. Stay secure!</p>
-    </div>
-    <div class="footer">
-      &copy; {login_time.year} Fastcase ERP &nbsp;|&nbsp;
-      This is an automated security notification. Please do not reply to this email.
-    </div>
-  </div>
+<body style="margin:0; padding:0; background-color:#f7f8f6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f8f6; padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px; background-color:#ffffff; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background:linear-gradient(160deg, #013B36 0%, #014D46 100%); padding:28px 32px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">
+                Fastcase
+              </div>
+              <div style="font-size:11px; color:#6ee7b7; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-top:2px;">
+                Security Alert &bull; Sign-in Activity
+              </div>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding:32px; background-color:#ffffff;">
+              <h2 style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 10px; line-height:1.3;">
+                Successful Sign-in to Your Account
+              </h2>
+
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 16px;">
+                Hello <strong>{full_name}</strong>,
+              </p>
+
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 20px;">
+                We detected a successful sign-in to your <strong>Fastcase</strong> account with the following session details:
+              </p>
+
+              <!-- Session Details Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px 20px; margin:20px 0;">
+                <tr>
+                  <td style="padding:8px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">Sign-in Time</td>
+                  <td align="right" style="padding:8px 0; color:#0f172a; font-size:13px; font-weight:700; border-bottom:1px solid #edf2f7;">{time_ist_str}<br/><span style="font-size:11px; color:#64748b; font-weight:normal;">({time_utc_str})</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">Account Type</td>
+                  <td align="right" style="padding:8px 0; color:#014D46; font-size:13px; font-weight:700; border-bottom:1px solid #edf2f7;">{role_display}</td>
+                </tr>
+                {firm_row}
+                <tr>
+                  <td style="padding:8px 0; color:#64748b; font-size:13px; font-weight:600; border-bottom:1px solid #edf2f7;">IP Address</td>
+                  <td align="right" style="padding:8px 0; color:#0f172a; font-size:13px; font-weight:700; font-family:monospace; border-bottom:1px solid #edf2f7;">{ip_str}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0; color:#64748b; font-size:13px; font-weight:600;">Device / Browser</td>
+                  <td align="right" style="padding:8px 0; color:#0f172a; font-size:13px; font-weight:600; max-width:280px; word-break:break-all;">{device_str}</td>
+                </tr>
+              </table>
+
+              <!-- Security Callout -->
+              <div style="background-color:#f0fdf4; border-left:4px solid #059669; border-radius:6px; padding:14px 18px; margin:20px 0; font-size:13px; color:#065f46; line-height:1.5;">
+                <strong>Did you just sign in?</strong> If this was you, no action is needed. Your session is active and secure.
+              </div>
+
+              <div style="background-color:#fef2f2; border-left:4px solid #ef4444; border-radius:6px; padding:14px 18px; margin:20px 0; font-size:13px; color:#991b1b; line-height:1.5;">
+                <strong>Not you?</strong> If you did not sign in or suspect unauthorized access to your account, please secure your account immediately:
+                <div style="margin-top:10px;">
+                  <a href="https://fastcase.in/reset-password" target="_blank" style="display:inline-block; background-color:#dc2626; color:#ffffff !important; text-decoration:none; padding:8px 18px; font-size:12px; font-weight:700; border-radius:6px;">
+                    Secure Account & Reset Password &rarr;
+                  </a>
+                </div>
+              </div>
+
+              <!-- Sign-off -->
+              <p style="font-size:13px; color:#475569; line-height:1.6; margin:24px 0 0; padding-top:16px; border-top:1px solid #f1f5f9;">
+                Warm regards,<br/>
+                <strong style="color:#0f172a;">Fastcase Security Operations</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.5;">
+              &copy; {current_year} Fastcase &bull; India's Complete Legal Operating System<br/>
+              Section 126 Privileged Digital Chambers Protection. Automated notification &mdash; please do not reply.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""
 
     text_body = (
-        f"Hi {full_name},\n\n"
-        f"A new login was detected on your Fastcase ERP account.\n\n"
-        f"Time       : {time_str}\n"
-        f"IP Address : {ip_str}\n"
-        f"Device     : {device_str}\n\n"
-        f"If this was not you, please change your password immediately.\n\n"
-        f"-- Fastcase ERP Security Team"
+        f"FASTCASE SECURITY ALERT — SUCCESSFUL SIGN-IN\n"
+        f"====================================================\n\n"
+        f"Hello {full_name},\n\n"
+        f"A successful sign-in to your Fastcase account was detected:\n\n"
+        f"Sign-in Time    : {time_ist_str} ({time_utc_str})\n"
+        f"Account Type    : {role_display}\n"
+        f"IP Address      : {ip_str}\n"
+        f"Device/Browser  : {device_str}\n\n"
+        f"If this was you, no action is needed.\n\n"
+        f"IF THIS WAS NOT YOU:\n"
+        f"Reset your password immediately: https://fastcase.in/reset-password\n\n"
+        f"-- Fastcase Security Operations"
     )
 
     await send_email(to_email, subject, html_body, text_body)
@@ -367,6 +437,8 @@ async def notify_login(
                 ip_address=ip_address,
                 user_agent=user_agent,
                 login_time=login_time,
+                user_role=user_role,
+                firm_name=firm_name,
             )
         )
 
@@ -623,11 +695,19 @@ async def send_otp_verification_email(
 
 def render_welcome_subscription_template(
     user_name: str,
-    plan_name: str = "Chambers Workspace",
-    dashboard_url: str = "https://app.fastcase.in/login",
+    plan_name: str = "Advocate Chambers Pro (14-Day Free Trial)",
+    dashboard_url: str = "https://app.fastcase.in/dashboard",
+    trial_days: int = 14,
+    expiry_date: datetime | None = None,
 ) -> tuple[str, str]:
-    """Render clean, warm, professional welcome email using exact application language."""
+    """Render clean, warm, professional welcome subscription email for advocates."""
+    from datetime import timedelta
     current_year = datetime.now(timezone.utc).year
+    expiry_date = expiry_date or (datetime.now(timezone.utc) + timedelta(days=trial_days))
+    if expiry_date.tzinfo is None:
+        expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+    ist_tz = timezone(timedelta(hours=5, minutes=30))
+    valid_until_str = expiry_date.astimezone(ist_tz).strftime("%d %B %Y")
 
     html_body = f"""<!DOCTYPE html>
 <html lang="en">
@@ -651,7 +731,7 @@ def render_welcome_subscription_template(
                 Fastcase
               </div>
               <div style="font-size:11px; color:#6ee7b7; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-top:2px;">
-                Legal Platform
+                Legal Platform &bull; Chambers Pro
               </div>
             </td>
           </tr>
@@ -662,41 +742,72 @@ def render_welcome_subscription_template(
 
               <!-- Greeting -->
               <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px; line-height:1.3;">
-                Welcome to Fastcase, {user_name}!
+                Welcome to Fastcase, Advocate {user_name}!
               </h2>
 
               <p style="font-size:15px; color:#014D46; font-weight:700; line-height:1.5; margin:0 0 8px;">
                 India's Complete Legal Operating System
               </p>
 
-              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 24px;">
-                Manage cases, draft documents, track hearings, and run your practice — all in one platform.
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 20px;">
+                Your new advocate account and digital chambers have been created. We have activated your complimentary <strong>14-day Chambers Pro Trial</strong> so you can experience everything Fastcase has to offer.
               </p>
 
-              <!-- Exact Application Features List -->
+              <!-- Subscription Details Box -->
+              <div style="background-color:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:20px; margin:20px 0;">
+                <div style="font-size:11px; font-weight:800; color:#166534; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">
+                  Active Subscription Details
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600; border-bottom:1px solid #dcfce7;">Plan:</td>
+                    <td align="right" style="padding:6px 0; color:#064e3b; font-size:14px; font-weight:800; border-bottom:1px solid #dcfce7;">{plan_name}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600; border-bottom:1px solid #dcfce7;">Status:</td>
+                    <td align="right" style="padding:6px 0; color:#059669; font-size:13px; font-weight:700; border-bottom:1px solid #dcfce7;">Active &bull; Full Pro Access</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600; border-bottom:1px solid #dcfce7;">Trial Fee:</td>
+                    <td align="right" style="padding:6px 0; color:#0f172a; font-size:13px; font-weight:700; border-bottom:1px solid #dcfce7;">₹0.00 (Complimentary)</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600;">Valid Until:</td>
+                    <td align="right" style="padding:6px 0; color:#064e3b; font-size:13px; font-weight:700;">{valid_until_str} ({trial_days} Days)</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Key Features List -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:24px;">
                 <tr>
                   <td style="padding:10px 0;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Smart Legal Drafting</div>
-                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Generate bail applications, writs, notices in seconds</div>
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">⚖️ Real-Time Cause Lists & Case Tracking</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Track hearing dates, court board stages, and instant cause list alerts.</div>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:10px 0; border-top:1px solid #edf2f7;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Smart Case Management</div>
-                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Track every case stage with real-time updates</div>
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">✍️ Smart Legal Drafting Studio</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Generate bail applications, writ petitions, civil suits, and legal notices in seconds.</div>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:10px 0; border-top:1px solid #edf2f7;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Document Intelligence</div>
-                    <div style="font-size:13px; color:#64748b; margin-top:2px;">OCR, search, and analyze any legal document</div>
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">📑 Document Intelligence & OCR Search</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Index, OCR, and search across thousands of case documents instantly.</div>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:10px 0; border-top:1px solid #edf2f7;">
-                    <div style="font-size:14px; font-weight:700; color:#0f172a;">Secure & Private</div>
-                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Section 126 Privileged Digital Chambers Protection</div>
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">👥 Matter Accounting & GST Tax Invoices</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Client ledgers, fee tracking, and one-click GST tax invoices.</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; border-top:1px solid #edf2f7;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">🛡️ Privileged Digital Chambers</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Section 126 privileged digital protection compliant with Indian Bar Council guidelines.</div>
                   </td>
                 </tr>
               </table>
@@ -705,8 +816,8 @@ def render_welcome_subscription_template(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td align="center">
-                    <a href="{dashboard_url}" target="_blank" style="display:inline-block; background-color:#014D46; color:#ffffff !important; text-decoration:none; padding:14px 32px; font-size:15px; font-weight:700; border-radius:10px; text-align:center;">
-                      Enter Practice &rarr;
+                    <a href="{dashboard_url}" target="_blank" style="display:inline-block; background-color:#014D46; color:#ffffff !important; text-decoration:none; padding:14px 34px; font-size:15px; font-weight:700; border-radius:10px; text-align:center; box-shadow:0 4px 12px rgba(1,77,70,0.25);">
+                      Enter Chambers Dashboard &rarr;
                     </a>
                   </td>
                 </tr>
@@ -724,7 +835,8 @@ def render_welcome_subscription_template(
           <!-- Footer -->
           <tr>
             <td style="background-color:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.5;">
-              &copy; {current_year} Fastcase &bull; India's Complete Legal Operating System
+              &copy; {current_year} Fastcase &bull; India's Complete Legal Operating System<br/>
+              Bar Council Compliant &bull; 100% Indian Cloud Data
             </td>
           </tr>
 
@@ -736,15 +848,22 @@ def render_welcome_subscription_template(
 </html>"""
 
     text_body = (
-        f"WELCOME TO FASTCASE\n"
+        f"WELCOME TO FASTCASE — YOUR 14-DAY PRO CHAMBERS TRIAL IS ACTIVE\n"
         f"India's Complete Legal Operating System\n"
         f"====================================================\n\n"
-        f"Hello {user_name},\n\n"
-        f"Manage cases, draft documents, track hearings, and run your practice — all in one platform.\n\n"
-        f"• Smart Legal Drafting: Generate bail applications, writs, notices in seconds\n"
-        f"• Smart Case Management: Track every case stage with real-time updates\n"
-        f"• Document Intelligence: OCR, search, and analyze any legal document\n"
-        f"• Secure & Private: Section 126 Privileged Digital Chambers Protection\n\n"
+        f"Hello Advocate {user_name},\n\n"
+        f"Your new advocate account and digital chambers have been created.\n\n"
+        f"SUBSCRIPTION DETAILS:\n"
+        f"• Plan         : {plan_name}\n"
+        f"• Status       : Active (Full Pro Access)\n"
+        f"• Trial Fee    : ₹0.00 (Complimentary)\n"
+        f"• Valid Until  : {valid_until_str} ({trial_days} Days)\n\n"
+        f"KEY CAPABILITIES:\n"
+        f"• Real-Time Cause Lists & Case Tracking\n"
+        f"• Smart Legal Drafting Studio (500+ Indian Court Templates)\n"
+        f"• Document Intelligence & OCR Legal Search\n"
+        f"• Client Ledgers & GST Tax Invoices\n"
+        f"• Section 126 Privileged Digital Chambers Protection\n\n"
         f"Enter Practice:\n"
         f"{dashboard_url}\n\n"
         f"Warm regards,\n"
@@ -759,11 +878,188 @@ async def send_welcome_subscription_email(
     to_email: str,
     user_name: str,
     plan_name: str = "Advocate Chambers Pro (14-Day Free Trial)",
-    dashboard_url: str = "https://app.fastcase.in/login",
+    dashboard_url: str = "https://app.fastcase.in/dashboard",
+    trial_days: int = 14,
+    expiry_date: datetime | None = None,
 ) -> None:
     """Send welcome onboarding email upon subscription activation."""
-    subject = "Welcome to Fastcase — Your Legal Practice Platform is Ready"
-    html_body, text_body = render_welcome_subscription_template(user_name, plan_name, dashboard_url)
+    subject = "Welcome to Fastcase — Your 14-Day Pro Chambers Trial is Active"
+    html_body, text_body = render_welcome_subscription_template(
+        user_name=user_name,
+        plan_name=plan_name,
+        dashboard_url=dashboard_url,
+        trial_days=trial_days,
+        expiry_date=expiry_date,
+    )
+    await send_email(to_email, subject, html_body, text_body)
+
+
+# ── 2B. Citizen Portal Welcome Email ──────────────────────────────────────────
+
+def render_citizen_welcome_template(
+    user_name: str,
+    dashboard_url: str = "https://app.fastcase.in/citizen-portal",
+    preferred_language: str = "mr",
+) -> tuple[str, str]:
+    """Render welcome & plan details email for citizens upon account registration."""
+    current_year = datetime.now(timezone.utc).year
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <title>Welcome to Fastcase Citizen Legal Portal</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f7f8f6; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f8f6; padding:32px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px; background-color:#ffffff; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background:linear-gradient(160deg, #013B36 0%, #014D46 100%); padding:32px; text-align:center;">
+              <div style="font-size:24px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">
+                Fastcase
+              </div>
+              <div style="font-size:11px; color:#6ee7b7; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-top:2px;">
+                नागरिक विधी सहाय्य कक्ष &bull; Citizen & Consumer Portal
+              </div>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td style="padding:36px 32px; background-color:#ffffff;">
+
+              <!-- Greeting -->
+              <h2 style="font-size:22px; font-weight:800; color:#0f172a; margin:0 0 10px; line-height:1.3;">
+                Welcome to Fastcase, {user_name}!
+              </h2>
+
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0 0 20px;">
+                Your citizen account is now active. You have full access to free legal guidance, statutory right checks, and official court application drafting across Maharashtra and India.
+              </p>
+
+              <!-- Account Plan Details Card -->
+              <div style="background-color:#f0fdf4; border:1.5px solid #86efac; border-radius:12px; padding:20px; margin:20px 0;">
+                <div style="font-size:11px; font-weight:800; color:#166534; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">
+                  Active Citizen Account Summary
+                </div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600; border-bottom:1px solid #dcfce7;">Account Tier:</td>
+                    <td align="right" style="padding:6px 0; color:#064e3b; font-size:13px; font-weight:800; border-bottom:1px solid #dcfce7;">Citizen Legal Assistance (नागरिक विधी कक्ष)</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600; border-bottom:1px solid #dcfce7;">Status:</td>
+                    <td align="right" style="padding:6px 0; color:#059669; font-size:13px; font-weight:700; border-bottom:1px solid #dcfce7;">Active &bull; Lifetime Free Access</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600; border-bottom:1px solid #dcfce7;">Legal Guidance:</td>
+                    <td align="right" style="padding:6px 0; color:#0f172a; font-size:13px; font-weight:700; border-bottom:1px solid #dcfce7;">Free / विनामूल्य</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:6px 0; color:#475569; font-size:13px; font-weight:600;">Court Draft Fee:</td>
+                    <td align="right" style="padding:6px 0; color:#064e3b; font-size:13px; font-weight:800;">₹30 per official court-ready petition</td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Available Services -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:24px;">
+                <tr>
+                  <td style="padding:10px 0;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">🏛️ 1-Click Instant Legal Solutions</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Get immediate legal rights, exact steps, and required documents for unpaid wages, cyber UPI fraud, police FIR refusal, consumer disputes, property trespass, women rights, RTI, and lost documents.</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; border-top:1px solid #edf2f7;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">📝 Official Court & Authority Drafts (₹30)</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Download legally sound, court-admissible A4 applications and legal notices formatted per Indian law in Marathi or English.</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; border-top:1px solid #edf2f7;">
+                    <div style="font-size:14px; font-weight:700; color:#0f172a;">📞 24x7 Government Legal Helplines</div>
+                    <div style="font-size:13px; color:#64748b; margin-top:2px;">Police: <strong>112</strong> &bull; Cyber Fraud: <strong>1930</strong> &bull; Consumer Grievance: <strong>1915</strong> &bull; Women: <strong>1091</strong> &bull; Free Legal Aid: <strong>15100</strong></div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Primary CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center">
+                    <a href="{dashboard_url}" target="_blank" style="display:inline-block; background-color:#014D46; color:#ffffff !important; text-decoration:none; padding:14px 34px; font-size:15px; font-weight:700; border-radius:10px; text-align:center; box-shadow:0 4px 12px rgba(1,77,70,0.25);">
+                      Open Citizen Portal &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Sign-off -->
+              <p style="font-size:14px; color:#475569; line-height:1.6; margin:0; padding-top:16px; border-top:1px solid #f1f5f9;">
+                Warm regards,<br/>
+                <strong style="color:#0f172a;">Fastcase Citizen Legal Assistance</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8fafc; padding:20px 32px; text-align:center; border-top:1px solid #e2e8f0; font-size:12px; color:#94a3b8; line-height:1.5;">
+              &copy; {current_year} Fastcase &bull; India's Complete Legal Operating System<br/>
+              Dedicated to Accessible Legal Empowerment for Every Citizen
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    text_body = (
+        f"WELCOME TO FASTCASE CITIZEN LEGAL PORTAL\n"
+        f"नागरिक विधी सहाय्य कक्ष — Citizen & Consumer Portal\n"
+        f"====================================================\n\n"
+        f"Hello {user_name},\n\n"
+        f"Your citizen account has been successfully created.\n\n"
+        f"ACCOUNT DETAILS:\n"
+        f"• Account Tier   : Citizen Legal Assistance (नागरिक विधी कक्ष)\n"
+        f"• Status         : Active (Lifetime Free Access)\n"
+        f"• Legal Guidance : Free\n"
+        f"• Official Draft : ₹30 per petition\n\n"
+        f"SERVICES AVAILABLE:\n"
+        f"• Instant Legal Guidance for 8 major legal situations\n"
+        f"• Official Court-Admissible Petition Generator\n"
+        f"• 24x7 Government Legal Helplines (Police 112, Cyber 1930, Consumer 1915, Women 1091, Legal Aid 15100)\n\n"
+        f"Access Citizen Portal:\n"
+        f"{dashboard_url}\n\n"
+        f"Warm regards,\n"
+        f"Fastcase Citizen Legal Assistance\n"
+        f"https://app.fastcase.in/citizen-portal"
+    )
+
+    return html_body, text_body
+
+
+async def send_citizen_welcome_email(
+    to_email: str,
+    user_name: str,
+    dashboard_url: str = "https://app.fastcase.in/citizen-portal",
+    preferred_language: str = "mr",
+) -> None:
+    """Send welcome onboarding email to citizen upon account registration."""
+    subject = "Welcome to Fastcase Citizen Legal Portal — Your Free Account is Ready"
+    html_body, text_body = render_citizen_welcome_template(user_name, dashboard_url, preferred_language)
     await send_email(to_email, subject, html_body, text_body)
 
 
@@ -945,8 +1241,14 @@ async def send_transactional_email(
         elif template in ("welcome", "welcome_subscription"):
             html_body, text_body = render_welcome_subscription_template(
                 user_name=payload.get("user_name", "Advocate"),
-                plan_name=payload.get("plan_name", "Advocate Pro Practice"),
-                dashboard_url=payload.get("dashboard_url", "https://fastcase.in/login"),
+                plan_name=payload.get("plan_name", "Advocate Chambers Pro (14-Day Free Trial)"),
+                dashboard_url=payload.get("dashboard_url", "https://app.fastcase.in/dashboard"),
+            )
+        elif template in ("citizen_welcome", "citizen_portal_welcome"):
+            html_body, text_body = render_citizen_welcome_template(
+                user_name=payload.get("user_name", "Citizen"),
+                dashboard_url=payload.get("dashboard_url", "https://app.fastcase.in/citizen-portal"),
+                preferred_language=payload.get("preferred_language", "mr"),
             )
         elif template in ("login_alert", "security_login_alert"):
             html_body, text_body = render_security_login_alert_template(
