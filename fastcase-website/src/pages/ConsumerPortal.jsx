@@ -66,7 +66,7 @@ export default function ConsumerPortal() {
             <div className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-300/40 text-amber-200 px-4 py-1.5 rounded-full text-xs font-bold">
               <span>💡 कायदेशीर मार्गदर्शन मोफत</span>
               <span>&bull;</span>
-              <span className="text-amber-100 font-black">अधिकृत कोर्ट अर्ज: केवळ ₹४९/-</span>
+              <span className="text-amber-100 font-black">अधिकृत कोर्ट अर्ज: केवळ ₹३०/-</span>
             </div>
 
             <a
@@ -159,7 +159,7 @@ export default function ConsumerPortal() {
                 ३
               </div>
               <h3 className="font-bold text-base text-ink">
-                ₹४९ मध्ये अधिकृत अर्ज मिळवा
+                ₹३० मध्ये अधिकृत अर्ज मिळवा
               </h3>
               <p className="text-xs text-ink/70 leading-relaxed">
                 वकिलांमार्फत ड्राफ्टिंगचा खर्च ₹१,५०० असतो — फास्टकेसवर कोर्ट-मान्य A4 अर्ज त्वरित PDF मध्ये डाऊनलोड करा.

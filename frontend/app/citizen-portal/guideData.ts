@@ -1,5 +1,5 @@
 // FastCase Citizen Portal - Simple & Fast Problem Guidance Data
-// Designed for Ordinary Citizens: Plain language, instant actionable steps, and ₹49 court-ready drafting.
+// Designed for Ordinary Citizens: Plain language, instant actionable steps, and ₹30 court-ready drafting.
 
 export interface QuickProblem {
   id: string;

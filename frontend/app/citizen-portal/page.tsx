@@ -62,13 +62,13 @@ export default function SimpleCitizenPortalPage() {
 
   // ── 3 Main Navigation Tabs ────────────────────────────────────────────────
   // 1: "solve" (समस्या व उपाय)
-  // 2: "draft" (अधिकृत अर्ज जनरेटर - ₹४९)
+  // 2: "draft" (अधिकृत अर्ज जनरेटर - ₹३०)
   // 3: "saved" (माझे जतन केलेले अर्ज)
   const [activeTab, setActiveTab] = useState<ActiveTab>("solve");
 
   // ── Problem & Solution State ──────────────────────────────────────────────
-  const [problemText, setProblemText] = useState<string>("कंपनीने किंवा मालकाने थकीत पगार दिला नाही / कामावरून काढले");
-  const [activeProblem, setActiveProblem] = useState<QuickProblem | null>(() => QUICK_PROBLEMS[2] || QUICK_PROBLEMS[0]);
+  const [problemText, setProblemText] = useState<string>("");
+  const [activeProblem, setActiveProblem] = useState<QuickProblem | null>(null);
 
   // ── Drafting Form State ───────────────────────────────────────────────────
   const [applicantName, setApplicantName] = useState<string>("");
@@ -81,7 +81,7 @@ export default function SimpleCitizenPortalPage() {
   const [generatedDoc, setGeneratedDoc] = useState<string>("");
   const [isDrafting, setIsDrafting] = useState<boolean>(false);
 
-  // ── ₹49 Payment / Checkout State ──────────────────────────────────────────
+  // ── ₹30 Payment / Checkout State ──────────────────────────────────────────
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [receiptId, setReceiptId] = useState<string>("");
@@ -258,7 +258,7 @@ ${template.relief}
     executeDraft();
   };
 
-  // ── Simulated ₹49 Payment ─────────────────────────────────────────────────
+  // ── Simulated ₹30 Payment ─────────────────────────────────────────────────
   const handleCompletePayment = () => {
     setIsProcessingPay(true);
     setTimeout(() => {
@@ -267,14 +267,14 @@ ${template.relief}
       setReceiptId(rId);
       setIsProcessingPay(false);
       setShowPayModal(false);
-      toast.success(`₹४९ भरणा यशस्वी! पावती क्र. ${rId}`);
+      toast.success(`₹३० भरणा यशस्वी! पावती क्र. ${rId}`);
 
       const newDoc = {
         id: rId,
         title: activeProblem?.title_mr || "अधिकृत तक्रार अर्ज",
         date: new Date().toLocaleDateString(),
         content: generatedDoc,
-        fee: "₹४९",
+        fee: "₹३०",
       };
       const updated = [newDoc, ...savedDocs];
       setSavedDocs(updated);
@@ -426,7 +426,7 @@ ${template.relief}
                 </span>
               </div>
               <p className="text-[10px] text-gray-500 font-medium">
-                समस्या सांगा • कायदेशीर उपाय जाणून घ्या • कोर्ट अर्ज (₹४९)
+                समस्या सांगा • कायदेशीर उपाय जाणून घ्या • कोर्ट अर्ज (₹३०)
               </p>
             </div>
           </div>
@@ -495,7 +495,7 @@ ${template.relief}
             )}
           >
             <FileText className="w-3.5 h-3.5 text-emerald-300" />
-            <span>२. अर्ज जनरेटर (₹४९)</span>
+            <span>२. अर्ज जनरेटर (₹३०)</span>
           </button>
 
           {/* Tab 3: माझे अर्ज */}
@@ -732,16 +732,31 @@ ${template.relief}
                     className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                   >
                     <FileText className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>कोर्ट-मान्य अर्ज तयार करा (केवळ ₹४९) →</span>
+                    <span>कोर्ट-मान्य अर्ज तयार करा (केवळ ₹३०) →</span>
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Empty State Prompt before user clicks any topic */}
+            {!activeProblem && (
+              <div className="bg-white rounded-2xl border border-dashed border-gray-300/90 p-8 text-center space-y-2 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto text-xl">
+                  💡
+                </div>
+                <h4 className="text-sm font-black text-gray-800">
+                  आपली कायदेशीर समस्या निवडा किंवा वर शोधा
+                </h4>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
+                  वरील ८ विषयांपैकी कोणत्याही विषयावर १-क्लिक करा — कायदेशीर उपाय, काय करावे व लागणाऱ्या कागदपत्रांची माहिती तात्काळ येथे दिसेल.
+                </p>
               </div>
             )}
           </div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════
-            TAB 2: अधिकृत तक्रार अर्ज जनरेटर (COMPACT DRAFTER - ₹49)
+            TAB 2: अधिकृत तक्रार अर्ज जनरेटर (COMPACT DRAFTER - ₹30)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === "draft" && (
           <div className="space-y-4">
@@ -767,7 +782,7 @@ ${template.relief}
                   <span>तक्रार अर्जाची माहिती प्रविष्ट करा:</span>
                 </h3>
                 <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-100 text-amber-900">
-                  शुल्क: ₹४९/-
+                  शुल्क: ₹३०/-
                 </span>
               </div>
 
@@ -887,7 +902,7 @@ ${template.relief}
                         className="px-3.5 py-1.5 text-xs font-black rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer animate-pulse"
                       >
                         <CreditCard className="w-3.5 h-3.5 text-amber-300" />
-                        <span>₹४९ भरणा करा व डाऊनलोड करा →</span>
+                        <span>₹३० भरणा करा व डाऊनलोड करा →</span>
                       </button>
                     )}
                   </div>
@@ -967,7 +982,7 @@ ${template.relief}
         )}
       </main>
 
-      {/* ── Simulated ₹49 Payment Modal ── */}
+      {/* ── Simulated ₹30 Payment Modal ── */}
       {showPayModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-2xs p-4">
           <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-gray-100 space-y-4">
@@ -986,7 +1001,7 @@ ${template.relief}
 
             <div className="p-3 bg-emerald-50 rounded-xl text-center space-y-1">
               <span className="text-[11px] text-emerald-900 font-bold">एकवेळ अधिकृत ड्राफ्टिंग फी:</span>
-              <div className="text-2xl font-black text-emerald-950">₹४९/-</div>
+              <div className="text-2xl font-black text-emerald-950">₹३०/-</div>
               <p className="text-[10px] text-emerald-800 font-medium">वकिलांचे ₹१,५०० वाचवा • कोर्ट-मान्य अधिकृत A4 PDF</p>
             </div>
 
@@ -1003,7 +1018,7 @@ ${template.relief}
                   </>
                 ) : (
                   <>
-                    <span>UPI द्वारे ₹४९ भरणा करा (Instant Pay)</span>
+                    <span>UPI द्वारे ₹३० भरणा करा (Instant Pay)</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
