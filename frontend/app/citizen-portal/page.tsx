@@ -28,6 +28,9 @@ import {
   KeyRound,
   Mail,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Smartphone,
   ShieldCheck,
   ExternalLink,
 } from "lucide-react";
@@ -86,7 +89,9 @@ export default function SimpleCitizenPortalPage() {
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [receiptId, setReceiptId] = useState<string>("");
   const [payMethod, setPayMethod] = useState<"upi" | "qr">("upi");
+  const [paymentTab, setPaymentTab] = useState<"upi_qr" | "upi_apps" | "card">("upi_qr");
   const [isProcessingPay, setIsProcessingPay] = useState<boolean>(false);
+  const [isEditingDetails, setIsEditingDetails] = useState<boolean>(false);
 
   // ── Saved Documents State ─────────────────────────────────────────────────
   const [savedDocs, setSavedDocs] = useState<any[]>([]);
@@ -170,46 +175,187 @@ export default function SimpleCitizenPortalPage() {
     }
   };
 
-  // ── Problem Solver ────────────────────────────────────────────────────────
-  const executeSolve = (customQuery?: string) => {
-    const query = customQuery !== undefined ? customQuery : problemText;
-    if (!query.trim()) {
-      toast.info("कृपया आपली समस्या थोडक्यात लिहा किंवा खालीलपैकी आपल्या समस्येवर १-क्लिक करा.");
+  // ── Print & PDF Download Functions ─────────────────────────────────────────
+  const printOfficialA4Document = (content: string, title: string, receipt: string) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      window.print();
       return;
     }
-    const matched = findMatchingProblem(query);
-    setActiveProblem(matched);
-    toast.success("कायदेशीर उपाय तयार आहे!");
+    const today = new Date().toLocaleDateString("mr-IN");
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <title>${title} - Fastcase Official Court Application</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Noto+Serif+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4; margin: 25mm 20mm 20mm 25mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Mukta', 'Noto Serif Devanagari', 'Times New Roman', serif;
+      color: #111827;
+      line-height: 1.65;
+      background: #f8fafc;
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px 48px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    .no-print-bar {
+      max-width: 820px;
+      margin: 0 auto 20px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0D3B2E;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .print-btn {
+      background: #10b981;
+      color: #ffffff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .header-box {
+      border-bottom: 2px solid #0D3B2E;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: #0D3B2E;
+      letter-spacing: -0.3px;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 2px;
+    }
+    .meta-box {
+      text-align: right;
+      font-size: 11px;
+    }
+    .content-box {
+      white-space: pre-wrap;
+      font-size: 13.5pt;
+      line-height: 1.7;
+      text-align: justify;
+      color: #000000;
+    }
+    .footer-box {
+      margin-top: 40px;
+      padding-top: 15px;
+      border-top: 1px dashed #cbd5e1;
+      font-size: 10px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .no-print-bar { display: none !important; }
+      .container { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+      .content-box { font-size: 13pt; line-height: 1.6; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print-bar">
+    <div><strong>🏛️ फास्टकेस नागरिक विधी कक्ष</strong> &bull; अधिकृत कोर्ट अर्ज</div>
+    <button class="print-btn" onclick="window.print()">🖨️ PDF म्हणून सेव्ह करा / प्रिंट करा</button>
+  </div>
+  <div class="container">
+    <div class="header-box">
+      <div>
+        <div class="header-title">🏛️ कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज</div>
+        <div class="header-sub">भारतीय कायदे व नियमावलीनुसार तयार केलेला अधिकृत मसुदा</div>
+      </div>
+      <div class="meta-box">
+        <div style="font-family: monospace; font-weight: 700; color: #0D3B2E;">पावती क्र: ${receipt}</div>
+        <div style="color: #059669; font-weight: 700;">शुल्क भरणा: ₹३० (यशस्वी)</div>
+        <div style="color: #6b7280;">दिनांक: ${today}</div>
+      </div>
+    </div>
+    <div class="content-box">${content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+    <div class="footer-box">
+      <span>Fastcase Legal ERP &bull; अधिकृत नागरिक विधी सहाय्य प्रणाली</span>
+      <span>पावती क्र: ${receipt} &bull; कोर्ट पुरावा प्रत</span>
+    </div>
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); }, 400);
+    };
+  </script>
+</body>
+</html>`);
+    printWindow.document.close();
   };
 
-  const handleSolveProblem = (customQuery?: string) => {
-    const query = customQuery !== undefined ? customQuery : problemText;
-    setProblemText(query);
-    if (!isAuthenticated) {
-      setPendingAction("solve");
-      setShowAuthModal(true);
+  const downloadPetitionPdf = (docText?: string, docTitle?: string, customReceipt?: string) => {
+    const textToUse = docText || generatedDoc;
+    const titleToUse = docTitle || activeProblem?.title_mr || "Court_Petition";
+    const receiptToUse = customReceipt || receiptId || `FC-DOC-${Date.now().toString().slice(-6)}`;
+
+    if (!textToUse) {
+      toast.error("अर्ज उपलब्ध नाही.");
       return;
     }
-    executeSolve(query);
+
+    try {
+      const element = document.createElement("a");
+      const file = new Blob([textToUse], { type: "text/plain;charset=utf-8" });
+      element.href = URL.createObjectURL(file);
+      element.download = `${titleToUse.replace(/\s+/g, "_")}_Fastcase_Court_Petition_${receiptToUse}.txt`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      URL.revokeObjectURL(element.href);
+      toast.success("अधिकृत अर्ज फाईल डाऊनलोड झाली!");
+    } catch (e) {
+      console.error("Download error:", e);
+    }
+
+    // Open clean formatted A4 print view for instant Save-as-PDF / Print
+    printOfficialA4Document(textToUse, titleToUse, receiptToUse);
   };
 
-  // ── Document Drafter ──────────────────────────────────────────────────────
-  const executeDraft = () => {
-    if (!applicantName.trim()) {
-      toast.error("कृपया अर्जदाराचे पूर्ण नाव प्रविष्ट करा.");
-      return;
-    }
-    if (!activeProblem) {
-      toast.error("कृपया आधी समस्येचा प्रकार निवडा.");
-      return;
-    }
+  // ── Document Drafter Helper ───────────────────────────────────────────────
+  const generateDraftForProblem = (
+    problem: QuickProblem,
+    name?: string,
+    phone?: string,
+    opp?: string,
+    place?: string,
+    date?: string
+  ) => {
+    const applicant = (name || applicantName || user?.full_name || "नागरिक अर्जदार").trim();
+    const template = problem.draft_template;
+    const todayFormatted = new Date().toLocaleDateString(lang === "mr" ? "mr-IN" : "en-IN");
 
-    setIsDrafting(true);
-    setTimeout(() => {
-      const template = activeProblem.draft_template;
-      const todayFormatted = new Date().toLocaleDateString(lang === "mr" ? "mr-IN" : "en-IN");
-
-      const draft = `दिनांक: ${todayFormatted}
+    const draft = `दिनांक: ${todayFormatted}
 
 प्रति,
 ${template.recipient_title}
@@ -217,17 +363,17 @@ ${template.recipient_title}
 विषय: ${template.subject}
 
 तक्रारदार / अर्जदार:
-नाव: ${applicantName}
-मोबाईल क्रमांक: ${applicantPhone || "उपलब्ध नाही"}
-पत्ता: ${incidentPlace || "स्थानिक रहिवासी"}
+नाव: ${applicant}
+मोबाईल क्रमांक: ${phone || applicantPhone || user?.phone || "उपलब्ध नाही"}
+पत्ता: ${place || incidentPlace || "स्थानिक रहिवासी"}
 
 ज्यांच्याविरुद्ध तक्रार आहे (विरोधी पक्ष):
-नाव: ${oppositeParty || "संबंधित कार्यालय / अज्ञात व्यक्ती"}
+नाव: ${opp || oppositeParty || "संबंधित कार्यालय / संबंधित पक्ष"}
 
 महोदय,
 मी खालीलप्रमाणे वस्तुस्थिती व कायदेशीर तक्रार सादर करत आहे:
 
-१. ${template.body_facts.replace(/\[तारीख\]/g, incidentDate || todayFormatted).replace(/\[ठिकाण\]/g, incidentPlace || "स्थानिक परिसर")}
+१. ${template.body_facts.replace(/\[तारीख\]/g, date || incidentDate || todayFormatted).replace(/\[ठिकाण\]/g, place || incidentPlace || "स्थानिक परिसर")}
 
 २. तक्रारदाराने याबाबत संबंधित व्यक्तीकडे वारंवार विचारणा केली, परंतु त्यांनी कायदेशीर जबाबदारी पार पाडण्यास नकार दिला आहे.
 
@@ -241,12 +387,50 @@ ${template.relief}
 आपला नम्र,
 
 स्वाक्षरी: ___________________
-(${applicantName})`;
+(${applicant})`;
 
-      setGeneratedDoc(draft);
+    setGeneratedDoc(draft);
+    return draft;
+  };
+
+  // ── Problem Solver (Instant Solution + Instant Document Generation) ────────
+  const executeSolve = (customQuery?: string) => {
+    const query = customQuery !== undefined ? customQuery : problemText;
+    if (!query.trim()) {
+      toast.info("कृपया आपली समस्या थोडक्यात लिहा किंवा खालीलपैकी आपल्या समस्येवर १-क्लिक करा.");
+      return;
+    }
+    const matched = findMatchingProblem(query);
+    setActiveProblem(matched);
+    // Automatically generate the document draft immediately!
+    generateDraftForProblem(matched);
+    toast.success("कायदेशीर उपाय व अधिकृत अर्ज तयार झाला आहे!");
+  };
+
+  const handleSolveProblem = (customQuery?: string) => {
+    const query = customQuery !== undefined ? customQuery : problemText;
+    setProblemText(query);
+    if (!isAuthenticated) {
+      setPendingAction("solve");
+      setShowAuthModal(true);
+      return;
+    }
+    executeSolve(query);
+  };
+
+  // ── Manual Draft Trigger (e.g. from tab 2 or detail form) ──────────────────
+  const executeDraft = () => {
+    if (!activeProblem) {
+      toast.error("कृपया आधी समस्येचा प्रकार निवडा.");
+      return;
+    }
+
+    setIsDrafting(true);
+    setTimeout(() => {
+      generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
       setIsDrafting(false);
-      toast.success("अधिकृत तक्रार अर्ज तयार झाला!");
-    }, 350);
+      toast.success("अधिकृत तक्रार अर्ज अपडेट झाला!");
+    }, 250);
   };
 
   const handleGenerateDocument = () => {
@@ -258,7 +442,7 @@ ${template.relief}
     executeDraft();
   };
 
-  // ── Simulated ₹30 Payment ─────────────────────────────────────────────────
+  // ── ₹30 Payment Completion & Automatic PDF Download ────────────────────────
   const handleCompletePayment = () => {
     setIsProcessingPay(true);
     setTimeout(() => {
@@ -281,7 +465,10 @@ ${template.relief}
       try {
         localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
       } catch (e) {}
-    }, 1000);
+
+      // Automatically trigger document download and print dialog!
+      downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, rId);
+    }, 850);
   };
 
   // ── Modal Auth Submit Handlers ────────────────────────────────────────────
@@ -714,42 +901,201 @@ ${template.relief}
                   </div>
                 </div>
 
-                {/* Direct Action Banner: Jump to Tab 2 */}
-                <div className="pt-2 bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-emerald-50/80 border border-emerald-200/80 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-                  <div>
-                    <span className="text-xs font-black text-emerald-950 block">
-                      अधिकृत कोर्ट अर्ज तयार करू इच्छिता?
-                    </span>
-                    <p className="text-[11px] text-emerald-800 font-medium">
-                      वकिलांशिवाय ५ मिनिटांत कोर्ट-मान्य अधिकृत A4 अर्ज तात्काळ तयार करा.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setActiveTab("draft");
-                      if (!applicantName && user?.full_name) setApplicantName(user.full_name);
-                    }}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>कोर्ट-मान्य अर्ज तयार करा (केवळ ₹३०) →</span>
-                  </button>
-                </div>
-              </div>
-            )}
+                {/* ── Generated Official Court Petition Document & ₹30 Download Action ── */}
+                <div className="pt-2 border-t border-gray-100 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-800 text-white flex items-center justify-center text-xs shadow-2xs">
+                        <FileText className="w-3.5 h-3.5 text-emerald-300" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-xs sm:text-sm font-black text-gray-900">
+                            अधिकृत कोर्ट / कार्यालयीन तक्रार अर्ज (Court Petition Draft)
+                          </h4>
+                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-emerald-100 text-emerald-900">
+                            तयार आहे
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 font-medium">
+                          कायदेशीररित्या वैध &bull; A4 कोर्ट फॉरमॅट &bull; वकील फी ₹१,५०० वाचवा
+                        </p>
+                      </div>
+                    </div>
 
-            {/* Empty State Prompt before user clicks any topic */}
-            {!activeProblem && (
-              <div className="bg-white rounded-2xl border border-dashed border-gray-300/90 p-8 text-center space-y-2 shadow-2xs">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto text-xl">
-                  💡
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingDetails(!isEditingDetails)}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 px-2.5 py-1 rounded-lg border border-emerald-200/80 bg-emerald-50/50 hover:bg-emerald-50 transition cursor-pointer"
+                    >
+                      {isEditingDetails ? (
+                        <>
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          <span>तपशील लपवा</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span>✏️ अर्जाचे तपशील बदला (नाव / पत्ता)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Optional Expandable Details Form */}
+                  {isEditingDetails && (
+                    <div className="bg-gray-50/90 border border-gray-200 rounded-xl p-3.5 space-y-3 text-xs animate-in fade-in duration-200">
+                      <span className="font-bold text-gray-700 block">
+                        आपली माहिती प्रविष्ट करा (अर्जात आपोआप अपडेट होईल):
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                            अर्जदाराचे पूर्ण नाव
+                          </label>
+                          <input
+                            type="text"
+                            value={applicantName}
+                            onChange={(e) => setApplicantName(e.target.value)}
+                            placeholder="उदा. रमेश शंकर पाटील"
+                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                            मोबाईल क्रमांक
+                          </label>
+                          <input
+                            type="tel"
+                            value={applicantPhone}
+                            onChange={(e) => setApplicantPhone(e.target.value)}
+                            placeholder="उदा. ९८२२००११२२"
+                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                            ज्यांच्याविरुद्ध तक्रार (कंपनी / व्यक्तीचे नाव)
+                          </label>
+                          <input
+                            type="text"
+                            value={oppositeParty}
+                            onChange={(e) => setOppositeParty(e.target.value)}
+                            placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
+                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
+                            घटना ठिकाण व शहर
+                          </label>
+                          <input
+                            type="text"
+                            value={incidentPlace}
+                            onChange={(e) => setIncidentPlace(e.target.value)}
+                            placeholder="उदा. शिवाजीनगर, पुणे"
+                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-emerald-700"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeProblem) {
+                              generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
+                              toast.success("अर्जाचा मजकूर अपडेट झाला!");
+                            }
+                          }}
+                          className="px-4 py-1.5 bg-emerald-800 text-white font-bold text-xs rounded-lg hover:bg-emerald-900 transition cursor-pointer"
+                        >
+                          अर्ज अपडेट करा
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preformatted Generated Court Application Preview */}
+                  <div className="relative">
+                    <div className="p-4 bg-gray-50/90 rounded-xl border border-gray-200/90 font-mono text-[11.5px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-72 overflow-y-auto select-all shadow-2xs">
+                      {generatedDoc || "अर्ज तयार होत आहे..."}
+                    </div>
+                  </div>
+
+                  {/* Action & Payment Bar */}
+                  <div className="pt-1">
+                    {isPaid ? (
+                      <div className="bg-emerald-50/90 border border-emerald-200 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                          <div>
+                            <span className="text-xs font-black text-emerald-950 block">
+                              भरणा यशस्वी झाला आहे (पावती क्र: {receiptId})
+                            </span>
+                            <span className="text-[10px] text-emerald-800 font-medium">
+                              आपला कोर्ट-मान्य अधिकृत अर्ज डाऊनलोड किंवा प्रिंटसाठी तयार आहे.
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(generatedDoc);
+                              toast.success("अर्जाचा मजकूर कॉपी केला!");
+                            }}
+                            className="flex-1 sm:flex-initial px-3 py-2 text-xs font-bold rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>कॉपी करा</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => printOfficialA4Document(generatedDoc, activeProblem.title_mr, receiptId)}
+                            className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl border border-emerald-700 bg-emerald-800 hover:bg-emerald-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-emerald-300" />
+                            <span>🖨️ प्रिंट / Save as PDF</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadPetitionPdf(generatedDoc, activeProblem.title_mr, receiptId)}
+                            className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-teal-800 hover:bg-teal-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
+                          >
+                            <Download className="w-3.5 h-3.5 text-teal-300" />
+                            <span>📥 PDF डाऊनलोड</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/70 to-emerald-50/90 border border-emerald-200 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                        <div className="space-y-0.5 text-center sm:text-left">
+                          <div className="flex items-center justify-center sm:justify-start gap-2">
+                            <span className="text-xs sm:text-sm font-black text-emerald-950">
+                              हा अधिकृत कोर्ट अर्ज डाऊनलोड करा
+                            </span>
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-800 text-white shadow-2xs">
+                              केवळ ₹३०/-
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-emerald-800 font-medium">
+                            वकिलांचे ₹१,५०० वाचवा &bull; तात्काळ UPI द्वारे भरणा &bull; कोर्ट-मान्य A4 PDF
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPayModal(true)}
+                          className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                        >
+                          <CreditCard className="w-4 h-4 text-amber-300" />
+                          <span>₹३० भरणा करा व अधिकृत PDF डाऊनलोड करा →</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <h4 className="text-sm font-black text-gray-800">
-                  आपली कायदेशीर समस्या निवडा किंवा वर शोधा
-                </h4>
-                <p className="text-xs text-gray-500 max-w-sm mx-auto leading-relaxed">
-                  वरील ८ विषयांपैकी कोणत्याही विषयावर १-क्लिक करा — कायदेशीर उपाय, काय करावे व लागणाऱ्या कागदपत्रांची माहिती तात्काळ येथे दिसेल.
-                </p>
               </div>
             )}
           </div>
@@ -879,6 +1225,7 @@ ${template.relief}
                     {isPaid ? (
                       <>
                         <button
+                          type="button"
                           onClick={() => {
                             navigator.clipboard.writeText(generatedDoc);
                             toast.success("अर्जाचा मजकूर कॉपी केला!");
@@ -889,17 +1236,27 @@ ${template.relief}
                           <span>कॉपी</span>
                         </button>
                         <button
-                          onClick={() => window.print()}
+                          type="button"
+                          onClick={() => printOfficialA4Document(generatedDoc, activeProblem?.title_mr || "तक्रार अर्ज", receiptId)}
                           className="px-3 py-1 text-xs font-black rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1 cursor-pointer"
                         >
                           <Printer className="w-3 h-3 text-emerald-300" />
-                          <span>प्रिंट / PDF</span>
+                          <span>प्रिंट / Save as PDF</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => downloadPetitionPdf(generatedDoc, activeProblem?.title_mr || "तक्रार अर्ज", receiptId)}
+                          className="px-3 py-1 text-xs font-black rounded-lg bg-teal-800 hover:bg-teal-900 text-white flex items-center gap-1 cursor-pointer"
+                        >
+                          <Download className="w-3 h-3 text-teal-300" />
+                          <span>PDF डाऊनलोड</span>
                         </button>
                       </>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => setShowPayModal(true)}
-                        className="px-3.5 py-1.5 text-xs font-black rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer animate-pulse"
+                        className="px-3.5 py-1.5 text-xs font-black rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-1.5 shadow-xs cursor-pointer"
                       >
                         <CreditCard className="w-3.5 h-3.5 text-amber-300" />
                         <span>₹३० भरणा करा व डाऊनलोड करा →</span>
@@ -982,53 +1339,211 @@ ${template.relief}
         )}
       </main>
 
-      {/* ── Simulated ₹30 Payment Modal ── */}
+      {/* ── Integrated ₹30 Payment Modal ── */}
       {showPayModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-2xs p-4">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-2xs p-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-white rounded-2xl p-5 sm:p-6 shadow-2xl border border-gray-100 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-emerald-700" />
-                <h4 className="text-sm font-black text-gray-900">अधिकृत अर्ज डाऊनलोड शुल्क</h4>
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <CreditCard className="w-4 h-4 text-emerald-700" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-gray-900">अधिकृत कोर्ट अर्ज - सुरक्षित भरणा</h4>
+                  <p className="text-[10px] text-gray-500 font-medium">Fastcase Legal ERP &bull; 256-bit SSL Secure</p>
+                </div>
               </div>
               <button
                 onClick={() => setShowPayModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xs p-1"
+                className="text-gray-400 hover:text-gray-600 text-xs p-1 rounded-lg hover:bg-gray-100"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-3 bg-emerald-50 rounded-xl text-center space-y-1">
-              <span className="text-[11px] text-emerald-900 font-bold">एकवेळ अधिकृत ड्राफ्टिंग फी:</span>
+            {/* Price Banner */}
+            <div className="p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-xl border border-emerald-200/80 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-emerald-900 font-bold block">एकवेळ अधिकृत ड्राफ्टिंग शुल्क:</span>
+                <span className="text-[10px] text-emerald-700">वकिलांचे ₹१,५०० वाचवा &bull; कोर्ट-मान्य A4 PDF</span>
+              </div>
               <div className="text-2xl font-black text-emerald-950">₹३०/-</div>
-              <p className="text-[10px] text-emerald-800 font-medium">वकिलांचे ₹१,५०० वाचवा • कोर्ट-मान्य अधिकृत A4 PDF</p>
             </div>
 
-            <div className="space-y-2">
+            {/* Payment Method Tabs */}
+            <div className="grid grid-cols-3 p-1 bg-gray-100 rounded-xl gap-1 text-xs font-bold">
               <button
+                type="button"
+                onClick={() => setPaymentTab("upi_qr")}
+                className={cn(
+                  "py-1.5 px-2 rounded-lg transition text-center flex items-center justify-center gap-1 cursor-pointer",
+                  paymentTab === "upi_qr"
+                    ? "bg-white text-emerald-900 shadow-2xs font-black"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <QrCode className="w-3.5 h-3.5 text-emerald-700" />
+                <span>UPI QR</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentTab("upi_apps")}
+                className={cn(
+                  "py-1.5 px-2 rounded-lg transition text-center flex items-center justify-center gap-1 cursor-pointer",
+                  paymentTab === "upi_apps"
+                    ? "bg-white text-emerald-900 shadow-2xs font-black"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <Smartphone className="w-3.5 h-3.5 text-emerald-700" />
+                <span>UPI Apps</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentTab("card")}
+                className={cn(
+                  "py-1.5 px-2 rounded-lg transition text-center flex items-center justify-center gap-1 cursor-pointer",
+                  paymentTab === "card"
+                    ? "bg-white text-emerald-900 shadow-2xs font-black"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <CreditCard className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Card / NetBank</span>
+              </button>
+            </div>
+
+            {/* Tab 1: UPI QR */}
+            {paymentTab === "upi_qr" && (
+              <div className="space-y-3 text-center">
+                <div className="p-3 bg-white rounded-xl border border-gray-200 inline-block shadow-2xs mx-auto">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi%3A%2F%2Fpay%3Fpa%3Dsupport%40fastcase.in%26pn%3DFastcase%2520ERP%26am%3D30%26cu%3DINR%26tn%3DCourt%2520Petition%2520Draft"
+                    alt="UPI QR Code"
+                    className="w-40 h-40 mx-auto rounded-lg"
+                  />
+                </div>
+                <p className="text-xs font-bold text-gray-700">
+                  कोणत्याही UPI अ‍ॅपद्वारे (GPay, PhonePe, Paytm) स्कॅन करून ₹३० पाठवा
+                </p>
+                <div className="flex items-center justify-center gap-2 text-xs font-mono bg-gray-50 border border-gray-200 py-1.5 px-3 rounded-lg max-w-xs mx-auto">
+                  <span className="text-gray-600">UPI ID:</span>
+                  <span className="font-bold text-emerald-900">support@fastcase.in</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText("support@fastcase.in");
+                      toast.success("UPI ID कॉपी केला!");
+                    }}
+                    className="text-emerald-700 hover:text-emerald-900 font-bold ml-1 cursor-pointer"
+                    title="Copy UPI ID"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: UPI Apps */}
+            {paymentTab === "upi_apps" && (
+              <div className="space-y-2.5">
+                <p className="text-xs font-bold text-gray-600 text-center">
+                  आपल्या आवडत्या UPI अ‍ॅपवर १-क्लिक करा:
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <a
+                    href="upi://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    className="p-2.5 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 flex items-center gap-2 font-bold transition"
+                  >
+                    <span className="text-base">🟢</span>
+                    <span>Google Pay</span>
+                  </a>
+                  <a
+                    href="phonepe://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    className="p-2.5 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 flex items-center gap-2 font-bold transition"
+                  >
+                    <span className="text-base">🟣</span>
+                    <span>PhonePe</span>
+                  </a>
+                  <a
+                    href="paytmmp://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    className="p-2.5 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 flex items-center gap-2 font-bold transition"
+                  >
+                    <span className="text-base">🔵</span>
+                    <span>Paytm</span>
+                  </a>
+                  <a
+                    href="upi://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    className="p-2.5 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/50 flex items-center gap-2 font-bold transition"
+                  >
+                    <span className="text-base">🟠</span>
+                    <span>BHIM UPI</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Card / NetBanking */}
+            {paymentTab === "card" && (
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">कार्ड नंबर (Debit / Credit Card)</label>
+                  <input
+                    type="text"
+                    placeholder="४१११ २२२२ ३३३३ ४४४४"
+                    maxLength={19}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-emerald-700"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">समाप्ती तारीख</label>
+                    <input
+                      type="text"
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-emerald-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">CVV</label>
+                    <input
+                      type="password"
+                      placeholder="•••"
+                      maxLength={3}
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-emerald-700"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Complete Payment Button */}
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
                 onClick={handleCompletePayment}
                 disabled={isProcessingPay}
-                className="w-full py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isProcessingPay ? (
                   <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>भरणा होत आहे...</span>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>भरणा पडताळत आहे व PDF डाऊनलोड होत आहे...</span>
                   </>
                 ) : (
                   <>
-                    <span>UPI द्वारे ₹३० भरणा करा (Instant Pay)</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                    <span>भरणा पूर्ण झाला (Verify & Download PDF) →</span>
                   </>
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => setShowPayModal(false)}
-                className="w-full py-2 text-xs font-bold text-gray-500 hover:text-gray-800"
+                className="w-full py-1.5 text-xs font-bold text-gray-400 hover:text-gray-700 transition cursor-pointer"
               >
-                रद्द करा
+                रद्द करा (Cancel)
               </button>
             </div>
           </div>
