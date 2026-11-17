@@ -92,6 +92,7 @@ export default function SimpleCitizenPortalPage() {
   const [paymentTab, setPaymentTab] = useState<"upi_qr" | "upi_apps" | "card">("upi_qr");
   const [isProcessingPay, setIsProcessingPay] = useState<boolean>(false);
   const [isEditingDetails, setIsEditingDetails] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
 
   // ── Step-by-Step Flow States ──────────────────────────────────────────────
   // Step 1: select case (selectedCategoryId)
@@ -325,7 +326,8 @@ export default function SimpleCitizenPortalPage() {
     printWindow.document.close();
   };
 
-  const downloadPetitionPdf = (docText?: string, docTitle?: string, customReceipt?: string) => {
+  // ── True High-Resolution A4 Court PDF File Generator & Downloader ─────────
+  const downloadPetitionPdf = async (docText?: string, docTitle?: string, customReceipt?: string) => {
     const textToUse = docText || generatedDoc;
     const titleToUse = docTitle || activeProblem?.title_mr || "Court_Petition";
     const receiptToUse = customReceipt || receiptId || `FC-DOC-${Date.now().toString().slice(-6)}`;
@@ -335,22 +337,112 @@ export default function SimpleCitizenPortalPage() {
       return;
     }
 
-    try {
-      const element = document.createElement("a");
-      const file = new Blob([textToUse], { type: "text/plain;charset=utf-8" });
-      element.href = URL.createObjectURL(file);
-      element.download = `${titleToUse.replace(/\s+/g, "_")}_Fastcase_Court_Petition_${receiptToUse}.txt`;
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
-      URL.revokeObjectURL(element.href);
-      toast.success("अधिकृत अर्ज फाईल डाऊनलोड झाली!");
-    } catch (e) {
-      console.error("Download error:", e);
-    }
+    setIsDownloadingPdf(true);
+    toast.info("अधिकृत कोर्ट PDF तयार होत आहे...");
 
-    // Open clean formatted A4 print view for instant Save-as-PDF / Print
-    printOfficialA4Document(textToUse, titleToUse, receiptToUse);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const html2canvas = (await import("html2canvas")).default;
+
+      // 1. Create temporary offscreen container styled cleanly with Marathi fonts & official court margins
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "794px"; // Standard A4 width at 96 DPI
+      container.style.backgroundColor = "#ffffff";
+      container.style.padding = "48px 56px";
+      container.style.fontFamily = "'Mukta', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Times New Roman', serif";
+      container.style.color = "#111827";
+      container.style.lineHeight = "1.7";
+      container.style.boxSizing = "border-box";
+      container.style.zIndex = "-1000";
+
+      const today = new Date().toLocaleDateString("mr-IN");
+      container.innerHTML = `
+        <div style="border-bottom: 2.5px solid #064e3b; padding-bottom: 14px; margin-bottom: 26px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 20px; font-weight: 800; color: #064e3b; letter-spacing: -0.3px;">
+              🏛️ कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज
+            </div>
+            <div style="font-size: 11.5px; color: #4b5563; margin-top: 3px; font-weight: 600;">
+              फास्टकेस विधी कक्ष &bull; भारतीय कायदे व नियमावलीनुसार तयार केलेला अधिकृत मसुदा
+            </div>
+          </div>
+          <div style="text-align: right; font-size: 11px;">
+            <div style="font-family: monospace; font-weight: 800; color: #064e3b; font-size: 12px;">पावती क्र: ${receiptToUse}</div>
+            <div style="color: #059669; font-weight: 700; margin-top: 2px;">शुल्क भरणा: ₹३० (यशस्वी)</div>
+            <div style="color: #6b7280; margin-top: 2px;">दिनांक: ${today}</div>
+          </div>
+        </div>
+        <div style="white-space: pre-wrap; font-size: 13.5pt; line-height: 1.75; text-align: justify; color: #000000; font-family: 'Mukta', 'Noto Serif Devanagari', sans-serif;">
+          ${textToUse.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+        </div>
+        <div style="margin-top: 55px; padding-top: 15px; border-top: 1px dashed #94a3b8; font-size: 10px; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
+          <span>Fastcase Legal ERP &bull; अधिकृत नागरिक विधी सहाय्य प्रणाली</span>
+          <span>पावती क्र: ${receiptToUse} &bull; कोर्ट पुरावा अधिकृत प्रत</span>
+        </div>
+      `;
+
+      document.body.appendChild(container);
+
+      // Render canvas with 2x resolution for ultra-sharp text in PDF
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.96);
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      // Handle multi-page if height exceeds single A4 page (297mm)
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const fileName = `${titleToUse.replace(/[\/\s\\:\*\?"<>\|]+/g, "_")}_Fastcase_Petition.pdf`;
+      pdf.save(fileName);
+      toast.success("अधिकृत PDF फाईल यशस्वीरीत्या डाऊनलोड झाली!");
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      // Fallback: create raw text file as .pdf or call window.print
+      try {
+        const { jsPDF } = await import("jspdf");
+        const doc = new jsPDF();
+        doc.setFontSize(14);
+        doc.text("FASTCASE OFFICIAL COURT PETITION", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Receipt: ${receiptToUse} | Fee: Rs 30 (PAID)`, 14, 28);
+        doc.text(textToUse, 14, 38, { maxWidth: 180 });
+        doc.save(`${titleToUse.replace(/[\/\s\\:\*\?"<>\|]+/g, "_")}_Fastcase_Petition.pdf`);
+        toast.success("अधिकृत PDF फाईल यशस्वीरीत्या डाऊनलोड झाली!");
+      } catch (fallbackErr) {
+        toast.error("PDF डाऊनलोड करताना त्रुटी आली. कृपया 'प्रिंट' बटनावर क्लिक करा.");
+      }
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   // ── Document Drafter Helper ───────────────────────────────────────────────
@@ -1156,11 +1248,21 @@ ${template.relief}
                         </button>
                         <button
                           type="button"
+                          disabled={isDownloadingPdf}
                           onClick={() => downloadPetitionPdf(generatedDoc, activeProblem.title_mr, receiptId)}
-                          className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-teal-800 hover:bg-teal-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
+                          className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-teal-800 hover:bg-teal-900 text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs disabled:opacity-60"
                         >
-                          <Download className="w-3.5 h-3.5 text-teal-300" />
-                          <span>📥 PDF डाऊनलोड</span>
+                          {isDownloadingPdf ? (
+                            <>
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              <span>PDF डाऊनलोड होत आहे...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-3.5 h-3.5 text-teal-300" />
+                              <span>📥 अधिकृत PDF डाऊनलोड</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>
@@ -1340,11 +1442,12 @@ ${template.relief}
                         </button>
                         <button
                           type="button"
+                          disabled={isDownloadingPdf}
                           onClick={() => downloadPetitionPdf(generatedDoc, activeProblem?.title_mr || "तक्रार अर्ज", receiptId)}
-                          className="px-3 py-1 text-xs font-black rounded-lg bg-teal-800 hover:bg-teal-900 text-white flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1 text-xs font-black rounded-lg bg-teal-800 hover:bg-teal-900 text-white flex items-center gap-1 cursor-pointer disabled:opacity-60"
                         >
                           <Download className="w-3 h-3 text-teal-300" />
-                          <span>PDF डाऊनलोड</span>
+                          <span>{isDownloadingPdf ? "PDF डाऊनलोड..." : "PDF डाऊनलोड"}</span>
                         </button>
                       </>
                     ) : (
@@ -1424,6 +1527,16 @@ ${template.relief}
                       >
                         <Printer className="w-3 h-3 text-emerald-300" />
                         <span>पहा / प्रिंट</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isDownloadingPdf}
+                        onClick={() => downloadPetitionPdf(doc.content, doc.title, doc.id)}
+                        className="px-2.5 py-1 text-xs font-bold rounded-lg bg-teal-800 hover:bg-teal-900 text-white flex items-center gap-1 cursor-pointer disabled:opacity-60"
+                        title="PDF डाऊनलोड करा"
+                      >
+                        <Download className="w-3 h-3 text-teal-300" />
+                        <span>PDF</span>
                       </button>
                     </div>
                   </div>
