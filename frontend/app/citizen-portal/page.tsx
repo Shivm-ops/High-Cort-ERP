@@ -577,38 +577,64 @@ ${template.relief}
                 </button>
               </div>
 
-              {/* Compact Issue Chips */}
-              <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-1.5">
-                {QUICK_PROBLEMS.map((prob) => {
-                  const isSelected = activeProblem?.id === prob.id;
-                  return (
-                    <button
-                      key={prob.id}
-                      onClick={() => {
-                        setProblemText(prob.title_mr);
-                        handleSolveProblem(prob.title_mr);
-                      }}
-                      className={cn(
-                        "px-2.5 py-1 rounded-lg text-[11px] font-bold border transition flex items-center gap-1 cursor-pointer",
-                        isSelected
-                          ? "bg-emerald-800 text-white border-emerald-800 shadow-2xs"
-                          : "bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-900 border-gray-200/80"
-                      )}
-                    >
-                      <span>{prob.title_mr.split("(")[0].trim()}</span>
-                    </button>
-                  );
-                })}
+              {/* User-Friendly Quick Category Cards */}
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-[11px] font-bold text-gray-500 mb-2">
+                  किंवा वारंवार विचारल्या जाणाऱ्या विषयावर १-क्लिक करा:
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "unpaid_salary", icon: "💼", label: "पगार / नोकरी वाद", desc: "थकीत पगार किंवा नोकरी प्रश्न" },
+                    { id: "cyber_fraud", icon: "💳", label: "बँक / UPI फ्रॉड", desc: "पैसे कापले / ऑनलाइन फसवणूक" },
+                    { id: "police_refusal", icon: "👮", label: "पोलीस FIR नकार", desc: "तक्रार नोंदवण्यास नकार" },
+                    { id: "consumer_fraud", icon: "🛒", label: "ग्राहक तक्रार", desc: "खराब वस्तू / वॉरंटी नाकारली" },
+                    { id: "property_land", icon: "🏠", label: "जमीन व घर वाद", desc: "अतिक्रमण / जागा हक्क वाद" },
+                    { id: "women_safety", icon: "👩", label: "महिला सुरक्षा", desc: "कौटुंबिक छळ व महिला हक्क" },
+                    { id: "rti_portal", icon: "📄", label: "RTI माहिती अधिकार", desc: "सरकारी कामाची माहिती मागवा" },
+                    { id: "lost_document", icon: "🔍", label: "कागदपत्रे / फोन गहाळ", desc: "आधार, पॅन किंवा फोन हरवला" },
+                  ].map((topic) => {
+                    const prob = QUICK_PROBLEMS.find((p) => p.id === topic.id);
+                    const isSelected = activeProblem?.id === topic.id;
+                    return (
+                      <button
+                        key={topic.id}
+                        type="button"
+                        onClick={() => {
+                          if (prob) {
+                            setProblemText(prob.title_mr);
+                            handleSolveProblem(prob.title_mr);
+                          }
+                        }}
+                        className={cn(
+                          "p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer",
+                          isSelected
+                            ? "bg-emerald-800 text-white border-emerald-800 shadow-sm"
+                            : "bg-gray-50/80 hover:bg-emerald-50/60 text-gray-800 border-gray-200/90 hover:border-emerald-300"
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-base">{topic.icon}</span>
+                          <span className={cn("text-xs font-black truncate", isSelected ? "text-white" : "text-gray-900")}>
+                            {topic.label}
+                          </span>
+                        </div>
+                        <span className={cn("text-[10px] line-clamp-1 leading-tight", isSelected ? "text-emerald-100" : "text-gray-500")}>
+                          {topic.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            {/* ── Compact, Clean & Attractive Remedy Card (Light & Beautiful) ── */}
+            {/* ── Visual, Friendly & Easy-to-Understand Remedy Card ── */}
             {activeProblem && (
               <div className="bg-white rounded-2xl border border-emerald-200/90 p-4 sm:p-5 shadow-xs space-y-4">
                 {/* Header Row */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900">
                       {activeProblem.category_name_mr}
                     </span>
                     <h3 className="text-base sm:text-lg font-black text-gray-900 tracking-tight">
@@ -618,73 +644,92 @@ ${template.relief}
 
                   <a
                     href={`tel:${activeProblem.helpline}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition shadow-2xs"
                   >
-                    <PhoneCall className="w-3 h-3 text-red-600" />
+                    <PhoneCall className="w-3.5 h-3.5 text-red-600" />
                     <span>{activeProblem.helpline_label}</span>
                   </a>
                 </div>
 
-                {/* Key Legal Right (Clean Emerald Tint Box) */}
-                <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-950 leading-relaxed font-medium">
-                  <Scale className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                {/* Key Legal Right (Clean Emerald Highlight Box) */}
+                <div className="bg-emerald-50/90 border border-emerald-200/90 rounded-xl p-3.5 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-2xs font-bold text-sm">
+                    ✓
+                  </div>
                   <div>
-                    <strong className="font-extrabold text-emerald-900">मुख्य कायदेशीर हक्क: </strong>
-                    {activeProblem.short_rights_mr}
+                    <span className="text-xs font-black text-emerald-950 block">
+                      तुमचा मुख्य कायदेशीर हक्क (Your Legal Right):
+                    </span>
+                    <p className="text-xs text-emerald-900 font-medium leading-relaxed mt-0.5">
+                      {activeProblem.short_rights_mr}
+                    </p>
                   </div>
                 </div>
 
-                {/* 3 Compact Clean Answer Cards */}
+                {/* 3 Step-by-Step Clear Action Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* 1. Where to go */}
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-200/80 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-emerald-900 font-extrabold text-xs">
-                      <Building2 className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>कोठे जावे? (Where to Go)</span>
+                  {/* Card 1: Where to go */}
+                  <div className="bg-white rounded-xl p-3.5 border border-gray-200 shadow-2xs space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-950 font-black text-xs">
+                      <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-900 flex items-center justify-center text-xs">🏛️</span>
+                      <span>१. कुठे जावे? (Where to Go)</span>
                     </div>
-                    <p className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                    <p className="text-xs text-gray-800 font-semibold leading-relaxed">
                       {activeProblem.where_to_go_mr}
                     </p>
                   </div>
 
-                  {/* 2. How to do it */}
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-200/80 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
-                      <span>कसे करावे? (३ सोप्या पायऱ्या)</span>
+                  {/* Card 2: How to do it */}
+                  <div className="bg-white rounded-xl p-3.5 border border-gray-200 shadow-2xs space-y-2">
+                    <div className="flex items-center gap-2 text-amber-950 font-black text-xs">
+                      <span className="w-5 h-5 rounded-md bg-amber-100 text-amber-900 flex items-center justify-center text-xs">📝</span>
+                      <span>२. काय करावे? (३ सोप्या पायऱ्या)</span>
                     </div>
-                    <ul className="text-[11px] text-gray-700 space-y-1 pl-3.5 list-disc leading-relaxed font-medium">
+                    <div className="space-y-1.5 text-xs text-gray-800 font-medium">
                       {activeProblem.simple_steps_mr.map((st, i) => (
-                        <li key={i}>{st}</li>
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-900 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">
+                            {i + 1}
+                          </span>
+                          <span className="leading-snug">{st.replace(/^पायरी \d+:\s*/, "")}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
 
-                  {/* 3. Documents needed */}
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-200/80 space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-teal-900 font-extrabold text-xs">
-                      <FileCheck className="w-3.5 h-3.5 text-teal-700" />
-                      <span>लागणारी कागदपत्रे</span>
+                  {/* Card 3: Documents needed */}
+                  <div className="bg-white rounded-xl p-3.5 border border-gray-200 shadow-2xs space-y-2">
+                    <div className="flex items-center gap-2 text-teal-950 font-black text-xs">
+                      <span className="w-5 h-5 rounded-md bg-teal-100 text-teal-900 flex items-center justify-center text-xs">📑</span>
+                      <span>३. लागणारी कागदपत्रे</span>
                     </div>
-                    <ul className="text-[11px] text-gray-700 space-y-1 pl-3.5 list-disc leading-relaxed font-medium">
+                    <div className="space-y-1.5 text-xs text-gray-800 font-medium">
                       {activeProblem.required_docs_mr.map((doc, i) => (
-                        <li key={i}>{doc}</li>
+                        <div key={i} className="flex items-start gap-1.5">
+                          <span className="text-emerald-600 font-bold">✓</span>
+                          <span className="leading-snug">{doc}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 </div>
 
-                {/* Direct Action: Jump to Tab 2 */}
-                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-                  <span className="text-[11px] text-gray-500 font-medium">
-                    वकिलांशिवाय कोर्ट-मान्य अधिकृत तक्रार अर्ज झटपट तयार करा.
-                  </span>
+                {/* Direct Action Banner: Jump to Tab 2 */}
+                <div className="pt-2 bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-emerald-50/80 border border-emerald-200/80 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+                  <div>
+                    <span className="text-xs font-black text-emerald-950 block">
+                      अधिकृत कोर्ट अर्ज तयार करू इच्छिता?
+                    </span>
+                    <p className="text-[11px] text-emerald-800 font-medium">
+                      वकिलांशिवाय ५ मिनिटांत कोर्ट-मान्य अधिकृत A4 अर्ज तात्काळ तयार करा.
+                    </p>
+                  </div>
                   <button
                     onClick={() => {
                       setActiveTab("draft");
                       if (!applicantName && user?.full_name) setApplicantName(user.full_name);
                     }}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                   >
                     <FileText className="w-3.5 h-3.5 text-emerald-300" />
                     <span>कोर्ट-मान्य अर्ज तयार करा (केवळ ₹४९) →</span>
