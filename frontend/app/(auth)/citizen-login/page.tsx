@@ -51,7 +51,7 @@ export default function CitizenLoginPage() {
 
   // OTP Step: "input" (enter email/phone) vs "code" (enter 6 digits)
   const [otpStep, setOtpStep] = useState<"input" | "code">("input");
-  const [emailInput, setEmailInput] = useState<string>("shwetaajadhav24@gmail.com");
+  const [emailInput, setEmailInput] = useState<string>("");
   const [phoneInput, setPhoneInput] = useState<string>("");
   const [passwordInput, setPasswordInput] = useState<string>("");
 
@@ -286,34 +286,14 @@ export default function CitizenLoginPage() {
                   </p>
                 </div>
 
-                {/* 3. Google One-Tap Card */}
+                {/* 3. Google Sign-In */}
                 <button
                   type="button"
                   onClick={() => {
-                    setEmailInput("shwetaajadhav24@gmail.com");
-                    setAuthChannel("email");
-                    setAuthMethod("otp");
-                    handleSendOtp("shwetaajadhav24@gmail.com");
+                    toast.info("Google sign-in is coming soon. Please use Email OTP or Mobile OTP below.");
                   }}
-                  className="w-full p-2.5 sm:p-3 rounded-2xl border border-gray-200/90 bg-white hover:bg-gray-50/80 transition-all flex items-center justify-between shadow-2xs cursor-pointer group text-left"
+                  className="w-full py-3 px-4 rounded-2xl border border-gray-200/90 bg-white hover:bg-gray-50/80 transition-all flex items-center justify-center gap-3 shadow-2xs cursor-pointer group text-gray-700 font-bold text-xs sm:text-sm"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 via-orange-400 to-amber-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden shadow-2xs shrink-0">
-                      <span>S</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-bold text-gray-900 group-hover:text-emerald-900">
-                          Continue as Shweta
-                        </span>
-                        <ChevronDown className="w-3 h-3 text-gray-400" />
-                      </div>
-                      <span className="text-[11px] text-gray-500 font-medium block">
-                        shwetajadhav2324@gmail.com
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Official Google 4-Color Logo */}
                   <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                     <path
@@ -333,6 +313,7 @@ export default function CitizenLoginPage() {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
+                  <span>Continue with Google</span>
                 </button>
 
                 {/* 4. Divider */}
