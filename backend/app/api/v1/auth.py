@@ -1151,20 +1151,21 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
     otp_code = generate_otp()
     store_login_otp(clean_email, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
 
+    expiry_mins = DEFAULT_OTP_EXPIRY_SECONDS // 60
     asyncio.create_task(
         send_otp_verification_email(
             to_email=clean_email,
             otp_code=otp_code,
             user_name=user.full_name or "Advocate",
-            expiry_minutes=1,
+            expiry_minutes=expiry_mins,
         )
     )
 
     return {
         "message": f"A 6-digit login verification code has been dispatched to {clean_email}.",
         "email": clean_email,
-        "expires_in_seconds": 60,
-        "max_attempts": 3,
+        "expires_in_seconds": DEFAULT_OTP_EXPIRY_SECONDS,
+        "max_attempts": 5,
     }
 
 

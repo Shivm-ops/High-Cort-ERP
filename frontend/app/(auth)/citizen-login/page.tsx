@@ -148,8 +148,16 @@ export default function CitizenLoginPage() {
         document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
 
+      useAuthStore.setState({
+        user: res.data.user,
+        accessToken: res.data.access_token,
+        refreshToken: res.data.refresh_token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
       toast.success("Login successful! Welcome back.");
-      router.push("/citizen-portal");
+      window.location.href = "/citizen-portal";
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -173,7 +181,7 @@ export default function CitizenLoginPage() {
     try {
       const u = await citizenLogin(emailInput.trim(), passwordInput);
       toast.success(`Welcome back, ${u.full_name || "Citizen"}!`);
-      router.push("/citizen-portal");
+      window.location.href = "/citizen-portal";
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {

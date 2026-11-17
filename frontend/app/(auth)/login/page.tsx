@@ -106,8 +106,21 @@ export default function AdvocateLoginPage() {
         document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
 
-      toast.success("Welcome back to Fastcase Practice!");
-      router.push("/dashboard");
+      useAuthStore.setState({
+        user: res.data.user,
+        accessToken: res.data.access_token,
+        refreshToken: res.data.refresh_token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      toast.success("Login successful! Welcome back.");
+      const role = res.data.user?.role || res.data.user?.user_type;
+      if (role === "citizen") {
+        window.location.href = "/citizen-portal";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -130,8 +143,14 @@ export default function AdvocateLoginPage() {
     setLoading(true);
     try {
       await login(emailInput.trim(), passwordInput);
+      const currentUser = useAuthStore.getState().user;
       toast.success("Welcome back to Fastcase Practice!");
-      router.push("/dashboard");
+      const role = currentUser?.role || (currentUser as any)?.user_type;
+      if (role === "citizen") {
+        window.location.href = "/citizen-portal";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

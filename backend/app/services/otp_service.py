@@ -23,8 +23,8 @@ _memory_store: Dict[str, Dict[str, Any]] = {}
 _memory_lockout: Dict[str, float] = {}
 
 # Constants
-DEFAULT_OTP_EXPIRY_SECONDS: int = 60          # 60 seconds (1 minute)
-MAX_OTP_ATTEMPTS: int = 3                     # 3 attempts
+DEFAULT_OTP_EXPIRY_SECONDS: int = 600         # 10 minutes (600 seconds)
+MAX_OTP_ATTEMPTS: int = 5                     # 5 attempts
 LOCKOUT_DURATION_SECONDS: int = 12 * 3600     # 12 hours (43,200 seconds)
 REG_SESSION_TTL_SECONDS: int = 15 * 60        # 15 minutes (session retention for resend)
 
