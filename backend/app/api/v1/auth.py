@@ -15,7 +15,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, field_validator
@@ -309,6 +309,7 @@ class ResendOtpRequest(BaseModel):
 @router.post("/token", response_model=LoginResponse)
 async def login(
     request: Request,
+    background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
@@ -364,10 +365,16 @@ async def login(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
 
-    return await _build_login_response(user, db, ip, user_agent)
+    return await _build_login_response(user, db, ip, user_agent, background_tasks=background_tasks)
 
 
-async def _build_login_response(user: User, db: Session, ip: str, user_agent: str) -> LoginResponse:
+async def _build_login_response(
+    user: User,
+    db: Session,
+    ip: str,
+    user_agent: str,
+    background_tasks: Optional[BackgroundTasks] = None,
+) -> LoginResponse:
     # 4. Issue tokens with JTI
     jti = str(uuid.uuid4())
     user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
@@ -383,25 +390,38 @@ async def _build_login_response(user: User, db: Session, ip: str, user_agent: st
                details={"login_count": user.login_count})
     db.commit()
 
-    # 6. Send login notification email to user and admin (fire-and-forget — does not block response)
+    # 6. Send login notification email to user and admin (background — does not block response)
     admin_emails = _get_admin_emails_for_notification(db, user.firm_id)
     firm_name_str = user.firm.name if user.firm else None
 
-    try:
-        asyncio.create_task(
-            notify_login(
-                user_email=str(user.email) if user.email else "",
-                user_name=str(user.full_name or user.email),
-                ip_address=ip,
-                user_agent=user_agent,
-                user_role=user_role_str,
-                firm_name=firm_name_str,
-                admin_emails=admin_emails,
-                login_time=user.last_login,
-            )
+    if background_tasks:
+        background_tasks.add_task(
+            notify_login,
+            user_email=str(user.email) if user.email else "",
+            user_name=str(user.full_name or user.email),
+            ip_address=ip,
+            user_agent=user_agent,
+            user_role=user_role_str,
+            firm_name=firm_name_str,
+            admin_emails=admin_emails,
+            login_time=user.last_login,
         )
-    except Exception:
-        pass
+    else:
+        try:
+            asyncio.create_task(
+                notify_login(
+                    user_email=str(user.email) if user.email else "",
+                    user_name=str(user.full_name or user.email),
+                    ip_address=ip,
+                    user_agent=user_agent,
+                    user_role=user_role_str,
+                    firm_name=firm_name_str,
+                    admin_emails=admin_emails,
+                    login_time=user.last_login,
+                )
+            )
+        except Exception:
+            pass
 
     sub_data = _get_user_subscription(user, db)
     from app.services.tenant_domain import domain_fields, ensure_firm_subdomain
@@ -511,6 +531,7 @@ async def client_login(
 async def citizen_register(
     payload: CitizenRegisterRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
@@ -544,24 +565,24 @@ async def citizen_register(
     db.commit()
     db.refresh(citizen_user)
 
-    # Dispatch Welcome & Services Overview email for Citizen
+    # Dispatch Welcome & Services Overview email for Citizen via BackgroundTasks
     if citizen_user.email:
-        asyncio.create_task(
-            send_citizen_welcome_email(
-                to_email=str(citizen_user.email),
-                user_name=str(citizen_user.full_name or "Citizen"),
-                dashboard_url="https://app.fastcase.in/citizen-portal",
-                preferred_language=str(citizen_user.preferred_language or "mr"),
-            )
+        background_tasks.add_task(
+            send_citizen_welcome_email,
+            to_email=str(citizen_user.email),
+            user_name=str(citizen_user.full_name or "Citizen"),
+            dashboard_url="https://app.fastcase.in/citizen-portal",
+            preferred_language=str(citizen_user.preferred_language or "mr"),
         )
 
-    return await _build_login_response(citizen_user, db, ip, user_agent)
+    return await _build_login_response(citizen_user, db, ip, user_agent, background_tasks=background_tasks)
 
 
 @router.post("/citizen-login", response_model=LoginResponse)
 async def citizen_login(
     payload: CitizenLoginRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
@@ -598,11 +619,15 @@ async def citizen_login(
     user.login_count = (user.login_count or 0) + 1
     db.commit()
 
-    return await _build_login_response(user, db, ip, user_agent)
+    return await _build_login_response(user, db, ip, user_agent, background_tasks=background_tasks)
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(data: RegisterRequest, db: Session = Depends(get_db)):
+async def register(
+    data: RegisterRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     if db.query(User).filter(User.email == data.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -646,23 +671,26 @@ async def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    # Dispatch Welcome & Subscription activation email (fire-and-forget background task)
+    # Dispatch Welcome & Subscription activation email (background task)
     if user.email:
-        asyncio.create_task(
-            send_welcome_subscription_email(
-                to_email=str(user.email),
-                user_name=str(user.full_name or "Advocate"),
-                plan_name="Advocate Chambers Pro (14-Day Free Trial)",
-                dashboard_url="https://app.fastcase.in/dashboard",
-                trial_days=14,
-            )
+        background_tasks.add_task(
+            send_welcome_subscription_email,
+            to_email=str(user.email),
+            user_name=str(user.full_name or "Advocate"),
+            plan_name="Advocate Chambers Pro (14-Day Free Trial)",
+            dashboard_url="https://app.fastcase.in/dashboard",
+            trial_days=14,
         )
 
     return {"message": "Registration successful", "user_id": str(user.id)}
 
 
 @router.post("/register-initiate")
-async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)):
+async def register_initiate(
+    data: RegisterRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     """
     Step 1 of Registration: Validates details, generates 6-digit OTP,
     stores pending profile for 10 minutes, and dispatches verification email.
@@ -695,14 +723,13 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
     }
     store_registration_otp(clean_email, reg_dict, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
 
-    # 3. Dispatch OTP email
-    asyncio.create_task(
-        send_otp_verification_email(
-            to_email=clean_email,
-            otp_code=otp_code,
-            user_name=data.full_name,
-            expiry_minutes=1,
-        )
+    # 3. Dispatch OTP email via BackgroundTasks
+    background_tasks.add_task(
+        send_otp_verification_email,
+        to_email=clean_email,
+        otp_code=otp_code,
+        user_name=data.full_name,
+        expiry_minutes=1,
     )
 
     return {
@@ -716,6 +743,7 @@ async def register_initiate(data: RegisterRequest, db: Session = Depends(get_db)
 async def register_verify_otp(
     data: VerifyOtpRequest,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
@@ -800,15 +828,14 @@ async def register_verify_otp(
     db.commit()
     db.refresh(user)
 
-    # Dispatch Welcome & Subscription activation email
-    asyncio.create_task(
-        send_welcome_subscription_email(
-            to_email=clean_email,
-            user_name=full_name,
-            plan_name="Advocate Chambers Pro (14-Day Free Trial)",
-            dashboard_url="https://app.fastcase.in/dashboard",
-            trial_days=14,
-        )
+    # Dispatch Welcome & Subscription activation email via BackgroundTasks
+    background_tasks.add_task(
+        send_welcome_subscription_email,
+        to_email=clean_email,
+        user_name=full_name,
+        plan_name="Advocate Chambers Pro (14-Day Free Trial)",
+        dashboard_url="https://app.fastcase.in/dashboard",
+        trial_days=14,
     )
 
     # Automatically sign in and issue JWT tokens
@@ -834,20 +861,19 @@ async def register_verify_otp(
     db.add(session_rec)
     db.commit()
 
-    # Dispatch login notification email for newly provisioned session
+    # Dispatch login notification email for newly provisioned session via BackgroundTasks
     admin_emails = _get_admin_emails_for_notification(db, user.firm_id)
     user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
-    asyncio.create_task(
-        notify_login(
-            user_email=clean_email,
-            user_name=full_name,
-            ip_address=ip,
-            user_agent=user_agent,
-            user_role=user_role_str,
-            firm_name=new_firm.name,
-            admin_emails=admin_emails,
-            login_time=user.last_login,
-        )
+    background_tasks.add_task(
+        notify_login,
+        user_email=clean_email,
+        user_name=full_name,
+        ip_address=ip,
+        user_agent=user_agent,
+        user_role=user_role_str,
+        firm_name=new_firm.name,
+        admin_emails=admin_emails,
+        login_time=user.last_login,
     )
 
     sub_data = _get_user_subscription(user, db)

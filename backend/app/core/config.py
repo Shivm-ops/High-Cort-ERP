@@ -61,12 +61,17 @@ class Settings(BaseSettings):
 
     # Email — SMTP (Amazon SES / Gmail / Brevo / Custom SMTP)
     SMTP_HOST: str = ""
-    SMTP_PORT: int = 2525
+    SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
     SMTP_FROM_EMAIL: str = "support@fastcase.in"
     SMTP_FROM_NAME: str = "Fastcase ERP"
     SMTP_USE_TLS: bool = True
+
+    # Azure Communication Services (optional)
+    AZURE_COMMUNICATION_CONNECTION_STRING: Optional[str] = None
+    AZURE_EMAIL_FROM_NAME: str = "Fastcase ERP"
+    AZURE_EMAIL_FROM_ADDRESS: str = "support@fastcase.in"
 
     # Razorpay Payment Gateway
     RAZORPAY_KEY_ID: str = ""

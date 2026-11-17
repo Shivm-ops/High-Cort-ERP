@@ -29,9 +29,11 @@ from email.mime.text import MIMEText
 def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str = "") -> None:
     """Blocking send — supports Azure Communication Services and SMTP (Amazon SES/Gmail/etc.)."""
     # 1. Try Azure Communication Services if configured
-    conn_str = settings.AZURE_COMMUNICATION_CONNECTION_STRING
+    conn_str = getattr(settings, "AZURE_COMMUNICATION_CONNECTION_STRING", None)
     if conn_str:
-        from_address = f"{settings.AZURE_EMAIL_FROM_NAME} <{settings.AZURE_EMAIL_FROM_ADDRESS}>"
+        from_name = getattr(settings, "AZURE_EMAIL_FROM_NAME", "Fastcase ERP")
+        from_addr = getattr(settings, "AZURE_EMAIL_FROM_ADDRESS", "support@fastcase.in")
+        from_address = f"{from_name} <{from_addr}>"
         message = {
             "senderAddress": from_address,
             "recipients": {
@@ -57,10 +59,10 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
             logger.error("Failed to send ACS email to %s: %s", to_email, exc)
             return
 
-    # 2. Try SMTP (Amazon SES, Gmail, Mailtrap, etc.) if configured
-    smtp_host = settings.SMTP_HOST
-    smtp_username = settings.SMTP_USERNAME
-    smtp_password = settings.SMTP_PASSWORD
+    # 2. Try SMTP (Amazon SES, Gmail, Mailtrap, Brevo, etc.) if configured
+    smtp_host = getattr(settings, "SMTP_HOST", "")
+    smtp_username = getattr(settings, "SMTP_USERNAME", "")
+    smtp_password = getattr(settings, "SMTP_PASSWORD", "")
 
     is_valid_smtp = bool(
         smtp_host
