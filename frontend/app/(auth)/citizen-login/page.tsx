@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,19 +10,13 @@ import {
   Eye,
   EyeOff,
   Scale,
-  KeyRound,
-  Mail,
   ArrowRight,
   ArrowLeft,
-  ShieldCheck,
-  FileText,
-  Sparkles,
-  User,
   Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { toast } from "sonner";
-import { api, getErrorMessage } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 // Citizen Password login schema
@@ -47,8 +41,20 @@ export default function CitizenLoginPage() {
   const { user, isAuthenticated, citizenLogin, citizenRegister } = useAuthStore();
   const [hydrated, setHydrated] = useState(false);
 
+  // Mode: "login" vs "register"
+  const [view, setView] = useState<"login" | "register">("login");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+
   useEffect(() => {
     setHydrated(true);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "register" || params.get("mode") === "register") {
+        setView("register");
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -58,24 +64,6 @@ export default function CitizenLoginPage() {
       router.replace("/citizen-portal");
     }
   }, [hydrated, isAuthenticated, user, router]);
-
-  // Mode: "login" vs "register"
-  const [view, setView] = useState<"login" | "register">("login");
-  // In Login: "password" vs "otp"
-  const [authMode, setAuthMode] = useState<"password" | "otp">("password");
-
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [showForgotModal, setShowForgotModal] = useState(false);
-
-  // OTP Login State
-  const [otpStep, setOtpStep] = useState<"email" | "code">("email");
-  const [otpEmail, setOtpEmail] = useState("");
-  const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
-  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Password form
   const {
@@ -94,17 +82,6 @@ export default function CitizenLoginPage() {
   } = useForm<CitizenRegisterFormData>({
     resolver: zodResolver(citizenRegisterSchema),
   });
-
-  // Countdown timer for OTP
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (authMode === "otp" && otpStep === "code" && timer > 0) {
-      interval = setInterval(() => setTimer((t) => t - 1), 1000);
-    } else if (timer === 0) {
-      setCanResend(true);
-    }
-    return () => clearInterval(interval);
-  }, [authMode, otpStep, timer]);
 
   // Citizen Password Submit
   const onPasswordSubmit = async (data: PasswordFormData) => {
@@ -138,93 +115,6 @@ export default function CitizenLoginPage() {
       toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Citizen Send OTP
-  const onSendLoginOtp = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!otpEmail.trim()) {
-      toast.error("Please enter your email address");
-      return;
-    }
-    setLoading(true);
-    try {
-      await api.post("/auth/login-otp/send", { email: otpEmail.trim().toLowerCase() });
-      toast.success("6-digit verification OTP sent to your email");
-      setOtpStep("code");
-      setTimer(60);
-      setCanResend(false);
-      setAttemptsRemaining(null);
-      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
-    } catch (err: any) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Citizen Verify OTP
-  const onVerifyLoginOtp = async () => {
-    const code = otpDigits.join("");
-    if (code.length !== 6) {
-      toast.error("Please enter complete 6-digit OTP");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await api.post("/auth/login-otp/verify", {
-        email: otpEmail.trim().toLowerCase(),
-        otp: code,
-        code,
-      });
-      localStorage.setItem("access_token", res.data.access_token);
-      localStorage.setItem("refresh_token", res.data.refresh_token);
-      if (typeof document !== "undefined") {
-        document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      }
-      toast.success("Login successful!");
-      window.location.href = "/citizen-portal";
-    } catch (err: any) {
-      const detail = err.response?.data?.detail;
-      if (typeof detail === "object" && detail.attempts_remaining !== undefined) {
-        setAttemptsRemaining(detail.attempts_remaining);
-        toast.error(`Invalid OTP. ${detail.attempts_remaining} attempts remaining.`);
-      } else {
-        toast.error(getErrorMessage(err));
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      const pasted = value.replace(/\D/g, "").slice(0, 6);
-      if (pasted.length > 0) {
-        const newDigits = [...otpDigits];
-        for (let i = 0; i < pasted.length; i++) {
-          newDigits[i] = pasted[i];
-        }
-        setOtpDigits(newDigits);
-        const nextIndex = Math.min(pasted.length, 5);
-        otpInputRefs.current[nextIndex]?.focus();
-      }
-      return;
-    }
-    const clean = value.replace(/\D/g, "");
-    const newDigits = [...otpDigits];
-    newDigits[index] = clean;
-    setOtpDigits(newDigits);
-
-    if (clean && index < 5) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -283,243 +173,95 @@ export default function CitizenLoginPage() {
               </p>
             </div>
 
-            {/* Segmented Dual Tabs */}
-            <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl gap-1">
-              <button
-                type="button"
-                onClick={() => setView("login")}
-                className={cn(
-                  "py-2 px-3 text-xs font-black rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer",
-                  view === "login"
-                    ? "bg-white text-emerald-950 shadow-xs"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <KeyRound className="w-3.5 h-3.5 text-emerald-700" />
-                <span>लॉगिन (Sign In)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("register")}
-                className={cn(
-                  "py-2 px-3 text-xs font-black rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer",
-                  view === "register"
-                    ? "bg-white text-emerald-950 shadow-xs"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-                <span>नवीन नोंदणी (Register)</span>
-              </button>
-            </div>
-
             {/* ── VIEW 1: SIGN IN ── */}
             {view === "login" && (
-              <div className="space-y-4">
-                {/* Auth Mode Toggle */}
-                <div className="flex items-center justify-center gap-2 p-1 bg-gray-50 border border-gray-200/70 rounded-xl text-xs font-bold text-gray-600">
-                  <button
-                    type="button"
-                    onClick={() => setAuthMode("password")}
+              <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ईमेल आयडी (Email Address)
+                  </label>
+                  <input
+                    {...registerPassword("email")}
+                    type="email"
+                    placeholder="citizen@example.com"
+                    autoComplete="email"
                     className={cn(
-                      "flex-1 py-1.5 rounded-lg transition cursor-pointer text-center",
-                      authMode === "password" ? "bg-white text-emerald-950 shadow-2xs font-black border border-gray-200" : "hover:text-gray-900"
+                      "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium",
+                      passwordErrors.email ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
                     )}
-                  >
-                    🔑 Password
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode("otp");
-                      setOtpStep("email");
-                    }}
-                    className={cn(
-                      "flex-1 py-1.5 rounded-lg transition cursor-pointer text-center",
-                      authMode === "otp" ? "bg-white text-emerald-950 shadow-2xs font-black border border-gray-200" : "hover:text-gray-900"
-                    )}
-                  >
-                    ✉️ Sign in with OTP
-                  </button>
+                  />
+                  {passwordErrors.email && (
+                    <p className="text-[11px] text-red-500 mt-1 font-semibold">{passwordErrors.email.message}</p>
+                  )}
                 </div>
 
-                {/* Password Form */}
-                {authMode === "password" && (
-                  <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-3.5">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        ईमेल आयडी (Email Address)
-                      </label>
-                      <input
-                        {...registerPassword("email")}
-                        type="email"
-                        placeholder="citizen@example.com"
-                        autoComplete="email"
-                        className={cn(
-                          "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 font-medium",
-                          passwordErrors.email ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
-                        )}
-                      />
-                      {passwordErrors.email && (
-                        <p className="text-[11px] text-red-500 mt-1 font-semibold">{passwordErrors.email.message}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="block text-xs font-bold text-gray-700">
-                          पासवर्ड (Password)
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setShowForgotModal(true)}
-                          className="text-[11px] font-bold text-emerald-800 hover:underline cursor-pointer"
-                        >
-                          Forgot password?
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <input
-                          {...registerPassword("password")}
-                          type={showPass ? "text" : "password"}
-                          placeholder="••••••••"
-                          autoComplete="current-password"
-                          className={cn(
-                            "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 pr-10 font-medium",
-                            passwordErrors.password ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
-                          )}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                        >
-                          {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      {passwordErrors.password && (
-                        <p className="text-[11px] text-red-500 mt-1 font-semibold">{passwordErrors.password.message}</p>
-                      )}
-                    </div>
-
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-bold text-gray-700">
+                      पासवर्ड (Password)
+                    </label>
                     <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      type="button"
+                      onClick={() => setShowForgotModal(true)}
+                      className="text-[11px] font-bold text-emerald-800 hover:underline cursor-pointer"
                     >
-                      {loading ? (
-                        <>
-                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Signing In...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Sign In to Citizen Portal</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </>
-                      )}
+                      पासवर्ड विसरलात?
                     </button>
-                  </form>
-                )}
-
-                {/* OTP Form */}
-                {authMode === "otp" && (
-                  <div className="space-y-3.5">
-                    {otpStep === "email" ? (
-                      <form onSubmit={onSendLoginOtp} className="space-y-3.5">
-                        <div>
-                          <label className="block text-xs font-bold text-gray-700 mb-1">
-                            ईमेल आयडी टाका (Email Address)
-                          </label>
-                          <input
-                            type="email"
-                            value={otpEmail}
-                            onChange={(e) => setOtpEmail(e.target.value)}
-                            placeholder="citizen@example.com"
-                            className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 bg-gray-50/50 focus:bg-white font-medium"
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={loading || !otpEmail.trim()}
-                          className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                        >
-                          {loading ? (
-                            <>
-                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              <span>Sending OTP...</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>Send 6-Digit OTP</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </>
-                          )}
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="space-y-3.5 text-center">
-                        <p className="text-xs text-gray-600">
-                          Enter 6-digit OTP sent to <strong className="text-gray-900">{otpEmail}</strong>:
-                        </p>
-                        <div className="flex justify-center gap-2">
-                          {otpDigits.map((digit, idx) => (
-                            <input
-                              key={idx}
-                              ref={(el) => {
-                                otpInputRefs.current[idx] = el;
-                              }}
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={1}
-                              value={digit}
-                              onChange={(e) => handleOtpChange(idx, e.target.value)}
-                              onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                              className="w-10 h-11 rounded-xl border-2 border-gray-200 text-center text-base font-black text-gray-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20"
-                            />
-                          ))}
-                        </div>
-
-                        {attemptsRemaining !== null && (
-                          <p className="text-[11px] text-amber-600 font-bold">
-                            {attemptsRemaining} attempts remaining
-                          </p>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={onVerifyLoginOtp}
-                          disabled={loading || otpDigits.join("").length !== 6}
-                          className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                        >
-                          {loading ? "Verifying..." : "Verify & Sign In →"}
-                        </button>
-
-                        <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOtpStep("email");
-                              setOtpDigits(["", "", "", "", "", ""]);
-                            }}
-                            className="hover:underline cursor-pointer font-bold text-gray-600"
-                          >
-                            Change Email
-                          </button>
-                          <button
-                            type="button"
-                            onClick={onSendLoginOtp}
-                            disabled={!canResend || loading}
-                            className={`font-bold ${canResend ? "text-emerald-800 hover:underline cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
-                          >
-                            {canResend ? "Resend OTP" : `Resend in ${timer}s`}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                )}
-              </div>
+                  <div className="relative">
+                    <input
+                      {...registerPassword("password")}
+                      type={showPass ? "text" : "password"}
+                      placeholder="••••••••"
+                      autoComplete="current-password"
+                      className={cn(
+                        "w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm outline-none transition placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 pr-10 font-medium",
+                        passwordErrors.password ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-gray-50/50 focus:bg-white"
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPass(!showPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {passwordErrors.password && (
+                    <p className="text-[11px] text-red-500 mt-1 font-semibold">{passwordErrors.password.message}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Signing In...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign In to Citizen Portal</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+
+                {/* Switch to Registration */}
+                <div className="pt-4 border-t border-gray-100 text-center text-xs text-gray-500">
+                  नवीन नागरिक आहात?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setView("register")}
+                    className="font-bold text-emerald-800 hover:underline cursor-pointer"
+                  >
+                    नवीन नोंदणी करा (Create Citizen Account)
+                  </button>
+                </div>
+              </form>
             )}
 
             {/* ── VIEW 2: REGISTRATION ── */}
@@ -618,7 +360,7 @@ export default function CitizenLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full rounded-xl bg-emerald-800 hover:bg-emerald-900 py-3 text-xs sm:text-sm font-black text-white shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                 >
                   {loading ? (
                     <>
@@ -632,6 +374,18 @@ export default function CitizenLoginPage() {
                     </>
                   )}
                 </button>
+
+                {/* Switch to Sign In */}
+                <div className="pt-4 border-t border-gray-100 text-center text-xs text-gray-500">
+                  आधीच खाते आहे?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setView("login")}
+                    className="font-bold text-emerald-800 hover:underline cursor-pointer"
+                  >
+                    लॉगिन करा (Sign In)
+                  </button>
+                </div>
               </form>
             )}
 
@@ -660,17 +414,14 @@ export default function CitizenLoginPage() {
               <h3 className="text-sm font-extrabold text-gray-900">Reset Password</h3>
             </div>
             <p className="text-xs text-gray-600 leading-relaxed">
-              If you forgot your password, simply select <strong>"Sign in with OTP"</strong> to log in instantly with a 6-digit code sent to your email.
+              पासवर्ड रीसेट करण्यासाठी कृपया आपल्या नोंदणीकृत ईमेल पत्त्यावरून <strong>support@fastcase.in</strong> शी संपर्क साधा किंवा आपल्या ॲडमिनिस्ट्रेटरला विनंती करा.
             </p>
             <button
               type="button"
-              onClick={() => {
-                setShowForgotModal(false);
-                setAuthMode("otp");
-              }}
+              onClick={() => setShowForgotModal(false)}
               className="w-full rounded-xl bg-emerald-800 py-2.5 text-xs font-bold text-white hover:bg-emerald-900 transition cursor-pointer"
             >
-              Sign in with OTP
+              बंद करा (Close)
             </button>
           </div>
         </div>
