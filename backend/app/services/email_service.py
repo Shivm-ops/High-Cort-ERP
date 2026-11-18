@@ -86,35 +86,53 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
             if html_body:
                 msg.attach(MIMEText(html_body, "html"))
 
-            port = int(settings.SMTP_PORT or 587)
+            base_port = int(settings.SMTP_PORT or 587)
+            ports_to_try = [base_port]
+            if "brevo" in smtp_host.lower() or "sendinblue" in smtp_host.lower():
+                for p in [465, 2525, 587]:
+                    if p not in ports_to_try:
+                        ports_to_try.append(p)
+
             # Enforce IPv4 resolution to avoid 'Network is unreachable' on IPv4-only VPS
             target_host = smtp_host
             try:
                 import socket
-                addr_infos = socket.getaddrinfo(smtp_host, port, socket.AF_INET, socket.SOCK_STREAM)
+                addr_infos = socket.getaddrinfo(smtp_host, base_port, socket.AF_INET, socket.SOCK_STREAM)
                 if addr_infos:
                     target_host = addr_infos[0][4][0]
             except Exception:
                 target_host = smtp_host
 
-            if port == 465:
-                import ssl
-                context = ssl.create_default_context()
+            last_error = None
+            for p in ports_to_try:
                 try:
-                    server = smtplib.SMTP_SSL(smtp_host, port, context=context, timeout=15)
-                except Exception:
-                    server = smtplib.SMTP_SSL(target_host, port, context=context, timeout=15)
-            else:
-                server = smtplib.SMTP(target_host, port, timeout=15)
-                if settings.SMTP_USE_TLS:
-                    server.starttls()
+                    if p == 465:
+                        import ssl
+                        context = ssl.create_default_context()
+                        try:
+                            server = smtplib.SMTP_SSL(smtp_host, p, context=context, timeout=10)
+                        except Exception:
+                            server = smtplib.SMTP_SSL(target_host, p, context=context, timeout=10)
+                    else:
+                        server = smtplib.SMTP(target_host, p, timeout=10)
+                        try:
+                            server.starttls()
+                        except Exception:
+                            pass
 
-            with server:
-                if smtp_username and smtp_password:
-                    server.login(smtp_username, smtp_password)
-                server.sendmail(from_email, [to_email], msg.as_string())
+                    with server:
+                        if smtp_username and smtp_password:
+                            server.login(smtp_username, smtp_password)
+                        server.sendmail(from_email, [to_email], msg.as_string())
 
-            logger.info("SMTP email sent to %s | subject: %s", to_email, subject)
+                    logger.info("SMTP email successfully sent to %s via %s:%d | subject: %s", to_email, smtp_host, p, subject)
+                    return
+                except Exception as exc:
+                    last_error = exc
+                    logger.warning("SMTP send on %s:%d failed (%s), trying next port...", smtp_host, p, exc)
+                    continue
+
+            logger.error("Failed to send SMTP email to %s across ports %s: %s", to_email, ports_to_try, last_error)
             return
         except Exception as exc:
             logger.error("Failed to send SMTP email to %s: %s", to_email, exc)
