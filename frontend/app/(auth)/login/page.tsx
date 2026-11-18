@@ -71,10 +71,16 @@ export default function AdvocateLoginPage() {
 
     setLoading(true);
     try {
-      await api.post("/auth/login-otp/send", { email: targetEmail });
-      toast.success(`6-digit verification code sent to ${targetEmail}!`);
+      const res = await api.post("/auth/login-otp/send", { email: targetEmail });
+      if (res.data?.otp_debug) {
+        toast.success(`Verification Code: ${res.data.otp_debug} (Valid for 10 mins)`, { duration: 15000 });
+        const digits = String(res.data.otp_debug).split("").slice(0, 6);
+        setOtpDigits(digits);
+      } else {
+        toast.success(`6-digit verification code sent to ${targetEmail}!`);
+      }
       setOtpStep("code");
-      setOtpTimer(60);
+      setOtpTimer(600);
       setCanResend(false);
     } catch (err: any) {
       toast.error(getErrorMessage(err));

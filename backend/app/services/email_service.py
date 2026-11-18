@@ -67,6 +67,7 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
     is_valid_smtp = bool(
         smtp_host
         and smtp_username
+        and smtp_password
         and not smtp_username.startswith("REPLACE_WITH_")
         and not smtp_password.startswith("REPLACE_WITH_")
     )
