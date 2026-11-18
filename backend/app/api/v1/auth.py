@@ -304,6 +304,12 @@ class ResendOtpRequest(BaseModel):
     email: EmailStr
 
 
+class GoogleLoginRequest(BaseModel):
+    credential: Optional[str] = None
+    access_token: Optional[str] = None
+    role: Optional[str] = "citizen"
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.post("/token", response_model=LoginResponse)
@@ -1265,3 +1271,108 @@ async def login_otp_verify(
             **firm_domains,
         }
     )
+
+
+@router.post("/google", response_model=LoginResponse)
+async def google_auth_login(
+    payload: GoogleLoginRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """
+    Authenticate user using Google One-Tap or Google OAuth 2.0 credential.
+    Verifies ID token directly with Google's public tokeninfo endpoint.
+    Creates citizen / advocate account automatically if new user.
+    """
+    import secrets
+    import httpx
+
+    ip = extract_ip(request)
+    user_agent = request.headers.get("User-Agent", "")
+
+    token = payload.credential or payload.access_token
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google authentication token or credential is required.",
+        )
+
+    # 1. Verify token with Google's official public API
+    google_data = None
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            if payload.credential:
+                res = await client.get(
+                    "https://oauth2.googleapis.com/tokeninfo",
+                    params={"id_token": payload.credential},
+                )
+                if res.status_code == 200:
+                    google_data = res.json()
+            if not google_data and payload.access_token:
+                res = await client.get(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    headers={"Authorization": f"Bearer {payload.access_token}"},
+                )
+                if res.status_code == 200:
+                    google_data = res.json()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Unable to reach Google verification service: {exc}",
+        )
+
+    if not google_data or not google_data.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid, expired, or unverified Google token.",
+        )
+
+    clean_email = str(google_data["email"]).lower().strip()
+    full_name = str(google_data.get("name") or clean_email.split("@")[0]).strip()
+
+    # 2. Find or create user
+    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    if not user:
+        target_role = (
+            UserRole.CITIZEN
+            if (payload.role or "").lower() == "citizen"
+            else UserRole.ASSOCIATE_ADVOCATE
+        )
+        user = User(
+            id=uuid.uuid4(),
+            email=clean_email,
+            hashed_password=get_password_hash(secrets.token_urlsafe(32)),
+            full_name=full_name,
+            user_type=target_role,
+            is_active=True,
+            is_verified=True,
+            firm_id=None,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        # Dispatch welcome email in background
+        if target_role == UserRole.CITIZEN:
+            background_tasks.add_task(
+                send_citizen_welcome_email,
+                to_email=clean_email,
+                user_name=full_name,
+                dashboard_url="https://app.fastcase.in/citizen-portal",
+            )
+        else:
+            background_tasks.add_task(
+                send_welcome_subscription_email,
+                to_email=clean_email,
+                user_name=full_name,
+                dashboard_url="https://app.fastcase.in/dashboard",
+            )
+    else:
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account is deactivated. Please contact support.",
+            )
+
+    return await _build_login_response(user, db, ip, user_agent, background_tasks=background_tasks)

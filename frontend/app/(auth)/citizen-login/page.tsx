@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -102,6 +103,113 @@ export default function CitizenLoginPage() {
   } = useForm<CitizenRegisterFormData>({
     resolver: zodResolver(citizenRegisterSchema),
   });
+
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
+  // ── Google One-Tap & Sign-In Handler ─────────────────────────────────────────
+  useEffect(() => {
+    if (!googleClientId || typeof window === "undefined") return;
+    const checkGis = setInterval(() => {
+      if ((window as any).google?.accounts?.id) {
+        clearInterval(checkGis);
+        try {
+          (window as any).google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: async (response: any) => {
+              if (response?.credential) {
+                setLoading(true);
+                try {
+                  const res = await api.post("/auth/google", {
+                    credential: response.credential,
+                    role: "citizen",
+                  });
+                  localStorage.setItem("access_token", res.data.access_token);
+                  localStorage.setItem("refresh_token", res.data.refresh_token);
+                  if (typeof document !== "undefined") {
+                    document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+                  }
+                  useAuthStore.setState({
+                    user: res.data.user,
+                    accessToken: res.data.access_token,
+                    refreshToken: res.data.refresh_token,
+                    isAuthenticated: true,
+                    isLoading: false,
+                  });
+                  toast.success(`Welcome, ${res.data.user?.full_name || "User"}!`);
+                  window.location.href = "/citizen-portal";
+                } catch (err: any) {
+                  toast.error(getErrorMessage(err));
+                } finally {
+                  setLoading(false);
+                }
+              }
+            },
+          });
+          (window as any).google.accounts.id.prompt();
+        } catch (e) {
+          // ignore prompt errors
+        }
+      }
+    }, 500);
+    return () => clearInterval(checkGis);
+  }, [googleClientId]);
+
+  const handleGoogleLogin = () => {
+    if (!googleClientId) {
+      toast.info(
+        "Google Client ID is not configured yet. Add NEXT_PUBLIC_GOOGLE_CLIENT_ID in your configuration to enable Google popup.",
+        { duration: 8000 }
+      );
+      return;
+    }
+
+    if (typeof window === "undefined" || !(window as any).google?.accounts?.oauth2) {
+      toast.error("Google Sign-In is initializing. Please click again in 2 seconds.");
+      return;
+    }
+
+    try {
+      const client = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: googleClientId,
+        scope: "email profile openid",
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse?.access_token) {
+            setLoading(true);
+            try {
+              const res = await api.post("/auth/google", {
+                access_token: tokenResponse.access_token,
+                role: "citizen",
+              });
+
+              localStorage.setItem("access_token", res.data.access_token);
+              localStorage.setItem("refresh_token", res.data.refresh_token);
+              if (typeof document !== "undefined") {
+                document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+              }
+
+              useAuthStore.setState({
+                user: res.data.user,
+                accessToken: res.data.access_token,
+                refreshToken: res.data.refresh_token,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+
+              toast.success(`Welcome, ${res.data.user?.full_name || "User"}!`);
+              window.location.href = "/citizen-portal";
+            } catch (err: any) {
+              toast.error(getErrorMessage(err));
+            } finally {
+              setLoading(false);
+            }
+          }
+        },
+      });
+      client.requestAccessToken();
+    } catch (err: any) {
+      toast.error(getErrorMessage(err));
+    }
+  };
 
   // ── Dispatch OTP (Email or Mobile) ─────────────────────────────────────────
   const handleSendOtp = async (customEmail?: string) => {
@@ -236,6 +344,7 @@ export default function CitizenLoginPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFB] text-gray-900 font-sans antialiased flex flex-col justify-between">
+      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       {/* ── Top Navigation Bar ── */}
       <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
@@ -303,9 +412,7 @@ export default function CitizenLoginPage() {
                 {/* 3. Google Sign-In */}
                 <button
                   type="button"
-                  onClick={() => {
-                    toast.info("Google sign-in is coming soon. Please use Email OTP or Mobile OTP below.");
-                  }}
+                  onClick={handleGoogleLogin}
                   className="w-full py-3 px-4 rounded-2xl border border-gray-200/90 bg-white hover:bg-gray-50/80 transition-all flex items-center justify-center gap-3 shadow-2xs cursor-pointer group text-gray-700 font-bold text-xs sm:text-sm"
                 >
                   {/* Official Google 4-Color Logo */}
