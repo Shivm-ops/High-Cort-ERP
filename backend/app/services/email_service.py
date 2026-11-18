@@ -98,10 +98,14 @@ def _send_email_sync(to_email: str, subject: str, html_body: str, text_body: str
                 target_host = smtp_host
 
             if port == 465:
-                server = smtplib.SMTP_SSL(target_host, port, timeout=12)
-                server.server_hostname = smtp_host
+                import ssl
+                context = ssl.create_default_context()
+                try:
+                    server = smtplib.SMTP_SSL(smtp_host, port, context=context, timeout=15)
+                except Exception:
+                    server = smtplib.SMTP_SSL(target_host, port, context=context, timeout=15)
             else:
-                server = smtplib.SMTP(target_host, port, timeout=12)
+                server = smtplib.SMTP(target_host, port, timeout=15)
                 if settings.SMTP_USE_TLS:
                     server.starttls()
 
