@@ -22,6 +22,9 @@ def update_settings(payload: Dict[str, str], db: Session = Depends(get_db), curr
         setting = db.query(SystemSetting).filter(SystemSetting.key == key).first()
         if setting:
             setting.value = str(value)
+        else:
+            setting = SystemSetting(key=key, value=str(value))
+            db.add(setting)
     
     db.commit()
     return {"message": "Settings updated successfully"}

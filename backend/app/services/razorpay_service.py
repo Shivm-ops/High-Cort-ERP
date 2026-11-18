@@ -23,10 +23,39 @@ logger = logging.getLogger("razorpay_service")
 RAZORPAY_API_BASE = "https://api.razorpay.com/v1"
 
 
-def get_razorpay_credentials() -> Tuple[str, str]:
-    """Retrieve Razorpay Key ID and Secret from settings or environment."""
-    key_id = settings.RAZORPAY_KEY_ID or os.getenv("RAZORPAY_KEY_ID", "")
-    key_secret = settings.RAZORPAY_KEY_SECRET or os.getenv("RAZORPAY_KEY_SECRET", "")
+def get_razorpay_credentials(db: Optional[Any] = None) -> Tuple[str, str]:
+    """Retrieve Razorpay Key ID and Secret from database SystemSetting (Superadmin form), settings, or environment."""
+    key_id = ""
+    key_secret = ""
+
+    # 1. Read dynamically from SuperAdmin SystemSetting in database
+    try:
+        from app.models.setting import SystemSetting
+        if db is not None:
+            s_id = db.query(SystemSetting).filter(SystemSetting.key == "razorpay_key_id").first()
+            s_sec = db.query(SystemSetting).filter(SystemSetting.key == "razorpay_key_secret").first()
+            if s_id and s_id.value:
+                key_id = s_id.value.strip()
+            if s_sec and s_sec.value:
+                key_secret = s_sec.value.strip()
+        else:
+            from app.core.database import SessionLocal
+            with SessionLocal() as session:
+                s_id = session.query(SystemSetting).filter(SystemSetting.key == "razorpay_key_id").first()
+                s_sec = session.query(SystemSetting).filter(SystemSetting.key == "razorpay_key_secret").first()
+                if s_id and s_id.value:
+                    key_id = s_id.value.strip()
+                if s_sec and s_sec.value:
+                    key_secret = s_sec.value.strip()
+    except Exception as exc:
+        logger.warning(f"Could not read Razorpay credentials from DB: {exc}")
+
+    # 2. Fallback to settings or environment variables
+    if not key_id:
+        key_id = settings.RAZORPAY_KEY_ID or os.getenv("RAZORPAY_KEY_ID", "")
+    if not key_secret:
+        key_secret = settings.RAZORPAY_KEY_SECRET or os.getenv("RAZORPAY_KEY_SECRET", "")
+
     return key_id.strip(), key_secret.strip()
 
 
