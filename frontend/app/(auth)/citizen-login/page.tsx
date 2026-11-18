@@ -104,7 +104,9 @@ export default function CitizenLoginPage() {
     resolver: zodResolver(citizenRegisterSchema),
   });
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const googleClientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    "46206747574-jed6tspi92c8rt2alfq72cbfd1h0mb9p.apps.googleusercontent.com";
 
   // ── Google One-Tap & Sign-In Handler ─────────────────────────────────────────
   useEffect(() => {

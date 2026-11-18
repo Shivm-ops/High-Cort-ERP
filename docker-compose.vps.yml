@@ -28,11 +28,13 @@ services:
       args:
         - NEXT_PUBLIC_API_URL=https://api.${DOMAIN:-fastcase.in}/api/v1
         - NEXT_PUBLIC_APP_NAME=Fastcase
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-46206747574-jed6tspi92c8rt2alfq72cbfd1h0mb9p.apps.googleusercontent.com}
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_API_URL=https://api.${DOMAIN:-fastcase.in}/api/v1
       - NEXT_PUBLIC_ROOT_DOMAIN=${DOMAIN:-fastcase.in}
       - NEXT_PUBLIC_APP_NAME=Fastcase
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-46206747574-jed6tspi92c8rt2alfq72cbfd1h0mb9p.apps.googleusercontent.com}
       - NODE_ENV=production
     depends_on:
       - backend
