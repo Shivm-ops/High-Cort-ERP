@@ -70,6 +70,14 @@ export default function ConsumerPortal() {
             </div>
 
             <a
+              href={`${getErpUrl()}/citizen-portal`}
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-500/30 hover:bg-emerald-500/40 text-emerald-100 text-xs font-bold border border-emerald-400/40 transition cursor-pointer"
+            >
+              <Building2 className="w-3.5 h-3.5 text-amber-300" />
+              <span>नवीन: मालमत्ता कायदेशीर तपासणी (Property Legal Check)</span>
+            </a>
+
+            <a
               href={`${getErpUrl()}/citizen-login`}
               className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition cursor-pointer"
             >

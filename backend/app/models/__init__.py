@@ -21,4 +21,15 @@ from .support import (
     TicketCategory,
 )
 from .citizen_help import CitizenGrievance, GrievanceStatus
+from .property_check import (
+    PropertyCheckRequest,
+    PropertyDocument,
+    PropertyCheckResult,
+    AdvocateTitleSearchOrder,
+    PropertyCategory,
+    CheckStatus,
+    RiskCategory,
+    PropertyDocumentType,
+    AdvocateVerificationStatus,
+)
 

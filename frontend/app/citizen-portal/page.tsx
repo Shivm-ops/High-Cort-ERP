@@ -40,9 +40,10 @@ import { cn } from "@/lib/utils";
 import { QUICK_PROBLEMS, QuickProblem, findMatchingProblem } from "./guideData";
 import { useAuthStore } from "@/lib/store/authStore";
 import { api, getErrorMessage } from "@/lib/api";
+import PropertyLegalCheck from "./PropertyLegalCheck";
 
 type Language = "mr" | "hi" | "en";
-type ActiveTab = "solve" | "draft" | "saved";
+type ActiveTab = "solve" | "draft" | "saved" | "property";
 
 export default function SimpleCitizenPortalPage() {
   const router = useRouter();
@@ -818,6 +819,20 @@ ${template.relief}
               </span>
             )}
           </button>
+
+          {/* Tab 4: मालमत्ता कायदेशीर तपासणी */}
+          <button
+            onClick={() => setActiveTab("property")}
+            className={cn(
+              "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer",
+              activeTab === "property"
+                ? "bg-emerald-800 text-white shadow-xs"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
+            )}
+          >
+            <Building2 className="w-3.5 h-3.5 text-teal-300" />
+            <span>४. मालमत्ता तपासणी</span>
+          </button>
         </div>
       </div>
 
@@ -1544,6 +1559,13 @@ ${template.relief}
               </div>
             )}
           </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            TAB 4: मालमत्ता कायदेशीर तपासणी (PROPERTY LEGAL CHECK & COURT SEARCH)
+        ══════════════════════════════════════════════════════════════════════ */}
+        {activeTab === "property" && (
+          <PropertyLegalCheck lang={lang} />
         )}
       </main>
 

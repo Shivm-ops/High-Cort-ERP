@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { toast, Toaster } from "sonner";
-import { Save, ShieldAlert, Globe, Server, Bell, Key, CreditCard, ExternalLink, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Save, ShieldAlert, Globe, Server, Bell, Key, CreditCard, ExternalLink, CheckCircle2, ShieldCheck, Building2, Search, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
@@ -235,6 +235,144 @@ export default function SettingsPage() {
                   </div>
                   <div className="text-[11px] text-indigo-700">
                     Events: <strong>payment.captured</strong>, <strong>order.paid</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Property & Court Search API Gateways */}
+              <div className="p-5 border border-emerald-200 rounded-xl bg-emerald-50/30 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-emerald-600 rounded-xl text-white shadow-sm">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-sm">Property Legal Check & Court Search Engine</h3>
+                      <p className="text-xs text-gray-500">Live API adapters for eCourtsIndia, Landeed/MahaBhumi, and CERSAI</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {settings.ecourts_api_key && settings.landeed_api_key ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        Gateways Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                        <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+                        Awaiting Keys
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                  {/* eCourtsIndia Partner API */}
+                  <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                        <Scale className="w-4 h-4 text-emerald-700" />
+                        eCourtsIndia Partner API
+                      </span>
+                      <a href="https://ecourtsindia.com/api/docs" target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-700 font-semibold hover:underline inline-flex items-center gap-1">
+                        API Docs <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">eCourts API Key</label>
+                      <input 
+                        type="password" 
+                        value={settings.ecourts_api_key || ''}
+                        onChange={(e) => handleChange("ecourts_api_key", e.target.value)}
+                        placeholder="Bearer api_key_..."
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">API Base URL</label>
+                      <input 
+                        type="text" 
+                        value={settings.ecourts_base_url || 'https://ecourtsindia.com/api'}
+                        onChange={(e) => handleChange("ecourts_base_url", e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Landeed / MahaBhumi Land Records */}
+                  <div className="p-4 bg-white border border-gray-200 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                        <Search className="w-4 h-4 text-emerald-700" />
+                        MahaBhumi / Landeed Engine
+                      </span>
+                      <a href="https://www.landeed.com" target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-700 font-semibold hover:underline inline-flex items-center gap-1">
+                        Portal <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">Landeed API Key (7/12 & Index II)</label>
+                      <input 
+                        type="password" 
+                        value={settings.landeed_api_key || ''}
+                        onChange={(e) => handleChange("landeed_api_key", e.target.value)}
+                        placeholder="ld_live_..."
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">API Base URL</label>
+                      <input 
+                        type="text" 
+                        value={settings.landeed_base_url || 'https://api.landeed.com/v1'}
+                        onChange={(e) => handleChange("landeed_base_url", e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Service Pricing & Tier Configuration */}
+                <div className="p-4 bg-white border border-gray-200 rounded-xl">
+                  <h4 className="text-xs font-bold uppercase text-gray-800 mb-3">Consumer Portal Service Pricing (INR)</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-[11px] text-gray-600 mb-1">Basic Court Search (₹)</label>
+                      <input 
+                        type="number" 
+                        value={settings.price_basic_court_search || '49'}
+                        onChange={(e) => handleChange("price_basic_court_search", e.target.value)}
+                        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-600 mb-1">Basic Property Check (₹)</label>
+                      <input 
+                        type="number" 
+                        value={settings.price_basic_property_check || '199'}
+                        onChange={(e) => handleChange("price_basic_property_check", e.target.value)}
+                        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-600 mb-1">Detailed Property Check (₹)</label>
+                      <input 
+                        type="number" 
+                        value={settings.price_detailed_property_check || '499'}
+                        onChange={(e) => handleChange("price_detailed_property_check", e.target.value)}
+                        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] text-gray-600 mb-1">Advocate Title Search (₹)</label>
+                      <input 
+                        type="number" 
+                        value={settings.price_advocate_title_search || '1499'}
+                        onChange={(e) => handleChange("price_advocate_title_search", e.target.value)}
+                        className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

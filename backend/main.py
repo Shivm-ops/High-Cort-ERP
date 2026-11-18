@@ -101,6 +101,19 @@ def run_db_migrations():
         except Exception:
             conn.rollback()
 
+        # Property Check Enums for PostgreSQL
+        property_enums = [
+            ("checkstatus", ["'pending'", "'processing'", "'completed'", "'failed'"]),
+            ("riskcategory", ["'records_found'", "'further_verification_required'", "'no_record_found'", "'source_unavailable'"]),
+            ("advocateverificationstatus", ["'requested'", "'assigned'", "'under_review'", "'opinion_issued'", "'rejected'"]),
+        ]
+        for enum_name, enum_vals in property_enums:
+            try:
+                conn.execute(text(f"DO $$ BEGIN CREATE TYPE {enum_name} AS ENUM ({', '.join(enum_vals)}); EXCEPTION WHEN duplicate_object THEN null; END $$;"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
         for extra_idx in [
             "CREATE INDEX IF NOT EXISTS ix_payment_transactions_razorpay_order_id ON payment_transactions (razorpay_order_id)",
             "CREATE INDEX IF NOT EXISTS ix_payment_transactions_invoice_number ON payment_transactions (invoice_number)",
