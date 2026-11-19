@@ -36,11 +36,12 @@ const COMMON_ISSUES = [
 ];
 
 export default function ConsumerPortal() {
-  const portalUrl = `${getErpUrl()}/citizen-login`;
+  const portalUrl = `${getErpUrl()}/citizen-portal`;
   const [inputVal, setInputVal] = useState('');
 
   const handleLaunch = (q) => {
-    window.location.href = portalUrl;
+    const queryParam = q ? `?q=${encodeURIComponent(q)}` : '';
+    window.location.href = `${portalUrl}${queryParam}`;
   };
 
   return (
@@ -115,6 +116,113 @@ export default function ConsumerPortal() {
                 {issue.label}
               </a>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── What We Provide Inside Portal (४ प्रमुख सेवा) ── */}
+      <section className="py-14 bg-slate-50 dark:bg-[#070E1A] border-b border-line">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center space-y-2 max-w-2xl mx-auto">
+            <span className="px-3.5 py-1 rounded-full bg-[#FF6551]/15 text-[#FF6551] text-xs font-black uppercase tracking-wider">
+              पोर्टलवर काय उपलब्ध आहे
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-ink">
+              फास्टकेस नागरिक विधी कक्षातील ४ मुख्य सेवा
+            </h2>
+            <p className="text-xs sm:text-sm text-ink/70">
+              सामान्य नागरिकांना विधी अडचण सोडवण्यासाठी आवश्यक असलेली सर्व कायदेशीर साधने एकाच छताखाली.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Service 1 */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#0C1D26] border border-line shadow-xs flex flex-col justify-between hover:shadow-md transition">
+              <div className="space-y-3">
+                <div className="w-11 h-11 rounded-xl bg-[#11213C] text-white flex items-center justify-center">
+                  <ShieldAlert className="w-5 h-5 text-[#FF6551]" />
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <h3 className="font-bold text-sm text-ink">१. समस्या व उपाय</h3>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#FF6551]/15 text-[#FF6551]">मोफत</span>
+                </div>
+                <p className="text-xs text-ink/70 leading-relaxed">
+                  बँक सायबर फ्रॉड, पोलीस तक्रार, पगार वाद, ग्राहक संरक्षण, महिला छळ व RTI यावर १-क्लिक कायदेशीर मार्गदर्शन व कलमे.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-line/60 mt-4">
+                <a href={portalUrl} className="text-xs font-bold text-[#FF6551] hover:underline flex items-center gap-1">
+                  <span>उपाय जाणून घ्या</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+
+            {/* Service 2 */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#0C1D26] border border-line shadow-xs flex flex-col justify-between hover:shadow-md transition">
+              <div className="space-y-3">
+                <div className="w-11 h-11 rounded-xl bg-[#11213C] text-white flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-[#FF6551]" />
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <h3 className="font-bold text-sm text-ink">२. अर्ज जनरेटर</h3>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#11213C] text-[#F5EEDB]">केवळ ₹३०</span>
+                </div>
+                <p className="text-xs text-ink/70 leading-relaxed">
+                  वकिलांच्या ड्राफ्टिंगचा खर्च ₹१,५०० असतो — फास्टकेसवर कोर्ट-मान्य A4 तक्रार अर्ज त्वरित मराठी व इंग्रजीत तयार करा व PDF डाऊनलोड करा.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-line/60 mt-4">
+                <a href={portalUrl} className="text-xs font-bold text-[#FF6551] hover:underline flex items-center gap-1">
+                  <span>अर्ज तयार करा</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+
+            {/* Service 3 */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#0C1D26] border border-line shadow-xs flex flex-col justify-between hover:shadow-md transition">
+              <div className="space-y-3">
+                <div className="w-11 h-11 rounded-xl bg-[#11213C] text-white flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-[#FF6551]" />
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <h3 className="font-bold text-sm text-ink">३. मालमत्ता तपासणी</h3>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#FF6551] text-white">नवीन</span>
+                </div>
+                <p className="text-xs text-ink/70 leading-relaxed">
+                  जमीन, प्लॉट, फ्लॅट खरेदीपूर्वी कायदेशीर तपासणी — ७/१२, फेरफार, इंडेक्स २ व ई-कोर्ट्स वाद (eCourts Disputes) शीर्षक रिस्क रिपोर्ट.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-line/60 mt-4">
+                <a href={portalUrl} className="text-xs font-bold text-[#FF6551] hover:underline flex items-center gap-1">
+                  <span>मालमत्ता तपासा</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+
+            {/* Service 4 */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-[#0C1D26] border border-line shadow-xs flex flex-col justify-between hover:shadow-md transition">
+              <div className="space-y-3">
+                <div className="w-11 h-11 rounded-xl bg-[#11213C] text-white flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-[#FF6551]" />
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <h3 className="font-bold text-sm text-ink">४. जतन केलेले अर्ज</h3>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-800">सुरक्षित</span>
+                </div>
+                <p className="text-xs text-ink/70 leading-relaxed">
+                  आपले तयार केलेले सर्व कोर्ट अर्ज, शासकीय तक्रारी व पावत्या क्लाउडमध्ये कायम सेव्ह राहतात आणि कधीही ॲक्सेस करता येतात.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-line/60 mt-4">
+                <a href={portalUrl} className="text-xs font-bold text-[#FF6551] hover:underline flex items-center gap-1">
+                  <span>माझे अर्ज पहा</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>

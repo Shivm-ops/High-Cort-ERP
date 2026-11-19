@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +21,11 @@ import {
   ChevronDown,
   CheckCircle2,
   Sparkles,
+  ShieldAlert,
+  FileText,
+  Building2,
+  FolderCheck,
+  Check,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { toast } from "sonner";
@@ -344,44 +350,198 @@ export default function CitizenLoginPage() {
     }
   };
 
+  const consumerServices = [
+    {
+      icon: ShieldAlert,
+      title: "१. समस्या व कायदेशीर उपाय (Instant Legal Guidance)",
+      desc: "बँक/UPI सायबर फ्रॉड, पोलीस FIR नकार, नोकरी-पगार वाद, ग्राहक संरक्षण, जमीन-घर वाद, महिला कौटुंबिक छळ व RTI यावर मोफत कायदेशीर उपाय व पुढची पावले.",
+      badge: "मोफत मार्गदर्शन",
+      badgeColor: "bg-[#FF6551]/20 text-[#F5EEDB] border-[#FF6551]/30",
+    },
+    {
+      icon: FileText,
+      title: "२. अधिकृत कोर्ट व पोलीस अर्ज जनरेटर (₹३०)",
+      desc: "वकिलांमार्फत ड्राफ्टिंगचा खर्च ₹१,५०० असतो — फास्टकेसवर कोर्ट-मान्य A4 अधिकृत अर्ज काही सेकंदांत थेट मराठी व इंग्रजीत तयार करा व PDF डाऊनलोड करा.",
+      badge: "केवळ ₹३०/-",
+      badgeColor: "bg-[#F5EEDB]/25 text-[#F5EEDB] border-[#E8DFC9]/40",
+    },
+    {
+      icon: Building2,
+      title: "३. मालमत्ता कायदेशीर तपासणी (Property Legal Check)",
+      desc: "खरेदीपूर्वी जमीन, प्लॉट, फ्लॅटची कायदेशीर तपासणी — ७/१२, फेरफार, इंडेक्स २ व ई-कोर्ट्स वाद (eCourts Disputes) पडताळणी आणि शीर्षक रिस्क रिपोर्ट.",
+      badge: "नवीन सेवा",
+      badgeColor: "bg-[#FF6551] text-white border-transparent",
+    },
+    {
+      icon: FolderCheck,
+      title: "४. नागरिक सुरक्षित लॉकर व अर्ज ट्रॅकिंग (Citizen Vault)",
+      desc: "आपले तयार केलेले सर्व अर्ज, पावत्या व कायदेशीर कागदपत्रे सुरक्षित क्लाउडमध्ये सेव्ह राहतात आणि कधीही प्रिंट/डाऊनलोड करता येतात.",
+      badge: "क्लाउड सुरक्षित",
+      badgeColor: "bg-white/10 text-[#F5EEDB] border-white/20",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#F8FAFB] text-gray-900 font-sans antialiased flex flex-col justify-between">
+    <div className="flex min-h-screen bg-[#0B1628] font-sans antialiased">
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-      {/* ── Top Navigation Bar (Option 2: Navy / Cream / Coral) ── */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#11213C] text-[#FF6551] flex items-center justify-center shadow-xs">
-              <Scale className="w-5 h-5 text-[#FF6551]" />
+
+      {/* ── Left Branding & Consumer Portal Services Panel (Desktop) ── */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-10 xl:p-14 relative overflow-hidden bg-gradient-to-br from-[#11213C] via-[#0E1A30] to-[#070E1A] text-white">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+
+        {/* Top Header inside Left Panel */}
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+              <Scale className="w-6 h-6 text-[#FF6551]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-[#11213C] leading-none">
-                  Fastcase
-                </span>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#F5EEDB] text-[#11213C] uppercase border border-[#E8DFC9]">
-                  विधी कक्ष
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-500 font-medium">
-                Legal OS & Grievance Portal
-              </p>
+              <span className="font-extrabold text-2xl tracking-tight leading-none block">Fastcase</span>
+              <span className="text-[10px] text-[#F5EEDB] font-semibold uppercase tracking-widest">
+                नागरिक विधी कक्ष • Consumer Portal
+              </span>
             </div>
           </div>
 
           <a
             href="https://fastcase.in"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition shadow-2xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-gray-500" />
-            <span>Back to fastcase.in</span>
+            <ArrowLeft className="w-3.5 h-3.5 text-[#F5EEDB]" />
+            <span>fastcase.in</span>
           </a>
         </div>
-      </header>
 
-      {/* ── Main Centered Container Matching Exact Mockup ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+        {/* Middle Hero Showcase */}
+        <div className="max-w-xl relative z-10 my-auto py-6 space-y-6">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#F5EEDB]">
+              <Scale className="w-3.5 h-3.5 text-[#FF6551]" />
+              <span>१-क्लिक विधी सहाय्य, कोर्ट अर्ज व मालमत्ता पडताळणी</span>
+            </div>
+
+            <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight leading-[1.2] text-white">
+              सामान्य नागरिकांसाठी<br />
+              <span className="text-[#FF6551]">कायदेशीर संरक्षण</span> व अधिकृत कोर्ट अर्ज
+            </h2>
+
+            <p className="text-white/80 text-sm xl:text-base leading-relaxed">
+              आपली समस्या सांगा — कोर्ट-मान्य अधिकृत तक्रार अर्ज, कायदेशीर मार्गदर्शन आणि मालमत्ता तपासणी काही मिनिटांत मिळवा.
+            </p>
+          </div>
+
+          {/* 4 Core Services Showcase Cards */}
+          <div className="space-y-3">
+            <p className="text-[11px] font-black uppercase tracking-wider text-[#F5EEDB]/80">
+              कंझ्युमर पोर्टलवर उपलब्ध प्रमुख सेवा (Services Inside Portal):
+            </p>
+
+            <div className="grid gap-2.5">
+              {consumerServices.map((service, idx) => {
+                const Icon = service.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-2xl bg-white/[0.07] border border-white/15 hover:bg-white/[0.12] transition-colors flex items-start gap-3.5 shadow-xs"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <Icon className="w-5 h-5 text-[#FF6551]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
+                          {service.title}
+                        </h4>
+                        <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0", service.badgeColor)}>
+                          {service.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/70 leading-relaxed">
+                        {service.desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Guest Direct Access Pill */}
+          <div className="pt-1">
+            <Link
+              href="/citizen-portal"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6551] hover:bg-[#E8523E] text-white text-xs font-bold transition cursor-pointer shadow-md shadow-[#FF6551]/30"
+            >
+              <span>आधी पोर्टल एक्सप्लोर करा (Explore Portal as Guest)</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Bottom Trust Highlights */}
+        <div className="pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/70 relative z-10">
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF6551]" /> बार कौन्सिल व विधी नियमांनुसार
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF6551]" /> केवळ ₹३०/- कोर्ट अर्ज
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF6551]" /> १००% सुरक्षित भारतीय क्लाउड
+          </span>
+        </div>
+      </div>
+
+      {/* ── Right Form Panel ── */}
+      <div className="flex-1 flex flex-col justify-center items-center bg-[#F7F8F6] px-4 sm:px-8 lg:px-12 py-8 lg:py-12 overflow-y-auto">
         <div className="w-full max-w-md space-y-4">
+          {/* Mobile Header & Portal Services Preview */}
+          <div className="lg:hidden space-y-3 mb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#11213C] text-white flex items-center justify-center shadow-xs">
+                  <Scale className="w-4 h-4 text-[#FF6551]" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-base text-gray-950 block leading-none">Fastcase</span>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">नागरिक विधी कक्ष</span>
+                </div>
+              </div>
+              <a href="https://fastcase.in" className="text-[11px] font-bold text-gray-600 hover:text-gray-900 border border-gray-200 bg-white px-2.5 py-1 rounded-lg shadow-2xs">
+                fastcase.in
+              </a>
+            </div>
+
+            {/* Mobile Services Overview Card */}
+            <div className="p-3.5 rounded-2xl bg-[#11213C] text-white space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold text-[#F5EEDB]">पोर्टलवर काय उपलब्ध आहे:</span>
+                <Link href="/citizen-portal" className="text-[10px] font-bold text-[#FF6551] flex items-center gap-1">
+                  <span>एक्सप्लोर करा</span>
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 text-[10px] text-white/90">
+                <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
+                  <ShieldAlert className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <span className="font-semibold truncate">१. समस्या व उपाय</span>
+                </div>
+                <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
+                  <FileText className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <span className="font-semibold truncate">२. कोर्ट अर्ज (₹३०)</span>
+                </div>
+                <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
+                  <Building2 className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <span className="font-semibold truncate">३. मालमत्ता तपासणी</span>
+                </div>
+                <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
+                  <FolderCheck className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <span className="font-semibold truncate">४. जतन केलेले अर्ज</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -906,7 +1066,7 @@ export default function CitizenLoginPage() {
             )}
           </motion.div>
         </div>
-      </main>
+      </div>
 
       {/* Forgot Password / Account Recovery Modal */}
       {showForgotModal && (

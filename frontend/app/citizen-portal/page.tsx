@@ -54,14 +54,6 @@ export default function SimpleCitizenPortalPage() {
     setHydrated(true);
   }, []);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
-    if (!isAuthenticated && !hasToken) {
-      router.replace("/citizen-login");
-    }
-  }, [hydrated, isAuthenticated, router]);
-
   const [lang, setLang] = useState<Language>("mr");
 
   // ── 3 Main Navigation Tabs ────────────────────────────────────────────────
@@ -695,11 +687,13 @@ ${template.relief}
   };
 
   const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
-  if (!hydrated || (!isAuthenticated && !hasToken)) {
+  const isGuest = !isAuthenticated && !hasToken;
+
+  if (!hydrated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F6F5]">
         <div className="w-8 h-8 rounded-full border-2 border-[#11213C] border-t-[#FF6551] animate-spin mb-3" />
-        <p className="text-xs font-semibold text-gray-500">नागरिक लॉगिन कक्षात पुनर्निर्देशित करत आहे...</p>
+        <p className="text-xs font-semibold text-gray-500">नागरिक विधी कक्ष लोड होत आहे...</p>
       </div>
     );
   }
@@ -739,7 +733,7 @@ ${template.relief}
               <span className="hidden sm:inline">मुख्य वेबसाइट</span>
             </a>
 
-            {isAuthenticated && user && (
+            {isAuthenticated && user ? (
               <div className="flex items-center gap-1.5 pl-2">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F5EEDB]/60 text-[#11213C] border border-[#E8DFC9] text-xs font-bold">
                   <User className="w-3 h-3 text-[#FF6551]" />
@@ -753,10 +747,43 @@ ${template.relief}
                   बाहेर पडा
                 </button>
               </div>
+            ) : (
+              <div className="flex items-center gap-1.5 pl-2">
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-[#FF6551] hover:bg-[#E8523E] text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                >
+                  <User className="w-3 h-3" />
+                  <span>लॉगिन / नोंदणी</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
       </header>
+
+      {/* ── Guest Awareness Notification Strip ── */}
+      {isGuest && (
+        <div className="bg-gradient-to-r from-[#11213C] via-[#182C4E] to-[#11213C] text-white px-4 py-2 border-b border-[#1C3259]/60 shadow-2xs">
+          <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-[#FF6551] text-white font-black text-[10px] uppercase tracking-wider">
+                अतिथी कक्ष
+              </span>
+              <span className="text-[#F5EEDB]/90 font-medium text-[11px] sm:text-xs">
+                आपण मोफत कायदेशीर उपाय व मार्गदर्शन वाचू शकता. कोर्ट अर्ज तयार व डाऊनलोड करण्यासाठी लॉगिन करा.
+              </span>
+            </div>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="text-[11px] sm:text-xs font-bold text-[#FF6551] hover:text-[#FF8C7D] transition cursor-pointer flex items-center gap-1 underline underline-offset-2"
+            >
+              <span>येथे लॉगिन करा</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── 4 SMALL ATTRACTIVE TABS (Compact Segmented Control - Option 2: Navy/Cream/Coral) ── */}
       <div className="max-w-4xl w-full mx-auto px-4 pt-4 pb-2">
