@@ -103,11 +103,6 @@ export default function ConsumerPortal() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-            >
-              <span>उपाय शोधा</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
 
           {/* Quick Chips */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
