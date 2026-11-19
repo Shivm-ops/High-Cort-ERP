@@ -111,21 +111,21 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
-          className="relative overflow-hidden rounded-2xl p-5"
-          style={{ background: "linear-gradient(135deg, #013B36 0%, #014D46 60%, #0B3D2E 100%)", boxShadow: "0 8px 32px rgba(1,59,54,0.25)" }}
+          className="relative overflow-hidden rounded-2xl p-5 border border-[#1C3259]/60 shadow-lg"
+          style={{ background: "linear-gradient(135deg, #11213C 0%, #182C4E 50%, #1C3259 100%)", boxShadow: "0 8px 32px rgba(17,33,60,0.25)" }}
         >
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 80% 50%, rgba(110,231,183,0.08) 0%, transparent 70%)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 80% 50%, rgba(255,101,81,0.08) 0%, transparent 70%)" }} />
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Search className="w-4 h-4 text-emerald-300" />
-                <span className="text-white text-sm font-semibold">Global Workspace Search</span>
+                <Search className="w-4 h-4 text-[#FF6551]" />
+                <span className="text-[#F5EEDB] text-sm font-semibold">Global Workspace Search</span>
               </div>
               <h2 className="text-white/60 text-xs">Search across matters, clients, notices, drafts, and invoices.</h2>
             </div>
             <div className="w-full md:w-auto md:flex-1 md:max-w-2xl">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <input
                   type="text"
                   value={globalSearch}
@@ -136,12 +136,14 @@ export default function DashboardPage() {
                      }
                   }}
                   placeholder="Enter case number, client name, or document reference..."
-                  className="w-full h-11 pl-11 pr-16 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none"
-                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(110,231,183,0.2)" }}
+                  className="w-full h-11 pl-11 pr-20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(245,238,219,0.25)" }}
                 />
                 <button 
                   onClick={() => globalSearch && toast.info(`Searching for "${globalSearch}" across workspace...`)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg text-xs font-bold text-[#013B36]" style={{ background: "linear-gradient(135deg,#6EE7B7,#72D6C9)" }}>
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3.5 rounded-lg text-xs font-bold text-white shadow-sm transition-all hover:brightness-110 active:scale-95" 
+                  style={{ background: "#FF6551" }}
+                >
                   Search
                 </button>
               </div>
@@ -372,32 +374,32 @@ export default function DashboardPage() {
             {/* 6. Legal Billing Dashboard */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              className="bg-[#013B36] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden"
+              className="bg-[#11213C] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden border border-[#1C3259]/50"
             >
-              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 100% 0%, rgba(110,231,183,0.15) 0%, transparent 60%)" }} />
+              <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 100% 0%, rgba(255,101,81,0.12) 0%, transparent 60%)" }} />
               <h3 className="text-sm font-semibold text-white/90 mb-4 flex items-center gap-2 relative z-10">
-                <Wallet className="w-4 h-4 text-emerald-400" /> Billing Snapshot
+                <Wallet className="w-4 h-4 text-[#FF6551]" /> Billing Snapshot
               </h3>
               <div className="space-y-4 relative z-10">
                  <div>
                     <div className="text-xs text-white/60 mb-1">Total Outstanding</div>
-                    <div className="text-2xl font-bold text-emerald-300">{formatCurrency(metrics.billing.outstanding)}</div>
+                    <div className="text-2xl font-bold text-[#F5EEDB]">{formatCurrency(metrics.billing.outstanding)}</div>
                  </div>
                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
                     <div>
                        <div className="text-[10px] text-white/60 mb-0.5">Pending Hearing Fees</div>
-                       <div className="text-sm font-semibold">{formatCurrency(metrics.billing.pending_hearing_fees)}</div>
+                       <div className="text-sm font-semibold text-white/90">{formatCurrency(metrics.billing.pending_hearing_fees)}</div>
                     </div>
                     <div>
                        <div className="text-[10px] text-white/60 mb-0.5">Pending Filing Fees</div>
-                       <div className="text-sm font-semibold">{formatCurrency(metrics.billing.pending_filing_fees)}</div>
+                       <div className="text-sm font-semibold text-white/90">{formatCurrency(metrics.billing.pending_filing_fees)}</div>
                     </div>
                  </div>
                  <div className="pt-2">
                     <div className="flex justify-between items-center bg-white/5 rounded-lg p-2 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => router.push('/billing')}>
                        <div>
                          <div className="text-[10px] text-white/60">Advance Balance Pool</div>
-                         <div className="text-sm font-bold text-emerald-400">{formatCurrency(metrics.billing.advance_balance)}</div>
+                         <div className="text-sm font-bold text-[#FF6551]">{formatCurrency(metrics.billing.advance_balance)}</div>
                        </div>
                        <ArrowRightCircle className="w-5 h-5 text-white/40" />
                     </div>

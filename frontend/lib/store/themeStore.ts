@@ -48,7 +48,8 @@ export const useThemeStore = create<ThemeState>()(
       setTypography: (settings) => set((state) => ({ typography: { ...state.typography, ...settings } })),
     }),
     {
-      name: 'fastcase-theme-storage',
+      name: 'fastcase-theme-storage-v2',
+      version: 2,
     }
   )
 );

@@ -327,21 +327,21 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
         {/* Quick Add */}
         <button
           onClick={() => setShowNewClientModal(true)}
-          className="h-9 px-4 rounded-xl flex items-center gap-2 text-[13px] font-semibold transition-all duration-200 active:scale-95"
+          className="h-9 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition-all duration-200 active:scale-95 shadow-sm hover:brightness-105"
           style={{
-            background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}cc 100%)`,
-            boxShadow: `0 4px 14px ${accentColor}55`,
-            color: accentTextColor,
+            background: "#FF6551",
+            boxShadow: "0 2px 10px rgba(255, 101, 81, 0.35)",
+            color: "#FFFFFF",
           }}
           onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${accentColor}88`)
+            ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(255, 101, 81, 0.5)")
           }
           onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.boxShadow = `0 4px 14px ${accentColor}55`)
+            ((e.currentTarget as HTMLElement).style.boxShadow = "0 2px 10px rgba(255, 101, 81, 0.35)")
           }
         >
-          <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
-          <span className="hidden sm:block">{t("common.newClient")}</span>
+          <Plus className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+          <span className="hidden sm:block text-white">{t("common.newClient")}</span>
         </button>
 
         {/* User Profile */}

@@ -248,7 +248,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
               <select
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               >
                 {MAHARASHTRA_DISTRICTS.map((d) => (
                   <option key={d} value={d}>
@@ -264,7 +264,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={taluka}
                 onChange={(e) => setTaluka(e.target.value)}
                 placeholder="उदा. हवेली, मुळशी..."
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
             <div>
@@ -274,7 +274,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={villageCity}
                 onChange={(e) => setVillageCity(e.target.value)}
                 placeholder="उदा. वाकड, बावधन..."
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
           </div>
@@ -287,7 +287,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={surveyNumber}
                 onChange={(e) => setSurveyNumber(e.target.value)}
                 placeholder="उदा. 45/1A"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={gatNumber}
                 onChange={(e) => setGatNumber(e.target.value)}
                 placeholder="उदा. 102"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
             <div>
@@ -307,7 +307,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={ctsNumber}
                 onChange={(e) => setCtsNumber(e.target.value)}
                 placeholder="उदा. 1204"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 onChange={(e) => setCurrentOwnerName(e.target.value)}
                 placeholder="उदा. रमेश किसनराव पाटील"
                 required
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
             <div>
@@ -337,7 +337,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={previousOwners}
                 onChange={(e) => setPreviousOwners(e.target.value)}
                 placeholder="उदा. बाळकृष्ण कदम, आनंद जोशी"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
               />
             </div>
           </div>
@@ -437,7 +437,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black uppercase text-gray-800 tracking-wider flex items-center gap-2">
-                <Scale className="w-4 h-4 text-emerald-700" />
+                <Scale className="w-4 h-4 text-[#FF6551]" />
                 न्यायालयीन खटले व वाद (Court Case Search - eCourts India)
               </h3>
               <span className="text-xs text-gray-500 font-medium">
@@ -492,7 +492,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           {searchResult.land_records?.satbara_7_12 && (
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-3">
               <h3 className="text-xs font-black uppercase text-gray-800 tracking-wider flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-700" />
+                <FileText className="w-4 h-4 text-[#FF6551]" />
                 महाभूमी अधिकृत ७/१२ उतारा नोंदी (MahaBhumi 7/12 Satbara)
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-xl text-xs">
@@ -525,7 +525,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           {/* Document Upload & OCR Matching */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
             <h3 className="text-xs font-black uppercase text-gray-800 tracking-wider flex items-center gap-2">
-              <Upload className="w-4 h-4 text-emerald-700" />
+              <Upload className="w-4 h-4 text-[#FF6551]" />
               कागदपत्रे अपलोड व मजकूर पडताळणी (Upload Deeds & OCR Check)
             </h3>
             <p className="text-xs text-gray-500">
