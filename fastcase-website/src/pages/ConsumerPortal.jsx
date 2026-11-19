@@ -45,43 +45,43 @@ export default function ConsumerPortal() {
 
   return (
     <div className="min-h-screen bg-surface">
-      {/* ── Clean Hero Section ── */}
-      <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-[#0B251E] via-[#0D3027] to-[#081C16] text-white">
+      {/* ── Clean Hero Section (Option 2: Navy, Cream & Coral) ── */}
+      <section className="relative overflow-hidden pt-12 pb-16 bg-gradient-to-b from-[#11213C] via-[#0E1A2F] to-[#0B1628] text-white border-b border-[#1C3259]/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold">
-            <Scale className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FF6551]/20 border border-[#FF6551]/30 text-[#F5EEDB] text-xs font-bold">
+            <Scale className="w-3.5 h-3.5 text-[#FF6551]" />
             <span>सामान्य नागरिकांसाठी १-क्लिक विधी सहाय्य कक्ष</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight text-white">
             आपली समस्या सांगा — कायदेशीर उत्तर व अधिकृत अर्ज मिळवा
           </h1>
 
-          <p className="text-sm sm:text-base text-emerald-100/80 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-[#F5EEDB]/85 max-w-2xl mx-auto leading-relaxed">
             पोलीस ठाणे, सायबर सेल, ग्राहक मंच किंवा सरकारी कार्यालयात तक्रार कशी करावी हे सोप्या भाषेत समजून घ्या आणि कोर्ट-मान्य अधिकृत तक्रार अर्ज काही सेकंदांत मिळवा.
           </p>
 
           {/* Pricing Highlight Pill & Citizen Login */}
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <div className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-300/40 text-amber-200 px-4 py-1.5 rounded-full text-xs font-bold">
+            <div className="inline-flex items-center gap-2 bg-[#F5EEDB]/20 border border-[#F5EEDB]/40 text-[#F5EEDB] px-4 py-1.5 rounded-full text-xs font-bold">
               <span>💡 कायदेशीर मार्गदर्शन मोफत</span>
               <span>&bull;</span>
-              <span className="text-amber-100 font-black">अधिकृत कोर्ट अर्ज: केवळ ₹३०/-</span>
+              <span className="text-[#FF6551] font-black">अधिकृत कोर्ट अर्ज: केवळ ₹३०/-</span>
             </div>
 
             <a
               href={`${getErpUrl()}/citizen-portal`}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-500/30 hover:bg-emerald-500/40 text-emerald-100 text-xs font-bold border border-emerald-400/40 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#FF6551]/25 hover:bg-[#FF6551]/35 text-[#F5EEDB] text-xs font-bold border border-[#FF6551]/40 transition cursor-pointer"
             >
-              <Building2 className="w-3.5 h-3.5 text-amber-300" />
+              <Building2 className="w-3.5 h-3.5 text-[#FF6551]" />
               <span>नवीन: मालमत्ता कायदेशीर तपासणी (Property Legal Check)</span>
             </a>
 
             <a
               href={`${getErpUrl()}/citizen-login`}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-[#F5EEDB] text-xs font-bold border border-white/20 transition cursor-pointer"
             >
-              <User className="w-3.5 h-3.5 text-emerald-400" />
+              <User className="w-3.5 h-3.5 text-[#FF6551]" />
               <span>नागरिक लॉगिन / नोंदणी</span>
             </a>
           </div>
@@ -97,7 +97,12 @@ export default function ConsumerPortal() {
             />
             <button
               onClick={() => handleLaunch(inputVal)}
-              className="w-full sm:w-auto px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 flex-shrink-0 shadow-md"
+              className="w-full sm:w-auto px-6 py-3 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 flex-shrink-0 shadow-md shadow-[#FF6551]/20 cursor-pointer"
+            >
+              <span>उपाय शोधा</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
             >
               <span>उपाय शोधा</span>
               <ArrowRight className="w-4 h-4" />

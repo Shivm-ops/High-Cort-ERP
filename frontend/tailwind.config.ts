@@ -10,6 +10,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Option 2 Palette: Navy, Cream, Coral
+        navy: {
+          DEFAULT: "#11213C",
+          dark: "#0B1628",
+          light: "#1C3259",
+          surface: "#182C4E",
+        },
+        cream: {
+          DEFAULT: "#F5EEDB",
+          light: "#FBF9F4",
+          dark: "#E8DFC9",
+          surface: "#FAF6ED",
+        },
+        coral: {
+          DEFAULT: "#FF6551",
+          hover: "#E8523E",
+          light: "#FFF0EE",
+          dark: "#D73C27",
+        },
         // Sidebar
         sidebar: {
           DEFAULT: "var(--color-primary)",

@@ -8,20 +8,23 @@
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 72px;
   --header-height: 64px;
-  --sidebar-bg: #013B36;
-  --sidebar-teal: #014D46;
-  --sidebar-forest: #0B3D2E;
-  --mint: #6EE7B7;
-  --aqua: #72D6C9;
-  --workspace: #F7F8F6;
+  --sidebar-bg: #11213C;
+  --sidebar-teal: #1C3259;
+  --sidebar-forest: #0B1628;
+  --mint: #FF6551;
+  --aqua: #F5EEDB;
+  --workspace: #FBF9F4;
+  --color-navy: #11213C;
+  --color-cream: #F5EEDB;
+  --color-coral: #FF6551;
 
-  /* Theme Engine defaults (overridden by ThemeProvider) */
-  --color-primary: #013B36;
-  --color-primary-dark: #0B3D2E;
-  --color-primary-light: #014D46;
-  --color-accent: #6EE7B7;
-  --color-accent-dark: #34D399;
-  --color-accent-light: #A7F3D0;
+  /* Theme Engine defaults (Option 2: Navy + Cream + Coral) */
+  --color-primary: #11213C;
+  --color-primary-dark: #0B1628;
+  --color-primary-light: #1C3259;
+  --color-accent: #FF6551;
+  --color-accent-dark: #E8523E;
+  --color-accent-light: #FF8C7D;
   --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-size-base: 14px;
   --border-radius-base: 0.75rem;

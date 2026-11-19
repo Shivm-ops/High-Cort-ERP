@@ -191,16 +191,16 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* ── Title Banner ── */}
-      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-emerald-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#11213C] via-[#1C3259] to-[#0B1628] text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-[#1C3259]/60">
         <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-black">
-            <Building2 className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF6551]/20 border border-[#FF6551]/40 text-[#F5EEDB] text-xs font-black">
+            <Building2 className="w-3.5 h-3.5 text-[#FF6551]" />
             <span>महाराष्ट्र जमीन, प्लॉट व फ्लॅट टायटल तपासणी</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#F5EEDB]">
             मालमत्ता कायदेशीर तपासणी & कोर्ट केस सर्च
           </h2>
-          <p className="text-emerald-100/80 text-xs sm:text-sm max-w-2xl leading-relaxed">
+          <p className="text-[#F5EEDB]/85 text-xs sm:text-sm max-w-2xl leading-relaxed">
             जमीन, प्लॉट किंवा फ्लॅट खरेदी करण्यापूर्वी ७/१२ उतारा, महाभूमी नोंदी, चालू दिवाणी दावे (Civil Court Cases),
             बँक बोजा आणि मालकी हक्काची साखळी (Chain of Title) एकाच ठिकाणी तपासा.
           </p>
@@ -223,7 +223,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 className={cn(
                   "p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer",
                   propertyCategory === cat.id
-                    ? "border-emerald-600 bg-emerald-50/70 text-emerald-950 shadow-xs ring-2 ring-emerald-500/20"
+                    ? "border-[#FF6551] bg-[#F5EEDB]/40 text-[#11213C] shadow-xs ring-2 ring-[#FF6551]/20"
                     : "border-gray-200 bg-white hover:bg-gray-50 text-gray-800"
                 )}
               >
@@ -348,7 +348,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           <button
             type="submit"
             disabled={isSearching}
-            className="w-full sm:w-auto px-8 py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto px-8 py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-black text-xs rounded-xl shadow-md shadow-[#FF6551]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSearching ? (
               <>
@@ -357,7 +357,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
               </>
             ) : (
               <>
-                <Search className="w-4 h-4" />
+                <Search className="w-4 h-4 text-[#F5EEDB]" />
                 <span>कायदेशीर तपासणी अहवाल मिळवा (Execute Legal Check)</span>
               </>
             )}
@@ -373,11 +373,11 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
             className={cn(
               "rounded-2xl p-6 border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4",
               searchResult.risk_category === "records_found"
-                ? "bg-emerald-50 border-emerald-300 text-emerald-950"
+                ? "bg-[#F5EEDB]/40 border-emerald-300 text-emerald-950"
                 : searchResult.risk_category === "further_verification_required"
-                ? "bg-amber-50 border-amber-300 text-amber-950"
+                ? "bg-[#FFF8EE] border-amber-300 text-amber-950"
                 : searchResult.risk_category === "source_unavailable"
-                ? "bg-red-50 border-red-300 text-red-950"
+                ? "bg-[#FFF0EE] border-red-300 text-red-950"
                 : "bg-slate-50 border-slate-300 text-slate-900"
             )}
           >
@@ -402,9 +402,9 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 href={searchResult.report_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-800 text-white rounded-xl text-xs font-bold hover:bg-emerald-900 shadow-sm"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#11213C] hover:bg-[#0B1628] text-[#F5EEDB] rounded-xl text-xs font-bold shadow-sm border border-[#F5EEDB]/20"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-3.5 h-3.5 text-[#FF6551]" />
                 <span>PDF अहवाल डाउनलोड करा</span>
               </a>
             </div>
@@ -561,13 +561,13 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           </div>
 
           {/* Advocate Verification Request Card */}
-          <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100 rounded-2xl border border-emerald-300 p-6 shadow-sm space-y-4">
+          <div className="bg-gradient-to-r from-[#F5EEDB]/60 via-white to-[#F5EEDB]/40 rounded-2xl border border-[#E8DFC9] p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-700 text-white rounded-xl shadow-xs">
+              <div className="p-2.5 bg-[#11213C] text-[#FF6551] rounded-xl shadow-xs">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-gray-900">
+                <h3 className="text-sm font-black text-[#11213C]">
                   वकिलांमार्फत प्रत्यक्ष टायटल शोध व कायदेशीर सल्ला (Advocate Title Opinion)
                 </h3>
                 <p className="text-xs text-gray-600">
@@ -582,19 +582,19 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                   value={lawyerNotes}
                   onChange={(e) => setLawyerNotes(e.target.value)}
                   placeholder="आपली काही विशेष विचारणा असल्यास येथे लिहा (उदा. सदर जमिनीवर बँकेचे कर्ज आहे का, वारसा हक्काचा वाद आहे का)..."
-                  className="w-full p-3 bg-white border border-gray-300 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/30"
                   rows={2}
                 />
                 <button
                   onClick={handleRequestLawyer}
                   disabled={isRequestingLawyer}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isRequestingLawyer ? (
                     <span>नोंदणी सुरू आहे...</span>
                   ) : (
                     <>
-                      <FileCheck className="w-4 h-4" />
+                      <FileCheck className="w-4 h-4 text-[#F5EEDB]" />
                       <span>वकिलांची पडताळणी बुक करा (Book Advocate Verification)</span>
                     </>
                   )}

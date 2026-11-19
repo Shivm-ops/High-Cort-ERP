@@ -15,6 +15,7 @@ export interface TypographySettings {
 }
 
 export const PREDEFINED_THEMES = [
+  { id: "navy_coral", name: "Judicial Navy & Coral", primary: "#11213C", accent: "#FF6551", desc: "Classic Navy, Warm Cream & Coral", isLight: false },
   { id: "emerald", name: "Emerald Legal", primary: "#013B36", accent: "#6EE7B7", desc: "Modern Law Firm Style" },
   { id: "executive", name: "Executive Blue", primary: "#1E3A8A", accent: "#FFFFFF", desc: "Corporate & Arbitration" },
   { id: "supreme", name: "Supreme Black", primary: "#111827", accent: "#D4AF37", desc: "Senior Advocates & High Court" },
@@ -38,8 +39,8 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      activeThemeId: "emerald",
-      customColors: { primary: "#013B36", accent: "#6EE7B7" },
+      activeThemeId: "navy_coral",
+      customColors: { primary: "#11213C", accent: "#FF6551" },
       typography: { fontStyle: "Inter", fontSize: "13px", borderRadius: "0.75rem", layout: "comfortable" },
       
       setActiveThemeId: (id) => set({ activeThemeId: id }),

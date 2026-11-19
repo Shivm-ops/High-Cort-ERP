@@ -758,24 +758,24 @@ ${template.relief}
         </div>
       </header>
 
-      {/* ── 3 SMALL ATTRACTIVE TABS (Compact Segmented Control) ── */}
+      {/* ── 4 SMALL ATTRACTIVE TABS (Compact Segmented Control - Option 2: Navy/Cream/Coral) ── */}
       <div className="max-w-4xl w-full mx-auto px-4 pt-4 pb-2">
-        <div className="flex p-1 bg-white rounded-xl border border-gray-200 shadow-2xs max-w-xl mx-auto gap-1">
+        <div className="flex p-1 bg-white rounded-xl border border-gray-200 shadow-2xs max-w-2xl mx-auto gap-1">
           {/* Tab 1: समस्या व उपाय */}
           <button
             onClick={() => setActiveTab("solve")}
             className={cn(
               "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer",
               activeTab === "solve"
-                ? "bg-emerald-800 text-white shadow-xs"
+                ? "bg-[#11213C] text-[#F5EEDB] shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <Sparkles className="w-3.5 h-3.5 text-[#FF6551]" />
             <span>१. समस्या व उपाय</span>
           </button>
 
-          {/* Tab 2: अर्ज जनरेटर (₹४९) */}
+          {/* Tab 2: अर्ज जनरेटर (₹३०) */}
           <button
             onClick={() => {
               if (!isAuthenticated) {
@@ -787,11 +787,11 @@ ${template.relief}
             className={cn(
               "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer",
               activeTab === "draft"
-                ? "bg-emerald-800 text-white shadow-xs"
+                ? "bg-[#11213C] text-[#F5EEDB] shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <FileText className="w-3.5 h-3.5 text-emerald-300" />
+            <FileText className="w-3.5 h-3.5 text-[#FF6551]" />
             <span>२. अर्ज जनरेटर (₹३०)</span>
           </button>
 
@@ -807,14 +807,14 @@ ${template.relief}
             className={cn(
               "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer relative",
               activeTab === "saved"
-                ? "bg-emerald-800 text-white shadow-xs"
+                ? "bg-[#11213C] text-[#F5EEDB] shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <FileCheck className="w-3.5 h-3.5 text-cyan-300" />
+            <FileCheck className="w-3.5 h-3.5 text-[#FF6551]" />
             <span>३. माझे अर्ज</span>
             {savedDocs.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500 text-white text-[9px] font-black">
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#FF6551] text-white text-[9px] font-black">
                 {savedDocs.length}
               </span>
             )}
@@ -826,11 +826,11 @@ ${template.relief}
             className={cn(
               "flex-1 py-1.5 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-black cursor-pointer",
               activeTab === "property"
-                ? "bg-emerald-800 text-white shadow-xs"
+                ? "bg-[#11213C] text-[#F5EEDB] shadow-xs"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/60"
             )}
           >
-            <Building2 className="w-3.5 h-3.5 text-teal-300" />
+            <Building2 className="w-3.5 h-3.5 text-[#FF6551]" />
             <span>४. मालमत्ता तपासणी</span>
           </button>
         </div>

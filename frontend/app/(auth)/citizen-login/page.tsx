@@ -347,19 +347,19 @@ export default function CitizenLoginPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFB] text-gray-900 font-sans antialiased flex flex-col justify-between">
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-      {/* ── Top Navigation Bar ── */}
+      {/* ── Top Navigation Bar (Option 2: Navy / Cream / Coral) ── */}
       <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shadow-xs">
-              <Scale className="w-5 h-5 text-emerald-300" />
+            <div className="w-9 h-9 rounded-xl bg-[#11213C] text-[#FF6551] flex items-center justify-center shadow-xs">
+              <Scale className="w-5 h-5 text-[#FF6551]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-gray-900 leading-none">
+                <span className="font-extrabold text-base tracking-tight text-[#11213C] leading-none">
                   Fastcase
                 </span>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 uppercase">
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#F5EEDB] text-[#11213C] uppercase border border-[#E8DFC9]">
                   विधी कक्ष
                 </span>
               </div>
@@ -561,7 +561,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -713,7 +713,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -765,7 +765,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
