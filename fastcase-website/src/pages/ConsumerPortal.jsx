@@ -110,7 +110,7 @@ export default function ConsumerPortal() {
               <a
                 key={idx}
                 href={portalUrl}
-                className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-emerald-200 text-xs font-semibold border border-white/10 transition"
+                className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[#F5EEDB] text-xs font-semibold border border-white/10 transition"
               >
                 {issue.label}
               </a>
@@ -123,7 +123,7 @@ export default function ConsumerPortal() {
       <section className="py-16 bg-white dark:bg-[#0C1D26] border-b border-line">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-2">
-            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase">
+            <span className="px-3 py-1 rounded-full bg-[#FF6551]/15 text-[#FF6551] text-xs font-black uppercase">
               सोपी ३-कलमी पद्धत
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-ink">
@@ -137,7 +137,7 @@ export default function ConsumerPortal() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Step 1 */}
             <div className="p-6 rounded-2xl bg-surface dark:bg-[#122734] border border-line space-y-3 shadow-2xs">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-900 font-black text-base flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#11213C] text-[#F5EEDB] font-black text-base flex items-center justify-center">
                 १
               </div>
               <h3 className="font-bold text-base text-ink">
@@ -150,7 +150,7 @@ export default function ConsumerPortal() {
 
             {/* Step 2 */}
             <div className="p-6 rounded-2xl bg-surface dark:bg-[#122734] border border-line space-y-3 shadow-2xs">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 font-black text-base flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#FF6551]/15 text-[#FF6551] font-black text-base flex items-center justify-center">
                 २
               </div>
               <h3 className="font-bold text-base text-ink">
@@ -163,7 +163,7 @@ export default function ConsumerPortal() {
 
             {/* Step 3 */}
             <div className="p-6 rounded-2xl bg-surface dark:bg-[#122734] border border-line space-y-3 shadow-2xs">
-              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-900 font-black text-base flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#11213C] text-[#FF6551] font-black text-base flex items-center justify-center">
                 ३
               </div>
               <h3 className="font-bold text-base text-ink">
@@ -176,18 +176,18 @@ export default function ConsumerPortal() {
           </div>
 
           {/* CTA Box */}
-          <div className="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-8 sm:p-10 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="bg-gradient-to-r from-[#11213C] via-[#0E1A2F] to-[#0B1628] border border-[#1C3259] rounded-3xl p-8 sm:p-10 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
             <div className="space-y-1 text-center sm:text-left">
-              <h3 className="text-xl sm:text-2xl font-black">
+              <h3 className="text-xl sm:text-2xl font-black text-white">
                 आत्ताच आपली समस्या सोडवा
               </h3>
-              <p className="text-xs sm:text-sm text-emerald-100">
+              <p className="text-xs sm:text-sm text-[#F5EEDB]/80">
                 १-क्लिकमध्ये कायदेशीर मार्गदर्शन व अधिकृत तक्रार अर्ज तयार करा.
               </p>
             </div>
             <a
               href={portalUrl}
-              className="px-8 py-3.5 bg-white text-emerald-950 font-black text-xs rounded-xl hover:bg-emerald-50 transition shadow-lg flex-shrink-0 flex items-center gap-2"
+              className="px-8 py-3.5 bg-[#FF6551] text-white font-black text-xs rounded-xl hover:bg-[#E8523E] transition shadow-lg flex-shrink-0 flex items-center gap-2"
             >
               <span>कंझ्युमर पोर्टल उघडा →</span>
             </a>

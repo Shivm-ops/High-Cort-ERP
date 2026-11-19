@@ -205,7 +205,7 @@
   .legal-prose h3 {
     @apply text-base font-semibold mt-6 mb-3;
     font-family: 'Manrope', 'Inter', sans-serif;
-    color: #013B36;
+    color: #11213C;
   }
 
   .legal-prose p {
@@ -240,12 +240,12 @@
   }
 
   .legal-prose a {
-    color: #014D46;
+    color: #FF6551;
     text-decoration: underline;
     text-underline-offset: 2px;
   }
   .legal-prose a:hover {
-    color: #013B36;
+    color: #E8523E;
   }
 }
 

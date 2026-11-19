@@ -395,8 +395,8 @@ export default function CitizenLoginPage() {
               <div className="space-y-4">
                 {/* 1. Top Pill Badge */}
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-extrabold border border-emerald-200/90 shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5EEDB] text-[#11213C] text-[11px] font-extrabold border border-[#E8DFC9] shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#FF6551]" />
                     <span className="uppercase tracking-wider">ACCOUNT SIGN IN</span>
                   </div>
                 </div>
@@ -460,11 +460,11 @@ export default function CitizenLoginPage() {
                     className={cn(
                       "py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer",
                       authChannel === "email"
-                        ? "bg-white text-emerald-950 font-black shadow-xs border border-gray-200/80"
+                        ? "bg-white text-[#11213C] font-black shadow-xs border border-gray-200/80"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
                     )}
                   >
-                    <Mail className="w-4 h-4 text-emerald-700" />
+                    <Mail className="w-4 h-4 text-[#FF6551]" />
                     <span>Email Address</span>
                   </button>
 
@@ -477,11 +477,11 @@ export default function CitizenLoginPage() {
                     className={cn(
                       "py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer",
                       authChannel === "mobile"
-                        ? "bg-white text-emerald-950 font-black shadow-xs border border-gray-200/80"
+                        ? "bg-white text-[#11213C] font-black shadow-xs border border-gray-200/80"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
                     )}
                   >
-                    <Smartphone className="w-4 h-4 text-emerald-700" />
+                    <Smartphone className="w-4 h-4 text-[#FF6551]" />
                     <span>Mobile OTP</span>
                   </button>
                 </div>
@@ -495,7 +495,7 @@ export default function CitizenLoginPage() {
                       className={cn(
                         "pb-1 transition font-bold cursor-pointer relative",
                         authMethod === "otp"
-                          ? "text-emerald-900 font-black border-b-2 border-emerald-700"
+                          ? "text-[#11213C] font-black border-b-2 border-[#11213C]"
                           : "text-gray-500 hover:text-gray-800"
                       )}
                     >
@@ -508,7 +508,7 @@ export default function CitizenLoginPage() {
                       className={cn(
                         "pb-1 transition font-bold cursor-pointer relative",
                         authMethod === "password"
-                          ? "text-emerald-900 font-black border-b-2 border-emerald-700"
+                          ? "text-[#11213C] font-black border-b-2 border-[#11213C]"
                           : "text-gray-500 hover:text-gray-800"
                       )}
                     >
@@ -536,7 +536,7 @@ export default function CitizenLoginPage() {
                         <button
                           type="button"
                           onClick={() => toast.info("Please contact support@fastcase.in for account recovery.")}
-                          className="text-[11px] font-bold text-emerald-700 hover:underline cursor-pointer"
+                          className="text-[11px] font-bold text-[#FF6551] hover:underline cursor-pointer"
                         >
                           Forgot email?
                         </button>
@@ -550,7 +550,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setEmailInput(e.target.value)}
                           placeholder="name@example.com"
                           required
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-500/10 transition"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 font-medium mt-1.5">
@@ -608,7 +608,7 @@ export default function CitizenLoginPage() {
                               otpRefs.current[idx - 1]?.focus();
                             }
                           }}
-                          className="w-11 h-12 text-center text-lg font-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 transition"
+                          className="w-11 h-12 text-center text-lg font-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#11213C] focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 transition"
                         />
                       ))}
                     </div>
@@ -626,7 +626,7 @@ export default function CitizenLoginPage() {
                         <button
                           type="button"
                           onClick={() => handleSendOtp()}
-                          className="font-bold text-emerald-800 hover:underline cursor-pointer"
+                          className="font-bold text-[#FF6551] hover:underline cursor-pointer"
                         >
                           Resend OTP
                         </button>
@@ -639,7 +639,7 @@ export default function CitizenLoginPage() {
                       type="button"
                       onClick={handleVerifyOtp}
                       disabled={loading || otpDigits.join("").length !== 6}
-                      className="w-full py-3.5 bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -671,7 +671,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setEmailInput(e.target.value)}
                           placeholder="name@example.com"
                           required
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-500/10 transition"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
                         />
                       </div>
                     </div>
@@ -684,7 +684,7 @@ export default function CitizenLoginPage() {
                         <button
                           type="button"
                           onClick={() => setShowForgotModal(true)}
-                          className="text-[11px] font-bold text-emerald-700 hover:underline cursor-pointer"
+                          className="text-[11px] font-bold text-[#FF6551] hover:underline cursor-pointer"
                         >
                           Forgot password?
                         </button>
@@ -698,7 +698,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setPasswordInput(e.target.value)}
                           placeholder="••••••••"
                           required
-                          className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-500/10 transition"
+                          className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
                         />
                         <button
                           type="button"
@@ -754,7 +754,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setPhoneInput(e.target.value)}
                           placeholder="+91 98765 43210"
                           required
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-500/10 transition"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 font-medium mt-1.5">
@@ -788,7 +788,7 @@ export default function CitizenLoginPage() {
                   <button
                     type="button"
                     onClick={() => setView("register")}
-                    className="font-bold text-emerald-800 hover:underline cursor-pointer"
+                    className="font-bold text-[#FF6551] hover:underline cursor-pointer"
                   >
                     Create free account →
                   </button>
@@ -800,8 +800,8 @@ export default function CitizenLoginPage() {
               ════════════════════════════════════════════════════════════════ */
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-extrabold border border-emerald-200/90 shadow-2xs">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5EEDB] text-[#11213C] text-[11px] font-extrabold border border-[#E8DFC9] shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-[#FF6551]" />
                     <span className="uppercase tracking-wider">CREATE ACCOUNT</span>
                   </div>
                   <h2 className="text-2xl font-black text-gray-950 tracking-tight">
@@ -821,7 +821,7 @@ export default function CitizenLoginPage() {
                       {...registerCitizen("fullName")}
                       type="text"
                       placeholder="उदा. रमेश शंकर पाटील"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-emerald-700 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
                     />
                     {citizenErrors.fullName && (
                       <p className="text-[10px] text-red-500 mt-0.5">{citizenErrors.fullName.message}</p>
@@ -836,7 +836,7 @@ export default function CitizenLoginPage() {
                       {...registerCitizen("email")}
                       type="email"
                       placeholder="name@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-emerald-700 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
                     />
                     {citizenErrors.email && (
                       <p className="text-[10px] text-red-500 mt-0.5">{citizenErrors.email.message}</p>
@@ -852,7 +852,7 @@ export default function CitizenLoginPage() {
                         {...registerCitizen("phone")}
                         type="tel"
                         placeholder="९८२२००११२२"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-emerald-700 focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
                       />
                     </div>
                     <div>
@@ -863,7 +863,7 @@ export default function CitizenLoginPage() {
                         {...registerCitizen("city")}
                         type="text"
                         placeholder="पुणे / मुंबई"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-emerald-700 focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -876,7 +876,7 @@ export default function CitizenLoginPage() {
                       {...registerCitizen("password")}
                       type="password"
                       placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-emerald-700 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
                     />
                     {citizenErrors.password && (
                       <p className="text-[10px] text-red-500 mt-0.5">{citizenErrors.password.message}</p>
@@ -886,7 +886,7 @@ export default function CitizenLoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
+                    className="w-full py-3 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
                   >
                     {loading ? "Creating Account..." : "Create Account →"}
                   </button>
@@ -896,7 +896,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="button"
                       onClick={() => setView("login")}
-                      className="font-bold text-emerald-800 hover:underline cursor-pointer"
+                      className="font-bold text-[#FF6551] hover:underline cursor-pointer"
                     >
                       Sign In →
                     </button>
@@ -917,8 +917,8 @@ export default function CitizenLoginPage() {
             className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-xl border border-gray-100 space-y-4"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800">
-                <Scale className="w-5 h-5 text-emerald-700" />
+              <div className="w-10 h-10 rounded-full bg-[#F5EEDB] flex items-center justify-center text-[#11213C] border border-[#E8DFC9]">
+                <Scale className="w-5 h-5 text-[#FF6551]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-gray-900">Reset Credentials</h3>
@@ -932,7 +932,7 @@ export default function CitizenLoginPage() {
             <button
               type="button"
               onClick={() => setShowForgotModal(false)}
-              className="w-full py-2.5 bg-emerald-900 text-white font-bold text-xs rounded-xl hover:bg-emerald-950 transition cursor-pointer"
+              className="w-full py-2.5 bg-[#11213C] text-white font-bold text-xs rounded-xl hover:bg-[#182C4E] transition cursor-pointer"
             >
               Close
             </button>

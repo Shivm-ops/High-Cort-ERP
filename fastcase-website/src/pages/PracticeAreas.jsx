@@ -122,7 +122,7 @@ export default function PracticeAreas() {
       {/* ── COURT-SUITE HERO ────────────────────────────────────────── */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)'
+          background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)'
         }}
         className="pt-32 pb-20 text-white relative overflow-hidden"
       >

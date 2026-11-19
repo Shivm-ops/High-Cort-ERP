@@ -71,7 +71,7 @@ export default function Contact() {
   return (
     <div className="bg-[#F8FAFC]">
       {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }} className="pt-28 pb-16 text-white relative overflow-hidden">
+      <section style={{ background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)' }} className="pt-28 pb-16 text-white relative overflow-hidden">
         <div className="section-container text-center max-w-3xl mx-auto relative z-10">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5 shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />

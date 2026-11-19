@@ -57,18 +57,18 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans selection:bg-[#6EE7B7] selection:text-[#013B36]">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans selection:bg-[#FF6551] selection:text-white">
       {/* ── TOP NAVIGATION ────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#013B36] to-[#014D46] flex items-center justify-center shadow-md shadow-[#013B36]/20 transition-transform group-hover:scale-105">
-              <Scale className="w-5 h-5 text-[#6EE7B7]" strokeWidth={2.5} />
+            <div className="w-10 h-10 rounded-xl bg-[#11213C] flex items-center justify-center shadow-md shadow-[#11213C]/20 transition-transform group-hover:scale-105">
+              <Scale className="w-5 h-5 text-[#FF6551]" strokeWidth={2.5} />
             </div>
             <div>
               <div className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-1">
-                Fast<span className="text-[#014D46]">case</span>
+                Fast<span className="text-[#FF6551]">case</span>
               </div>
               <div className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
                 Fastcase Platform
@@ -78,10 +78,10 @@ export default function LandingPage() {
 
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-[14px] font-semibold text-slate-600">
-            <a href="#features" className="hover:text-[#014D46] transition-colors">Features</a>
-            <a href="#pillars" className="hover:text-[#014D46] transition-colors">Practice Areas</a>
-            <a href="#showcase" className="hover:text-[#014D46] transition-colors">Workspace</a>
-            <a href="#faq" className="hover:text-[#014D46] transition-colors">FAQ</a>
+            <a href="#features" className="hover:text-[#11213C] transition-colors">Features</a>
+            <a href="#pillars" className="hover:text-[#11213C] transition-colors">Practice Areas</a>
+            <a href="#showcase" className="hover:text-[#11213C] transition-colors">Workspace</a>
+            <a href="#faq" className="hover:text-[#11213C] transition-colors">FAQ</a>
           </nav>
 
           {/* Action Buttons */}
@@ -94,7 +94,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/register"
-              className="px-5 py-2.5 rounded-xl bg-[#013B36] hover:bg-[#014D46] text-white font-semibold text-sm transition-all shadow-md shadow-[#013B36]/20 hover:shadow-lg"
+              className="px-5 py-2.5 rounded-xl bg-[#FF6551] hover:bg-[#E8523E] text-white font-semibold text-sm transition-all shadow-md shadow-[#FF6551]/25 hover:shadow-lg"
             >
               Registration
             </Link>
@@ -145,7 +145,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/register"
-                className="w-full text-center py-2.5 rounded-xl bg-[#013B36] text-white font-semibold text-sm"
+                className="w-full text-center py-2.5 rounded-xl bg-[#FF6551] hover:bg-[#E8523E] text-white font-semibold text-sm"
               >
                 Registration
               </Link>
@@ -160,14 +160,14 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Copy */}
             <div>
-              <div className="inline-flex items-center gap-2 bg-[#013B36]/10 border border-[#013B36]/20 text-[#013B36] text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5 mb-6">
-                <Gavel className="w-3.5 h-3.5 text-amber-500" />
+              <div className="inline-flex items-center gap-2 bg-[#F5EEDB] border border-[#E8DFC9] text-[#11213C] text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5 mb-6">
+                <Gavel className="w-3.5 h-3.5 text-[#FF6551]" />
                 LEGAL ERP FOR INDIAN ADVOCATES
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-[46px] font-[900] text-slate-900 leading-[1.22] tracking-tight mb-5">
                 Everything Your Legal Practice Needs,{" "}
-                <span className="text-[#014D46]">Unified.</span>
+                <span className="text-[#FF6551]">Unified.</span>
               </h1>
 
               <p className="text-[16px] sm:text-[17px] text-slate-600 leading-relaxed mb-8 max-w-xl">
@@ -178,7 +178,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap items-center gap-4 mb-8">
                 <Link
                   href="/register"
-                  className="px-7 py-3 rounded-xl bg-[#013B36] hover:bg-[#014D46] text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#013B36]/25 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                  className="px-7 py-3 rounded-xl bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-[#FF6551]/25 hover:shadow-xl hover:-translate-y-0.5 transition-all"
                 >
                   Registration <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -245,7 +245,7 @@ export default function LandingPage() {
                 key={title}
                 className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200/90 shadow-xs"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#013B36]/10 text-[#013B36] flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#F5EEDB] text-[#11213C] flex items-center justify-center flex-shrink-0">
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
@@ -262,7 +262,7 @@ export default function LandingPage() {
       <section id="pillars" className="py-16 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-[11px] font-bold text-[#013B36] uppercase tracking-widest bg-[#013B36]/10 px-3.5 py-1 rounded-full border border-[#013B36]/20">
+            <span className="text-[11px] font-bold text-[#11213C] uppercase tracking-widest bg-[#F5EEDB] px-3.5 py-1 rounded-full border border-[#E8DFC9]">
               Core Pillars
             </span>
             <h2 className="text-2xl sm:text-3xl font-[800] text-slate-900 mt-3">
@@ -301,7 +301,7 @@ export default function LandingPage() {
                 title: "Privileged Evidence Vault",
                 desc: "Section 126 Evidence Act compliant encryption isolating client files in Indian cloud datacenters.",
                 tag: "Security",
-                color: "text-[#013B36] bg-[#013B36]/10 border-[#013B36]/20",
+                color: "text-[#11213C] bg-[#F5EEDB] border-[#E8DFC9]",
               },
             ].map((p) => {
               const Icon = p.icon;
@@ -337,7 +337,7 @@ export default function LandingPage() {
       <section id="showcase" className="py-16 bg-slate-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-[11px] font-bold text-[#013B36] uppercase tracking-widest bg-[#013B36]/10 px-3.5 py-1 rounded-full border border-[#013B36]/20">
+            <span className="text-[11px] font-bold text-[#11213C] uppercase tracking-widest bg-[#F5EEDB] px-3.5 py-1 rounded-full border border-[#E8DFC9]">
               Interactive Workspace
             </span>
             <h2 className="text-2xl sm:text-3xl font-[800] text-slate-900 mt-3">
@@ -359,7 +359,7 @@ export default function LandingPage() {
                   onClick={() => setActiveTab(idx)}
                   className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all ${
                     isActive
-                      ? "bg-[#013B36] text-white shadow-md shadow-[#013B36]/20"
+                      ? "bg-[#11213C] text-white shadow-md shadow-[#11213C]/20"
                       : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                   }`}
                 >
@@ -395,7 +395,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CALL TO ACTION BANNER ──────────────────────────────── */}
-      <section className="py-16 bg-gradient-to-br from-[#013B36] to-[#014D46] text-white">
+      <section className="py-16 bg-gradient-to-br from-[#11213C] to-[#182C4E] text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-[900] tracking-tight mb-4">
             Ready to Streamline Your High Court & District Practice?
@@ -406,7 +406,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/register"
-              className="px-8 py-3.5 rounded-xl bg-[#6EE7B7] text-[#013B36] font-bold text-sm shadow-lg hover:shadow-xl hover:bg-[#86efac] transition-all"
+              className="px-8 py-3.5 rounded-xl bg-[#FF6551] text-white font-bold text-sm shadow-lg hover:shadow-xl hover:bg-[#E8523E] transition-all"
             >
               Start 14-Day Free Trial
             </Link>
@@ -424,8 +424,8 @@ export default function LandingPage() {
       <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#013B36] flex items-center justify-center">
-              <Scale className="w-4 h-4 text-[#6EE7B7]" />
+            <div className="w-8 h-8 rounded-lg bg-[#11213C] flex items-center justify-center">
+              <Scale className="w-4 h-4 text-[#FF6551]" />
             </div>
             <div>
               <span className="font-bold text-white text-sm">Fastcase</span>

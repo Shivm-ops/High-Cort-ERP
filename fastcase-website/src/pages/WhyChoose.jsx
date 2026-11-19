@@ -82,7 +82,7 @@ export default function WhyChoose() {
   return (
     <div>
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }} className="pt-32 pb-20">
+      <section style={{ background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)' }} className="pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
             Why Choose Fastcase?
@@ -171,14 +171,14 @@ export default function WhyChoose() {
       {/* Data Security Highlight */}
       <section className="section-padding bg-white border-t border-line">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="card p-8 md:p-12 text-white" style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }}>
+          <div className="card p-8 md:p-12 text-white" style={{ background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)' }}>
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div>
-                <Shield className="w-14 h-14 text-emerald-200 mb-5" />
+                <Shield className="w-14 h-14 text-[#FF6551] mb-5" />
                 <h2 className="text-2xl md:text-3xl font-heading font-bold mb-4">
                   Your Data is Safe with Fastcase
                 </h2>
-                <p className="text-emerald-100/90 leading-relaxed mb-6">
+                <p className="text-slate-200/90 leading-relaxed mb-6">
                   We implement enterprise-grade security across every layer of the platform.
                   Your client data, legal documents, and business information are protected
                   with the highest standards of security.
@@ -201,8 +201,8 @@ export default function WhyChoose() {
                   'Security Monitoring',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-300 flex-shrink-0" />
-                    <span className="text-sm text-blue-100">{item}</span>
+                    <CheckCircle className="w-4 h-4 text-[#FF6551] flex-shrink-0" />
+                    <span className="text-sm text-slate-200">{item}</span>
                   </div>
                 ))}
               </div>
@@ -212,7 +212,7 @@ export default function WhyChoose() {
       </section>
 
       {/* CTA */}
-      <section className="section-padding-sm border-t border-line" style={{ background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)' }}>
+      <section className="section-padding-sm border-t border-line" style={{ background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)' }}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading font-[800] text-3xl tracking-tight text-white mb-4">
             Make the Switch to Fastcase

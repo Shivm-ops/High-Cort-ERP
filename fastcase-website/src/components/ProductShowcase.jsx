@@ -13,7 +13,7 @@ const tabs = [
     img: '/screenshots/dashboard.png',
     color: 'text-primary',
     bg: 'bg-primary/8',
-    accent: '#013B36',
+    accent: '#11213C',
   },
   {
     id: 'case',

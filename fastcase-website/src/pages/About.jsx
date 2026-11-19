@@ -88,7 +88,7 @@ export default function About() {
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #021816 0%, #013B36 55%, #074E47 100%)'
+          background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)'
         }}
         className="pt-28 pb-20 text-white relative overflow-hidden"
       >
@@ -198,7 +198,7 @@ export default function About() {
               <div key={m.name} className="bg-[#F8FAFC] rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                 <div>
                   <div className="flex items-center gap-3.5 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-[#014D46] text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-[#0B1628] text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
                       {m.initials}
                     </div>
                     <div className="min-w-0">
@@ -244,7 +244,7 @@ export default function About() {
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Registered Corporate Office</p>
                 <div className="flex items-start gap-2.5 text-slate-700 text-sm leading-relaxed">
-                  <MapPin className="w-4 h-4 text-[#0EA5A4] flex-shrink-0 mt-1" />
+                  <MapPin className="w-4 h-4 text-[#FF6551] flex-shrink-0 mt-1" />
                   <address className="not-italic">
                     B4/5, Omkar Plaza, Rajaram Road,<br />
                     Near ICICI Bank, E Ward, Shahupuri,<br />
