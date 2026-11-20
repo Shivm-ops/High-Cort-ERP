@@ -96,7 +96,7 @@ const faqs = [
     questions: [
       {
         q: 'How do I get support?',
-        a: 'Fastcase provides support via email at support@Fastcase.in. You can also use the Contact form on our website. Our support team is available during business hours (Monday–Saturday, 9 AM – 6 PM IST) to assist with technical issues, onboarding, and training.',
+        a: 'Fastcase provides support via email at support@fastcase.in. You can also use the Contact form on our website. Our support team is available during business hours (Monday–Saturday, 9 AM – 6 PM IST) to assist with technical issues, onboarding, and training.',
       },
       {
         q: 'How do I raise a grievance?',
@@ -181,8 +181,8 @@ export default function FAQ() {
               <Link to="/contact" className="btn-primary text-sm px-6 py-2.5">
                 Contact Us <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-              <a href="mailto:support@Fastcase.in" className="btn-secondary text-sm px-6 py-2.5">
-                support@Fastcase.in
+              <a href="mailto:support@fastcase.in" className="btn-secondary text-sm px-6 py-2.5">
+                support@fastcase.in
               </a>
             </div>
           </div>

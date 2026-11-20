@@ -1,187 +1,146 @@
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Link } from 'react-router-dom';
+import { ShieldCheck, Lock, Database, EyeOff, UserCheck, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   return (
     <LegalPageLayout
-      title="Privacy Policy"
-      subtitle="How Fastcase collects, uses, and protects your personal and legal data."
-      lastUpdated="June 1, 2025"
+      title="Privacy & Data Protection Policy"
+      subtitle="How Fastcase safeguards advocate credentials, client case records, and confidential legal archives in compliance with Indian privacy laws."
+      lastUpdated="November 20, 2026"
     >
-      <h2>1. Introduction</h2>
+      {/* ── Key Highlights Banner ── */}
+      <div className="not-prose grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">
+            <Database className="w-3.5 h-3.5 text-emerald-600" /> 100% Indian Data Centers
+          </div>
+          <p className="text-xs text-slate-700 leading-relaxed">
+            All legal pleadings, evidence files, and case notes are stored exclusively within sovereign data centers located in India.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
+            <Lock className="w-3.5 h-3.5 text-[#013B36]" /> AES-256 Encryption
+          </div>
+          <p className="text-xs text-slate-700 leading-relaxed">
+            End-to-end encryption in transit (TLS 1.3) and AES-256 cryptographic protection at rest for all stored attachments.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
+            <EyeOff className="w-3.5 h-3.5 text-[#013B36]" /> Zero Data Sale
+          </div>
+          <p className="text-xs text-slate-700 leading-relaxed">
+            We never sell, rent, or monetize advocate or client information. You retain 100% ownership over all uploaded content.
+          </p>
+        </div>
+      </div>
+
+      <h2>1. Introduction &amp; Statutory Framework</h2>
       <p>
-        SOSM Services Private Limited ("Company", "we", "us", or "our") operates the Fastcase platform ("Fastcase", "Platform", "Service"). This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use Fastcase.
+        <strong>SOSM Services Private Limited</strong> ("Company", "we", "us", or "our") operates <strong>Fastcase</strong>. We are committed to safeguarding the constitutional right to privacy and maintaining rigorous standards of legal data confidentiality in accordance with:
       </p>
+      <ul>
+        <li>The Digital Personal Data Protection Act, 2023 (DPDP Act).</li>
+        <li>The Information Technology Act, 2000, and Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011.</li>
+        <li>Bar Council of India Professional Conduct Standards concerning client confidentiality and privileged communications.</li>
+      </ul>
+
+      <h2>2. Roles under Indian Privacy Law</h2>
+      <div className="not-prose my-6 border border-slate-200 rounded-2xl p-5 bg-slate-50 space-y-4">
+        <div>
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-[#013B36]" /> The Advocate as the Data Fiduciary (Controller)
+          </h3>
+          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+            When you enter client names, case briefs, KYC records, or evidence files into Fastcase, you (or your law firm) act as the Data Fiduciary. You determine the lawful purpose for processing client data under the advocate-client mandate.
+          </p>
+        </div>
+        <div className="pt-3 border-t border-slate-200/80">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#059669]" /> Fastcase as the Data Processor
+          </h3>
+          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+            Fastcase acts strictly as a technological Data Processor. We store, index, and retrieve data strictly on your instructions to provide practice management tools. We do not access or process client case files for any secondary commercial purposes.
+          </p>
+        </div>
+      </div>
+
+      <h2>3. Information We Collect</h2>
+
+      <h3>3.1 Advocate Account Information</h3>
+      <ul>
+        <li>Full Name, State Bar Council Enrollment Number, and legal chamber address.</li>
+        <li>Official Email address, verified mobile phone number, and GSTIN (for tax invoicing).</li>
+        <li>Encrypted authentication credentials (passwords hashed using modern argon2/bcrypt algorithms).</li>
+      </ul>
+
+      <h3>3.2 Legal Matter &amp; Case Data (Managed by User)</h3>
+      <ul>
+        <li>Client contact records, case numbers (CNR, Suit No., Writ Petition No.), court listings, and hearing dates.</li>
+        <li>Pleadings, affidavits, evidence files, and court daily orders uploaded for case preparation.</li>
+        <li>Professional fee invoices and payment records generated through the platform.</li>
+      </ul>
+
+      <h3>3.3 Technical &amp; System Metadata</h3>
+      <ul>
+        <li>Session IP address, browser type, device operating system, and system audit timestamps to detect unauthorized login attempts.</li>
+      </ul>
+
+      <h2>4. How We Utilize Your Information</h2>
+      <p>All information processed on Fastcase is used strictly for operational purposes:</p>
+      <ul>
+        <li>Authenticating your access and enforcing role-based team permissions across your legal chambers.</li>
+        <li>Synchronizing hearing schedules with public eCourts cause lists to notify you of upcoming boards.</li>
+        <li>Dispatching client reminders, fee receipts, and hearing updates via automated WhatsApp/SMS notifications.</li>
+        <li>Generating compliant GST tax invoices for your Fastcase subscriptions.</li>
+        <li>Preventing security intrusions, credential stuffing, and technical anomalies.</li>
+      </ul>
+
+      <h2>5. Strict Non-Disclosure &amp; Sub-Processors</h2>
       <p>
-        By accessing or using Fastcase, you acknowledge that you have read, understood, and agree to the collection and use of information as described in this Privacy Policy. If you do not agree, please discontinue use of the platform.
+        We do not sell, trade, or lease personal or legal information to any advertisers or third-party brokers. Data is shared solely with certified technical infrastructure partners under binding confidentiality covenants:
       </p>
-
-      <h2>2. Information We Collect</h2>
-      <h3>2.1 Account & Registration Information</h3>
-      <p>When you register on Fastcase, we collect:</p>
       <ul>
-        <li>Full name and professional designation (e.g., Advocate, Senior Advocate)</li>
-        <li>Bar Council enrollment number</li>
-        <li>Email address and mobile number</li>
-        <li>Office/chamber address</li>
-        <li>GST registration number (if applicable)</li>
-        <li>Password (stored in hashed form — never in plain text)</li>
+        <li><strong>Cloud Infrastructure:</strong> Tier-IV secure Indian data centers (ISO 27001, SOC 2 Type II certified) providing tenant-isolated database storage.</li>
+        <li><strong>Payment Gateway:</strong> <strong>Razorpay Software Private Limited</strong>, an RBI-regulated payment aggregator compliant with PCI-DSS Level 1 standards for processing debit/credit cards, Net Banking, and UPI payments.</li>
+        <li><strong>Messaging Gateway:</strong> WhatsApp Business API (Meta Platforms) for delivering automated client updates requested by you.</li>
       </ul>
 
-      <h3>2.2 Client Information</h3>
-      <p>As part of your legal practice management, you may store the following information about your clients on the Platform:</p>
-      <ul>
-        <li>Client name, address, mobile number, and email</li>
-        <li>PAN (Permanent Account Number)</li>
-        <li>Aadhaar number (stored with applicable encryption)</li>
-        <li>KYC documents and records</li>
-        <li>Business details (for corporate clients)</li>
-        <li>Family and relationship information (as relevant to the matter)</li>
-      </ul>
-      <p>You, as the advocate/user, are the data controller for your clients' information. Fastcase processes this data on your behalf as a data processor.</p>
-
-      <h3>2.3 Case & Matter Information</h3>
-      <ul>
-        <li>Case names, matter types, and practice areas</li>
-        <li>Court names, case numbers, and filing information</li>
-        <li>Hearing dates, orders, and compliance records</li>
-        <li>Opposite party details</li>
-        <li>Case notes, research, and arguments</li>
-      </ul>
-
-      <h3>2.4 KYC & Identification Documents</h3>
-      <ul>
-        <li>Identity proof documents uploaded for client KYC</li>
-        <li>Address proof documents</li>
-        <li>Professional registration documents</li>
-      </ul>
-
-      <h3>2.5 Documents & Evidence Files</h3>
-      <ul>
-        <li>Legal drafts, notices, agreements, and petitions created on the platform</li>
-        <li>Uploaded court orders, judgments, and affidavits</li>
-        <li>Evidence files and supporting documents uploaded per matter</li>
-        <li>Document version histories</li>
-      </ul>
-
-      <h3>2.6 Billing & Financial Data</h3>
-      <ul>
-        <li>Invoice details and billing records</li>
-        <li>Payment status and transaction history</li>
-        <li>GST invoice data</li>
-        <li>Your subscription plan and payment history with us</li>
-      </ul>
-
-      <h3>2.7 Usage & Technical Data</h3>
-      <ul>
-        <li>IP address, browser type, and operating system</li>
-        <li>Pages visited, features used, and session duration</li>
-        <li>Device identifiers</li>
-        <li>Access logs and audit trails</li>
-        <li>Error logs and performance data</li>
-      </ul>
-
-      <h3>2.8 Cookie Data</h3>
-      <p>We use cookies to maintain your session, remember preferences, and analyze platform usage. Please see our <Link to="/cookie-policy">Cookie Policy</Link> for complete details.</p>
-
-      <h2>3. How We Use Your Information</h2>
-      <p>We use the collected information for the following purposes:</p>
-      <ul>
-        <li>To provide, operate, and maintain the Fastcase platform</li>
-        <li>To authenticate users and maintain session security</li>
-        <li>To enable auto-populate features for draft generation</li>
-        <li>To send WhatsApp notifications (hearings, invoices, reminders)</li>
-        <li>To generate and send GST invoices and billing communications</li>
-        <li>To provide customer support and respond to queries</li>
-        <li>To detect, prevent, and address security incidents and fraud</li>
-        <li>To improve and develop platform features</li>
-        <li>To comply with applicable laws and regulations</li>
-        <li>To respond to legal process and government requests</li>
-      </ul>
-
-      <h2>4. Data Ownership</h2>
+      <h2>6. Comprehensive Security Measures</h2>
       <p>
-        <strong>Users retain complete ownership of their legal documents, client data, and all uploaded content.</strong> Fastcase does not claim any ownership rights over user-generated content, legal drafts, client information, case records, or any documents uploaded or created on the platform.
+        Fastcase employs defense-in-depth architecture to protect privileged legal information:
       </p>
+      <ul>
+        <li><strong>Encryption Standards:</strong> Data in transit is secured using TLS 1.3 with forward secrecy. Sensitive database attributes and stored document files are encrypted with AES-256.</li>
+        <li><strong>Tenant Isolation:</strong> Logical separation ensures that no subscriber can view, query, or access records belonging to another advocate chamber.</li>
+        <li><strong>Audit Logging:</strong> Every document view, download, edit, and deletion event generates an unalterable audit log for internal compliance.</li>
+      </ul>
+
+      <h2>7. Data Retention &amp; Permanent Erasure</h2>
       <p>
-        Fastcase is a data processor acting on your instructions as the data controller. We will not use your clients' data for any purpose other than providing the contracted services to you.
+        You retain full authority to delete individual client files or case records at any time. Upon cancellation of a subscription:
       </p>
-
-      <h2>5. Data Sharing & Disclosure</h2>
-      <p>We do not sell, trade, or rent your personal information to third parties. We may share information in the following limited circumstances:</p>
       <ul>
-        <li><strong>Service Providers:</strong> Cloud hosting, database, and infrastructure partners who process data on our behalf under strict confidentiality agreements</li>
-        <li><strong>WhatsApp Integration:</strong> When sending notifications via WhatsApp Business API, relevant message data passes through WhatsApp's (Meta's) infrastructure</li>
-        <li><strong>E-Sign Integration:</strong> If you use digital signature features, relevant document data is shared with the integrated e-sign provider</li>
-        <li><strong>Legal Compliance:</strong> When required by law, court order, or government authority</li>
-        <li><strong>Business Transfer:</strong> In the event of a merger or acquisition, data may transfer to the successor entity subject to the same privacy protections</li>
+        <li>Your account enters a 30-day grace period during which you can export all client records and files in standard formats (PDF, Excel, CSV).</li>
+        <li>After 90 days from subscription termination, your database partition and encrypted file attachments are permanently deleted from production disks.</li>
       </ul>
 
-      <h2>6. Third-Party Integrations</h2>
-      <h3>6.1 WhatsApp Business API</h3>
-      <p>Fastcase integrates with WhatsApp Business API for sending notifications. Message content for notifications passes through Meta's (WhatsApp's) servers. Usage of this feature is subject to WhatsApp's Terms of Service and Privacy Policy.</p>
-
-      <h3>6.2 E-Sign Integration</h3>
-      <p>If e-signature functionality is available and used, the relevant document content is transmitted to the integrated e-sign service provider. We ensure our e-sign partners maintain appropriate data protection standards.</p>
-
-      <h3>6.3 E-Courts Integration</h3>
-      <p>Any integration with e-Courts or eCourt Services portals is subject to the terms and policies of the National Informatics Centre and the respective High Courts.</p>
-
-      <h2>7. Data Security</h2>
-      <p>We implement comprehensive security measures to protect your data. See our <Link to="/data-security">Data Security Policy</Link> for full details. In summary:</p>
-      <ul>
-        <li>All data is encrypted in transit (TLS 1.2+) and at rest (AES-256)</li>
-        <li>Role-based access controls restrict data access within your organization</li>
-        <li>Audit logs track all access and modifications</li>
-        <li>Regular security monitoring and vulnerability assessments</li>
-        <li>Secure, isolated data environments per client/tenant</li>
-      </ul>
-
-      <h2>8. Data Retention</h2>
-      <p>We retain your data for as long as your account is active or as needed to provide services. Specifically:</p>
-      <ul>
-        <li>Active subscription data is retained for the duration of your subscription</li>
-        <li>Upon account termination, data is retained for 90 days to allow export</li>
-        <li>After 90 days from termination, data is securely and permanently deleted</li>
-        <li>Billing records may be retained for 7 years as required by Indian tax law</li>
-        <li>Audit logs are retained for 1 year for security purposes</li>
-      </ul>
-
-      <h2>9. Your Rights</h2>
-      <p>As a user of Fastcase, you have the following rights regarding your data:</p>
-      <ul>
-        <li><strong>Access:</strong> Request a copy of your personal data we hold</li>
-        <li><strong>Correction:</strong> Request correction of inaccurate or incomplete data</li>
-        <li><strong>Deletion:</strong> Request deletion of your account and associated data</li>
-        <li><strong>Export:</strong> Export your data in standard formats at any time</li>
-        <li><strong>Objection:</strong> Object to specific processing of your data</li>
-        <li><strong>Complaint:</strong> Lodge a complaint with our Grievance Officer</li>
-      </ul>
-      <p>To exercise these rights, contact us at <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a> or use our <Link to="/contact">Contact form</Link>.</p>
-
-      <h2>10. Data Deletion Requests</h2>
-      <p>To request deletion of your account and all associated data:</p>
-      <ol>
-        <li>Send an email to <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a> with the subject "Data Deletion Request"</li>
-        <li>Include your registered email address and account details</li>
-        <li>We will verify your identity and process the request within 30 days</li>
-        <li>You will receive a confirmation once deletion is complete</li>
-      </ol>
-      <p>Note: Certain data may be retained for legal compliance purposes (e.g., billing records for tax compliance) even after an account deletion request.</p>
-
-      <h2>11. Children's Privacy</h2>
-      <p>Fastcase is not intended for users under 18 years of age. We do not knowingly collect personal information from minors. If you become aware that a minor has provided us with personal information, please contact us immediately.</p>
-
-      <h2>12. Changes to This Policy</h2>
-      <p>We may update this Privacy Policy from time to time. We will notify registered users of material changes via email and/or an in-platform notification. Continued use of the platform after changes constitutes acceptance of the updated policy.</p>
-
-      <h2>13. Contact Us</h2>
-      <p>For privacy-related queries or to exercise your rights:</p>
-      <ul>
-        <li><strong>Email:</strong> <a href="mailto:privacy@Fastcase.in">privacy@Fastcase.in</a></li>
-        <li><strong>Postal Address:</strong> SOSM Services Private Limited, B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra, India</li>
-        <li><strong>Grievance Officer:</strong> <Link to="/grievance-officer">Click here</Link> for our Grievance Redressal page</li>
-      </ul>
+      <h2>8. Statutory Grievance Redressal Officer</h2>
+      <p>
+        Pursuant to Rule 3(11) of the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, and the DPDP Act, 2023, the details of our Grievance Officer are as follows:
+      </p>
+      <div className="not-prose my-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1.5 text-slate-700">
+        <p className="font-bold text-slate-900 text-sm">Grievance Redressal Officer</p>
+        <p><strong>Company:</strong> SOSM Services Private Limited</p>
+        <p><strong>Address:</strong> B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra, India</p>
+        <p><strong>Dedicated Email:</strong> <a href="mailto:grievance@fastcase.in" className="text-[#013B36] font-semibold underline">grievance@fastcase.in</a> / <a href="mailto:privacy@fastcase.in" className="text-[#013B36] font-semibold underline">privacy@fastcase.in</a></p>
+        <p><strong>Direct Helpline:</strong> <a href="tel:+919405669420" className="text-[#013B36] font-semibold">+91 94056 69420</a></p>
+        <p className="text-slate-500 pt-1 text-[11px]">All grievances are acknowledged within 24 hours and redressed within statutory timelines (maximum 15 working days).</p>
+      </div>
     </LegalPageLayout>
   );
 }

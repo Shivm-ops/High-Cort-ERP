@@ -119,11 +119,11 @@ export default function GrievanceOfficer() {
                   <div>
                     <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Email</p>
                     <a
-                      href="mailto:grievance@Fastcase.in"
+                      href="mailto:grievance@fastcase.in"
                       className="text-accent hover:underline flex items-center gap-1"
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      grievance@Fastcase.in
+                      grievance@fastcase.in
                     </a>
                   </div>
                   <div>

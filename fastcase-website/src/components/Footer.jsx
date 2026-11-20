@@ -84,15 +84,15 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3 h-3 text-white/25" />
-                <span>support@Fastcase.in</span>
+                <span>support@fastcase.in</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3 h-3 text-white/25" />
-                <span>contact@Fastcase.in</span>
+                <span>contact@fastcase.in</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3 h-3 text-white/25" />
-                <span>grievance@Fastcase.in</span>
+                <span>grievance@fastcase.in</span>
               </div>
             </div>
 

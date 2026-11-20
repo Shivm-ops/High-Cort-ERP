@@ -146,7 +146,7 @@ export default function ProductShowcase() {
                   </div>
                   <div className="flex-1 bg-white border border-line rounded-md px-3 py-1 flex items-center gap-1.5 text-[11px] text-ink/30 max-w-[240px] mx-auto">
                     <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                    app.Fastcase.in
+                    app.fastcase.in
                   </div>
                 </div>
                 {/* Screenshot */}

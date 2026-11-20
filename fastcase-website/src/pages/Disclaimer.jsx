@@ -1,133 +1,98 @@
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Link } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Scale, ShieldAlert, FileText, CheckCircle2, Info } from 'lucide-react';
 
 export default function Disclaimer() {
   return (
     <LegalPageLayout
-      title="Disclaimer"
-      subtitle="Important limitations and disclaimers regarding the use of Fastcase."
-      lastUpdated="June 1, 2025"
+      title="Disclaimer & Statutory Notice"
+      subtitle="Important regulatory and legal disclaimers governing the use of the Fastcase Practice Management Platform."
+      lastUpdated="November 20, 2026"
     >
-      <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl mb-8 flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
-        <p className="text-sm text-orange-800 dark:text-orange-300 font-medium">
-          Please read this disclaimer carefully. It contains important information about what Fastcase is and is not.
-        </p>
+      {/* ── Key Regulatory Notice Card ── */}
+      <div className="not-prose p-5 bg-amber-50/80 rounded-2xl border border-amber-200/90 mb-8 flex items-start gap-3.5">
+        <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+          <ShieldAlert className="w-5 h-5 text-amber-700" />
+        </div>
+        <div>
+          <h2 className="text-sm font-bold text-amber-950 mb-1">
+            Statutory Notice under the Advocates Act, 1961 &amp; Bar Council of India Rules
+          </h2>
+          <p className="text-xs text-amber-900/90 leading-relaxed">
+            Fastcase is a legal workflow software platform operated by <strong>SOSM Services Private Limited</strong>. Fastcase is <strong>not a law firm</strong>, does not solicit legal business, and does not provide formal legal representation or opinions. All tools are designed exclusively to assist registered legal practitioners and litigants in managing their judicial workflows.
+          </p>
+        </div>
       </div>
 
-      <h2>1. Nature of Fastcase</h2>
+      <h2>1. Nature of the Fastcase Service</h2>
       <p>
-        Fastcase is a <strong>software platform and practice management tool</strong> developed and operated by SOSM Services Private Limited. Fastcase is designed to help advocates, law firms, and legal professionals manage and automate their practice administration, document management, case tracking, and billing operations.
+        Fastcase is an enterprise software platform and Enterprise Resource Planning (ERP) suite tailored for advocates, law chambers, senior counsels, and litigants across India. The software offers document storage, automated hearing alerts, court diary scheduling, fee invoicing, and document drafting templates.
+      </p>
+      <p>
+        Nothing contained within the platform, website, sample templates, or marketing documentation constitutes legal advice, a formal legal opinion, or a recommendation on any ongoing judicial proceeding.
       </p>
 
-      <h2>2. Not Legal Advice</h2>
+      <h2>2. No Advocate-Client Relationship</h2>
       <p>
-        <strong>Fastcase does not provide legal advice of any kind.</strong> The information, templates, documents, draft formats, and other content available on the Fastcase platform are for <em>practice management and administrative purposes only</em>. Nothing on Fastcase constitutes or should be construed as legal advice, legal opinion, or a legal recommendation.
+        Your use of the Fastcase platform, creation of a subscriber account, or interaction with our support team does not create an advocate-client relationship between you and <strong>SOSM Services Private Limited</strong> or its directors, employees, or technical staff.
       </p>
       <p>
-        Users should always consult a qualified and registered advocate for legal advice specific to their situation. Fastcase cannot and does not replace professional legal consultation.
-      </p>
-
-      <h2>3. Not an Advocate or Legal Representative</h2>
-      <p>Fastcase is NOT:</p>
-      <ul>
-        <li>An advocate registered with the Bar Council of India or any State Bar Council</li>
-        <li>A legal representative of any client or user</li>
-        <li>A party authorized to appear before any court, tribunal, or quasi-judicial authority</li>
-        <li>An officer of the court in any jurisdiction</li>
-      </ul>
-
-      <h2>4. No Court Representation</h2>
-      <p>
-        Fastcase does not appear before any court, tribunal, arbitration panel, or other judicial or quasi-judicial forum on behalf of any user or client. The platform provides tools to help advocates prepare for and manage their court appearances, but it does not take any actions before courts.
+        Legal advice must always be obtained from an independent, licensed advocate enrolled with a State Bar Council under the Advocates Act, 1961, who can evaluate the unique facts of your specific case.
       </p>
 
-      <h2>5. No Guarantee of Legal Outcomes</h2>
+      <h2>3. AI Legal Drafting &amp; Document Generation</h2>
       <p>
-        <strong>Fastcase makes no representation, warranty, or guarantee regarding any legal outcome.</strong> The success or failure of any legal matter, court filing, petition, appeal, or other legal action is determined by courts, tribunals, and judicial authorities based on facts, law, and advocacy — not by the use of practice management software.
-      </p>
-      <p>
-        Use of Fastcase does not improve, guarantee, or affect the likelihood of success in any legal proceeding.
-      </p>
-
-      <h2>6. User Responsibility for Legal Decisions</h2>
-      <p>
-        <strong>All legal decisions, including but not limited to:</strong>
+        Fastcase incorporates smart templates and assistive drafting modules to streamline the creation of legal notices, bail applications, affidavits, and consumer complaints. By utilizing these drafting tools, you acknowledge and agree that:
       </p>
       <ul>
-        <li>Legal advice given to clients</li>
-        <li>Drafting and review of legal documents</li>
-        <li>Filing of cases, appeals, and applications</li>
-        <li>Court submissions, arguments, and pleadings</li>
-        <li>Settlement negotiations and agreements</li>
-        <li>Compliance with court orders</li>
-        <li>Professional conduct and ethical obligations</li>
+        <li><strong>Drafting Starting Points:</strong> All auto-generated drafts and boilerplate templates are intended strictly as preliminary drafts and starting points.</li>
+        <li><strong>Mandatory Human Review:</strong> The practicing advocate is solely responsible for verifying the factual accuracy, statutory references, court jurisdiction, and judicial precedents before printing, signing, or presenting any document in court.</li>
+        <li><strong>No Outcome Guarantee:</strong> Fastcase makes no representation that documents generated using our templates will be accepted without objection by any court, tribunal, or registrar.</li>
       </ul>
-      <p>
-        <strong>remain solely and exclusively the responsibility of the registered advocate or authorized user.</strong> Fastcase is a tool to assist in practice management — the professional judgment, skill, and responsibility always remain with the human advocate.
-      </p>
 
-      <h2>7. Template Accuracy Disclaimer</h2>
+      <h2>4. Public Court Data &amp; Cause List Tracking</h2>
       <p>
-        While Fastcase provides legal document templates to assist advocates, these templates:
+        Fastcase provides automated court diary synchronization by reading public daily cause lists and case status information published by the National Judicial Data Grid (NJDG), High Court computer registries, and e-Courts systems.
       </p>
       <ul>
-        <li>Are general-purpose starting points and not jurisdiction-specific legal advice</li>
-        <li>May not reflect the latest legislative changes, court rules, or judicial precedents</li>
-        <li>Must be reviewed and modified by the advocate before use</li>
-        <li>Should be adapted to the specific facts and circumstances of each matter</li>
-        <li>Do not constitute a guarantee of legal correctness or court acceptance</li>
+        <li><strong>Informational Convenience:</strong> Case status notifications and cause list updates are provided for organizational convenience only.</li>
+        <li><strong>Certified Copies Prevail:</strong> In the event of any discrepancy between notifications delivered via Fastcase and the official physical cause list or certified order passed by a Presiding Judge, the official court records and certified copies shall always prevail.</li>
+        <li><strong>Advocate Duty:</strong> Subscribers remain duty-bound to independently confirm hearing dates, bench allocations, and peremptory board listings directly from the official court registry.</li>
       </ul>
+
+      <h2>5. E-Filing &amp; Government Registry Portals</h2>
       <p>
-        <strong>Advocates are solely responsible for verifying, reviewing, and approving all documents generated through or stored on Fastcase before filing or delivering them to any court, client, or third party.</strong>
+        While Fastcase provides digital workspace tools to assemble e-filing bundles, index petitions, and organize annexures according to High Court e-filing guidelines, the actual act of filing remains under the direct control and credential access of the advocate or litigant on government filing portals. Fastcase is not affiliated with or endorsed by any judicial registry.
       </p>
 
-      <h2>8. E-Filing Disclaimer</h2>
+      <h2>6. Third-Party Integrations &amp; Payment Gateway</h2>
       <p>
-        Fastcase provides an E-Filing Workspace to help advocates prepare filing documents and bundles. However:
+        Our platform integrates with trusted third-party providers:
       </p>
       <ul>
-        <li>Fastcase does not directly file documents with any government portal, court, or e-courts system unless an official integration is formally established and disclosed</li>
-        <li>The act of filing remains the responsibility of the advocate</li>
-        <li>Fastcase is not responsible for any technical issues with third-party filing portals</li>
-        <li>Advocates must verify that their filings comply with the rules of the relevant court</li>
+        <li><strong>Razorpay Software Private Limited:</strong> Handles subscription payments, invoices, and transaction processing. Payment security is governed by Razorpay's PCI-DSS compliant infrastructure.</li>
+        <li><strong>WhatsApp Cloud API:</strong> Automated notifications and reminders dispatched via WhatsApp are subject to Meta Platforms' business messaging terms. Fastcase is not liable for intermittent telecommunication delivery delays caused by external network operators.</li>
       </ul>
 
-      <h2>9. OCR & Auto-Populate Accuracy</h2>
+      <h2>7. Limitation of Professional Liability</h2>
       <p>
-        Fastcase uses Optical Character Recognition (OCR) technology for notice processing and auto-populate features. While we strive for accuracy:
+        To the fullest extent permitted under Indian law, <strong>SOSM Services Private Limited</strong>, its directors, officers, engineers, and affiliates disclaim any liability for:
       </p>
       <ul>
-        <li>OCR results may contain errors and require human review before use</li>
-        <li>Auto-populated document fields must be verified by the advocate before finalizing any document</li>
-        <li>We are not responsible for errors in documents resulting from uncorrected OCR output</li>
+        <li>Any loss of judicial limitation periods, dismissals in default, or adverse orders resulting from user oversight or technical connectivity issues.</li>
+        <li>Clerical or typographical errors introduced into legal pleadings generated via OCR or automated data extraction.</li>
+        <li>Direct, indirect, consequential, or exemplary damages arising out of the use or inability to use the Fastcase platform.</li>
       </ul>
 
-      <h2>10. Third-Party Integrations</h2>
+      <h2>8. Regulatory Compliance Inquiries</h2>
       <p>
-        Fastcase may integrate with third-party services including WhatsApp, e-sign providers, and payment gateways. We are not responsible for the terms, policies, availability, or actions of third-party services. Your use of integrated third-party services is subject to their respective terms and privacy policies.
-      </p>
-
-      <h2>11. Limitation of Liability</h2>
-      <p>
-        SOSM Services Private Limited, its directors, officers, employees, and agents shall not be liable for any damage, loss, or harm — direct, indirect, incidental, consequential, or punitive — arising from:
+        If you have questions regarding our compliance notices or require regulatory clarifications, please contact our Legal Cell:
       </p>
       <ul>
-        <li>Your use of or reliance on the Fastcase platform</li>
-        <li>Any legal outcome or court decision in matters managed through Fastcase</li>
-        <li>Errors, inaccuracies, or omissions in auto-generated documents</li>
-        <li>Technical failures, outages, or data loss events</li>
-        <li>Unauthorized access to your account due to your failure to secure credentials</li>
+        <li><strong>Email:</strong> <a href="mailto:legal@fastcase.in">legal@fastcase.in</a></li>
+        <li><strong>Compliance Desk:</strong> <a href="tel:+919405669420">+91 94056 69420</a></li>
+        <li><strong>Corporate Office:</strong> SOSM Services Private Limited, B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra, India.</li>
       </ul>
-
-      <h2>12. Acceptance</h2>
-      <p>
-        By using Fastcase, you acknowledge that you have read, understood, and agree to this Disclaimer. If you do not agree with any part of this Disclaimer, please discontinue use of the platform.
-      </p>
-
-      <h2>13. Questions</h2>
-      <p>For questions about this Disclaimer, contact us at <a href="mailto:legal@Fastcase.in">legal@Fastcase.in</a> or visit our <Link to="/contact">Contact page</Link>.</p>
     </LegalPageLayout>
   );
 }
