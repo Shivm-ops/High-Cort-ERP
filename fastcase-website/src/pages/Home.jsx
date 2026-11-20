@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import ProductShowcase from '../components/ProductShowcase';
 import {
   Users, Briefcase, Calendar, FileText, CheckCircle, ArrowRight, Shield,
-  Zap, Lock, ChevronDown, Gavel, CreditCard, Sparkles, Scale
+  Zap, Lock, ChevronDown, Gavel, CreditCard, Sparkles, Scale, Search,
+  IndianRupee, Clock, Bell
 } from 'lucide-react';
 
 const getErpUrl = () => {
@@ -17,17 +18,17 @@ const getErpUrl = () => {
   return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
 };
 
-/* ─── Enhanced Hero Dashboard Showcase ────────────────────────────────── */
+/* ─── Enhanced Hero Dashboard Showcase (Clean, Vector, High-Impact) ─────── */
 function DashboardMockup() {
   return (
-    <div className="relative w-full max-w-[620px] mx-auto lg:mr-0 group">
+    <div className="relative w-full max-w-[620px] mx-auto lg:mr-0 group select-none">
       {/* Ambient Emerald Glow Backdrop */}
       <div className="absolute -inset-3 bg-gradient-to-tr from-[#34D399]/25 via-[#059669]/20 to-[#013B36]/30 rounded-3xl blur-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       {/* Main Browser Card */}
       <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_24px_60px_-15px_rgba(1,59,54,0.18)] transition-all duration-300 group-hover:shadow-[0_28px_70px_-12px_rgba(1,59,54,0.25)]">
-        {/* Browser Bar */}
-        <div className="bg-slate-50/90 backdrop-blur-sm border-b border-slate-200/80 px-4 py-2.5 flex items-center gap-3">
+        {/* Browser Top Window Chrome */}
+        <div className="bg-slate-50/95 backdrop-blur-sm border-b border-slate-200/80 px-4 py-2.5 flex items-center gap-3">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
             <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
@@ -44,13 +45,143 @@ function DashboardMockup() {
           </div>
         </div>
 
-        {/* Real Screenshot */}
-        <div className="relative overflow-hidden bg-slate-900">
-          <img
-            src="/screenshots/dashboard.png"
-            alt="Fastcase Advocate Operations Dashboard"
-            className="w-full block object-cover object-top max-h-[380px] transition-transform duration-500 group-hover:scale-[1.01]"
-          />
+        {/* ── Coded Modern Fastcase Dashboard UI (Crystal Clear, Vector & Crisp) ── */}
+        <div className="p-3.5 sm:p-4 bg-[#F8FAFC] text-slate-800 space-y-3">
+          
+          {/* Top Sub-Bar: Brand, Search & Advocate Profile */}
+          <div className="flex items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200/80">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#013B36] text-[#34D399] flex items-center justify-center shadow-xs">
+                <Scale className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <p className="text-[12px] font-extrabold text-slate-900 leading-none">Fastcase</p>
+                <p className="text-[9px] text-[#059669] font-bold mt-0.5">High Court Suite</p>
+              </div>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[10.5px] text-slate-400 w-44">
+              <Search className="w-3 h-3 text-slate-400" />
+              <span className="truncate">Search CNR / Case...</span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#065F46] bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#059669] animate-pulse" />
+                Adv. Rajesh Patil
+              </span>
+            </div>
+          </div>
+
+          {/* 4 Clean Metric Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500">Active Cases</span>
+                <Gavel className="w-3.5 h-3.5 text-[#059669]" />
+              </div>
+              <p className="text-base sm:text-lg font-black text-slate-900 leading-tight">142</p>
+              <p className="text-[9px] text-[#059669] font-bold mt-0.5">+8 this month</p>
+            </div>
+
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500">Today's Board</span>
+                <Calendar className="w-3.5 h-3.5 text-amber-600" />
+              </div>
+              <p className="text-base sm:text-lg font-black text-slate-900 leading-tight">4 Listed</p>
+              <p className="text-[9px] text-amber-600 font-bold mt-0.5">2 High Court • 2 Dist</p>
+            </div>
+
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500">Legal Drafts</span>
+                <FileText className="w-3.5 h-3.5 text-blue-600" />
+              </div>
+              <p className="text-base sm:text-lg font-black text-slate-900 leading-tight">19 Ready</p>
+              <p className="text-[9px] text-blue-600 font-bold mt-0.5">Marathi / Eng A4</p>
+            </div>
+
+            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-400 mb-1">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500">Fee Recovery</span>
+                <IndianRupee className="w-3.5 h-3.5 text-[#013B36]" />
+              </div>
+              <p className="text-base sm:text-lg font-black text-slate-900 leading-tight">₹4.2 Lakh</p>
+              <p className="text-[9px] text-[#059669] font-bold mt-0.5">92% Invoiced</p>
+            </div>
+          </div>
+
+          {/* 2-Column Split: Daily Court Cause List & Quick Actions */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-start">
+            
+            {/* Left: Today's Cause List (7 cols) */}
+            <div className="sm:col-span-7 bg-white rounded-xl border border-slate-200/80 p-2.5 shadow-2xs">
+              <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-100">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#059669] animate-ping" />
+                  <span className="text-[10.5px] font-extrabold text-slate-900">Today's Court Board</span>
+                </div>
+                <span className="text-[9px] font-bold text-slate-400">eCourts CNR Live</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10.5px] font-bold text-slate-900">WP/8912/2026</span>
+                      <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded">Item #11</span>
+                    </div>
+                    <p className="text-[9px] text-slate-500 truncate max-w-[170px]">Deshmukh vs State of Maharashtra</p>
+                    <p className="text-[8.5px] text-slate-400">Court 4 • Justice R. K. Shinde (10:30 AM)</p>
+                  </div>
+                  <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 shrink-0">
+                    Next in Line
+                  </span>
+                </div>
+
+                <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10.5px] font-bold text-slate-900">BAIL/412/2026</span>
+                      <span className="text-[9px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">Item #07</span>
+                    </div>
+                    <p className="text-[9px] text-slate-500 truncate max-w-[170px]">State vs Sachin Kadam (Sec 438)</p>
+                    <p className="text-[8.5px] text-slate-400">Sessions Court 2 • 11:45 AM</p>
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 shrink-0">
+                    Arguments
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Smart Drafting & Automation (5 cols) */}
+            <div className="sm:col-span-5 bg-white rounded-xl border border-slate-200/80 p-2.5 shadow-2xs space-y-2">
+              <p className="text-[10.5px] font-extrabold text-slate-900 pb-1 border-b border-slate-100 flex items-center justify-between">
+                <span>Advocate Workspace</span>
+                <Sparkles className="w-3 h-3 text-[#059669]" />
+              </p>
+
+              <div className="p-2 rounded-lg bg-[#ECFDF5] border border-[#A7F3D0]/80">
+                <p className="text-[9.5px] font-bold text-[#065F46] flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-[#059669]" />
+                  1-Click Legal Drafter
+                </p>
+                <p className="text-[8.5px] text-slate-600 mt-0.5">Bail petition generated in 3s (Marathi/Eng)</p>
+              </div>
+
+              <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                <p className="text-[9.5px] font-bold text-slate-800 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-emerald-600" />
+                  Client WhatsApp Sync
+                </p>
+                <p className="text-[8.5px] text-slate-500 mt-0.5">4 Hearing alerts dispatched at 09:00 AM</p>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       </div>
 
