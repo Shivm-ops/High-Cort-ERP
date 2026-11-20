@@ -1,53 +1,37 @@
 import { useState } from 'react';
-import { Shield, Mail, Clock, AlertCircle, CheckCircle, Send, ChevronRight } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ShieldCheck, Mail, Clock, AlertCircle, CheckCircle2, Send, Phone, MapPin, Building2, User, ChevronRight } from 'lucide-react';
+
+const legalNavLinks = [
+  { name: 'Terms of Service', href: '/terms-of-service' },
+  { name: 'Privacy Policy', href: '/privacy-policy' },
+  { name: 'Refund Policy', href: '/refund-policy' },
+  { name: 'Disclaimer', href: '/disclaimer' },
+  { name: 'Cookie Policy', href: '/cookie-policy' },
+  { name: 'Data Security', href: '/data-security' },
+  { name: 'Grievance Officer', href: '/grievance-officer' },
+];
 
 const escalationSteps = [
-  {
-    step: 1,
-    title: 'Submit Your Grievance',
-    desc: 'Submit your complaint via the form below or email the Grievance Officer directly.',
-    duration: 'Day 0',
-  },
-  {
-    step: 2,
-    title: 'Acknowledgement',
-    desc: 'You will receive a written acknowledgement of your grievance within 3 business days.',
-    duration: 'Within 3 business days',
-  },
-  {
-    step: 3,
-    title: 'Investigation',
-    desc: 'The Grievance Officer reviews your complaint, collects relevant information, and investigates.',
-    duration: 'Days 3–25',
-  },
-  {
-    step: 4,
-    title: 'Resolution Communication',
-    desc: 'The Grievance Officer communicates the decision and resolution to you in writing.',
-    duration: 'Within 30 days',
-  },
-  {
-    step: 5,
-    title: 'Escalation (if required)',
-    desc: 'If you are not satisfied with the resolution, you may escalate to senior management or approach applicable regulatory authorities.',
-    duration: 'Post Day 30',
-  },
+  { step: '01', title: 'Submit Grievance', desc: 'File your grievance online via this form or email directly.', time: 'Immediate' },
+  { step: '02', title: 'Written Acknowledgement', desc: 'System generates a unique ticket ID within 24 to 48 hours.', time: 'Within 48 hrs' },
+  { step: '03', title: 'Investigation & Action', desc: 'Grievance Officer examines the case with legal & tech team.', time: 'Days 2–10' },
+  { step: '04', title: 'Resolution Communication', desc: 'Formal resolution notice communicated in writing to you.', time: 'Within 15 days' },
 ];
 
 const grievanceCategories = [
-  'Privacy / Data Protection Concern',
-  'Unauthorized Access to Account',
-  'Data Breach Notification',
-  'Incorrect Billing or Charge',
-  'Platform Misuse or Abuse',
-  'Service Quality Complaint',
-  'Violation of Terms of Service',
-  'Delay in Support Response',
-  'Data Deletion Request Not Honored',
-  'Other Grievance',
+  'Billing / Payment / Duplicate Deduction',
+  'Refund Request or Policy Query',
+  'Account Security or Unauthorized Access',
+  'Data Privacy & DPDP Act Data Erasure Request',
+  'Service Availability or Technical Outage',
+  'Document Generation or OCR Issue',
+  'Terms of Service Violation',
+  'Other Statutory Concern',
 ];
 
 export default function GrievanceOfficer() {
+  const location = useLocation();
   const [form, setForm] = useState({
     name: '', email: '', phone: '', category: '', description: '', resolution: '',
   });
@@ -59,280 +43,319 @@ export default function GrievanceOfficer() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setSubmitted(true); }, 1200);
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+    }, 1000);
   };
 
   const inputClass =
-    'w-full px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition';
+    'w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#059669] focus:bg-white transition-all';
 
   return (
-    <div>
-      {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #021F1B 0%, #03362E 55%, #05483D 100%)' }} className="pt-32 pb-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 border border-white/20 rounded-2xl mb-6">
-            <Shield className="w-8 h-8 text-white" />
+    <div className="bg-[#F8FAFC] min-h-screen pt-24 pb-20 font-sans">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* ── Policy Navigation Tabs ── */}
+        <div className="mb-6 overflow-x-auto no-scrollbar py-2">
+          <nav className="flex items-center gap-1.5 min-w-max bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs">
+            {legalNavLinks.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-[#013B36] text-[#34D399] shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* ── Clean Light Header ── */}
+        <div className="mb-8 pb-6 border-b border-slate-200">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-xs font-bold text-[#065F46] mb-3">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
+            <span>Statutory Officer — Rule 3(11) of IT Rules, 2021 &amp; DPDP Act, 2023</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-heading font-bold text-white mb-5">
+          <h1 className="text-3xl md:text-4xl font-heading font-black text-slate-900 mb-2 tracking-tight">
             Grievance Redressal
           </h1>
-          <p className="text-lg text-slate-200/90 max-w-2xl mx-auto">
-            Fastcase is committed to resolving all user grievances in a fair, transparent,
-            and timely manner. If you have a concern, we are here to help.
+          <p className="text-slate-600 text-sm sm:text-base max-w-3xl leading-relaxed">
+            Fastcase provides an official channel to resolve customer grievances, billing disputes, and data protection inquiries in a fair, prompt, and legally compliant manner.
           </p>
         </div>
-      </section>
 
-      <section className="section-padding bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-5 gap-10">
-            {/* Left: Officer Info + Process */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Grievance Officer Card */}
-              <div className="card p-6 border-l-4 border-primary">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-white" />
-                  </div>
+        {/* ── 2-Column Content Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: Officer Card & Timeline (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            
+            {/* Designated Officer Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs">
+              <div className="flex items-center gap-3.5 pb-4 border-b border-slate-100 mb-4">
+                <div className="w-11 h-11 rounded-2xl bg-[#013B36] text-[#34D399] flex items-center justify-center shrink-0 shadow-xs">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-extrabold text-slate-900 leading-tight">
+                    Abhijit Patil
+                  </h2>
+                  <p className="text-xs text-[#059669] font-bold">
+                    Designated Grievance &amp; Compliance Officer
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    SOSM Services Private Limited
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3.5 text-xs text-slate-600">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-[#013B36] shrink-0 mt-0.5" />
                   <div>
-                    <h2 className="text-base font-heading font-bold text-gray-900 dark:text-white">
-                      Grievance Officer
-                    </h2>
-                    <p className="text-xs text-gray-500 dark:text-slate-400">
-                      SOSM Services Private Limited
-                    </p>
+                    <span className="font-bold text-slate-700 block mb-0.5">Corporate Office</span>
+                    <span className="leading-relaxed">
+                      B4/5, Omkar Plaza, Rajaram Road, Shahupuri, Kolhapur – 416001, Maharashtra, India
+                    </span>
                   </div>
                 </div>
-                <div className="space-y-3 text-sm">
+
+                <div className="flex items-center gap-2.5">
+                  <Mail className="w-4 h-4 text-[#013B36] shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Name</p>
-                    <p className="text-gray-800 dark:text-slate-200 font-semibold">
-                      Abhijit Patil
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Designation</p>
-                    <p className="text-gray-800 dark:text-slate-200">
-                      Grievance Officer – Fastcase
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Email</p>
-                    <a
-                      href="mailto:grievance@fastcase.in"
-                      className="text-accent hover:underline flex items-center gap-1"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
+                    <span className="font-bold text-slate-700 block mb-0.5">Dedicated Grievance Email</span>
+                    <a href="mailto:grievance@fastcase.in" className="text-[#013B36] font-semibold hover:underline">
                       grievance@fastcase.in
                     </a>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-[#013B36] shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Postal Address</p>
-                    <address className="not-italic text-gray-700 dark:text-slate-300 text-xs leading-relaxed">
-                      Grievance Officer – Fastcase<br />
-                      SOSM Services Private Limited<br />
-                      B4/5, Omkar Plaza, Rajaram Road,<br />
-                      Shahupuri, Kolhapur – 416001,<br />
-                      Maharashtra, India
-                    </address>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 font-medium uppercase tracking-wide mb-0.5">Contact Hours</p>
-                    <div className="flex items-center gap-1.5 text-gray-700 dark:text-slate-300 text-xs">
-                      <Clock className="w-3.5 h-3.5" />
-                      Monday–Friday, 10:00 AM – 5:00 PM IST
-                    </div>
+                    <span className="font-bold text-slate-700 block mb-0.5">Direct Helpline</span>
+                    <a href="tel:+919405669420" className="text-slate-800 font-semibold hover:text-[#013B36]">
+                      +91 94056 69420
+                    </a>
                   </div>
                 </div>
-              </div>
 
-              {/* Important Notice */}
-              <div className="card p-5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <div className="flex items-start gap-2.5">
-                  <AlertCircle className="w-4.5 h-4.5 w-[18px] h-[18px] text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-[#013B36] shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">Resolution Timeline</p>
-                    <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
-                      All grievances are acknowledged within <strong>3 business days</strong> and resolved within <strong>30 days</strong> of receipt. Complex cases may take longer with appropriate communication.
-                    </p>
+                    <span className="font-bold text-slate-700 block mb-0.5">Working Hours</span>
+                    <span className="text-slate-600">Monday to Friday (10:00 AM – 5:30 PM IST)</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Escalation Process */}
-              <div className="card p-6">
-                <h3 className="text-sm font-heading font-semibold text-gray-900 dark:text-white mb-4">
-                  Escalation Process
-                </h3>
-                <div className="space-y-4">
-                  {escalationSteps.map((s) => (
-                    <div key={s.step} className="flex gap-3">
-                      <div className="w-6 h-6 bg-primary text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {s.step}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-gray-900 dark:text-white">{s.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed mt-0.5">{s.desc}</p>
-                        <p className="text-xs text-accent font-medium mt-0.5">{s.duration}</p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Right: Grievance Form */}
-            <div className="lg:col-span-3">
-              <div className="card p-8">
-                {submitted ? (
-                  <div className="text-center py-10">
-                    <div className="w-16 h-16 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="w-8 h-8 text-brand-success" />
+            {/* Resolution Timeline Notice */}
+            <div className="p-4 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-start gap-3">
+              <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
+              <div className="text-xs text-[#065F46]">
+                <p className="font-bold mb-0.5">Guaranteed Statutory Response</p>
+                <p className="text-[#047857] leading-relaxed">
+                  Written acknowledgement is issued within <strong>48 hours</strong>. Complete inquiry and redressal are concluded within <strong>15 calendar days</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Escalation Process Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-xs">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                Redressal Lifecycle
+              </h3>
+              <div className="space-y-4">
+                {escalationSteps.map((s) => (
+                  <div key={s.step} className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-slate-100 text-[#013B36] font-mono font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                      {s.step}
+                    </span>
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold text-slate-900">{s.title}</p>
+                        <span className="text-[10.5px] font-semibold text-[#059669] bg-emerald-50 px-2 py-0.2 rounded-md">
+                          {s.time}
+                        </span>
+                      </div>
+                      <p className="text-[11.5px] text-slate-500 mt-0.5 leading-relaxed">{s.desc}</p>
                     </div>
-                    <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white mb-2">
-                      Grievance Submitted
-                    </h2>
-                    <p className="text-gray-600 dark:text-slate-400 text-sm max-w-sm mx-auto mb-2">
-                      Your grievance has been received. You will receive an acknowledgement within 3 business days at your registered email.
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-slate-500 mb-6">
-                      Please retain any reference number provided in the acknowledgement email for future correspondence.
-                    </p>
-                    <button
-                      onClick={() => { setSubmitted(false); setForm({ name: '', email: '', phone: '', category: '', description: '', resolution: '' }); }}
-                      className="btn-primary text-sm px-6 py-2.5"
-                    >
-                      Submit Another Grievance
-                    </button>
                   </div>
-                ) : (
-                  <>
-                    <h2 className="text-xl font-heading font-bold text-gray-900 dark:text-white mb-1">
-                      Submit a Grievance
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Column: Clean Submission Form (7 cols) */}
+          <div className="lg:col-span-7">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-slate-200/90 shadow-xs">
+              
+              {submitted ? (
+                <div className="text-center py-12">
+                  <div className="w-14 h-14 bg-[#ECFDF5] border border-[#A7F3D0] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#059669]">
+                    <CheckCircle2 className="w-7 h-7" />
+                  </div>
+                  <h2 className="text-xl font-heading font-black text-slate-900 mb-2">
+                    Grievance Registered Successfully
+                  </h2>
+                  <p className="text-slate-600 text-xs sm:text-sm max-w-md mx-auto mb-6 leading-relaxed">
+                    Your complaint has been assigned to our compliance desk. A formal acknowledgement with your tracking reference will be dispatched to your email within 48 hours.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSubmitted(false);
+                      setForm({ name: '', email: '', phone: '', category: '', description: '', resolution: '' });
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#013B36] text-[#34D399] text-xs font-bold hover:bg-[#02201D] transition-all shadow-xs cursor-pointer"
+                  >
+                    Submit Another Inquiry
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <h2 className="text-xl font-heading font-black text-slate-900 mb-1">
+                      File a Formal Grievance
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">
-                      Please provide complete details so we can investigate and resolve your concern effectively.
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Please supply accurate details so our Grievance Officer can investigate and resolve your concern.
                     </p>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                            Full Name <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            name="name"
-                            value={form.name}
-                            onChange={handleChange}
-                            required
-                            placeholder="Your Full Name"
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                            Registered Email <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            placeholder="email@example.com"
-                            className={inputClass}
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                            Mobile Number
-                          </label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={form.phone}
-                            onChange={handleChange}
-                            placeholder="+91 XXXXX XXXXX"
-                            className={inputClass}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                            Grievance Category <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            name="category"
-                            value={form.category}
-                            onChange={handleChange}
-                            required
-                            className={inputClass}
-                          >
-                            <option value="">Select category…</option>
-                            {grievanceCategories.map((c) => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                          Detailed Description <span className="text-red-500">*</span>
+                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Full Name <span className="text-rose-500">*</span>
                         </label>
-                        <textarea
-                          name="description"
-                          value={form.description}
+                        <input
+                          type="text"
+                          name="name"
+                          value={form.name}
                           onChange={handleChange}
                           required
-                          rows={4}
-                          placeholder="Describe your grievance in detail. Include dates, account details, and any relevant information…"
-                          className={`${inputClass} resize-none`}
+                          placeholder="Advocate / Litigant Name"
+                          className={inputClass}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                          Expected Resolution
+                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Registered Email <span className="text-rose-500">*</span>
                         </label>
-                        <textarea
-                          name="resolution"
-                          value={form.resolution}
+                        <input
+                          type="email"
+                          name="email"
+                          value={form.email}
                           onChange={handleChange}
-                          rows={2}
-                          placeholder="What resolution are you seeking? (Optional)"
-                          className={`${inputClass} resize-none`}
+                          required
+                          placeholder="registered@email.com"
+                          className={inputClass}
                         />
                       </div>
-                      <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <p className="text-xs text-yellow-800 dark:text-yellow-300">
-                          <strong>Important:</strong> By submitting this form, you confirm that the information provided is accurate to the best of your knowledge. False or misleading grievances may be rejected.
-                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Mobile Phone
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={form.phone}
+                          onChange={handleChange}
+                          placeholder="+91 98765 43210"
+                          className={inputClass}
+                        />
                       </div>
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="btn-primary w-full justify-center text-sm py-3 disabled:opacity-60"
-                      >
-                        {loading ? (
-                          <span className="flex items-center gap-2">
-                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Submitting…
-                          </span>
-                        ) : (
-                          <>Submit Grievance <Send className="w-4 h-4" /></>
-                        )}
-                      </button>
-                    </form>
-                  </>
-                )}
-              </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                          Grievance Category <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          name="category"
+                          value={form.category}
+                          onChange={handleChange}
+                          required
+                          className={inputClass}
+                        >
+                          <option value="">Select subject…</option>
+                          {grievanceCategories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Detailed Description of Complaint <span className="text-rose-500">*</span>
+                      </label>
+                      <textarea
+                        name="description"
+                        value={form.description}
+                        onChange={handleChange}
+                        required
+                        rows={4}
+                        placeholder="Provide details regarding the transaction ID, court case number, date of incident, or technical difficulty…"
+                        className={`${inputClass} resize-none`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Expected Redressal / Desired Outcome
+                      </label>
+                      <textarea
+                        name="resolution"
+                        value={form.resolution}
+                        onChange={handleChange}
+                        rows={2}
+                        placeholder="State the resolution you are seeking (e.g., refund credit, data deletion, account unlock)…"
+                        className={`${inputClass} resize-none`}
+                      />
+                    </div>
+
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        <strong>Statutory Declaration:</strong> You affirm that the details submitted herein are true and accurate to the best of your knowledge under Indian law.
+                      </p>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#013B36] hover:bg-[#02201D] text-[#34D399] font-bold text-xs tracking-wide uppercase transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <span>Submitting Ticket…</span>
+                      ) : (
+                        <>
+                          <span>Submit Grievance to Compliance Officer</span>
+                          <Send className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </>
+              )}
+
             </div>
           </div>
+
         </div>
-      </section>
+
+      </div>
     </div>
   );
 }
