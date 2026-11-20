@@ -356,48 +356,48 @@ export default function CitizenLoginPage() {
       title: "१. समस्या व कायदेशीर उपाय (Instant Legal Guidance)",
       desc: "बँक/UPI सायबर फ्रॉड, पोलीस FIR नकार, नोकरी-पगार वाद, ग्राहक संरक्षण, जमीन-घर वाद, महिला कौटुंबिक छळ व RTI यावर मोफत कायदेशीर उपाय व पुढची पावले.",
       badge: "मोफत मार्गदर्शन",
-      badgeColor: "bg-[#FF6551]/20 text-[#F5EEDB] border-[#FF6551]/30",
+      badgeColor: "bg-[#ECFDF5] text-[#065F46] border-[#A7F3D0]",
     },
     {
       icon: FileText,
       title: "२. अधिकृत कोर्ट व पोलीस अर्ज जनरेटर (₹३०)",
       desc: "वकिलांमार्फत ड्राफ्टिंगचा खर्च ₹१,५०० असतो — फास्टकेसवर कोर्ट-मान्य A4 अधिकृत अर्ज काही सेकंदांत थेट मराठी व इंग्रजीत तयार करा व PDF डाऊनलोड करा.",
       badge: "केवळ ₹३०/-",
-      badgeColor: "bg-[#F5EEDB]/25 text-[#F5EEDB] border-[#E8DFC9]/40",
+      badgeColor: "bg-white/10 text-[#6EE7B7] border-white/20",
     },
     {
       icon: Building2,
       title: "३. मालमत्ता कायदेशीर तपासणी (Property Legal Check)",
       desc: "खरेदीपूर्वी जमीन, प्लॉट, फ्लॅटची कायदेशीर तपासणी — ७/१२, फेरफार, इंडेक्स २ व ई-कोर्ट्स वाद (eCourts Disputes) पडताळणी आणि शीर्षक रिस्क रिपोर्ट.",
       badge: "नवीन सेवा",
-      badgeColor: "bg-[#FF6551] text-white border-transparent",
+      badgeColor: "bg-[#059669] text-white border-transparent",
     },
     {
       icon: FolderCheck,
       title: "४. नागरिक सुरक्षित लॉकर व अर्ज ट्रॅकिंग (Citizen Vault)",
       desc: "आपले तयार केलेले सर्व अर्ज, पावत्या व कायदेशीर कागदपत्रे सुरक्षित क्लाउडमध्ये सेव्ह राहतात आणि कधीही प्रिंट/डाऊनलोड करता येतात.",
       badge: "क्लाउड सुरक्षित",
-      badgeColor: "bg-white/10 text-[#F5EEDB] border-white/20",
+      badgeColor: "bg-white/10 text-[#6EE7B7] border-white/20",
     },
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#0B1628] font-sans antialiased">
+    <div className="flex min-h-screen bg-[#02201D] font-sans antialiased">
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
 
       {/* ── Left Branding & Consumer Portal Services Panel (Desktop) ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-10 xl:p-14 relative overflow-hidden bg-gradient-to-br from-[#11213C] via-[#0E1A30] to-[#070E1A] text-white">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-10 xl:p-14 relative overflow-hidden bg-gradient-to-br from-[#021F1B] via-[#03362E] to-[#02201D] text-white">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
         {/* Top Header inside Left Panel */}
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-              <Scale className="w-6 h-6 text-[#FF6551]" />
+              <Scale className="w-6 h-6 text-[#34D399]" />
             </div>
             <div>
               <span className="font-extrabold text-2xl tracking-tight leading-none block">Fastcase</span>
-              <span className="text-[10px] text-[#F5EEDB] font-semibold uppercase tracking-widest">
+              <span className="text-[10px] text-[#6EE7B7] font-semibold uppercase tracking-widest">
                 नागरिक विधी कक्ष • Consumer Portal
               </span>
             </div>
@@ -407,7 +407,7 @@ export default function CitizenLoginPage() {
             href="https://fastcase.in"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition shadow-2xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5 text-[#F5EEDB]" />
+            <ArrowLeft className="w-3.5 h-3.5 text-[#34D399]" />
             <span>fastcase.in</span>
           </a>
         </div>
@@ -415,14 +415,14 @@ export default function CitizenLoginPage() {
         {/* Middle Hero Showcase */}
         <div className="max-w-xl relative z-10 my-auto py-6 space-y-6">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#F5EEDB]">
-              <Scale className="w-3.5 h-3.5 text-[#FF6551]" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#6EE7B7]">
+              <Scale className="w-3.5 h-3.5 text-[#34D399]" />
               <span>१-क्लिक विधी सहाय्य, कोर्ट अर्ज व मालमत्ता पडताळणी</span>
             </div>
 
             <h2 className="text-3xl xl:text-4xl font-extrabold tracking-tight leading-[1.2] text-white">
               सामान्य नागरिकांसाठी<br />
-              <span className="text-[#FF6551]">कायदेशीर संरक्षण</span> व अधिकृत कोर्ट अर्ज
+              <span className="text-[#34D399]">कायदेशीर संरक्षण</span> व अधिकृत कोर्ट अर्ज
             </h2>
 
             <p className="text-white/80 text-sm xl:text-base leading-relaxed">
@@ -432,7 +432,7 @@ export default function CitizenLoginPage() {
 
           {/* 4 Core Services Showcase Cards */}
           <div className="space-y-3">
-            <p className="text-[11px] font-black uppercase tracking-wider text-[#F5EEDB]/80">
+            <p className="text-[11px] font-black uppercase tracking-wider text-[#6EE7B7]">
               कंझ्युमर पोर्टलवर उपलब्ध प्रमुख सेवा (Services Inside Portal):
             </p>
 
@@ -445,7 +445,7 @@ export default function CitizenLoginPage() {
                     className="p-3.5 rounded-2xl bg-white/[0.07] border border-white/15 hover:bg-white/[0.12] transition-colors flex items-start gap-3.5 shadow-xs"
                   >
                     <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0 mt-0.5">
-                      <Icon className="w-5 h-5 text-[#FF6551]" />
+                      <Icon className="w-5 h-5 text-[#34D399]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-0.5">
@@ -470,10 +470,10 @@ export default function CitizenLoginPage() {
           <div className="pt-1">
             <Link
               href="/citizen-portal"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6551] hover:bg-[#E8523E] text-white text-xs font-bold transition cursor-pointer shadow-md shadow-[#FF6551]/30"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#013B36] hover:bg-[#024E47] border border-[#34D399]/30 text-white text-xs font-bold transition cursor-pointer shadow-md shadow-[#013B36]/30"
             >
               <span>आधी पोर्टल एक्सप्लोर करा (Explore Portal as Guest)</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-[#34D399]" />
             </Link>
           </div>
         </div>
@@ -481,26 +481,26 @@ export default function CitizenLoginPage() {
         {/* Bottom Trust Highlights */}
         <div className="pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/70 relative z-10">
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF6551]" /> बार कौन्सिल व विधी नियमांनुसार
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399]" /> बार कौन्सिल व विधी नियमांनुसार
           </span>
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF6551]" /> केवळ ₹३०/- कोर्ट अर्ज
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399]" /> केवळ ₹३०/- कोर्ट अर्ज
           </span>
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#FF6551]" /> १००% सुरक्षित भारतीय क्लाउड
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399]" /> १००% सुरक्षित भारतीय क्लाउड
           </span>
         </div>
       </div>
 
       {/* ── Right Form Panel ── */}
-      <div className="flex-1 flex flex-col justify-center items-center bg-[#F7F8F6] px-4 sm:px-8 lg:px-12 py-8 lg:py-12 overflow-y-auto">
+      <div className="flex-1 flex flex-col justify-center items-center bg-[#F8FAFC] px-4 sm:px-8 lg:px-12 py-8 lg:py-12 overflow-y-auto">
         <div className="w-full max-w-md space-y-4">
           {/* Mobile Header & Portal Services Preview */}
           <div className="lg:hidden space-y-3 mb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#11213C] text-white flex items-center justify-center shadow-xs">
-                  <Scale className="w-4 h-4 text-[#FF6551]" />
+                <div className="w-8 h-8 rounded-lg bg-[#013B36] text-white flex items-center justify-center shadow-xs">
+                  <Scale className="w-4 h-4 text-[#34D399]" />
                 </div>
                 <div>
                   <span className="font-extrabold text-base text-gray-950 block leading-none">Fastcase</span>
@@ -513,29 +513,29 @@ export default function CitizenLoginPage() {
             </div>
 
             {/* Mobile Services Overview Card */}
-            <div className="p-3.5 rounded-2xl bg-[#11213C] text-white space-y-2 shadow-sm">
+            <div className="p-3.5 rounded-2xl bg-[#02201D] border border-white/10 text-white space-y-2 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-extrabold text-[#F5EEDB]">पोर्टलवर काय उपलब्ध आहे:</span>
-                <Link href="/citizen-portal" className="text-[10px] font-bold text-[#FF6551] flex items-center gap-1">
+                <span className="text-[11px] font-extrabold text-[#6EE7B7]">पोर्टलवर काय उपलब्ध आहे:</span>
+                <Link href="/citizen-portal" className="text-[10px] font-bold text-[#34D399] flex items-center gap-1">
                   <span>एक्सप्लोर करा</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-1.5 text-[10px] text-white/90">
                 <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
-                  <ShieldAlert className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <ShieldAlert className="w-3 h-3 text-[#34D399] shrink-0" />
                   <span className="font-semibold truncate">१. समस्या व उपाय</span>
                 </div>
                 <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
-                  <FileText className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <FileText className="w-3 h-3 text-[#34D399] shrink-0" />
                   <span className="font-semibold truncate">२. कोर्ट अर्ज (₹३०)</span>
                 </div>
                 <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
-                  <Building2 className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <Building2 className="w-3 h-3 text-[#34D399] shrink-0" />
                   <span className="font-semibold truncate">३. मालमत्ता तपासणी</span>
                 </div>
                 <div className="p-1.5 rounded-lg bg-white/10 flex items-center gap-1.5">
-                  <FolderCheck className="w-3 h-3 text-[#FF6551] shrink-0" />
+                  <FolderCheck className="w-3 h-3 text-[#34D399] shrink-0" />
                   <span className="font-semibold truncate">४. जतन केलेले अर्ज</span>
                 </div>
               </div>
@@ -549,14 +549,14 @@ export default function CitizenLoginPage() {
             className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-200/90 p-6 sm:p-8"
           >
             {/* ═══════════════════════════════════════════════════════════════
-                VIEW 1: SIGN IN (PIXEL-PERFECT MATCH TO ATTACHED IMAGE)
+                VIEW 1: SIGN IN (TRUEPAY AI MATCHING DESIGN)
             ════════════════════════════════════════════════════════════════ */}
             {view === "login" ? (
               <div className="space-y-4">
                 {/* 1. Top Pill Badge */}
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5EEDB] text-[#11213C] text-[11px] font-extrabold border border-[#E8DFC9] shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#FF6551]" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#065F46] text-[11px] font-extrabold border border-[#A7F3D0] shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
                     <span className="uppercase tracking-wider">ACCOUNT SIGN IN</span>
                   </div>
                 </div>
@@ -620,11 +620,11 @@ export default function CitizenLoginPage() {
                     className={cn(
                       "py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer",
                       authChannel === "email"
-                        ? "bg-white text-[#11213C] font-black shadow-xs border border-gray-200/80"
+                        ? "bg-white text-[#013B36] font-black shadow-xs border border-gray-200/80"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
                     )}
                   >
-                    <Mail className="w-4 h-4 text-[#FF6551]" />
+                    <Mail className="w-4 h-4 text-[#059669]" />
                     <span>Email Address</span>
                   </button>
 
@@ -637,11 +637,11 @@ export default function CitizenLoginPage() {
                     className={cn(
                       "py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer",
                       authChannel === "mobile"
-                        ? "bg-white text-[#11213C] font-black shadow-xs border border-gray-200/80"
+                        ? "bg-white text-[#013B36] font-black shadow-xs border border-gray-200/80"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
                     )}
                   >
-                    <Smartphone className="w-4 h-4 text-[#FF6551]" />
+                    <Smartphone className="w-4 h-4 text-[#059669]" />
                     <span>Mobile OTP</span>
                   </button>
                 </div>
@@ -655,7 +655,7 @@ export default function CitizenLoginPage() {
                       className={cn(
                         "pb-1 transition font-bold cursor-pointer relative",
                         authMethod === "otp"
-                          ? "text-[#11213C] font-black border-b-2 border-[#11213C]"
+                          ? "text-[#013B36] font-black border-b-2 border-[#059669]"
                           : "text-gray-500 hover:text-gray-800"
                       )}
                     >
@@ -668,7 +668,7 @@ export default function CitizenLoginPage() {
                       className={cn(
                         "pb-1 transition font-bold cursor-pointer relative",
                         authMethod === "password"
-                          ? "text-[#11213C] font-black border-b-2 border-[#11213C]"
+                          ? "text-[#013B36] font-black border-b-2 border-[#059669]"
                           : "text-gray-500 hover:text-gray-800"
                       )}
                     >
@@ -696,7 +696,7 @@ export default function CitizenLoginPage() {
                         <button
                           type="button"
                           onClick={() => toast.info("Please contact support@fastcase.in for account recovery.")}
-                          className="text-[11px] font-bold text-[#FF6551] hover:underline cursor-pointer"
+                          className="text-[11px] font-bold text-[#059669] hover:underline cursor-pointer"
                         >
                           Forgot email?
                         </button>
@@ -710,7 +710,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setEmailInput(e.target.value)}
                           placeholder="name@example.com"
                           required
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 font-medium mt-1.5">
@@ -721,7 +721,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -768,7 +768,7 @@ export default function CitizenLoginPage() {
                               otpRefs.current[idx - 1]?.focus();
                             }
                           }}
-                          className="w-11 h-12 text-center text-lg font-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#11213C] focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                          className="w-11 h-12 text-center text-lg font-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#059669] focus:outline-none focus:ring-2 focus:ring-[#059669]/20 transition"
                         />
                       ))}
                     </div>
@@ -786,7 +786,7 @@ export default function CitizenLoginPage() {
                         <button
                           type="button"
                           onClick={() => handleSendOtp()}
-                          className="font-bold text-[#FF6551] hover:underline cursor-pointer"
+                          className="font-bold text-[#059669] hover:underline cursor-pointer"
                         >
                           Resend OTP
                         </button>
@@ -799,7 +799,7 @@ export default function CitizenLoginPage() {
                       type="button"
                       onClick={handleVerifyOtp}
                       disabled={loading || otpDigits.join("").length !== 6}
-                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -831,7 +831,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setEmailInput(e.target.value)}
                           placeholder="name@example.com"
                           required
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                         />
                       </div>
                     </div>
@@ -844,7 +844,7 @@ export default function CitizenLoginPage() {
                         <button
                           type="button"
                           onClick={() => setShowForgotModal(true)}
-                          className="text-[11px] font-bold text-[#FF6551] hover:underline cursor-pointer"
+                          className="text-[11px] font-bold text-[#059669] hover:underline cursor-pointer"
                         >
                           Forgot password?
                         </button>
@@ -858,7 +858,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setPasswordInput(e.target.value)}
                           placeholder="••••••••"
                           required
-                          className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                          className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                         />
                         <button
                           type="button"
@@ -873,7 +873,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -914,7 +914,7 @@ export default function CitizenLoginPage() {
                           onChange={(e) => setPhoneInput(e.target.value)}
                           placeholder="+91 98765 43210"
                           required
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                          className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                         />
                       </div>
                       <p className="text-[11px] text-gray-500 font-medium mt-1.5">
@@ -925,7 +925,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -948,7 +948,7 @@ export default function CitizenLoginPage() {
                   <button
                     type="button"
                     onClick={() => setView("register")}
-                    className="font-bold text-[#FF6551] hover:underline cursor-pointer"
+                    className="font-bold text-[#059669] hover:underline cursor-pointer"
                   >
                     Create free account →
                   </button>
@@ -960,8 +960,8 @@ export default function CitizenLoginPage() {
               ════════════════════════════════════════════════════════════════ */
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5EEDB] text-[#11213C] text-[11px] font-extrabold border border-[#E8DFC9] shadow-2xs">
-                    <Sparkles className="w-3.5 h-3.5 text-[#FF6551]" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#065F46] text-[11px] font-extrabold border border-[#A7F3D0] shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
                     <span className="uppercase tracking-wider">CREATE ACCOUNT</span>
                   </div>
                   <h2 className="text-2xl font-black text-gray-950 tracking-tight">
@@ -981,7 +981,7 @@ export default function CitizenLoginPage() {
                       {...registerCitizen("fullName")}
                       type="text"
                       placeholder="उदा. रमेश शंकर पाटील"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#059669] focus:outline-none"
                     />
                     {citizenErrors.fullName && (
                       <p className="text-[10px] text-red-500 mt-0.5">{citizenErrors.fullName.message}</p>
@@ -996,7 +996,7 @@ export default function CitizenLoginPage() {
                       {...registerCitizen("email")}
                       type="email"
                       placeholder="name@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#059669] focus:outline-none"
                     />
                     {citizenErrors.email && (
                       <p className="text-[10px] text-red-500 mt-0.5">{citizenErrors.email.message}</p>
@@ -1012,7 +1012,7 @@ export default function CitizenLoginPage() {
                         {...registerCitizen("phone")}
                         type="tel"
                         placeholder="९८२२००११२२"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#059669] focus:outline-none"
                       />
                     </div>
                     <div>
@@ -1023,7 +1023,7 @@ export default function CitizenLoginPage() {
                         {...registerCitizen("city")}
                         type="text"
                         placeholder="पुणे / मुंबई"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#059669] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1036,7 +1036,7 @@ export default function CitizenLoginPage() {
                       {...registerCitizen("password")}
                       type="password"
                       placeholder="••••••••"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#11213C] focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm font-medium focus:border-[#059669] focus:outline-none"
                     />
                     {citizenErrors.password && (
                       <p className="text-[10px] text-red-500 mt-0.5">{citizenErrors.password.message}</p>
@@ -1046,7 +1046,7 @@ export default function CitizenLoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
+                    className="w-full py-3 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-1"
                   >
                     {loading ? "Creating Account..." : "Create Account →"}
                   </button>
@@ -1056,7 +1056,7 @@ export default function CitizenLoginPage() {
                     <button
                       type="button"
                       onClick={() => setView("login")}
-                      className="font-bold text-[#FF6551] hover:underline cursor-pointer"
+                      className="font-bold text-[#059669] hover:underline cursor-pointer"
                     >
                       Sign In →
                     </button>
@@ -1077,8 +1077,8 @@ export default function CitizenLoginPage() {
             className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-xl border border-gray-100 space-y-4"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#F5EEDB] flex items-center justify-center text-[#11213C] border border-[#E8DFC9]">
-                <Scale className="w-5 h-5 text-[#FF6551]" />
+              <div className="w-10 h-10 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#065F46] border border-[#A7F3D0]">
+                <Scale className="w-5 h-5 text-[#059669]" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-gray-900">Reset Credentials</h3>
@@ -1092,7 +1092,7 @@ export default function CitizenLoginPage() {
             <button
               type="button"
               onClick={() => setShowForgotModal(false)}
-              className="w-full py-2.5 bg-[#11213C] text-white font-bold text-xs rounded-xl hover:bg-[#182C4E] transition cursor-pointer"
+              className="w-full py-2.5 bg-[#013B36] text-white font-bold text-xs rounded-xl hover:bg-[#024E47] transition cursor-pointer"
             >
               Close
             </button>

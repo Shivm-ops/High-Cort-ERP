@@ -304,33 +304,44 @@ export default function AdvocateLoginPage() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#0B1628] font-sans antialiased">
+    <div className="flex min-h-screen bg-[#021F1B] font-sans antialiased">
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
-      {/* ── Left Branding Panel ── */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16 relative overflow-hidden bg-gradient-to-br from-[#11213C] via-[#0E1A30] to-[#070E1A] text-white">
+      {/* ── Left Branding Panel (TruePay AI Emerald & Mint) ── */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16 relative overflow-hidden bg-gradient-to-br from-[#021F1B] via-[#03362E] to-[#02201D] text-white">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
-        {/* Logo */}
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-            <Scale className="w-6 h-6 text-[#FF6551]" />
+        {/* Logo & Website button */}
+        <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+              <Scale className="w-6 h-6 text-[#34D399]" />
+            </div>
+            <div>
+              <span className="font-extrabold text-2xl tracking-tight leading-none block">Fastcase</span>
+              <span className="text-[10px] text-[#6EE7B7] font-semibold uppercase tracking-widest">
+                Advocate ERP Platform
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="font-extrabold text-2xl tracking-tight leading-none block">Fastcase</span>
-            <span className="text-[10px] text-[#F5EEDB] font-semibold uppercase tracking-widest">
-              Advocate ERP Platform
-            </span>
-          </div>
+
+          <a
+            href="https://fastcase.in"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 text-white/90 text-xs font-bold transition shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Website</span>
+          </a>
         </div>
 
         {/* Headline */}
         <div className="max-w-xl xl:max-w-2xl relative z-10 my-auto py-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#F5EEDB] mb-5">
-            <Scale className="w-3.5 h-3.5 text-[#FF6551]" /> ॲडव्होकेट विधी प्रॅक्टिस कक्ष (Advocate OS)
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-[#6EE7B7] mb-5">
+            <Lock className="w-3.5 h-3.5 text-[#34D399]" /> PRIVATE & CONFIDENTIAL WORKSPACE
           </div>
 
           <h2 className="text-3xl lg:text-4xl xl:text-5xl 2xl:text-[50px] font-extrabold tracking-tight mb-5 lg:mb-6 leading-[1.18]">
-            India's Complete Legal<br />Operating System
+            India's Complete Legal<br />
+            <span className="text-[#34D399]">Operating System.</span>
           </h2>
 
           <p className="text-white/80 text-base lg:text-lg xl:text-xl leading-relaxed font-normal max-w-xl">
@@ -343,7 +354,7 @@ export default function AdvocateLoginPage() {
           {advocateFeatures.map((f, i) => (
             <div key={i} className="flex items-center gap-4.5">
               <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-                <f.icon className="w-5 h-5 text-[#FF6551]" />
+                <f.icon className="w-5 h-5 text-[#34D399]" />
               </div>
               <div>
                 <h4 className="text-sm lg:text-base font-semibold text-white tracking-tight">{f.text}</h4>
@@ -355,7 +366,7 @@ export default function AdvocateLoginPage() {
       </div>
 
       {/* ── Right Form Panel Matching Exact Mockup ── */}
-      <div className="flex-1 flex items-center justify-center bg-[#F7F8F6] px-5 sm:px-10 lg:px-12 xl:px-16 2xl:px-20 py-8 lg:py-12">
+      <div className="flex-1 flex items-center justify-center bg-[#F8FAFC] px-5 sm:px-10 lg:px-12 xl:px-16 2xl:px-20 py-8 lg:py-12">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -364,31 +375,31 @@ export default function AdvocateLoginPage() {
         >
           {/* Mobile Logo */}
           <div className="flex lg:hidden items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-[#11213C] flex items-center justify-center shadow-md text-white">
-              <Scale className="w-5 h-5 text-[#FF6551]" />
+            <div className="w-10 h-10 rounded-xl bg-[#013B36] flex items-center justify-center shadow-md text-white">
+              <Scale className="w-5 h-5 text-[#34D399]" />
             </div>
             <div>
               <span className="text-gray-900 font-extrabold text-2xl tracking-tight leading-none block">Fastcase</span>
-              <span className="text-[10px] text-[#11213C] font-bold uppercase tracking-wider">Advocate ERP Platform</span>
+              <span className="text-[10px] text-[#013B36] font-bold uppercase tracking-wider">Advocate ERP Platform</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/90 p-6 sm:p-9 space-y-4">
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-6 sm:p-9 space-y-4">
             {/* Back Link */}
             <div className="mb-2">
               <a
                 href="https://fastcase.in"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#11213C] transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#013B36] transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to fastcase.in</span>
               </a>
             </div>
 
-            {/* 1. Top Pill Badge */}
+            {/* 1. Top Pill Badge (TruePay AI Account Sign In) */}
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5EEDB] text-[#11213C] text-[11px] font-extrabold border border-[#E8DFC9] shadow-2xs">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#FF6551]" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#065F46] text-[11px] font-extrabold border border-[#A7F3D0] shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
                 <span className="uppercase tracking-wider">ACCOUNT SIGN IN</span>
               </div>
             </div>
@@ -452,11 +463,11 @@ export default function AdvocateLoginPage() {
                 className={cn(
                   "py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer",
                   authChannel === "email"
-                    ? "bg-white text-[#11213C] font-black shadow-xs border border-gray-200/80"
+                    ? "bg-white text-[#013B36] font-black shadow-xs border border-gray-200/80"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
                 )}
               >
-                <Mail className="w-4 h-4 text-[#FF6551]" />
+                <Mail className="w-4 h-4 text-[#059669]" />
                 <span>Email Address</span>
               </button>
 
@@ -469,11 +480,11 @@ export default function AdvocateLoginPage() {
                 className={cn(
                   "py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer",
                   authChannel === "mobile"
-                    ? "bg-white text-[#11213C] font-black shadow-xs border border-gray-200/80"
+                    ? "bg-white text-[#013B36] font-black shadow-xs border border-gray-200/80"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/50"
                 )}
               >
-                <Smartphone className="w-4 h-4 text-[#FF6551]" />
+                <Smartphone className="w-4 h-4 text-[#059669]" />
                 <span>Mobile OTP</span>
               </button>
             </div>
@@ -487,7 +498,7 @@ export default function AdvocateLoginPage() {
                   className={cn(
                     "pb-1 transition font-bold cursor-pointer relative",
                     authMethod === "otp"
-                      ? "text-[#11213C] font-black border-b-2 border-[#11213C]"
+                      ? "text-[#013B36] font-black border-b-2 border-[#059669]"
                       : "text-gray-500 hover:text-gray-800"
                   )}
                 >
@@ -500,7 +511,7 @@ export default function AdvocateLoginPage() {
                   className={cn(
                     "pb-1 transition font-bold cursor-pointer relative",
                     authMethod === "password"
-                      ? "text-[#11213C] font-black border-b-2 border-[#11213C]"
+                      ? "text-[#013B36] font-black border-b-2 border-[#059669]"
                       : "text-gray-500 hover:text-gray-800"
                   )}
                 >
@@ -528,7 +539,7 @@ export default function AdvocateLoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowForgotModal(true)}
-                      className="text-[11px] font-bold text-[#FF6551] hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-[#059669] hover:underline cursor-pointer"
                     >
                       Forgot email?
                     </button>
@@ -542,7 +553,7 @@ export default function AdvocateLoginPage() {
                       onChange={(e) => setEmailInput(e.target.value)}
                       placeholder="name@example.com"
                       required
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                     />
                   </div>
                   <p className="text-[11px] text-gray-500 font-medium mt-1.5">
@@ -553,7 +564,7 @@ export default function AdvocateLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -600,7 +611,7 @@ export default function AdvocateLoginPage() {
                           otpRefs.current[idx - 1]?.focus();
                         }
                       }}
-                      className="w-11 h-12 text-center text-lg font-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#11213C] focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                      className="w-11 h-12 text-center text-lg font-black bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-[#059669] focus:outline-none focus:ring-2 focus:ring-[#059669]/20 transition"
                     />
                   ))}
                 </div>
@@ -618,7 +629,7 @@ export default function AdvocateLoginPage() {
                     <button
                       type="button"
                       onClick={() => handleSendOtp()}
-                      className="font-bold text-[#FF6551] hover:underline cursor-pointer"
+                      className="font-bold text-[#059669] hover:underline cursor-pointer"
                     >
                       Resend OTP
                     </button>
@@ -631,7 +642,7 @@ export default function AdvocateLoginPage() {
                   type="button"
                   onClick={handleVerifyOtp}
                   disabled={loading || otpDigits.join("").length !== 6}
-                  className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -663,7 +674,7 @@ export default function AdvocateLoginPage() {
                       onChange={(e) => setEmailInput(e.target.value)}
                       placeholder="name@example.com"
                       required
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                     />
                   </div>
                 </div>
@@ -676,7 +687,7 @@ export default function AdvocateLoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowForgotModal(true)}
-                      className="text-[11px] font-bold text-[#FF6551] hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-[#059669] hover:underline cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -690,7 +701,7 @@ export default function AdvocateLoginPage() {
                       onChange={(e) => setPasswordInput(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                      className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                     />
                     <button
                       type="button"
@@ -705,7 +716,7 @@ export default function AdvocateLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -743,7 +754,7 @@ export default function AdvocateLoginPage() {
                       onChange={(e) => setPhoneInput(e.target.value)}
                       placeholder="+91 98765 43210"
                       required
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#11213C] focus:ring-2 focus:ring-[#FF6551]/20 transition"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition"
                     />
                   </div>
                   <p className="text-[11px] text-gray-500 font-medium mt-1.5">
@@ -754,7 +765,7 @@ export default function AdvocateLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#FF6551]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -777,7 +788,7 @@ export default function AdvocateLoginPage() {
               <button
                 type="button"
                 onClick={() => router.push("/register")}
-                className="font-bold text-[#FF6551] hover:underline cursor-pointer"
+                className="font-bold text-[#059669] hover:underline cursor-pointer"
               >
                 Create free account →
               </button>
@@ -795,8 +806,8 @@ export default function AdvocateLoginPage() {
             className="w-full max-w-sm bg-white rounded-2xl p-6 shadow-xl border border-gray-100 space-y-4"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#F5EEDB] flex items-center justify-center text-[#11213C] border border-[#E8DFC9]">
-                <Scale className="w-5 h-5 text-[#FF6551]" />
+              <div className="w-10 h-10 rounded-full bg-[#ECFDF5] flex items-center justify-center text-[#065F46] border border-[#A7F3D0]">
+                <Scale className="w-5 h-5 text-[#059669]" />
               </div>
               <h3 className="text-base font-bold text-gray-900">Reset Credentials</h3>
             </div>
@@ -807,7 +818,7 @@ export default function AdvocateLoginPage() {
             <button
               type="button"
               onClick={() => setShowForgotModal(false)}
-              className="w-full py-2.5 bg-[#11213C] text-white font-bold text-xs rounded-xl hover:bg-[#182C4E] transition cursor-pointer"
+              className="w-full py-2.5 bg-[#013B36] text-white font-bold text-xs rounded-xl hover:bg-[#024E47] transition cursor-pointer"
             >
               Close
             </button>

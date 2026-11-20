@@ -86,7 +86,7 @@ export default function Home() {
               </div>
 
               <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.32] sm:leading-[1.28] lg:leading-[1.24] tracking-tight mb-5 text-balance">
-                Everything Your Legal Practice Needs, <span className="text-[#FF6551]">Unified.</span>
+                Everything Your Legal Practice Needs, <span className="text-[#059669]">Unified.</span>
               </h1>
 
               <p className="text-[16px] text-slate-600 leading-relaxed mb-6 max-w-lg">
@@ -109,13 +109,13 @@ export default function Home() {
               {/* Key Trust Checkmarks */}
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#FF6551]" /> 14-Day Free Trial
+                  <CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> 14-Day Free Trial
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#FF6551]" /> 100% Indian Cloud Data
+                  <CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> 100% Indian Cloud Data
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#FF6551]" /> Bar Council Compliant
+                  <CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> Bar Council Compliant
                 </span>
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function Home() {
                 title: 'GST Billing & Ledger',
                 desc: 'Compliant legal fee invoices, trust account retainers, and automated WhatsApp receipts.',
                 tag: 'Billing',
-                color: 'text-[#FF6551] bg-[#FF6551]/10 border-[#FF6551]/20',
+                color: 'text-[#065F46] bg-[#ECFDF5] border-[#A7F3D0]',
               },
               {
                 icon: Shield,

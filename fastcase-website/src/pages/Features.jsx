@@ -151,7 +151,7 @@ export default function Features() {
   return (
     <div className="bg-surface">
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)' }} className="pt-32 pb-16">
+      <section style={{ background: 'linear-gradient(135deg, #021F1B 0%, #03362E 55%, #05483D 100%)' }} className="pt-32 pb-16">
         <div className="section-container text-center">
           <span className="inline-block bg-[#C59B27]/20 border border-[#C59B27]/40 text-amber-300 text-[12px] font-[800] tracking-wider uppercase px-4 py-1.5 rounded-full mb-4 shadow-sm">
             Platform Capabilities

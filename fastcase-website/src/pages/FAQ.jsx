@@ -137,7 +137,7 @@ export default function FAQ() {
   return (
     <div>
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)' }} className="pt-32 pb-20">
+      <section style={{ background: 'linear-gradient(135deg, #021F1B 0%, #03362E 55%, #05483D 100%)' }} className="pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 border border-white/20 rounded-2xl mb-6">
             <HelpCircle className="w-8 h-8 text-white" />

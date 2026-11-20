@@ -8,8 +8,8 @@ import { useAuthStore } from "@/lib/store/authStore";
 const LandingPage = dynamic(() => import("@/components/landing/LandingPage"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-screen items-center justify-center bg-[#11213C]">
-      <div className="w-8 h-8 rounded-full border-2 border-[#11213C] border-t-[#FF6551] animate-spin" />
+    <div className="flex h-screen items-center justify-center bg-[#02201D]">
+      <div className="w-8 h-8 rounded-full border-2 border-[#02201D] border-t-[#34D399] animate-spin" />
     </div>
   ),
 });
@@ -30,8 +30,8 @@ export default function RootPage() {
 
   if (checking) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#11213C]">
-        <div className="w-8 h-8 rounded-full border-2 border-[#11213C] border-t-[#FF6551] animate-spin" />
+      <div className="flex h-screen items-center justify-center bg-[#02201D]">
+        <div className="w-8 h-8 rounded-full border-2 border-[#02201D] border-t-[#34D399] animate-spin" />
       </div>
     );
   }

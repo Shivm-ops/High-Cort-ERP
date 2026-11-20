@@ -201,26 +201,27 @@ export default function RegisterPage() {
       {/* Left branding panel */}
       <div
         className="hidden lg:flex flex-1 flex-col justify-between p-10 lg:p-14 xl:p-18 2xl:p-24 relative overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #11213C 0%, #182C4E 50%, #0B1628 100%)" }}
+        style={{ background: "linear-gradient(160deg, #021F1B 0%, #03362E 50%, #02201D 100%)" }}
       >
         <div className="absolute top-[-80px] left-[-80px] w-96 h-96 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #FF6551 0%, transparent 70%)" }} />
+          style={{ background: "radial-gradient(circle, #34D399 0%, transparent 70%)" }} />
         <div className="absolute bottom-20 right-[-60px] w-72 h-72 rounded-full opacity-[0.08]"
-          style={{ background: "radial-gradient(circle, #F5EEDB 0%, transparent 70%)" }} />
+          style={{ background: "radial-gradient(circle, #6EE7B7 0%, transparent 70%)" }} />
         
         <div className="flex items-center gap-3.5 relative z-10">
-          <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-[#FF6551]/15 border border-[#FF6551]/25 flex items-center justify-center shadow-lg shadow-[#FF6551]/10">
-            <Scale className="w-6 h-6 lg:w-7 lg:h-7 text-[#FF6551]" />
+          <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-[#34D399]/15 border border-[#34D399]/25 flex items-center justify-center shadow-lg shadow-[#34D399]/10">
+            <Scale className="w-6 h-6 lg:w-7 lg:h-7 text-[#34D399]" />
           </div>
           <div>
             <div className="text-white font-extrabold text-xl lg:text-2xl tracking-tight leading-none">Fastcase</div>
-            <div className="text-[#F5EEDB] text-[11px] lg:text-xs uppercase tracking-widest font-bold">Legal Platform</div>
+            <div className="text-[#6EE7B7] text-[11px] lg:text-xs uppercase tracking-widest font-bold">Legal Platform</div>
           </div>
         </div>
 
         <div className="max-w-xl xl:max-w-2xl relative z-10 my-auto py-8">
           <h1 className="text-white text-3xl lg:text-4xl xl:text-5xl 2xl:text-[52px] font-extrabold leading-[1.18] mb-5 lg:mb-6 tracking-tight">
-            India's Complete Legal<br />Operating System
+            India's Complete Legal<br />
+            <span className="text-[#34D399]">Operating System.</span>
           </h1>
           <p className="text-white/80 text-base lg:text-lg xl:text-xl leading-relaxed font-normal max-w-xl">
             Manage cases, draft documents, track hearings, and run your practice — all in one platform.
@@ -236,7 +237,7 @@ export default function RegisterPage() {
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex items-center gap-4.5">
               <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center shrink-0 shadow-sm">
-                <Icon className="w-5 h-5 text-[#FF6551]" />
+                <Icon className="w-5 h-5 text-[#34D399]" />
               </div>
               <div>
                 <div className="text-white text-sm lg:text-base font-semibold tracking-tight">{label}</div>

@@ -191,16 +191,16 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* ── Title Banner ── */}
-      <div className="bg-gradient-to-r from-[#11213C] via-[#1C3259] to-[#0B1628] text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-[#1C3259]/60">
+      <div className="bg-gradient-to-br from-[#021F1B] via-[#03362E] to-[#02201D] text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-white/10">
         <div className="relative z-10 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FF6551]/20 border border-[#FF6551]/40 text-[#F5EEDB] text-xs font-black">
-            <Building2 className="w-3.5 h-3.5 text-[#FF6551]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-xs font-black">
+            <Building2 className="w-3.5 h-3.5 text-[#059669]" />
             <span>महाराष्ट्र जमीन, प्लॉट व फ्लॅट टायटल तपासणी</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#F5EEDB]">
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#6EE7B7]">
             मालमत्ता कायदेशीर तपासणी & कोर्ट केस सर्च
           </h2>
-          <p className="text-[#F5EEDB]/85 text-xs sm:text-sm max-w-2xl leading-relaxed">
+          <p className="text-[#6EE7B7] text-xs sm:text-sm max-w-2xl leading-relaxed">
             जमीन, प्लॉट किंवा फ्लॅट खरेदी करण्यापूर्वी ७/१२ उतारा, महाभूमी नोंदी, चालू दिवाणी दावे (Civil Court Cases),
             बँक बोजा आणि मालकी हक्काची साखळी (Chain of Title) एकाच ठिकाणी तपासा.
           </p>
@@ -223,7 +223,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 className={cn(
                   "p-3 rounded-xl border text-left transition-all flex flex-col gap-1 cursor-pointer",
                   propertyCategory === cat.id
-                    ? "border-[#FF6551] bg-[#F5EEDB]/40 text-[#11213C] shadow-xs ring-2 ring-[#FF6551]/20"
+                    ? "border-[#059669] bg-[#ECFDF5] text-[#013B36] shadow-xs ring-2 ring-[#059669]/20"
                     : "border-gray-200 bg-white hover:bg-gray-50 text-gray-800"
                 )}
               >
@@ -248,7 +248,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
               <select
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               >
                 {MAHARASHTRA_DISTRICTS.map((d) => (
                   <option key={d} value={d}>
@@ -264,7 +264,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={taluka}
                 onChange={(e) => setTaluka(e.target.value)}
                 placeholder="उदा. हवेली, मुळशी..."
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
             <div>
@@ -274,7 +274,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={villageCity}
                 onChange={(e) => setVillageCity(e.target.value)}
                 placeholder="उदा. वाकड, बावधन..."
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
           </div>
@@ -287,7 +287,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={surveyNumber}
                 onChange={(e) => setSurveyNumber(e.target.value)}
                 placeholder="उदा. 45/1A"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
             <div>
@@ -297,7 +297,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={gatNumber}
                 onChange={(e) => setGatNumber(e.target.value)}
                 placeholder="उदा. 102"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
             <div>
@@ -307,7 +307,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={ctsNumber}
                 onChange={(e) => setCtsNumber(e.target.value)}
                 placeholder="उदा. 1204"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 onChange={(e) => setCurrentOwnerName(e.target.value)}
                 placeholder="उदा. रमेश किसनराव पाटील"
                 required
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
             <div>
@@ -337,7 +337,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 value={previousOwners}
                 onChange={(e) => setPreviousOwners(e.target.value)}
                 placeholder="उदा. बाळकृष्ण कदम, आनंद जोशी"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/20 focus:border-[#11213C]"
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#013B36]"
               />
             </div>
           </div>
@@ -348,7 +348,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           <button
             type="submit"
             disabled={isSearching}
-            className="w-full sm:w-auto px-8 py-3.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-black text-xs rounded-xl shadow-md shadow-[#FF6551]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto px-8 py-3.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs rounded-xl shadow-md shadow-[#013B36]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isSearching ? (
               <>
@@ -357,7 +357,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
               </>
             ) : (
               <>
-                <Search className="w-4 h-4 text-[#F5EEDB]" />
+                <Search className="w-4 h-4 text-[#6EE7B7]" />
                 <span>कायदेशीर तपासणी अहवाल मिळवा (Execute Legal Check)</span>
               </>
             )}
@@ -373,7 +373,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
             className={cn(
               "rounded-2xl p-6 border shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4",
               searchResult.risk_category === "records_found"
-                ? "bg-[#F5EEDB]/40 border-emerald-300 text-emerald-950"
+                ? "bg-[#ECFDF5] border-emerald-300 text-emerald-950"
                 : searchResult.risk_category === "further_verification_required"
                 ? "bg-[#FFF8EE] border-amber-300 text-amber-950"
                 : searchResult.risk_category === "source_unavailable"
@@ -402,9 +402,9 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                 href={searchResult.report_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#11213C] hover:bg-[#0B1628] text-[#F5EEDB] rounded-xl text-xs font-bold shadow-sm border border-[#F5EEDB]/20"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#013B36] hover:bg-[#024E47] text-white rounded-xl text-xs font-bold shadow-sm border border-white/20"
               >
-                <Download className="w-3.5 h-3.5 text-[#FF6551]" />
+                <Download className="w-3.5 h-3.5 text-[#059669]" />
                 <span>PDF अहवाल डाउनलोड करा</span>
               </a>
             </div>
@@ -437,7 +437,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black uppercase text-gray-800 tracking-wider flex items-center gap-2">
-                <Scale className="w-4 h-4 text-[#FF6551]" />
+                <Scale className="w-4 h-4 text-[#059669]" />
                 न्यायालयीन खटले व वाद (Court Case Search - eCourts India)
               </h3>
               <span className="text-xs text-gray-500 font-medium">
@@ -492,7 +492,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           {searchResult.land_records?.satbara_7_12 && (
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-3">
               <h3 className="text-xs font-black uppercase text-gray-800 tracking-wider flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#FF6551]" />
+                <FileText className="w-4 h-4 text-[#059669]" />
                 महाभूमी अधिकृत ७/१२ उतारा नोंदी (MahaBhumi 7/12 Satbara)
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-gray-50 rounded-xl text-xs">
@@ -525,7 +525,7 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           {/* Document Upload & OCR Matching */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
             <h3 className="text-xs font-black uppercase text-gray-800 tracking-wider flex items-center gap-2">
-              <Upload className="w-4 h-4 text-[#FF6551]" />
+              <Upload className="w-4 h-4 text-[#059669]" />
               कागदपत्रे अपलोड व मजकूर पडताळणी (Upload Deeds & OCR Check)
             </h3>
             <p className="text-xs text-gray-500">
@@ -561,13 +561,13 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
           </div>
 
           {/* Advocate Verification Request Card */}
-          <div className="bg-gradient-to-r from-[#F5EEDB]/60 via-white to-[#F5EEDB]/40 rounded-2xl border border-[#E8DFC9] p-6 shadow-sm space-y-4">
+          <div className="bg-gradient-to-r from-[#ECFDF5]/60 via-white to-[#ECFDF5]/40 rounded-2xl border border-[#A7F3D0] p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#11213C] text-[#FF6551] rounded-xl shadow-xs">
+              <div className="p-2.5 bg-[#013B36] text-[#059669] rounded-xl shadow-xs">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-[#11213C]">
+                <h3 className="text-sm font-black text-[#013B36]">
                   वकिलांमार्फत प्रत्यक्ष टायटल शोध व कायदेशीर सल्ला (Advocate Title Opinion)
                 </h3>
                 <p className="text-xs text-gray-600">
@@ -582,19 +582,19 @@ export default function PropertyLegalCheck({ lang = "mr" }: { lang?: string }) {
                   value={lawyerNotes}
                   onChange={(e) => setLawyerNotes(e.target.value)}
                   placeholder="आपली काही विशेष विचारणा असल्यास येथे लिहा (उदा. सदर जमिनीवर बँकेचे कर्ज आहे का, वारसा हक्काचा वाद आहे का)..."
-                  className="w-full p-3 bg-white border border-gray-300 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FF6551]/30"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#059669]/30"
                   rows={2}
                 />
                 <button
                   onClick={handleRequestLawyer}
                   disabled={isRequestingLawyer}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-[#FF6551] hover:bg-[#E8523E] text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isRequestingLawyer ? (
                     <span>नोंदणी सुरू आहे...</span>
                   ) : (
                     <>
-                      <FileCheck className="w-4 h-4 text-[#F5EEDB]" />
+                      <FileCheck className="w-4 h-4 text-[#6EE7B7]" />
                       <span>वकिलांची पडताळणी बुक करा (Book Advocate Verification)</span>
                     </>
                   )}

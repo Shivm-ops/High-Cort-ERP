@@ -88,7 +88,7 @@ export default function About() {
       {/* ── HERO ───────────────────────────────────────────────────── */}
       <section
         style={{
-          background: 'linear-gradient(135deg, #0B1628 0%, #11213C 55%, #182C4E 100%)'
+          background: 'linear-gradient(135deg, #021F1B 0%, #03362E 55%, #05483D 100%)'
         }}
         className="pt-28 pb-20 text-white relative overflow-hidden"
       >
@@ -244,7 +244,7 @@ export default function About() {
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Registered Corporate Office</p>
                 <div className="flex items-start gap-2.5 text-slate-700 text-sm leading-relaxed">
-                  <MapPin className="w-4 h-4 text-[#FF6551] flex-shrink-0 mt-1" />
+                  <MapPin className="w-4 h-4 text-[#059669] flex-shrink-0 mt-1" />
                   <address className="not-italic">
                     B4/5, Omkar Plaza, Rajaram Road,<br />
                     Near ICICI Bank, E Ward, Shahupuri,<br />

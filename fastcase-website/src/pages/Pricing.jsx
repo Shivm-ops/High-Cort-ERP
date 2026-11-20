@@ -155,7 +155,7 @@ export default function Pricing() {
                   key={plan.name}
                   className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
                     plan.highlight
-                      ? 'bg-gradient-to-b from-[#0B1628] via-[#11213C] to-[#182C4E] text-white border-2 border-[#FF6551]/40 shadow-[0_25px_60px_-10px_rgba(17,33,60,0.4)] hover:shadow-[0_30px_70px_-10px_rgba(17,33,60,0.5)] lg:-translate-y-2'
+                      ? 'bg-gradient-to-b from-[#021F1B] via-[#03362E] to-[#05483D] text-white border-2 border-[#34D399]/40 shadow-[0_25px_60px_-10px_rgba(2,31,27,0.5)] hover:shadow-[0_30px_70px_-10px_rgba(2,31,27,0.6)] lg:-translate-y-2'
                       : 'bg-white border border-slate-200 text-slate-900 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_12px_32px_-6px_rgba(15,23,42,0.1)] hover:-translate-y-1'
                   }`}
                 >
@@ -208,7 +208,7 @@ export default function Pricing() {
                         )}
                       </div>
                       <p className={`text-[11px] font-semibold mt-1 ${
-                        plan.highlight ? 'text-amber-300' : 'text-[#FF6551]'
+                        plan.highlight ? 'text-amber-300' : 'text-[#059669]'
                       }`}>
                         {plan.billedNote}
                       </p>

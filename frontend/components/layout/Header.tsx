@@ -329,15 +329,15 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
           onClick={() => setShowNewClientModal(true)}
           className="h-9 px-4 rounded-xl flex items-center gap-2 text-[13px] font-bold text-white transition-all duration-200 active:scale-95 shadow-sm hover:brightness-105"
           style={{
-            background: "#FF6551",
-            boxShadow: "0 2px 10px rgba(255, 101, 81, 0.35)",
+            background: "#013B36",
+            boxShadow: "0 2px 10px rgba(1, 59, 54, 0.35)",
             color: "#FFFFFF",
           }}
           onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(255, 101, 81, 0.5)")
+            ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(1, 59, 54, 0.5)")
           }
           onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.boxShadow = "0 2px 10px rgba(255, 101, 81, 0.35)")
+            ((e.currentTarget as HTMLElement).style.boxShadow = "0 2px 10px rgba(1, 59, 54, 0.35)")
           }
         >
           <Plus className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
