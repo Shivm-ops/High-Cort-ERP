@@ -308,7 +308,6 @@ export default function AdvocateLoginPage() {
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       {/* ── Left Branding Panel (TruePay AI Emerald & Mint) ── */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16 relative overflow-hidden bg-gradient-to-br from-[#021F1B] via-[#03362E] to-[#02201D] text-white">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
         {/* Logo & Website button */}
         <div className="flex items-center justify-between relative z-10">

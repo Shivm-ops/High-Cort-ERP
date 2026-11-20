@@ -115,12 +115,10 @@ export default function Home() {
 
       {/* ── HERO (Compact, Attractive & High-Impact) ─────────────────────────────────── */}
       <section className="relative pt-20 pb-12 lg:pt-24 lg:pb-16 overflow-hidden border-b border-slate-200/80 bg-white">
-        {/* Subtle Ambient Mesh & Dot-Grid Texture */}
+        {/* Subtle Ambient Mesh Texture */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Radial Top Glow in TruePay Emerald */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-[radial-gradient(ellipse_at_top,rgba(52,211,153,0.18),rgba(1,59,54,0.06)_45%,transparent_75%)] opacity-80" />
-          {/* Subtle Dot Grid */}
-          <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#013B36_1px,transparent_1px)] [background-size:22px_22px]" />
         </div>
 
         <div className="section-container relative z-10">

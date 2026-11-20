@@ -126,8 +126,6 @@ export default function PracticeAreas() {
         }}
         className="pt-32 pb-20 text-white relative overflow-hidden"
       >
-        {/* Subtle courtroom watermark aura */}
-        <div className="absolute inset-0 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.04] pointer-events-none" />
 
         <div className="section-container text-center relative z-10 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5 shadow-sm">

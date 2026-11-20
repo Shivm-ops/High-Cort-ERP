@@ -387,7 +387,6 @@ export default function CitizenLoginPage() {
 
       {/* ── Left Branding & Consumer Portal Services Panel (Desktop) ── */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-10 xl:p-14 relative overflow-hidden bg-gradient-to-br from-[#021F1B] via-[#03362E] to-[#02201D] text-white">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
         {/* Top Header inside Left Panel */}
         <div className="flex items-center justify-between relative z-10">
