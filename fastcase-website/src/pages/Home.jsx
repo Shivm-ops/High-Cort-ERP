@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import ProductShowcase from '../components/ProductShowcase';
 import {
   Users, Briefcase, Calendar, FileText, CheckCircle, ArrowRight, Shield,
-  Zap, Lock, ChevronDown, Gavel, CreditCard
+  Zap, Lock, ChevronDown, Gavel, CreditCard, Sparkles, Scale
 } from 'lucide-react';
 
 const getErpUrl = () => {
@@ -17,29 +17,68 @@ const getErpUrl = () => {
   return import.meta.env.VITE_ERP_APP_URL || "http://localhost:3000";
 };
 
-/* ─── Compact Dashboard Mockup ────────────────────────────────────────── */
+/* ─── Enhanced Hero Dashboard Showcase ────────────────────────────────── */
 function DashboardMockup() {
   return (
-    <div className="relative w-full max-w-[580px] mx-auto lg:mx-0">
-      <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_20px_50px_-12px_rgba(13,38,68,0.15)]">
-        {/* Browser bar */}
-        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 flex items-center gap-3">
+    <div className="relative w-full max-w-[620px] mx-auto lg:mr-0 group">
+      {/* Ambient Emerald Glow Backdrop */}
+      <div className="absolute -inset-3 bg-gradient-to-tr from-[#34D399]/25 via-[#059669]/20 to-[#013B36]/30 rounded-3xl blur-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+      {/* Main Browser Card */}
+      <div className="relative bg-white rounded-2xl overflow-hidden border border-slate-200/90 shadow-[0_24px_60px_-15px_rgba(1,59,54,0.18)] transition-all duration-300 group-hover:shadow-[0_28px_70px_-12px_rgba(1,59,54,0.25)]">
+        {/* Browser Bar */}
+        <div className="bg-slate-50/90 backdrop-blur-sm border-b border-slate-200/80 px-4 py-2.5 flex items-center gap-3">
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
             <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
-          <div className="flex-1 bg-white border border-slate-200 rounded-md px-3 py-1 flex items-center gap-1.5 text-[11px] text-slate-400">
-            <Lock className="w-3 h-3 text-emerald-600" />
-            app.fastcase.in/dashboard
+          <div className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1 flex items-center justify-between text-[11px] text-slate-400 shadow-2xs">
+            <span className="flex items-center gap-1.5 font-mono text-slate-600 font-medium truncate">
+              <Lock className="w-3 h-3 text-[#059669] shrink-0" />
+              https://app.fastcase.in/dashboard
+            </span>
+            <span className="text-[10px] font-black text-[#065F46] bg-[#ECFDF5] px-2 py-0.5 rounded border border-[#A7F3D0] shrink-0">
+              LIVE WORKSPACE
+            </span>
           </div>
         </div>
-        {/* Real screenshot */}
-        <img
-          src="/screenshots/dashboard.png"
-          alt="Fastcase Dashboard"
-          className="w-full block object-cover object-top max-h-[380px]"
-        />
+
+        {/* Real Screenshot */}
+        <div className="relative overflow-hidden bg-slate-900">
+          <img
+            src="/screenshots/dashboard.png"
+            alt="Fastcase Advocate Operations Dashboard"
+            className="w-full block object-cover object-top max-h-[380px] transition-transform duration-500 group-hover:scale-[1.01]"
+          />
+        </div>
+      </div>
+
+      {/* Floating Badge 1: Top Right - Live Court Sync */}
+      <div className="absolute -top-3.5 -right-3.5 sm:-right-4 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 shadow-xl shadow-slate-900/10 hidden sm:flex items-center gap-2.5 z-20">
+        <div className="w-8 h-8 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669] shrink-0">
+          <Scale className="w-4 h-4" />
+        </div>
+        <div className="text-left pr-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-extrabold text-slate-900">eCourts CNR Sync</span>
+            <span className="inline-flex items-center gap-1 text-[9px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+            </span>
+          </div>
+          <p className="text-[10px] text-slate-500 font-medium">Daily Cause List Automated</p>
+        </div>
+      </div>
+
+      {/* Floating Badge 2: Bottom Left - Vernacular Drafting */}
+      <div className="absolute -bottom-3.5 -left-3.5 sm:-left-4 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 shadow-xl shadow-slate-900/10 hidden sm:flex items-center gap-2.5 z-20">
+        <div className="w-8 h-8 rounded-xl bg-[#013B36] text-[#34D399] flex items-center justify-center shrink-0 shadow-xs">
+          <FileText className="w-4 h-4" />
+        </div>
+        <div className="text-left pr-1.5">
+          <p className="text-[11px] font-extrabold text-slate-900">500+ Legal Drafts</p>
+          <p className="text-[10px] text-slate-500 font-medium">Marathi • Hindi • English A4</p>
+        </div>
       </div>
     </div>
   );
@@ -74,54 +113,94 @@ export default function Home() {
   return (
     <div className="bg-[#F8FAFC]">
 
-      {/* ── HERO (Compact & Judicial) ─────────────────────────────────── */}
-      <section className="relative pt-28 pb-14 lg:pt-32 lg:pb-16 overflow-hidden bg-white border-b border-slate-200">
-        <div className="section-container relative">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-            {/* Left Content */}
-            <div>
-              <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-[11px] font-bold tracking-wider uppercase rounded-full px-3.5 py-1.5 mb-6">
-                <Gavel className="w-3.5 h-3.5 text-amber-500" />
-                Legal ERP for Indian Advocates
+      {/* ── HERO (Compact, Attractive & High-Impact) ─────────────────────────────────── */}
+      <section className="relative pt-20 pb-12 lg:pt-24 lg:pb-16 overflow-hidden border-b border-slate-200/80 bg-white">
+        {/* Subtle Ambient Mesh & Dot-Grid Texture */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Radial Top Glow in TruePay Emerald */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-[radial-gradient(ellipse_at_top,rgba(52,211,153,0.18),rgba(1,59,54,0.06)_45%,transparent_75%)] opacity-80" />
+          {/* Subtle Dot Grid */}
+          <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#013B36_1px,transparent_1px)] [background-size:22px_22px]" />
+        </div>
+
+        <div className="section-container relative z-10">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+            {/* Left Content (7 cols on lg) */}
+            <div className="lg:col-span-7 space-y-5">
+              {/* Top Announcement Pill */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-xs font-bold text-[#065F46] shadow-2xs">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34D399] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#059669]" />
+                </span>
+                <span className="tracking-wide uppercase text-[10.5px]">Legal Operating System for Indian Advocates</span>
+                <span className="text-[10px] bg-[#059669] text-white px-1.5 py-0.2 rounded font-black">v2.0</span>
               </div>
 
-              <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-900 leading-[1.32] sm:leading-[1.28] lg:leading-[1.24] tracking-tight mb-5 text-balance">
-                Everything Your Legal Practice Needs, <span className="text-[#059669]">Unified.</span>
+              {/* Main Headline */}
+              <h1 className="font-heading font-[900] text-3xl sm:text-4xl lg:text-[44px] text-slate-950 leading-[1.25] tracking-tight text-balance">
+                Everything Your Legal Practice Needs,{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#013B36] via-[#059669] to-[#10B981]">
+                  Unified.
+                </span>
               </h1>
 
-              <p className="text-[16px] text-slate-600 leading-relaxed mb-6 max-w-lg">
+              {/* Subheading */}
+              <p className="text-base sm:text-[17px] text-slate-600 leading-relaxed max-w-xl font-normal">
                 Automate case lifecycles, court cause lists, 500+ vernacular drafts, and GST-compliant fee billing from one secure platform.
               </p>
 
-              {/* CTAs */}
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <a href={`${getErpUrl()}/register`} className="btn-primary text-sm py-2.5 px-6 rounded-xl flex items-center gap-2 shadow-sm">
-                  Registration <ArrowRight className="w-4 h-4" />
+              {/* CTAs Row */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <a
+                  href={`${getErpUrl()}/register`}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#013B36] hover:bg-[#024E47] text-white font-bold text-sm shadow-md shadow-[#013B36]/25 hover:shadow-lg transition-all group"
+                >
+                  <span>Start Free Trial</span>
+                  <ArrowRight className="w-4 h-4 text-[#34D399] transition-transform group-hover:translate-x-1" />
                 </a>
-                <a href={`${getErpUrl()}/login`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
+
+                <a
+                  href={`${getErpUrl()}/login`}
+                  className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm border border-slate-200/90 shadow-2xs transition"
+                >
                   Advocate Login
                 </a>
-                <a href={`${getErpUrl()}/citizen-login`} className="btn-secondary text-sm py-2.5 px-6 rounded-xl">
-                  Consumer Portal
+
+                <a
+                  href={`${getErpUrl()}/citizen-login`}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm border border-slate-200 transition"
+                >
+                  <span>Consumer Portal</span>
+                  <span className="text-[9px] font-black bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0] px-1.5 py-0.5 rounded-full">
+                    ₹३० Drafts
+                  </span>
                 </a>
               </div>
 
-              {/* Key Trust Checkmarks */}
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> 14-Day Free Trial
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> 100% Indian Cloud Data
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#059669]" /> Bar Council Compliant
-                </span>
+              {/* Trust Checkmarks & Rating Strip */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-600">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-[#059669]" /> 14-Day Free Trial
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-[#059669]" /> 100% Indian Cloud Data
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-[#059669]" /> Bar Council Compliant
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                  <span className="text-amber-500 text-xs">★★★★★</span>
+                  <span>Trusted by <strong>2,500+ Indian Advocates</strong> across Maharashtra & India</span>
+                </div>
               </div>
             </div>
 
-            {/* Right — Dashboard Mockup */}
-            <div className="hidden lg:block">
+            {/* Right Dashboard Mockup (5 cols on lg) */}
+            <div className="lg:col-span-5 relative mt-4 lg:mt-0">
               <DashboardMockup />
             </div>
           </div>
@@ -129,21 +208,21 @@ export default function Home() {
       </section>
 
       {/* ── TRUST HIGHLIGHTS (Single Clean Strip) ───────────────────── */}
-      <section className="bg-slate-50 border-b border-slate-200 py-6">
+      <section className="bg-slate-50/90 border-b border-slate-200 py-6">
         <div className="section-container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
               { icon: Briefcase, title: 'Case Lifecycle', desc: 'CNR sync & cause lists' },
               { icon: FileText, title: '500+ Drafts', desc: 'English, Marathi, Hindi' },
               { icon: CreditCard, title: 'GST Invoicing', desc: 'SAC 9982 legal tax bills' },
               { icon: Shield, title: 'Sec 126 Privilege', desc: 'Encrypted client vaults' },
             ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4" />
+              <div key={title} className="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-xs hover:border-[#059669]/30 transition-all group">
+                <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] text-[#059669] group-hover:bg-[#013B36] group-hover:text-[#34D399] flex items-center justify-center flex-shrink-0 transition-colors">
+                  <Icon className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-heading font-[700] text-[13px] text-slate-900 leading-tight truncate">{title}</p>
+                  <p className="font-heading font-[800] text-[13.5px] text-slate-900 leading-tight truncate">{title}</p>
                   <p className="text-[11px] text-slate-500 leading-tight mt-0.5 truncate">{desc}</p>
                 </div>
               </div>
