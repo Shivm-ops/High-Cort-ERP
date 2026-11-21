@@ -196,13 +196,8 @@ export default function AdvocateLoginPage() {
         phone: rawInput,
       };
       const res = await api.post("/auth/login-otp/send", payload);
-      if (res.data?.otp_debug) {
-        toast.success(`Verification Code: ${res.data.otp_debug} (Valid for 10 mins)`, { duration: 15000 });
-        const digits = String(res.data.otp_debug).split("").slice(0, 6);
-        setOtpDigits(digits);
-      } else {
-        toast.success(`6-digit verification code sent to ${rawInput}!`);
-      }
+      setOtpDigits(["", "", "", "", "", ""]);
+      toast.success(`6-digit verification code sent to ${rawInput}! Check your mobile SMS.`);
       setOtpStep("code");
       setOtpTimer(600);
       setCanResend(false);

@@ -1227,14 +1227,13 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
             )
         )
 
-    has_sms = bool(getattr(settings, "FAST2SMS_API_KEY", "") or "")
     return {
         "message": f"A 6-digit login verification code has been dispatched to {raw_input}.",
         "target": raw_input,
         "email": user.email,
         "expires_in_seconds": DEFAULT_OTP_EXPIRY_SECONDS,
         "max_attempts": 5,
-        "otp_debug": otp_code if (not has_sms and not has_smtp) else None,
+        "otp_debug": None,
     }
 
 

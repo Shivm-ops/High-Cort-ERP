@@ -5,6 +5,7 @@ Supports:
   - Route "otp" (Transactional OTP route fallback)
 """
 
+import os
 import logging
 import httpx
 from typing import Optional
@@ -13,13 +14,18 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 FAST2SMS_ENDPOINT = "https://www.fast2sms.com/dev/bulkV2"
+DEFAULT_FAST2SMS_KEY = "XuVZPRNJ6IPoGE2zzfs7HtkbL1qCbza5sXS480Wt6Aq3J7hrQUWiMgLzooK6"
 
 
 async def send_fast2sms_otp(phone_number: str, otp_code: str) -> bool:
     """
     Dispatches a 6-digit OTP code to an Indian mobile handset via Fast2SMS.
     """
-    api_key = getattr(settings, "FAST2SMS_API_KEY", "") or ""
+    api_key = (
+        getattr(settings, "FAST2SMS_API_KEY", "") 
+        or os.environ.get("FAST2SMS_API_KEY", "") 
+        or DEFAULT_FAST2SMS_KEY
+    )
     if not api_key:
         logger.warning("FAST2SMS_API_KEY is not configured in environment. Skipping SMS.")
         return False
