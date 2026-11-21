@@ -62,7 +62,7 @@ export default function SettingsPage() {
         <button 
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold rounded-xl shadow-md shadow-[#059669]/25 transition-all disabled:opacity-50 cursor-pointer"
         >
           {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
           Save Changes

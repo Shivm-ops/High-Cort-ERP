@@ -9,11 +9,14 @@ Superadmin Support Desk & Knowledge Base Management:
 """
 
 import datetime
+import logging
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.core.security import get_current_superadmin
@@ -83,48 +86,66 @@ def get_all_tickets(
     current_admin: User = Depends(get_current_superadmin),
 ):
     """List all support tickets with filtering by status, category, priority, or user search."""
-    query = db.query(SupportTicket)
+    try:
+        query = db.query(SupportTicket)
 
-    if status != "all":
-        query = query.filter(SupportTicket.status == status)
-    if category and category != "all":
-        query = query.filter(SupportTicket.category == category)
-    if priority and priority != "all":
-        query = query.filter(SupportTicket.priority == priority)
+        if status and status != "all":
+            try:
+                enum_status = TicketStatus(status)
+                query = query.filter(SupportTicket.status == enum_status)
+            except ValueError:
+                query = query.filter(SupportTicket.status == status)
 
-    if q and q.strip():
-        term = f"%{q.strip()}%"
-        query = query.join(SupportTicket.user).filter(
-            or_(
-                SupportTicket.subject.ilike(term),
-                SupportTicket.ticket_number.ilike(term),
-                User.full_name.ilike(term),
-                User.email.ilike(term),
+        if category and category != "all":
+            try:
+                enum_cat = TicketCategory(category)
+                query = query.filter(SupportTicket.category == enum_cat)
+            except ValueError:
+                query = query.filter(SupportTicket.category == category)
+
+        if priority and priority != "all":
+            try:
+                enum_pri = TicketPriority(priority)
+                query = query.filter(SupportTicket.priority == enum_pri)
+            except ValueError:
+                query = query.filter(SupportTicket.priority == priority)
+
+        if q and q.strip():
+            term = f"%{q.strip()}%"
+            query = query.join(SupportTicket.user).filter(
+                or_(
+                    SupportTicket.subject.ilike(term),
+                    SupportTicket.ticket_number.ilike(term),
+                    User.full_name.ilike(term),
+                    User.email.ilike(term),
+                )
             )
-        )
 
-    tickets = query.order_by(SupportTicket.updated_at.desc()).all()
+        tickets = query.order_by(SupportTicket.updated_at.desc()).all()
 
-    result = []
-    for t in tickets:
-        result.append({
-            "id": str(t.id),
-            "ticket_number": t.ticket_number or f"FC-{str(t.id)[:6].upper()}",
-            "subject": t.subject,
-            "category": t.category.value if hasattr(t.category, "value") else str(t.category),
-            "priority": t.priority.value if hasattr(t.priority, "value") else str(t.priority),
-            "status": t.status.value if hasattr(t.status, "value") else str(t.status),
-            "attachment_url": t.attachment_url,
-            "created_at": t.created_at,
-            "updated_at": t.updated_at,
-            "user_name": t.user.full_name if t.user else "Unknown Advocate",
-            "user_email": t.user.email if t.user else "",
-            "user_phone": t.user.phone if t.user else None,
-            "firm_name": t.firm.name if t.firm else "Independent Chambers",
-            "assigned_to_name": t.assigned_to.full_name if t.assigned_to else "Unassigned",
-            "message_count": len(t.messages),
-        })
-    return result
+        result = []
+        for t in tickets:
+            result.append({
+                "id": str(t.id),
+                "ticket_number": t.ticket_number or f"FC-{str(t.id)[:6].upper()}",
+                "subject": t.subject,
+                "category": t.category.value if hasattr(t.category, "value") else str(t.category),
+                "priority": t.priority.value if hasattr(t.priority, "value") else str(t.priority),
+                "status": t.status.value if hasattr(t.status, "value") else str(t.status),
+                "attachment_url": t.attachment_url,
+                "created_at": str(t.created_at) if t.created_at else None,
+                "updated_at": str(t.updated_at) if t.updated_at else None,
+                "user_name": t.user.full_name if t.user else "Unknown Advocate",
+                "user_email": t.user.email if t.user else "",
+                "user_phone": t.user.phone if t.user else None,
+                "firm_name": t.firm.name if t.firm else "Independent Chambers",
+                "assigned_to_name": t.assigned_to.full_name if t.assigned_to else "Unassigned",
+                "message_count": len(t.messages) if t.messages else 0,
+            })
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching support tickets: {e}")
+        return []
 
 
 @router.get("/{ticket_id}")

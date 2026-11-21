@@ -29,62 +29,64 @@ function SidebarContent({ user, router, pathname }: any) {
   ];
 
   return (
-    <div className="w-64 bg-gray-900 text-white flex flex-col shadow-xl z-20">
-      <div className="p-6">
+    <div className="w-64 bg-[#021F1B] text-white flex flex-col shadow-2xl z-20 border-r border-[#065F46]/30">
+      <div className="p-6 border-b border-[#065F46]/30">
         <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-indigo-400" />
+          <div className="w-10 h-10 rounded-xl bg-[#059669]/20 border border-[#059669]/40 flex items-center justify-center shadow-lg shadow-[#059669]/15">
+            <Shield className="w-6 h-6 text-[#34D399]" />
+          </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Fastcase Admin</h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Control Center</p>
+            <h1 className="text-xl font-extrabold tracking-tight text-white">Fastcase Admin</h1>
+            <p className="text-[10px] text-emerald-300/70 uppercase tracking-widest font-bold">Control Center</p>
           </div>
         </div>
       </div>
       
-      <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2">Management Modules</div>
+      <div className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+        <div className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest mb-3 px-3">Management Modules</div>
         {navItems.map((item) => (
           <button
             key={item.href}
             onClick={() => router.push(item.href)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer",
               pathname === item.href 
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" 
-                : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                ? "bg-[#059669] text-white shadow-lg shadow-[#059669]/30" 
+                : "text-emerald-100/70 hover:bg-white/[0.07] hover:text-white"
             )}
           >
-            <item.icon className={cn("w-5 h-5", pathname === item.href ? "text-white" : "text-gray-400")} />
+            <item.icon className={cn("w-5 h-5", pathname === item.href ? "text-white" : "text-emerald-300/80")} />
             {item.label}
           </button>
         ))}
       </div>
 
-      <div className="p-4 bg-gray-950 border-t border-gray-800">
+      <div className="p-4 bg-[#011714] border-t border-[#065F46]/30">
         <button 
           onClick={() => router.push('/admin-profile')}
-          className="w-full flex items-center gap-3 mb-4 px-2 py-2 hover:bg-gray-900 rounded-xl transition-colors text-left"
+          className="w-full flex items-center gap-3 mb-3 px-2 py-2 hover:bg-white/[0.05] rounded-xl transition-colors text-left"
         >
-          <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-sm font-bold flex-shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-[#059669] border border-[#34D399]/40 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 shadow-sm">
             {user?.full_name?.charAt(0) || "A"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user?.full_name}</p>
-            <p className="text-[11px] text-gray-500 truncate">{user?.email}</p>
+            <p className="text-sm font-semibold text-white truncate">{user?.full_name}</p>
+            <p className="text-[11px] text-emerald-300/60 truncate">{user?.email}</p>
           </div>
         </button>
 
-        <div className="mt-4 px-4 flex items-center justify-between border-t border-gray-800 pt-4">
-          <div className="flex items-center gap-2 text-gray-400 w-full">
+        <div className="mt-2 px-2 flex items-center justify-between border-t border-[#065F46]/20 pt-3">
+          <div className="flex items-center gap-2 text-emerald-300/80 w-full">
             <Globe className="w-4 h-4 flex-shrink-0" />
             <select 
               value={language}
               onChange={(e) => setLanguage(e.target.value as any)}
-              className="bg-transparent text-sm focus:outline-none text-gray-300 font-medium cursor-pointer flex-1"
+              className="bg-transparent text-xs focus:outline-none text-emerald-100 font-medium cursor-pointer flex-1"
             >
-              <option value="en">English</option>
-              <option value="hi">हिंदी (Hindi)</option>
-              <option value="mr">मराठी (Marathi)</option>
-              <option value="gu">ગુજરાતી (Gujarati)</option>
+              <option value="en" className="bg-[#021F1B] text-white">English</option>
+              <option value="hi" className="bg-[#021F1B] text-white">हिंदी (Hindi)</option>
+              <option value="mr" className="bg-[#021F1B] text-white">मराठी (Marathi)</option>
+              <option value="gu" className="bg-[#021F1B] text-white">ગુજરાતી (Gujarati)</option>
             </select>
           </div>
         </div>
@@ -95,9 +97,9 @@ function SidebarContent({ user, router, pathname }: any) {
             localStorage.removeItem("access_token"); 
             router.push("/login"); 
           }}
-          className="w-full flex items-center justify-center gap-2 py-2 mt-4 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg text-sm font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 mt-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-xl text-xs font-bold transition-colors cursor-pointer"
         >
-          <LogOut className="w-4 h-4" /> Sign Out
+          <LogOut className="w-3.5 h-3.5" /> Sign Out
         </button>
       </div>
     </div>
