@@ -1,8 +1,8 @@
 """
 Fastcase SMS Dispatch Service (Fast2SMS Gateway)
 Supports:
-  - Route "otp" (Transactional OTP route)
-  - Route "q" (Quick SMS route fallback)
+  - Route "q" (Quick Transactional SMS route - instant delivery)
+  - Route "otp" (Transactional OTP route fallback)
 """
 
 import logging
@@ -36,36 +36,35 @@ async def send_fast2sms_otp(phone_number: str, otp_code: str) -> bool:
         "Content-Type": "application/json",
     }
 
-    # Attempt 1: Try OTP route (Fast2SMS OTP Service)
-    otp_payload = {
-        "variables_values": str(otp_code),
-        "route": "otp",
+    # Primary: Quick SMS route (route=q) delivers instantly to Indian numbers
+    quick_payload = {
+        "message": f"Your Fastcase verification code is {otp_code}. Valid for 10 minutes.",
+        "route": "q",
         "numbers": mobile_10,
     }
 
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
-            resp = await client.post(FAST2SMS_ENDPOINT, json=otp_payload, headers=headers)
+            resp = await client.post(FAST2SMS_ENDPOINT, json=quick_payload, headers=headers)
             data = resp.json() if resp.status_code == 200 else {}
             if resp.status_code == 200 and data.get("return") is True:
                 logger.info(f"✓ Fast2SMS OTP delivered to {mobile_10}: {data.get('message')}")
                 return True
 
-            logger.info(f"Fast2SMS OTP route response: {resp.status_code} {resp.text}. Trying Quick SMS route...")
-
-            # Attempt 2: Fallback to Quick SMS route (route=q)
-            quick_payload = {
-                "message": f"Your Fastcase verification code is {otp_code}. Valid for 10 minutes.",
-                "route": "q",
+            # Fallback: OTP route
+            logger.info(f"Quick route status: {resp.status_code}. Trying OTP route...")
+            otp_payload = {
+                "variables_values": str(otp_code),
+                "route": "otp",
                 "numbers": mobile_10,
             }
-            resp_q = await client.post(FAST2SMS_ENDPOINT, json=quick_payload, headers=headers)
-            data_q = resp_q.json() if resp_q.status_code == 200 else {}
-            if resp_q.status_code == 200 and data_q.get("return") is True:
-                logger.info(f"✓ Fast2SMS Quick SMS delivered to {mobile_10}: {data_q.get('message')}")
+            resp_otp = await client.post(FAST2SMS_ENDPOINT, json=otp_payload, headers=headers)
+            data_otp = resp_otp.json() if resp_otp.status_code == 200 else {}
+            if resp_otp.status_code == 200 and data_otp.get("return") is True:
+                logger.info(f"✓ Fast2SMS OTP route delivered to {mobile_10}: {data_otp.get('message')}")
                 return True
             else:
-                logger.warning(f"Fast2SMS Quick SMS route failed: {resp_q.status_code} {resp_q.text}")
+                logger.warning(f"Fast2SMS fallback failed: {resp_otp.status_code} {resp_otp.text}")
                 return False
 
     except Exception as e:
