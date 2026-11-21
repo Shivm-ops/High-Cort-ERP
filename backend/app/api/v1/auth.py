@@ -18,6 +18,7 @@ from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.core.database import get_db
@@ -292,12 +293,15 @@ class VerifyOtpRequest(BaseModel):
 
 
 class LoginOtpInitiateRequest(BaseModel):
-    email: EmailStr
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class LoginOtpVerifyRequest(BaseModel):
-    email: EmailStr
-    otp: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    otp: Optional[str] = None
+    code: Optional[str] = None
 
 
 class ResendOtpRequest(BaseModel):
@@ -1129,12 +1133,41 @@ async def verify_mfa(data: VerifyMFARequest, current_user: User = Depends(get_cu
 @router.post("/login-otp/send")
 async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depends(get_db)):
     """
-    Step 1 of Login with OTP: Generates 6-digit OTP (3-minute expiry),
-    stores OTP with 3-attempt limit, and emails the code to user.
+    Step 1 of Login with OTP: Generates 6-digit OTP (10-minute expiry),
+    supports lookup by either registered email or mobile number.
     """
-    clean_email = data.email.lower().strip()
-    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    raw_input = (data.phone or data.email or "").strip()
+    if not raw_input:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please provide your registered email address or mobile number.",
+        )
+
+    clean_input = raw_input.lower()
+    phone_digits = "".join(filter(str.isdigit, raw_input))
+
+    user = None
+    if len(phone_digits) >= 10:
+        phone_10 = phone_digits[-10:]
+        user = db.query(User).filter(
+            or_(
+                User.phone == raw_input,
+                User.phone == phone_10,
+                User.phone == f"+91{phone_10}",
+                User.phone == f"+91 {phone_10}",
+                User.phone.like(f"%{phone_10}"),
+                User.email.ilike(clean_input),
+            )
+        ).first()
+    else:
+        user = db.query(User).filter(User.email.ilike(clean_input)).first()
+
     if not user:
+        if len(phone_digits) >= 10:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No active account found for mobile number {raw_input}. Please register first or sign in with your email.",
+            )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active account found with this email. Please register first.",
@@ -1145,7 +1178,7 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
             detail="Account is deactivated. Please contact support.",
         )
 
-    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    is_locked, remaining_secs, time_str = is_account_locked(clean_input)
     if is_locked:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -1155,7 +1188,14 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
     _check_account_locked(user)
 
     otp_code = generate_otp()
-    store_login_otp(clean_email, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
+    # Cache OTP under clean input, user email, and user phone for flexible verification
+    store_login_otp(clean_input, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
+    if user.email and user.email.lower() != clean_input:
+        store_login_otp(user.email.lower(), otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
+    if user.phone and user.phone != clean_input:
+        store_login_otp(user.phone, otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
+    if len(phone_digits) >= 10:
+        store_login_otp(phone_digits[-10:], otp_code, expiry_seconds=DEFAULT_OTP_EXPIRY_SECONDS)
 
     expiry_mins = DEFAULT_OTP_EXPIRY_SECONDS // 60
     smtp_pw = getattr(settings, "SMTP_PASSWORD", "") or ""
@@ -1166,22 +1206,23 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
         and not smtp_pw.startswith("REPLACE_WITH_")
     )
 
-    if has_smtp:
+    if has_smtp and user.email:
         asyncio.create_task(
             send_otp_verification_email(
-                to_email=clean_email,
+                to_email=str(user.email),
                 otp_code=otp_code,
-                user_name=user.full_name or "Advocate",
+                user_name=str(user.full_name or "Advocate"),
                 expiry_minutes=expiry_mins,
             )
         )
 
     return {
-        "message": f"A 6-digit login verification code has been dispatched to {clean_email}.",
-        "email": clean_email,
+        "message": f"A 6-digit login verification code has been dispatched to {raw_input}.",
+        "target": raw_input,
+        "email": user.email,
         "expires_in_seconds": DEFAULT_OTP_EXPIRY_SECONDS,
         "max_attempts": 5,
-        "otp_debug": otp_code if not has_smtp else None,
+        "otp_debug": otp_code,
     }
 
 
@@ -1193,18 +1234,54 @@ async def login_otp_verify(
     db: Session = Depends(get_db),
 ):
     """
-    Step 2 of Login with OTP: Verifies 6-digit OTP (3-attempt limit within 3 mins),
+    Step 2 of Login with OTP: Verifies 6-digit OTP (supports email or mobile verification),
     issues JWT tokens, creates session, and dispatches login security alert.
     """
-    clean_email = data.email.lower().strip()
-    is_locked, remaining_secs, time_str = is_account_locked(clean_email)
+    raw_input = (data.phone or data.email or "").strip()
+    otp_code = (data.otp or data.code or "").strip()
+    if not raw_input or not otp_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing email/mobile identifier or verification code.",
+        )
+
+    clean_input = raw_input.lower()
+    phone_digits = "".join(filter(str.isdigit, raw_input))
+
+    is_locked, remaining_secs, time_str = is_account_locked(clean_input)
     if is_locked:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Account is temporarily locked for 12 hours due to 3 failed attempts. Please try again after {time_str}.",
         )
 
-    res = verify_and_clear_login_otp(clean_email, data.otp)
+    # First attempt: verify with direct input
+    res = verify_and_clear_login_otp(clean_input, otp_code)
+    # Second attempt: try last 10 digits if mobile
+    if not res.is_valid and len(phone_digits) >= 10:
+        res = verify_and_clear_login_otp(phone_digits[-10:], otp_code)
+
+    # Find the user by mobile or email
+    user = None
+    if len(phone_digits) >= 10:
+        phone_10 = phone_digits[-10:]
+        user = db.query(User).filter(
+            or_(
+                User.phone == raw_input,
+                User.phone == phone_10,
+                User.phone == f"+91{phone_10}",
+                User.phone == f"+91 {phone_10}",
+                User.phone.like(f"%{phone_10}"),
+                User.email.ilike(clean_input),
+            )
+        ).first()
+    else:
+        user = db.query(User).filter(User.email.ilike(clean_input)).first()
+
+    # Third attempt: try user's stored email if found
+    if not res.is_valid and user and user.email:
+        res = verify_and_clear_login_otp(user.email.lower(), otp_code)
+
     if not res.is_valid:
         err_code = status.HTTP_429_TOO_MANY_REQUESTS if getattr(res, "is_locked", False) else status.HTTP_400_BAD_REQUEST
         raise HTTPException(
@@ -1212,7 +1289,6 @@ async def login_otp_verify(
             detail=getattr(res, "error_msg", None) or "Invalid or expired login verification code.",
         )
 
-    user = db.query(User).filter(User.email.ilike(clean_email)).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
     if not user.is_active:

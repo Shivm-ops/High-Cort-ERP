@@ -105,7 +105,12 @@ export default function AdvocateLoginPage() {
               }
             },
           });
-          (window as any).google.accounts.id.prompt();
+          // Safe prompt with notification handler to prevent uncaught FedCM/GIS rejections
+          (window as any).google.accounts.id.prompt((notification: any) => {
+            if (notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()) {
+              // Notification skipped or dismissed, ignore silently
+            }
+          });
         } catch (e) {
           // ignore
         }
@@ -178,21 +183,25 @@ export default function AdvocateLoginPage() {
 
   // Dispatch OTP
   const handleSendOtp = async (customEmail?: string) => {
-    const targetEmail = (customEmail || (authChannel === "email" ? emailInput : phoneInput)).trim().toLowerCase();
-    if (!targetEmail) {
+    const rawInput = (customEmail || (authChannel === "email" ? emailInput : phoneInput)).trim();
+    if (!rawInput) {
       toast.error(authChannel === "email" ? "Please enter your email address." : "Please enter your mobile number.");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await api.post("/auth/login-otp/send", { email: targetEmail });
+      const payload: Record<string, string> = {
+        email: rawInput,
+        phone: rawInput,
+      };
+      const res = await api.post("/auth/login-otp/send", payload);
       if (res.data?.otp_debug) {
         toast.success(`Verification Code: ${res.data.otp_debug} (Valid for 10 mins)`, { duration: 15000 });
         const digits = String(res.data.otp_debug).split("").slice(0, 6);
         setOtpDigits(digits);
       } else {
-        toast.success(`6-digit verification code sent to ${targetEmail}!`);
+        toast.success(`6-digit verification code sent to ${rawInput}!`);
       }
       setOtpStep("code");
       setOtpTimer(600);
@@ -212,14 +221,16 @@ export default function AdvocateLoginPage() {
       return;
     }
 
-    const targetEmail = (authChannel === "email" ? emailInput : phoneInput).trim().toLowerCase();
+    const rawInput = (authChannel === "email" ? emailInput : phoneInput).trim();
     setLoading(true);
     try {
-      const res = await api.post("/auth/login-otp/verify", {
-        email: targetEmail,
+      const payload: Record<string, string> = {
+        email: rawInput,
+        phone: rawInput,
         otp: code,
-        code,
-      });
+        code: code,
+      };
+      const res = await api.post("/auth/login-otp/verify", payload);
 
       localStorage.setItem("access_token", res.data.access_token);
       localStorage.setItem("refresh_token", res.data.refresh_token);

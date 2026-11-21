@@ -15,8 +15,8 @@ export interface TypographySettings {
 }
 
 export const PREDEFINED_THEMES = [
+  { id: "emerald", name: "Emerald Legal (Default)", primary: "#013B36", accent: "#059669", desc: "Signature Deep Emerald & Mint", isLight: false },
   { id: "navy_coral", name: "Judicial Navy & Coral", primary: "#11213C", accent: "#FF6551", desc: "Classic Navy, Warm Cream & Coral", isLight: false },
-  { id: "emerald", name: "Emerald Legal", primary: "#013B36", accent: "#6EE7B7", desc: "Modern Law Firm Style" },
   { id: "executive", name: "Executive Blue", primary: "#1E3A8A", accent: "#FFFFFF", desc: "Corporate & Arbitration" },
   { id: "supreme", name: "Supreme Black", primary: "#111827", accent: "#D4AF37", desc: "Senior Advocates & High Court" },
   { id: "maroon", name: "Classic Maroon", primary: "#800000", accent: "#FFFFF0", desc: "Traditional Legal Chamber" },
@@ -39,8 +39,8 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      activeThemeId: "navy_coral",
-      customColors: { primary: "#11213C", accent: "#FF6551" },
+      activeThemeId: "emerald",
+      customColors: { primary: "#013B36", accent: "#059669" },
       typography: { fontStyle: "Inter", fontSize: "13px", borderRadius: "0.75rem", layout: "comfortable" },
       
       setActiveThemeId: (id) => set({ activeThemeId: id }),
@@ -48,8 +48,18 @@ export const useThemeStore = create<ThemeState>()(
       setTypography: (settings) => set((state) => ({ typography: { ...state.typography, ...settings } })),
     }),
     {
-      name: 'fastcase-theme-storage-v2',
-      version: 2,
+      name: 'fastcase-theme-storage-v5',
+      version: 5,
+      migrate: (persistedState: any) => {
+        if (!persistedState || persistedState.activeThemeId === "navy_coral") {
+          return {
+            ...persistedState,
+            activeThemeId: "emerald",
+            customColors: { primary: "#013B36", accent: "#059669" }
+          };
+        }
+        return persistedState;
+      }
     }
   )
 );

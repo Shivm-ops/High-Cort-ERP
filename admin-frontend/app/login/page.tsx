@@ -60,36 +60,36 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#021F1B] flex items-center justify-center p-4 selection:bg-[#059669] selection:text-white">
       <Toaster position="top-center" richColors />
-      <div className="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+      <div className="bg-[#032A24] p-8 sm:p-10 rounded-3xl shadow-2xl w-full max-w-md border border-[#065F46]/40 backdrop-blur-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-500/20">
-            <ShieldAlert className="w-8 h-8 text-indigo-400" />
+          <div className="w-16 h-16 bg-[#059669]/15 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#059669]/30 shadow-lg shadow-[#059669]/10">
+            <ShieldAlert className="w-8 h-8 text-[#34D399]" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Fastcase Admin Portal</h1>
-          <p className="text-sm text-gray-400 mt-2">Restricted Area. Authorized personnel only.</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Fastcase Admin Portal</h1>
+          <p className="text-xs text-emerald-200/60 mt-1.5 font-medium">Restricted Area. Authorized personnel only.</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Admin Email</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-emerald-100/80 mb-2">Admin Email</label>
             <input 
               type="email" 
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-[#021F1B]/90 border border-[#065F46]/50 rounded-xl text-white placeholder-emerald-700/50 focus:outline-none focus:ring-2 focus:ring-[#059669]/50 focus:border-[#059669] transition-all text-sm font-medium"
               placeholder="admin@fastcase.in"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-emerald-100/80 mb-2">Password</label>
             <input 
               type="password" 
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              className="w-full px-4 py-3 bg-[#021F1B]/90 border border-[#065F46]/50 rounded-xl text-white placeholder-emerald-700/50 focus:outline-none focus:ring-2 focus:ring-[#059669]/50 focus:border-[#059669] transition-all text-sm font-medium"
               placeholder="••••••••"
               required
             />
@@ -98,7 +98,7 @@ export default function AdminLogin() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold rounded-xl shadow-lg shadow-[#059669]/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer"
           >
             {loading ? "Authenticating..." : <><Lock className="w-4 h-4" /> Secure Login</>}
           </button>

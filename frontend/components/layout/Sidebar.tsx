@@ -197,9 +197,9 @@ export default function Sidebar() {
     : PREDEFINED_THEMES.find(t => t.id === activeThemeId) || PREDEFINED_THEMES[0];
   const primaryColor = currentTheme.primary;
   const accentColor = currentTheme.accent;
-  // For text on accent-colored elements, we need contrast
-  // For text on accent-colored elements, we need contrast
-  const accentTextColor = activeThemeId === "minimal" ? "#FFFFFF" : primaryColor;
+  // Ensure crisp contrast for text and icons inside accent badges/avatars
+  const isAccentLight = accentColor.toLowerCase() === "#ffffff" || accentColor.toLowerCase() === "#fffff0" || accentColor.toLowerCase() === "#c0c0c0";
+  const accentTextColor = isAccentLight ? (primaryColor === "#FFFFFF" ? "#1F2937" : primaryColor) : "#FFFFFF";
 
   // Filter navigation groups based on subscription
   const subscriptionFeatures = user?.subscription?.features || [];

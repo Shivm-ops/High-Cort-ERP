@@ -81,7 +81,8 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
     : PREDEFINED_THEMES.find(t => t.id === activeThemeId) || PREDEFINED_THEMES[0];
   const primaryColor = currentTheme.primary;
   const accentColor = currentTheme.accent;
-  const accentTextColor = activeThemeId === "minimal" ? "#FFFFFF" : primaryColor;
+  const isAccentLight = accentColor.toLowerCase() === "#ffffff" || accentColor.toLowerCase() === "#fffff0" || accentColor.toLowerCase() === "#c0c0c0";
+  const accentTextColor = isAccentLight ? (primaryColor === "#FFFFFF" ? "#1F2937" : primaryColor) : "#FFFFFF";
 
   const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.isRead).length;
 
