@@ -49,6 +49,7 @@ from app.services.otp_service import (
     is_account_locked,
     DEFAULT_OTP_EXPIRY_SECONDS,
 )
+from app.services.sms_service import send_fast2sms_otp
 
 router = APIRouter()
 
@@ -1213,6 +1214,16 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
                 otp_code=otp_code,
                 user_name=str(user.full_name or "Advocate"),
                 expiry_minutes=expiry_mins,
+            )
+        )
+
+    # Dispatch real SMS via Fast2SMS to mobile handset
+    target_phone = user.phone or (phone_digits[-10:] if len(phone_digits) >= 10 else None)
+    if target_phone:
+        asyncio.create_task(
+            send_fast2sms_otp(
+                phone_number=target_phone,
+                otp_code=otp_code,
             )
         )
 
