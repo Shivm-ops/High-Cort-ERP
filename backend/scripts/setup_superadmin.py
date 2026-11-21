@@ -1,11 +1,7 @@
 """
-Fastcase Super Admin Provisioning Script
+Fastcase Super Admin Setup & Verification Script
 Usage:
     python scripts/setup_superadmin.py [email] [password]
-
-Defaults:
-    email:    admin@fastcase.in
-    password: Admin@Fastcase2026!
 """
 
 import sys
@@ -23,53 +19,70 @@ def setup_superadmin(email: str = "admin@fastcase.in", password: str = "Admin@Fa
     db = SessionLocal()
     clean_email = email.lower().strip()
     pw_hash = get_password_hash(password)
+
     try:
-        # Introspect PostgreSQL userrole enum labels (e.g. 'ADMIN' vs 'admin')
-        try:
-            enum_rows = db.execute(text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'userrole'::regtype")).fetchall()
-            valid_roles = [r[0] for r in enum_rows]
-            admin_val = "ADMIN" if "ADMIN" in valid_roles else ("admin" if "admin" in valid_roles else valid_roles[0])
-        except Exception:
-            admin_val = "ADMIN"
+        # Check if user already exists
+        existing = db.execute(
+            text("SELECT id, email, user_type, is_superadmin, is_active FROM users WHERE lower(email) = lower(:e)"),
+            {"e": clean_email}
+        ).fetchone()
 
-        # Update existing user if found
-        update_res = db.execute(
-            text("""
-                UPDATE users 
-                SET hashed_password = :h, 
-                    is_superadmin = true, 
-                    is_active = true, 
-                    is_verified = true,
-                    user_type = :role
-                WHERE lower(email) = lower(:e)
-            """),
-            {"h": pw_hash, "e": clean_email, "role": admin_val}
-        )
-        db.commit()
-
-        if update_res.rowcount > 0:
-            print(f"SUCCESS: Super Admin account '{clean_email}' successfully updated.")
-            print(f"Password reset to: '{password}'")
-            print(f"Privileges verified: is_superadmin=True, is_active=True, user_type='{admin_val}'")
+        if existing:
+            # Update password, unlock account, grant superadmin
+            db.execute(
+                text("""
+                    UPDATE users 
+                    SET hashed_password = :h, 
+                        is_superadmin = true, 
+                        is_active = true, 
+                        is_verified = true,
+                        failed_login_attempts = 0,
+                        locked_until = NULL
+                    WHERE lower(email) = lower(:e)
+                """),
+                {"h": pw_hash, "e": clean_email}
+            )
+            db.commit()
+            print(f"✓ SUCCESS: Updated existing account '{clean_email}'.")
+            print(f"✓ Password reset to: '{password}'")
+            print(f"✓ Account unlocked & superadmin privileges active.")
         else:
-            # User doesn't exist yet, insert brand new superadmin
+            # Discover exact PostgreSQL userrole enum values to prevent InvalidTextRepresentation
+            try:
+                enum_rows = db.execute(
+                    text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'userrole'::regtype")
+                ).fetchall()
+                valid_roles = [r[0] for r in enum_rows]
+                role_val = "ADMIN" if "ADMIN" in valid_roles else ("admin" if "admin" in valid_roles else valid_roles[0])
+            except Exception:
+                role_val = "ADMIN"
+
             db.execute(
                 text("""
                     INSERT INTO users (
                         id, email, hashed_password, full_name, user_type, 
-                        is_superadmin, is_active, is_verified, created_at, updated_at
+                        is_superadmin, is_active, is_verified, failed_login_attempts, created_at, updated_at
                     )
                     VALUES (
                         gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', :role, 
-                        true, true, true, NOW(), NOW()
+                        true, true, true, 0, NOW(), NOW()
                     )
                 """),
-                {"h": pw_hash, "e": clean_email, "role": admin_val}
+                {"h": pw_hash, "e": clean_email, "role": role_val}
             )
             db.commit()
-            print(f"SUCCESS: Brand new Super Admin account '{clean_email}' created.")
-            print(f"Password set to: '{password}'")
-            print(f"Privileges verified: is_superadmin=True, is_active=True, user_type='{admin_val}'")
+            print(f"✓ SUCCESS: Created new Super Admin account '{clean_email}'.")
+            print(f"✓ Password set to: '{password}' (role: {role_val})")
+
+        # Print all active superadmins in the database for confirmation
+        admins = db.execute(
+            text("SELECT email, is_superadmin, is_active, user_type FROM users WHERE is_superadmin = true")
+        ).fetchall()
+        print("\n--- Verified Super Admins in Database ---")
+        for a in admins:
+            print(f"  • Email: {a[0]} | is_superadmin: {a[1]} | is_active: {a[2]} | user_type: {a[3]}")
+        print("-----------------------------------------\n")
+
     except Exception as e:
         db.rollback()
         print(f"ERROR: Failed to configure superadmin account: {e}")

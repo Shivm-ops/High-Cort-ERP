@@ -12,43 +12,54 @@ def reset_admin(email: str = "admin@fastcase.in", password: str = "Admin@Fastcas
     clean_email = email.lower().strip()
     pw_hash = get_password_hash(password)
     try:
-        try:
-            enum_rows = db.execute(text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'userrole'::regtype")).fetchall()
-            valid_roles = [r[0] for r in enum_rows]
-            admin_val = "ADMIN" if "ADMIN" in valid_roles else ("admin" if "admin" in valid_roles else valid_roles[0])
-        except Exception:
-            admin_val = "ADMIN"
+        existing = db.execute(
+            text("SELECT id, email, user_type, is_superadmin, is_active FROM users WHERE lower(email) = lower(:e)"),
+            {"e": clean_email}
+        ).fetchone()
 
-        res = db.execute(
-            text("""
-                UPDATE users 
-                SET hashed_password = :h, 
-                    is_superadmin = true, 
-                    is_active = true, 
-                    is_verified = true, 
-                    user_type = :role 
-                WHERE lower(email) = lower(:e)
-            """),
-            {"h": pw_hash, "e": clean_email, "role": admin_val}
-        )
-        db.commit()
-
-        if res.rowcount > 0:
-            print(f"SUCCESS: Reset password for {clean_email} to '{password}' (is_superadmin=True, user_type='{admin_val}').")
+        if existing:
+            db.execute(
+                text("""
+                    UPDATE users 
+                    SET hashed_password = :h, 
+                        is_superadmin = true, 
+                        is_active = true, 
+                        is_verified = true,
+                        failed_login_attempts = 0,
+                        locked_until = NULL
+                    WHERE lower(email) = lower(:e)
+                """),
+                {"h": pw_hash, "e": clean_email}
+            )
+            db.commit()
+            print(f"✓ Reset existing user: {clean_email}")
         else:
+            try:
+                enum_rows = db.execute(text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'userrole'::regtype")).fetchall()
+                valid_roles = [r[0] for r in enum_rows]
+                role_val = "ADMIN" if "ADMIN" in valid_roles else ("admin" if "admin" in valid_roles else valid_roles[0])
+            except Exception:
+                role_val = "ADMIN"
+
             db.execute(
                 text("""
                     INSERT INTO users (
-                        id, email, hashed_password, full_name, user_type, is_superadmin, is_active, is_verified, created_at, updated_at
+                        id, email, hashed_password, full_name, user_type, 
+                        is_superadmin, is_active, is_verified, failed_login_attempts, created_at, updated_at
                     )
                     VALUES (
-                        gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', :role, true, true, true, NOW(), NOW()
+                        gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', :role, 
+                        true, true, true, 0, NOW(), NOW()
                     )
                 """),
-                {"h": pw_hash, "e": clean_email, "role": admin_val}
+                {"h": pw_hash, "e": clean_email, "role": role_val}
             )
             db.commit()
-            print(f"SUCCESS: Created superadmin {clean_email} with password '{password}' (user_type='{admin_val}').")
+            print(f"✓ Created superadmin: {clean_email}")
+
+        admins = db.execute(text("SELECT email, is_superadmin, is_active FROM users WHERE is_superadmin = true")).fetchall()
+        for a in admins:
+            print(f"  • {a[0]} (is_superadmin={a[1]}, is_active={a[2]})")
     except Exception as e:
         print(f"ERROR: {e}")
         db.rollback()
@@ -56,6 +67,4 @@ def reset_admin(email: str = "admin@fastcase.in", password: str = "Admin@Fastcas
         db.close()
 
 if __name__ == "__main__":
-    target_email = sys.argv[1] if len(sys.argv) > 1 else "admin@fastcase.in"
-    target_password = sys.argv[2] if len(sys.argv) > 2 else "Admin@Fastcase2026!"
-    reset_admin(target_email, target_password)
+    reset_admin()
