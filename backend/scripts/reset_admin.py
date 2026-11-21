@@ -12,17 +12,29 @@ def reset_admin(email: str = "admin@fastcase.in", password: str = "Admin@Fastcas
     clean_email = email.lower().strip()
     pw_hash = get_password_hash(password)
     try:
+        try:
+            enum_rows = db.execute(text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'userrole'::regtype")).fetchall()
+            valid_roles = [r[0] for r in enum_rows]
+            admin_val = "ADMIN" if "ADMIN" in valid_roles else ("admin" if "admin" in valid_roles else valid_roles[0])
+        except Exception:
+            admin_val = "ADMIN"
+
         res = db.execute(
             text("""
                 UPDATE users 
-                SET hashed_password = :h, is_superadmin = true, is_active = true, is_verified = true, user_type = 'admin' 
+                SET hashed_password = :h, 
+                    is_superadmin = true, 
+                    is_active = true, 
+                    is_verified = true, 
+                    user_type = :role 
                 WHERE lower(email) = lower(:e)
             """),
-            {"h": pw_hash, "e": clean_email}
+            {"h": pw_hash, "e": clean_email, "role": admin_val}
         )
         db.commit()
+
         if res.rowcount > 0:
-            print(f"SUCCESS: Reset password for {clean_email} to '{password}' (is_superadmin=True).")
+            print(f"SUCCESS: Reset password for {clean_email} to '{password}' (is_superadmin=True, user_type='{admin_val}').")
         else:
             db.execute(
                 text("""
@@ -30,13 +42,13 @@ def reset_admin(email: str = "admin@fastcase.in", password: str = "Admin@Fastcas
                         id, email, hashed_password, full_name, user_type, is_superadmin, is_active, is_verified, created_at, updated_at
                     )
                     VALUES (
-                        gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', 'admin', true, true, true, NOW(), NOW()
+                        gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', :role, true, true, true, NOW(), NOW()
                     )
                 """),
-                {"h": pw_hash, "e": clean_email}
+                {"h": pw_hash, "e": clean_email, "role": admin_val}
             )
             db.commit()
-            print(f"SUCCESS: Created superadmin {clean_email} with password '{password}'.")
+            print(f"SUCCESS: Created superadmin {clean_email} with password '{password}' (user_type='{admin_val}').")
     except Exception as e:
         print(f"ERROR: {e}")
         db.rollback()

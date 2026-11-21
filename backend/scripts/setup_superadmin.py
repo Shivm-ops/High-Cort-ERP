@@ -24,7 +24,15 @@ def setup_superadmin(email: str = "admin@fastcase.in", password: str = "Admin@Fa
     clean_email = email.lower().strip()
     pw_hash = get_password_hash(password)
     try:
-        # Use direct raw SQL to guarantee success without any ORM mapper initialization delays
+        # Introspect PostgreSQL userrole enum labels (e.g. 'ADMIN' vs 'admin')
+        try:
+            enum_rows = db.execute(text("SELECT enumlabel FROM pg_enum WHERE enumtypid = 'userrole'::regtype")).fetchall()
+            valid_roles = [r[0] for r in enum_rows]
+            admin_val = "ADMIN" if "ADMIN" in valid_roles else ("admin" if "admin" in valid_roles else valid_roles[0])
+        except Exception:
+            admin_val = "ADMIN"
+
+        # Update existing user if found
         update_res = db.execute(
             text("""
                 UPDATE users 
@@ -32,17 +40,17 @@ def setup_superadmin(email: str = "admin@fastcase.in", password: str = "Admin@Fa
                     is_superadmin = true, 
                     is_active = true, 
                     is_verified = true,
-                    user_type = 'admin'
+                    user_type = :role
                 WHERE lower(email) = lower(:e)
             """),
-            {"h": pw_hash, "e": clean_email}
+            {"h": pw_hash, "e": clean_email, "role": admin_val}
         )
         db.commit()
 
         if update_res.rowcount > 0:
             print(f"SUCCESS: Super Admin account '{clean_email}' successfully updated.")
             print(f"Password reset to: '{password}'")
-            print(f"Privileges verified: is_superadmin=True, is_active=True")
+            print(f"Privileges verified: is_superadmin=True, is_active=True, user_type='{admin_val}'")
         else:
             # User doesn't exist yet, insert brand new superadmin
             db.execute(
@@ -52,16 +60,16 @@ def setup_superadmin(email: str = "admin@fastcase.in", password: str = "Admin@Fa
                         is_superadmin, is_active, is_verified, created_at, updated_at
                     )
                     VALUES (
-                        gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', 'admin', 
+                        gen_random_uuid(), lower(:e), :h, 'Fastcase Super Admin', :role, 
                         true, true, true, NOW(), NOW()
                     )
                 """),
-                {"h": pw_hash, "e": clean_email}
+                {"h": pw_hash, "e": clean_email, "role": admin_val}
             )
             db.commit()
             print(f"SUCCESS: Brand new Super Admin account '{clean_email}' created.")
             print(f"Password set to: '{password}'")
-            print(f"Privileges verified: is_superadmin=True, is_active=True")
+            print(f"Privileges verified: is_superadmin=True, is_active=True, user_type='{admin_val}'")
     except Exception as e:
         db.rollback()
         print(f"ERROR: Failed to configure superadmin account: {e}")
