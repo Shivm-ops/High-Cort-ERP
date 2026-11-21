@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import {
-  Menu, X, Sun, Moon, Scale, ChevronDown, ArrowRight,
+  Menu, X, Sun, Moon, Scale, ChevronDown, ArrowRight, Lock,
   Users, Calendar, FileText, CreditCard, Search, Briefcase, Shield,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -137,15 +137,15 @@ export default function Header() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-[0_1px_3px_rgba(17,33,60,0.35)] group-hover:shadow-[0_2px_8px_rgba(17,33,60,0.35)] transition-shadow">
-              <Scale className="w-4 h-4 text-white" strokeWidth={2} />
+            <div className="w-8 h-8 bg-[#013B36] rounded-lg flex items-center justify-center shadow-[0_1px_3px_rgba(1,59,54,0.35)] group-hover:shadow-[0_2px_8px_rgba(1,59,54,0.45)] transition-shadow">
+              <Scale className="w-4 h-4 text-white" strokeWidth={2.2} />
             </div>
             <div>
-              <p className="font-heading font-[800] text-[18px] tracking-[-0.03em] text-ink" style={{ lineHeight: '1.1' }}>
-                Fast<span className="text-primary">case</span>
+              <p className="font-heading font-[900] text-[18.5px] tracking-[-0.03em] text-slate-900 leading-none">
+                Fast<span className="text-[#059669]">case</span>
               </p>
-              <p className="text-[9px] font-semibold tracking-[0.1em] text-ink/30 uppercase" style={{ lineHeight: '1', marginTop: '2px' }}>
-                Fastcase Platform
+              <p className="text-[9px] font-bold tracking-[0.08em] text-[#059669] uppercase mt-0.5">
+                Legal Practice ERP
               </p>
             </div>
           </Link>
@@ -315,28 +315,35 @@ export default function Header() {
               )}
             </button>
 
-            {/* Consumer Portal Button (exact match to Login button) */}
+            {/* Consumer Portal Button with Distinctive Badge */}
             <a
               href={`${getErpUrl()}/citizen-portal`}
-              className="hidden sm:inline-flex items-center btn-secondary text-[14px] py-2 px-4 rounded-lg border border-line font-medium hover:border-primary/40 hover:text-primary transition-colors whitespace-nowrap"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200/90 text-xs font-bold text-slate-700 hover:text-[#013B36] hover:border-[#059669]/50 hover:bg-[#ECFDF5] transition whitespace-nowrap shadow-2xs"
+              title="सामान्य नागरिकांसाठी १-क्लिक विधी सहाय्य व तक्रार अर्ज"
             >
-              Consumer Portal
+              <Scale className="w-3.5 h-3.5 text-[#059669]" />
+              <span>Consumer Portal</span>
+              <span className="text-[9px] font-black bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0] px-1.5 py-0.2 rounded-full">
+                नागरिक कक्ष
+              </span>
             </a>
 
-            {/* Direct Login Button */}
+            {/* Direct Advocate Login Button */}
             <a
               href={`${getErpUrl()}/login`}
-              className="hidden sm:inline-flex items-center btn-secondary text-[14px] py-2 px-4 rounded-lg border border-line font-medium hover:border-primary/40 hover:text-primary transition-colors whitespace-nowrap"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:text-[#013B36] hover:bg-slate-100 transition border border-transparent hover:border-slate-200 whitespace-nowrap"
             >
-              Login
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Advocate Login</span>
             </a>
 
-            {/* Direct Registration Button */}
+            {/* Direct Free Trial Registration Button */}
             <a
               href={`${getErpUrl()}/register`}
-              className="btn-primary text-[13px] sm:text-[14px] py-2 px-3.5 sm:px-4 rounded-lg whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[#013B36] hover:bg-[#024E47] text-white text-xs sm:text-[13px] font-extrabold shadow-sm hover:shadow-md transition whitespace-nowrap"
             >
-              Registration
+              <span>Start Free Trial</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#34D399]" />
             </a>
 
             <button onClick={() => setMobileOpen(o => !o)} aria-label="Toggle menu"
