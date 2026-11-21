@@ -12,18 +12,18 @@ from .hearing import Hearing
 from .order import CourtOrder
 from .invoice import Invoice
 from .filing import Filing
-from .intake import ClientIntake
+from .intake import Intake
 from .case_law import CaseLaw
-from .case_advocate import CaseAdvocate
-from .letterhead import LetterheadTemplate
-from .fee_expense import FeeExpense
+from .case_advocate import CaseAdvocate, CaseTask
+from .letterhead import Letterhead
+from .fee_expense import Fee, Expense
 from .audit_log import AuditLog
 from .advance_payment import AdvancePayment
 from .court import Court
-from .act import Act
+from .act import Act, Section
 from .kyc import KycRecord
-from .subscription import SubscriptionPlan, UserSubscription
-from .setting import Setting
+from .subscription import SubscriptionPlan, TenantSubscription, PaymentTransaction, SubscriptionUpgradeRequest
+from .setting import SystemSetting
 from .security import LoginHistory, UserSession
 from .mact import MactCase, MactClaimant, MactDocument, MactInsurance, MactWorkflowLog
 from .support import (
@@ -66,19 +66,24 @@ __all__ = [
     "CourtOrder",
     "Invoice",
     "Filing",
-    "ClientIntake",
+    "Intake",
     "CaseLaw",
     "CaseAdvocate",
-    "LetterheadTemplate",
-    "FeeExpense",
+    "CaseTask",
+    "Letterhead",
+    "Fee",
+    "Expense",
     "AuditLog",
     "AdvancePayment",
     "Court",
     "Act",
+    "Section",
     "KycRecord",
     "SubscriptionPlan",
-    "UserSubscription",
-    "Setting",
+    "TenantSubscription",
+    "PaymentTransaction",
+    "SubscriptionUpgradeRequest",
+    "SystemSetting",
     "LoginHistory",
     "UserSession",
     "MactCase",
