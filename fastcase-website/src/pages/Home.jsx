@@ -226,9 +226,6 @@ function DashboardMockup() {
     </div>
   );
 }
-    </div>
-  );
-}
 
 /* ─── Compact FAQ Item ───────────────────────────────────────────────── */
 function HomeFAQItem({ q, a }) {
