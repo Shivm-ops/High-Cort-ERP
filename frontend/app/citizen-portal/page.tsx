@@ -1666,24 +1666,24 @@ ${template.relief}
               <div className="space-y-3 text-center">
                 <div className="p-3 bg-white rounded-xl border border-gray-200 inline-block shadow-2xs mx-auto">
                   <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi%3A%2F%2Fpay%3Fpa%3Dsupport%40fastcase.in%26pn%3DFastcase%2520ERP%26am%3D30%26cu%3DINR%26tn%3DCourt%2520Petition%2520Draft"
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D7218834640%40ybl%26pn%3DFastcase%2520ERP%26am%3D30%26cu%3DINR%26tn%3DCourt%2520Petition%2520Draft"
                     alt="UPI QR Code"
-                    className="w-40 h-40 mx-auto rounded-lg"
+                    className="w-44 h-44 mx-auto rounded-lg"
                   />
                 </div>
                 <p className="text-xs font-bold text-gray-700">
-                  कोणत्याही UPI अ‍ॅपद्वारे (GPay, PhonePe, Paytm) स्कॅन करून ₹३० पाठवा
+                  कोणत्याही UPI अ‍ॅपद्वारे (PhonePe, GPay, Paytm) स्कॅन करून ₹३० पाठवा
                 </p>
                 <div className="flex items-center justify-center gap-2 text-xs font-mono bg-gray-50 border border-gray-200 py-1.5 px-3 rounded-lg max-w-xs mx-auto">
                   <span className="text-gray-600">UPI ID:</span>
-                  <span className="font-bold text-[#013B36]">support@fastcase.in</span>
+                  <span className="font-bold text-[#013B36]">7218834640@ybl</span>
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText("support@fastcase.in");
+                      navigator.clipboard.writeText("7218834640@ybl");
                       toast.success("UPI ID कॉपी केला!");
                     }}
-                    className="text-[#059669] hover:text-[#E8523E] font-bold ml-1 cursor-pointer"
+                    className="text-[#059669] hover:text-[#013B36] font-bold ml-1 cursor-pointer"
                     title="Copy UPI ID"
                   >
                     <Copy className="w-3 h-3" />
@@ -1700,28 +1700,28 @@ ${template.relief}
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <a
-                    href="upi://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
-                    className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
-                  >
-                    <span className="text-base">🟢</span>
-                    <span>Google Pay</span>
-                  </a>
-                  <a
-                    href="phonepe://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    href="phonepe://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
                     className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
                   >
                     <span className="text-base">🟣</span>
                     <span>PhonePe</span>
                   </a>
                   <a
-                    href="paytmmp://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    href="upi://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
+                  >
+                    <span className="text-base">🟢</span>
+                    <span>Google Pay</span>
+                  </a>
+                  <a
+                    href="paytmmp://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
                     className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
                   >
                     <span className="text-base">🔵</span>
                     <span>Paytm</span>
                   </a>
                   <a
-                    href="upi://pay?pa=support@fastcase.in&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
+                    href="upi://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
                     className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
                   >
                     <span className="text-base">🟠</span>
