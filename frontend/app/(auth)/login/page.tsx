@@ -51,6 +51,22 @@ export default function AdvocateLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
+  // Navigate after login: On Advocate login page, always navigate to /dashboard
+  // unless user explicitly passed redirect or portal query parameters.
+  const navigateAfterLogin = () => {
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const redirectParam = params?.get("redirect");
+    const portalParam = params?.get("portal");
+
+    if (redirectParam) {
+      window.location.href = redirectParam;
+    } else if (portalParam === "citizen") {
+      window.location.href = "/citizen-portal";
+    } else {
+      window.location.href = "/dashboard";
+    }
+  };
+
   // OTP Countdown Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -96,7 +112,7 @@ export default function AdvocateLoginPage() {
                     isLoading: false,
                   });
                   toast.success(`Welcome, ${res.data.user?.full_name || "Advocate"}!`);
-                  window.location.href = res.data.user?.role === "citizen" ? "/citizen-portal" : "/dashboard";
+                  navigateAfterLogin();
                 } catch (err: any) {
                   toast.error(getErrorMessage(err));
                 } finally {
@@ -161,12 +177,7 @@ export default function AdvocateLoginPage() {
               });
 
               toast.success(`Welcome, ${res.data.user?.full_name || "Advocate"}!`);
-              const role = res.data.user?.role || res.data.user?.user_type;
-              if (role === "citizen") {
-                window.location.href = "/citizen-portal";
-              } else {
-                window.location.href = "/dashboard";
-              }
+              navigateAfterLogin();
             } catch (err: any) {
               toast.error(getErrorMessage(err));
             } finally {
@@ -242,12 +253,7 @@ export default function AdvocateLoginPage() {
       });
 
       toast.success("Login successful! Welcome back.");
-      const role = res.data.user?.role || res.data.user?.user_type;
-      if (role === "citizen") {
-        window.location.href = "/citizen-portal";
-      } else {
-        window.location.href = "/dashboard";
-      }
+      navigateAfterLogin();
     } catch (err: any) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -272,12 +278,7 @@ export default function AdvocateLoginPage() {
       await login(emailInput.trim(), passwordInput);
       const currentUser = useAuthStore.getState().user;
       toast.success("Welcome back to Fastcase Practice!");
-      const role = currentUser?.role || (currentUser as any)?.user_type;
-      if (role === "citizen") {
-        window.location.href = "/citizen-portal";
-      } else {
-        window.location.href = "/dashboard";
-      }
+      navigateAfterLogin();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {

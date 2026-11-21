@@ -33,6 +33,7 @@ import {
   Smartphone,
   ShieldCheck,
   ExternalLink,
+  LayoutDashboard,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -722,26 +723,41 @@ ${template.relief}
             </div>
           </div>
 
-          {/* User Auth Status Button & Back Link */}
+          {/* User Auth Status Button & Back Links */}
           <div className="flex items-center gap-2">
+            {/* Direct redirect to Main Advocate Dashboard */}
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#013B36] hover:bg-[#024E47] transition border border-[#059669] shadow-xs cursor-pointer"
+              title="वकील मुख्य डॅशबोर्डवर जा (Go to Advocate Practice Dashboard)"
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 text-[#34D399]" />
+              <span className="font-extrabold">मुख्य डॅशबोर्ड</span>
+            </Link>
+
+            {/* Back to Landing Website */}
             <a
               href="https://fastcase.in"
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-gray-700 hover:text-[#013B36] hover:bg-[#ECFDF5] transition cursor-pointer border border-gray-200"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-gray-700 hover:text-[#013B36] hover:bg-[#ECFDF5] transition cursor-pointer border border-gray-200"
               title="मुख्य वेबसाइटवर जा"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-[#013B36]" />
-              <span className="hidden sm:inline">मुख्य वेबसाइट</span>
+              <span className="hidden sm:inline">वेबसाइट</span>
             </a>
 
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-1.5 pl-2">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ECFDF5] text-[#013B36] border border-[#A7F3D0] text-xs font-bold">
+              <div className="flex items-center gap-1.5 pl-1 sm:pl-2">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#013B36] border border-[#A7F3D0] text-xs font-bold transition cursor-pointer"
+                  title="मुख्य डॅशबोर्ड उघडा"
+                >
                   <User className="w-3 h-3 text-[#059669]" />
                   <span className="truncate max-w-[120px]">{user.full_name || user.email}</span>
-                </div>
+                </Link>
                 <button
                   onClick={logout}
-                  className="px-2 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-[#059669] hover:bg-red-50 transition cursor-pointer"
+                  className="px-2 py-1 rounded-lg text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
                   title="Logout"
                 >
                   बाहेर पडा

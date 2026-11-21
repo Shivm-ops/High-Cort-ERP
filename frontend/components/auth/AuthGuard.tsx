@@ -26,11 +26,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
-
-    // Role boundary: Ordinary citizens access the dedicated Citizen Portal, not advocate ERP
-    if (hydrated && (isAuthenticated || hasToken) && user?.role === "citizen") {
-      router.replace("/citizen-portal");
-    }
   }, [hydrated, isAuthenticated, user, router]);
 
   if (!hydrated) {
@@ -42,7 +37,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   const hasToken = typeof window !== "undefined" && !!localStorage.getItem("access_token");
-  if ((isAuthenticated || hasToken) && user?.role !== "citizen") {
+  if (isAuthenticated || hasToken) {
     return <>{children}</>;
   }
 
