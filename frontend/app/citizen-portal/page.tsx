@@ -69,11 +69,20 @@ export default function SimpleCitizenPortalPage() {
   // ── Drafting Form State ───────────────────────────────────────────────────
   const [applicantName, setApplicantName] = useState<string>("");
   const [applicantPhone, setApplicantPhone] = useState<string>("");
+  const [applicantAddress, setApplicantAddress] = useState<string>("");
   const [oppositeParty, setOppositeParty] = useState<string>("");
+  const [opponentAddress, setOpponentAddress] = useState<string>("");
   const [incidentDate, setIncidentDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
+  const [incidentTime, setIncidentTime] = useState<string>("");
   const [incidentPlace, setIncidentPlace] = useState<string>("");
+  const [claimAmount, setClaimAmount] = useState<string>("");
+  const [bankOrOrgName, setBankOrOrgName] = useState<string>("");
+  const [accountOrUtr, setAccountOrUtr] = useState<string>("");
+  const [extraDetails, setExtraDetails] = useState<string>("");
+  const [pageFormatPreference, setPageFormatPreference] = useState<"auto" | "1page" | "2page">("auto");
+  const [docPreviewTab, setDocPreviewTab] = useState<"court" | "text">("court");
   const [generatedDoc, setGeneratedDoc] = useState<string>("");
   const [isDrafting, setIsDrafting] = useState<boolean>(false);
 
@@ -188,6 +197,17 @@ export default function SimpleCitizenPortalPage() {
       return;
     }
     const today = new Date().toLocaleDateString("mr-IN");
+    const applicant = (applicantName.trim() || user?.full_name || "नागरिक अर्जदार");
+    const phone = (applicantPhone.trim() || user?.phone || "नोंदणीकृत मोबाईल");
+    const address = (applicantAddress.trim() || incidentPlace.trim() || "स्थानिक रहिवासी");
+    const opp = (oppositeParty.trim() || "संबंधित कार्यालय / संस्था");
+    const oppAddress = (opponentAddress.trim() || incidentPlace.trim() || "स्थानिक शाखा / कार्यालय");
+    const date = (incidentDate || new Date().toISOString().split("T")[0]);
+    const time = incidentTime.trim();
+    const amount = claimAmount.trim();
+    const bank = bankOrOrgName.trim();
+    const utr = accountOrUtr.trim();
+
     printWindow.document.write(`<!DOCTYPE html>
 <html lang="mr">
 <head>
@@ -195,34 +215,34 @@ export default function SimpleCitizenPortalPage() {
   <title>${title} - Fastcase Official Court Application</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700&family=Noto+Serif+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&family=Noto+Serif+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    @page { size: A4; margin: 25mm 20mm 20mm 25mm; }
+    @page { size: A4; margin: 15mm 18mm 15mm 18mm; }
     * { box-sizing: border-box; }
     body {
       font-family: 'Mukta', 'Noto Serif Devanagari', 'Times New Roman', serif;
-      color: #111827;
-      line-height: 1.65;
+      color: #0f172a;
+      line-height: 1.5;
       background: #f8fafc;
       margin: 0;
-      padding: 24px;
+      padding: 20px;
     }
     .container {
       max-width: 820px;
       margin: 0 auto;
       background: #ffffff;
-      padding: 40px 48px;
+      padding: 36px 44px;
       border-radius: 8px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.06);
       border: 1px solid #e2e8f0;
     }
     .no-print-bar {
       max-width: 820px;
-      margin: 0 auto 20px auto;
+      margin: 0 auto 16px auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #0D3B2E;
+      background: #064e3b;
       color: #ffffff;
       padding: 12px 20px;
       border-radius: 8px;
@@ -239,38 +259,61 @@ export default function SimpleCitizenPortalPage() {
       cursor: pointer;
     }
     .header-box {
-      border-bottom: 2px solid #0D3B2E;
+      border-bottom: 2.5px solid #064e3b;
       padding-bottom: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
     }
     .header-title {
-      font-size: 17px;
+      font-size: 19px;
       font-weight: 800;
-      color: #0D3B2E;
+      color: #064e3b;
       letter-spacing: -0.3px;
     }
     .header-sub {
       font-size: 11px;
       color: #4b5563;
       margin-top: 2px;
+      font-weight: 600;
     }
     .meta-box {
       text-align: right;
       font-size: 11px;
     }
+    .parties-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #1e293b;
+      margin: 12px 0 16px 0;
+      font-size: 10pt;
+    }
+    .parties-table th {
+      background: #064e3b;
+      color: #ffffff;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: 700;
+      border-right: 1px solid #ffffff;
+    }
+    .parties-table td {
+      padding: 8px 10px;
+      vertical-align: top;
+      background: #fbfdfc;
+      border-right: 1.5px solid #1e293b;
+      line-height: 1.45;
+    }
     .content-box {
       white-space: pre-wrap;
-      font-size: 13.5pt;
-      line-height: 1.7;
+      font-size: 11pt;
+      line-height: 1.6;
       text-align: justify;
-      color: #000000;
+      color: #0f172a;
     }
     .footer-box {
-      margin-top: 40px;
-      padding-top: 15px;
+      margin-top: 35px;
+      padding-top: 12px;
       border-top: 1px dashed #cbd5e1;
       font-size: 10px;
       color: #64748b;
@@ -282,28 +325,58 @@ export default function SimpleCitizenPortalPage() {
       body { background: #ffffff; padding: 0; }
       .no-print-bar { display: none !important; }
       .container { box-shadow: none; border: none; padding: 0; max-width: 100%; }
-      .content-box { font-size: 13pt; line-height: 1.6; }
+      .content-box { font-size: 10.5pt; line-height: 1.5; }
     }
   </style>
 </head>
 <body>
   <div class="no-print-bar">
-    <div><strong>🏛️ फास्टकेस नागरिक विधी कक्ष</strong> &bull; अधिकृत कोर्ट अर्ज</div>
+    <div><strong>🏛️ फास्टकेस विधी कक्ष</strong> &bull; अधिकृत कोर्ट तक्रार अर्ज</div>
     <button class="print-btn" onclick="window.print()">🖨️ PDF म्हणून सेव्ह करा / प्रिंट करा</button>
   </div>
   <div class="container">
     <div class="header-box">
       <div>
         <div class="header-title">🏛️ कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज</div>
-        <div class="header-sub">भारतीय कायदे व नियमावलीनुसार तयार केलेला अधिकृत मसुदा</div>
+        <div class="header-sub">भारतीय कायदे, BNSS व IT Act नियमावलीनुसार तयार केलेला अधिकृत मसुदा</div>
       </div>
       <div class="meta-box">
-        <div style="font-family: monospace; font-weight: 700; color: #0D3B2E;">पावती क्र: ${receipt}</div>
-        <div style="color: #059669; font-weight: 700;">शुल्क भरणा: ₹३० (यशस्वी)</div>
+        <div style="font-family: monospace; font-weight: 800; color: #064e3b; font-size: 12px;">पावती क्र: ${receipt}</div>
+        <div style="color: #059669; font-weight: 700;">मुद्रांक शुल्क: ₹३० (भरणा पूर्ण)</div>
         <div style="color: #6b7280;">दिनांक: ${today}</div>
       </div>
     </div>
+
+    <!-- Structured Parties Table -->
+    <table class="parties-table">
+      <thead>
+        <tr>
+          <th style="width: 50%;">[१] तक्रारदार / अर्जदार (Complainant)</th>
+          <th style="width: 50%;">[२] विरोधी पक्ष / प्रतिवादी (Opposite Party)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div><b>पूर्ण नाव:</b> ${applicant}</div>
+            <div><b>मोबाईल क्र.:</b> ${phone}</div>
+            <div><b>पूर्ण पत्ता:</b> ${address}</div>
+            ${bank ? `<div><b>बँक / संस्था:</b> ${bank}</div>` : ""}
+            ${utr ? `<div><b>खाते क्र.:</b> ${utr}</div>` : ""}
+          </td>
+          <td>
+            <div><b>नाव / हुद्दा:</b> ${opp}</div>
+            <div><b>पत्ता / शाखा:</b> ${oppAddress}</div>
+            <div><b>तारीख व वेळ:</b> ${date} ${time ? `(${time})` : ""}</div>
+            ${amount ? `<div><b>दावा / रक्कम:</b> ₹ ${amount}/-</div>` : ""}
+            ${utr ? `<div><b>UTR / संदर्भ क्र.:</b> ${utr}</div>` : ""}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
     <div class="content-box">${content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+
     <div class="footer-box">
       <span>Fastcase Legal ERP &bull; अधिकृत नागरिक विधी सहाय्य प्रणाली</span>
       <span>पावती क्र: ${receipt} &bull; कोर्ट पुरावा प्रत</span>
@@ -325,7 +398,7 @@ export default function SimpleCitizenPortalPage() {
     const titleToUse = docTitle || activeProblem?.title_mr || "Court_Petition";
     const receiptToUse = customReceipt || receiptId || `FC-DOC-${Date.now().toString().slice(-6)}`;
 
-    if (!textToUse) {
+    if (!textToUse && !activeProblem) {
       toast.error("अर्ज उपलब्ध नाही.");
       return;
     }
@@ -335,91 +408,406 @@ export default function SimpleCitizenPortalPage() {
 
     try {
       const { jsPDF } = await import("jspdf");
-      const html2canvas = (await import("html2canvas")).default;
+      const html2canvas = (await import("html2canvas")).default as any;
 
-      // 1. Create temporary offscreen container styled cleanly with Marathi fonts & official court margins
+      const applicant = (applicantName.trim() || user?.full_name || "नागरिक अर्जदार");
+      const phone = (applicantPhone.trim() || user?.phone || "नोंदणीकृत मोबाईल");
+      const address = (applicantAddress.trim() || incidentPlace.trim() || "स्थानिक रहिवासी");
+      const opp = (oppositeParty.trim() || "संबंधित कार्यालय / संस्था");
+      const oppAddress = (opponentAddress.trim() || incidentPlace.trim() || "स्थानिक शाखा / कार्यालय");
+      const place = (incidentPlace.trim() || "महाराष्ट्र");
+      const date = (incidentDate || new Date().toISOString().split("T")[0]);
+      const time = incidentTime.trim();
+      const amount = claimAmount.trim();
+      const bank = bankOrOrgName.trim();
+      const utr = accountOrUtr.trim();
+      const extra = extraDetails.trim();
+      const today = new Date().toLocaleDateString("mr-IN");
+
+      const template = activeProblem?.draft_template || {
+        recipient_title: "मा. सक्षम प्राधिकारी / पोलीस निरीक्षक साहेब",
+        subject: titleToUse,
+        act_reference: "भारतीय न्याय संहिता २०२३ / संबंधित कायदे व नियमावली",
+        body_facts: "अर्जदाराने नमूद केलेल्या घटनेनुसार कायदेशीर हक्कांचे थेट उल्लंघन झाले आहे.",
+        relief: "सदर प्रकरणी योग्य ती कायदेशीर चौकशी करून अर्जदारास तात्काळ न्याय व नुकसानभरपाई मिळवून द्यावी ही नम्र विनंती.",
+      };
+
+      // Substitute placeholders in recipient and facts
+      let recipientClean = template.recipient_title
+        .replace(/\[बँकेचे नाव\]/g, bank || opp || "संबंधित बँक शाखा")
+        .replace(/\[कार्यालयाचे नाव\]/g, opp || "संबंधित कार्यालय")
+        .replace(/\[पोलीस ठाण्याचे नाव\]/g, oppAddress || place || "स्थानिक पोलीस ठाणे")
+        .replace(/\[जिल्ह्याचे नाव\]/g, place || "स्थानिक जिल्हा")
+        .replace(/\[जिल्हा\]/g, place || "स्थानिक जिल्हा")
+        .replace(/\[पत्ता\]/g, oppAddress || "स्थानिक पत्ता")
+        .replace(/\[[^\]]+\]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      let factsClean = template.body_facts
+        .replace(/\[आपले नाव\]/g, applicant)
+        .replace(/\[मोबाईल\]/g, phone)
+        .replace(/\[पत्ता\]/g, address)
+        .replace(/\[तारीख\]/g, date)
+        .replace(/\[वेळ\]/g, time ? `अंदाजे वेळ ${time}` : "सदर वेळी")
+        .replace(/\[ठिकाण\]/g, place)
+        .replace(/\[बँकेचे नाव\]/g, bank || opp || "संबंधित बँक शाखा")
+        .replace(/\[खाते क्र\.\]/g, utr ? utr : "नोंदणीकृत बँक खाते")
+        .replace(/\[रक्कम\]/g, amount ? `रुपये ${amount}/-` : "कापलेली रक्कम")
+        .replace(/\[थकीत रक्कम\]/g, amount ? `रुपये ${amount}/-` : "थकीत रक्कम")
+        .replace(/\[आयडी\]/g, utr || "बँक स्टेटमेंटनुसार")
+        .replace(/\[बिल क्र\.\]/g, utr || "पावतीनुसार")
+        .replace(/\[मेसेज\/कॉल\/बनावट लिंक\]/g, extra || "बनावट कॉल / OTP / संशयास्पद लिंक")
+        .replace(/\[कंपनीचे नाव\]/g, opp)
+        .replace(/\[विरोधी पक्षाचे नाव\]/g, opp)
+        .replace(/\[आरोपीचे नाव\]/g, opp)
+        .replace(/\[कार्यालयाचे नाव\]/g, opp)
+        .replace(/\[पतीचे नाव\]/g, opp)
+        .replace(/\[गुन्ह्याचा तपशील - मारहाण\/धमकी\/चोरी\]/g, extra || "दखलपात्र गुन्हा")
+        .replace(/\[घटनेचा तपशील\]/g, extra || "कायदेशीर हक्कांचे उल्लंघन")
+        .replace(/\[दोषाचे वर्णन\]/g, extra || "वस्तू / सेवेमधील सदोषपणा")
+        .replace(/\[पोलीस ठाण्याचे नाव\]/g, oppAddress || place || "स्थानिक पोलीस ठाणे")
+        .replace(/\[जिल्ह्याचे नाव\]/g, place || "स्थानिक जिल्हा")
+        .replace(/\[जिल्हा\]/g, place || "स्थानिक जिल्हा")
+        .replace(/\[तालुका \/ जिल्हा\]/g, place || "स्थानिक तालुका/जिल्हा")
+        .replace(/\[गावाचे नाव\]/g, place || "स्थानिक गाव")
+        .replace(/\[सर्व्हे क्र\.\]/g, utr || "मिळकत / सर्व्हे क्र.")
+        .replace(/\[विवाह तारीख\]/g, date)
+        .replace(/\[वस्तूचे नाव\]/g, extra || "खरेदी केलेली वस्तू / सेवा")
+        .replace(/\[हुद्दा\]/g, "कर्मचारी / कामगार")
+        .replace(/\[महिना\]/g, "संबंधित कालावधी")
+        .replace(/\[मुद्दा १\]/g, extra || "संबंधित कामाची अधिकृत नोंद व कागदपत्रांची प्रमाणित प्रत")
+        .replace(/\[मुद्दा २\]/g, "सदर प्रकरणातील सक्षम प्राधिकाऱ्यांचे आदेश व टिप्पणी")
+        .replace(/\[कार्यालयाचे नाव \/ काम\]/g, opp || "संबंधित कार्यालयीन कामकाज")
+        .replace(/\[कागदपत्राचे नाव व क्रमांक[^\]]*\]/g, extra || utr || "महत्त्वाचे अधिकृत मूळ कागदपत्र")
+        .replace(/\[[^\]]+\]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // Determine 1-page vs 2-page dynamically
+      const isTwoPage =
+        pageFormatPreference === "2page" ? true :
+        pageFormatPreference === "1page" ? false :
+        (extra.length > 120 || (factsClean.length + template.relief.length > 520));
+
       const container = document.createElement("div");
       container.style.position = "fixed";
       container.style.left = "-9999px";
       container.style.top = "0";
-      container.style.width = "794px"; // Standard A4 width at 96 DPI
-      container.style.backgroundColor = "#ffffff";
-      container.style.padding = "48px 56px";
-      container.style.fontFamily = "'Mukta', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Times New Roman', serif";
-      container.style.color = "#111827";
-      container.style.lineHeight = "1.7";
-      container.style.boxSizing = "border-box";
-      container.style.zIndex = "-1000";
+      container.style.zIndex = "-9999";
+      document.body.appendChild(container);
 
-      const today = new Date().toLocaleDateString("mr-IN");
-      container.innerHTML = `
-        <div style="border-bottom: 2.5px solid #064e3b; padding-bottom: 14px; margin-bottom: 26px; display: flex; justify-content: space-between; align-items: flex-end;">
-          <div>
-            <div style="font-size: 20px; font-weight: 800; color: #064e3b; letter-spacing: -0.3px;">
-              🏛️ कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज
-            </div>
-            <div style="font-size: 11.5px; color: #4b5563; margin-top: 3px; font-weight: 600;">
-              फास्टकेस विधी कक्ष &bull; भारतीय कायदे व नियमावलीनुसार तयार केलेला अधिकृत मसुदा
+      // Common Header HTML
+      const headerHtml = `
+        <div style="border-bottom: 2.5px solid #064e3b; padding-bottom: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 32px; line-height: 1;">🏛️</div>
+            <div>
+              <div style="font-size: 10.5px; font-weight: 800; color: #064e3b; letter-spacing: 0.8px; text-transform: uppercase;">
+                भारतीय विधी व न्याय मसुदा कक्ष &bull; FASTCASE LEGAL ERP
+              </div>
+              <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-top: 1px; letter-spacing: -0.3px;">
+                कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज
+              </div>
+              <div style="font-size: 10px; color: #475569; font-weight: 600;">
+                (Under Indian Penal / BNSS / Consumer Protection & Allied Statutes)
+              </div>
             </div>
           </div>
-          <div style="text-align: right; font-size: 11px;">
-            <div style="font-family: monospace; font-weight: 800; color: #064e3b; font-size: 12px;">पावती क्र: ${receiptToUse}</div>
-            <div style="color: #059669; font-weight: 700; margin-top: 2px;">शुल्क भरणा: ₹३० (यशस्वी)</div>
-            <div style="color: #6b7280; margin-top: 2px;">दिनांक: ${today}</div>
+          <div style="text-align: right; font-size: 10px; line-height: 1.4;">
+            <div style="font-family: monospace; font-weight: 800; color: #064e3b; font-size: 11.5px; background: #ecfdf5; padding: 2px 7px; border-radius: 4px; border: 1px solid #a7f3d0; display: inline-block;">
+              पावती क्र: ${receiptToUse}
+            </div>
+            <div style="color: #059669; font-weight: 700; margin-top: 2px;">
+              मुद्रांक शुल्क: ₹३० (भरणा पूर्ण)
+            </div>
+            <div style="color: #64748b; font-weight: 600;">
+              दिनांक: ${today}
+            </div>
           </div>
-        </div>
-        <div style="white-space: pre-wrap; font-size: 13.5pt; line-height: 1.75; text-align: justify; color: #000000; font-family: 'Mukta', 'Noto Serif Devanagari', sans-serif;">
-          ${textToUse.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
-        </div>
-        <div style="margin-top: 55px; padding-top: 15px; border-top: 1px dashed #94a3b8; font-size: 10px; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
-          <span>Fastcase Legal ERP &bull; अधिकृत नागरिक विधी सहाय्य प्रणाली</span>
-          <span>पावती क्र: ${receiptToUse} &bull; कोर्ट पुरावा अधिकृत प्रत</span>
         </div>
       `;
 
-      document.body.appendChild(container);
+      // Common Subject Box HTML
+      const subjectBoxHtml = `
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #064e3b; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
+          <div style="font-size: 10.5pt; line-height: 1.35; color: #0f172a;">
+            <span style="font-weight: 700; color: #064e3b;">प्रति,</span> <span style="font-weight: 700;">${recipientClean}</span>
+          </div>
+          <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-size: 10.5pt; line-height: 1.35;">
+            <span style="font-weight: 800; color: #064e3b;">विषय:</span> <span style="font-weight: 700; color: #0f172a;">${template.subject}</span>
+          </div>
+          ${template.act_reference ? `
+          <div style="margin-top: 3px; font-size: 9pt; color: #334155; font-weight: 600;">
+            <span style="color: #064e3b; font-weight: 700;">कायदेशीर संदर्भ:</span> ${template.act_reference}
+          </div>` : ""}
+        </div>
+      `;
 
-      // Render canvas with 2x resolution for ultra-sharp text in PDF
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
+      // Common Parties Table HTML
+      const partiesTableHtml = `
+        <div style="margin: 10px 0 12px 0;">
+          <div style="font-size: 10pt; font-weight: 800; color: #064e3b; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span>📋 पक्षकार व तक्रार तपशील तक्ता (Parties & Claim Particulars):</span>
+            <span style="font-size: 8.5pt; font-weight: 600; color: #64748b;">(कोर्ट व पोलीस रेकॉर्डसाठी अधिकृत नोंद)</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #1e293b; font-size: 9.5pt; line-height: 1.4; font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;">
+            <thead>
+              <tr style="background: #064e3b; color: #ffffff;">
+                <th style="width: 50%; padding: 5px 8px; text-align: left; font-weight: 700; border-right: 1px solid #ffffff; font-size: 9.5pt;">
+                  [१] तक्रारदार / अर्जदार (Complainant)
+                </th>
+                <th style="width: 50%; padding: 5px 8px; text-align: left; font-weight: 700; font-size: 9.5pt;">
+                  [२] विरोधी पक्ष / प्रतिवादी (Opposite Party)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 7px 9px; vertical-align: top; border-right: 1.5px solid #1e293b; background: #fbfdfc;">
+                  <div><b style="color: #064e3b;">पूर्ण नाव:</b> ${applicant}</div>
+                  <div><b style="color: #064e3b;">मोबाईल:</b> ${phone}</div>
+                  <div><b style="color: #064e3b;">पत्ता:</b> ${address}</div>
+                  ${bank ? `<div><b style="color: #064e3b;">बँक/संस्था:</b> ${bank}</div>` : ""}
+                  ${utr ? `<div><b style="color: #064e3b;">खाते क्र.:</b> ${utr}</div>` : ""}
+                </td>
+                <td style="padding: 7px 9px; vertical-align: top; background: #fbfdfc;">
+                  <div><b style="color: #064e3b;">नाव/कंपनी:</b> ${opp}</div>
+                  <div><b style="color: #064e3b;">पत्ता/शाखा:</b> ${oppAddress}</div>
+                  <div><b style="color: #064e3b;">तारीख/वेळ:</b> ${date} ${time ? `(${time})` : ""}</div>
+                  ${amount ? `<div><b style="color: #064e3b;">फसवणूक/दावा:</b> <span style="color: #b91c1c; font-weight: 800;">₹ ${amount}/-</span></div>` : ""}
+                  ${utr ? `<div><b style="color: #064e3b;">व्यवहार/UTR क्र.:</b> <span style="font-family: monospace; font-weight: 700;">${utr}</span></div>` : ""}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
 
-      document.body.removeChild(container);
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.96);
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
       });
-
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Handle multi-page if height exceeds single A4 page (297mm)
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      let heightLeft = pdfHeight;
-      let position = 0;
+      if (!isTwoPage) {
+        // ── 1-PAGE DOCUMENT GENERATION (Exact 1-page fit, zero overflow) ──────
+        const pageEl = document.createElement("div");
+        pageEl.style.width = "794px";
+        pageEl.style.height = "1123px";
+        pageEl.style.maxHeight = "1123px";
+        pageEl.style.boxSizing = "border-box";
+        pageEl.style.padding = "30px 42px 24px 42px";
+        pageEl.style.backgroundColor = "#ffffff";
+        pageEl.style.fontFamily = "'Mukta', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Mangal', serif";
+        pageEl.style.color = "#0f172a";
+        pageEl.style.position = "relative";
+        pageEl.style.overflow = "hidden";
 
-      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+        pageEl.innerHTML = `
+          ${headerHtml}
+          ${subjectBoxHtml}
+          ${partiesTableHtml}
 
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
+          <div style="font-size: 10pt; line-height: 1.45; color: #0f172a; text-align: justify; margin-bottom: 8px;">
+            <div style="font-weight: 700; margin-bottom: 4px; color: #064e3b;">महोदय, मी खालीलप्रमाणे वस्तुस्थिती व कायदेशीर तक्रार सादर करत आहे:</div>
+            <div style="margin-bottom: 4px;"><b>१.</b> ${factsClean}</div>
+            <div style="margin-bottom: 4px;"><b>२.</b> तक्रारदाराने याबाबत संबंधित व्यक्ती / संस्थेकडे वारंवार विचारणा व पाठपुरावा केला, परंतु त्यांनी कायदेशीर जबाबदारी पार पाडण्यास नकार दिला व टाळाटाळ केली.</div>
+            <div><b>३.</b> सदर कृत्य हे ${template.act_reference || "प्रचलित कायदे व नियमावली"} अन्वये कायद्याचे थेट उल्लंघन आहे.</div>
+          </div>
+
+          <div style="background: #f0fdf4; border-left: 3.5px solid #059669; padding: 7px 10px; margin: 8px 0; border-radius: 0 4px 4px 0;">
+            <div style="font-weight: 800; color: #064e3b; font-size: 10pt; margin-bottom: 2px;">मागणी व दाद (Relief & Prayer):</div>
+            <div style="font-size: 9.5pt; line-height: 1.38; color: #064e3b;">${template.relief}</div>
+          </div>
+
+          <div style="font-size: 9pt; color: #334155; margin-bottom: 8px;">
+            <b>सोबत जोडलेली कागदपत्रे:</b> १. आधार कार्ड सत्यप्रत &bull; २. बँक स्टेटमेंट / व्यवहार पावती &bull; ३. तक्रार / संवादाचा पुरावा.
+          </div>
+
+          <div style="border-top: 1px dashed #cbd5e1; padding-top: 6px; margin-top: 8px; font-size: 8.5pt; color: #475569; text-align: justify;">
+            <b>सत्यप्रतिज्ञा (Verification):</b> मी, वरील तक्रारदार सत्यप्रतिज्ञेवर नमूद करतो की, वरील तक्रारीतील सर्व मुद्दे माझ्या व्यक्तिगत माहितीनुसार व कागदपत्रांनुसार सत्य व बिनचूक आहेत.
+          </div>
+
+          <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 9.5pt;">
+            <div>
+              <div><b>दिनांक:</b> ${today}</div>
+              <div><b>ठिकाण:</b> ${place}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="border-bottom: 1px solid #475569; width: 180px; margin-bottom: 4px;"></div>
+              <div style="font-weight: 800; color: #0f172a;">तक्रारदाराची सही / अंगठा</div>
+              <div style="font-size: 9pt; color: #475569;">(${applicant})</div>
+            </div>
+          </div>
+
+          <div style="position: absolute; bottom: 14px; left: 42px; right: 42px; border-top: 1px solid #e2e8f0; padding-top: 5px; display: flex; justify-content: space-between; font-size: 8pt; color: #64748b;">
+            <span>फास्टकेस लीगल ईआरपी &bull; अधिकृत नागरिक विधी सहाय्य प्रणाली</span>
+            <span>पृष्ठ १ पैकी १ &bull; पावती क्र: ${receiptToUse} &bull; कोर्ट पुरावा प्रत</span>
+          </div>
+        `;
+
+        container.appendChild(pageEl);
+
+        const canvas = await html2canvas(pageEl, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.98);
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+      } else {
+        // ── 2-PAGE DOCUMENT GENERATION (Exact 2-page pagination, no cut lines) ─
+        // Page 1
+        const page1El = document.createElement("div");
+        page1El.style.width = "794px";
+        page1El.style.height = "1123px";
+        page1El.style.maxHeight = "1123px";
+        page1El.style.boxSizing = "border-box";
+        page1El.style.padding = "32px 42px 24px 42px";
+        page1El.style.backgroundColor = "#ffffff";
+        page1El.style.fontFamily = "'Mukta', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Mangal', serif";
+        page1El.style.color = "#0f172a";
+        page1El.style.position = "relative";
+        page1El.style.overflow = "hidden";
+
+        page1El.innerHTML = `
+          ${headerHtml}
+          ${subjectBoxHtml}
+          ${partiesTableHtml}
+
+          <div style="font-size: 10.5pt; line-height: 1.55; color: #0f172a; text-align: justify; margin-top: 10px;">
+            <div style="font-weight: 700; margin-bottom: 6px; color: #064e3b; font-size: 11pt;">महोदय, मी खालीलप्रमाणे सविस्तर वस्तुस्थिती व तक्रार सादर करत आहे:</div>
+            <div style="margin-bottom: 8px;"><b>१. प्राथमिक वस्तुस्थिती:</b> ${factsClean}</div>
+            <div style="margin-bottom: 8px;"><b>२. पाठपुरावा व नकार:</b> तक्रारदाराने सदर गंभीर घटनेबाबत विरोधी पक्षाकडे वारंवार कायदेशीर विचारणा व पाठपुरावा केला. परंतु विरोधी पक्षाने आपली कायदेशीर जबाबदारी पार पाडण्यास साफ नकार दिला व जाणीवपूर्वक टाळाटाळ केली.</div>
+            <div style="margin-bottom: 8px;"><b>३. कायदेशीर उल्लंघन:</b> विरोधी पक्षाचे सदर कृत्य हे ${template.act_reference} अन्वये कायद्याचे थेट व गंभीर उल्लंघन असून तक्रारदारास कायदेशीर दाद मिळणे आवश्यक आहे.</div>
+          </div>
+
+          <div style="margin-top: 24px; padding: 10px 14px; background: #f8fafc; border: 1.5px dashed #94a3b8; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 9.5pt; color: #475569; font-weight: 700;">
+            <span>🏛️ फास्टकेस अधिकृत मसुदा</span>
+            <span>(सदर अर्जाचा पुढील भाग, कायदेशीर मागण्या व स्वाक्षरी पृष्ठ २ वर चालू...) &rarr;</span>
+          </div>
+
+          <div style="position: absolute; bottom: 14px; left: 42px; right: 42px; border-top: 1px solid #e2e8f0; padding-top: 5px; display: flex; justify-content: space-between; font-size: 8pt; color: #64748b;">
+            <span>फास्टकेस लीगल ईआरपी &bull; अधिकृत विधी सहाय्य प्रणाली</span>
+            <span>पृष्ठ १ पैकी २ &bull; पावती क्र: ${receiptToUse}</span>
+          </div>
+        `;
+
+        container.appendChild(page1El);
+
+        const canvas1 = await html2canvas(page1El, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+        });
+
+        const imgData1 = canvas1.toDataURL("image/jpeg", 0.98);
+        pdf.addImage(imgData1, "JPEG", 0, 0, pdfWidth, pdfHeight);
+
+        container.removeChild(page1El);
+
+        // Page 2
+        const page2El = document.createElement("div");
+        page2El.style.width = "794px";
+        page2El.style.height = "1123px";
+        page2El.style.maxHeight = "1123px";
+        page2El.style.boxSizing = "border-box";
+        page2El.style.padding = "32px 42px 24px 42px";
+        page2El.style.backgroundColor = "#ffffff";
+        page2El.style.fontFamily = "'Mukta', 'Noto Serif Devanagari', 'Noto Sans Devanagari', 'Mangal', serif";
+        page2El.style.color = "#0f172a";
+        page2El.style.position = "relative";
+        page2El.style.overflow = "hidden";
+
+        page2El.innerHTML = `
+          <div style="border-bottom: 2px solid #064e3b; padding-bottom: 8px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 10pt; color: #064e3b; font-weight: 700;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>🏛️</span>
+              <span>कोर्ट तक्रार अर्ज (पुढे चालू - पृष्ठ २) &bull; विषय: ${template.subject.slice(0, 45)}...</span>
+            </div>
+            <div style="font-family: monospace; font-size: 9.5pt; color: #475569;">
+              पावती: ${receiptToUse} &bull; ${today}
+            </div>
+          </div>
+
+          <div style="font-size: 10.5pt; line-height: 1.55; color: #0f172a; text-align: justify; margin-bottom: 12px;">
+            ${extra ? `
+            <div style="margin-bottom: 10px; background: #fdfdfe; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 6px;">
+              <b style="color: #064e3b;">४. विशेष हकीकत व पुराव्यांचा तपशील:</b><br/>
+              <span style="font-size: 10pt; color: #1e293b;">${extra}</span>
+            </div>` : ""}
+
+            <div style="margin-bottom: 8px;">
+              <b>५. नुकसान व मानसिक त्रास:</b> विरोधी पक्षाच्या बेकायदेशीर व निष्काळजी वागणुकीमुळे तक्रारदाराचे गंभीर आर्थिक नुकसान झाले असून प्रचंड मानसिक व आर्थिक त्रास सहन करावा लागला आहे.
+            </div>
+          </div>
+
+          <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 10px 14px; margin: 12px 0; border-radius: 0 6px 6px 0;">
+            <div style="font-weight: 800; color: #064e3b; font-size: 11pt; margin-bottom: 4px;">मागणी व कायदेशीर दाद (Relief & Prayers):</div>
+            <div style="font-size: 10pt; line-height: 1.5; color: #064e3b;">
+              ${template.relief}
+            </div>
+          </div>
+
+          <div style="font-size: 9.5pt; color: #334155; margin: 12px 0 10px 0; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <b>सोबत जोडलेली अधिकृत कागदपत्रे (Enclosures Checklist):</b><br/>
+            १. तक्रारदाराच्या आधार कार्डची प्रमाणित प्रत.<br/>
+            २. बँकेचे अधिकृत स्टेटमेंट / पासबुक झेरॉक्स / कापलेल्या रकमेची नोंद.<br/>
+            ३. व्यवहार UTR पावती / मेसेज स्क्रीनशॉट / संभाषणाचा पुरावा.<br/>
+            ४. विरोधी पक्षाशी केलेल्या लेखी पत्रव्यवहाराची सत्यप्रत.
+          </div>
+
+          <div style="border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 12px; font-size: 9pt; color: #475569; text-align: justify;">
+            <b>सत्यप्रतिज्ञा / पडताळणी (Statutory Verification):</b><br/>
+            मी, वरील तक्रारदार सत्यप्रतिज्ञेवर नमूद करतो की, वरील तक्रारीतील सर्व मुद्दे व परिच्छेद माझ्या व्यक्तिगत माहितीनुसार व कागदपत्रांनुसार सत्य व बिनचूक आहेत. मी या अर्जात कोणतीही खोटी माहिती दिलेली नाही.
+          </div>
+
+          <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10pt;">
+            <div>
+              <div><b>दिनांक:</b> ${today}</div>
+              <div><b>ठिकाण:</b> ${place}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="border-bottom: 1.5px solid #1e293b; width: 200px; margin-bottom: 5px;"></div>
+              <div style="font-weight: 800; color: #0f172a;">तक्रारदाराची सही / अंगठा</div>
+              <div style="font-size: 9.5pt; color: #475569;">(${applicant})</div>
+            </div>
+          </div>
+
+          <div style="position: absolute; bottom: 14px; left: 42px; right: 42px; border-top: 1px solid #e2e8f0; padding-top: 5px; display: flex; justify-content: space-between; font-size: 8pt; color: #64748b;">
+            <span>फास्टकेस लीगल ईआरपी &bull; अधिकृत विधी सहाय्य प्रणाली</span>
+            <span>पृष्ठ २ पैकी २ &bull; पावती क्र: ${receiptToUse} &bull; कोर्ट पुरावा अधिकृत प्रत</span>
+          </div>
+        `;
+
+        container.appendChild(page2El);
+
         pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+        const canvas2 = await html2canvas(page2El, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+        });
+
+        const imgData2 = canvas2.toDataURL("image/jpeg", 0.98);
+        pdf.addImage(imgData2, "JPEG", 0, 0, pdfWidth, pdfHeight);
       }
+
+      document.body.removeChild(container);
 
       const fileName = `${titleToUse.replace(/[\/\s\\:\*\?"<>\|]+/g, "_")}_Fastcase_Petition.pdf`;
       pdf.save(fileName);
-      toast.success("अधिकृत PDF फाईल यशस्वीरीत्या डाऊनलोड झाली!");
+      toast.success(isTwoPage ? "अधिकृत २ पानांची कोर्ट PDF डाऊनलोड झाली!" : "अधिकृत १ पानाची कोर्ट PDF डाऊनलोड झाली!");
     } catch (err) {
       console.error("PDF generation error:", err);
-      // Fallback: create raw text file as .pdf or call window.print
+      // Fallback
       try {
         const { jsPDF } = await import("jspdf");
         const doc = new jsPDF();
@@ -440,53 +828,157 @@ export default function SimpleCitizenPortalPage() {
 
   // ── Document Drafter Helper ───────────────────────────────────────────────
   const generateDraftForProblem = (
-    problem: QuickProblem,
-    name?: string,
-    phone?: string,
-    opp?: string,
-    place?: string,
-    date?: string
+    problem?: QuickProblem | null,
+    overrides?: {
+      name?: string;
+      phone?: string;
+      address?: string;
+      opp?: string;
+      oppAddress?: string;
+      place?: string;
+      date?: string;
+      time?: string;
+      amount?: string;
+      bank?: string;
+      utr?: string;
+      extra?: string;
+    } | string,
+    posPhone?: string,
+    posOpp?: string,
+    posPlace?: string,
+    posDate?: string
   ) => {
-    const applicant = (name || applicantName || user?.full_name || "नागरिक अर्जदार").trim();
-    const template = problem.draft_template;
+    const prob = problem || activeProblem || QUICK_PROBLEMS[0];
+    const opts = typeof overrides === "object" ? overrides : {
+      name: typeof overrides === "string" ? overrides : undefined,
+      phone: posPhone,
+      opp: posOpp,
+      place: posPlace,
+      date: posDate,
+    };
+
+    const applicant = (opts.name ?? applicantName ?? user?.full_name ?? "नागरिक अर्जदार").trim() || "नागरिक अर्जदार";
+    const phone = (opts.phone ?? applicantPhone ?? user?.phone ?? "").trim();
+    const address = (opts.address ?? applicantAddress ?? incidentPlace ?? "स्थानिक रहिवासी").trim() || "स्थानिक रहिवासी";
+    const opp = (opts.opp ?? oppositeParty ?? "संबंधित कार्यालय / संस्था / व्यक्ती").trim() || "संबंधित कार्यालय / संस्था";
+    const oppAddress = (opts.oppAddress ?? opponentAddress ?? incidentPlace ?? "").trim();
+    const place = (opts.place ?? incidentPlace ?? "स्थानिक परिसर").trim() || "स्थानिक परिसर";
+    const date = (opts.date ?? incidentDate ?? new Date().toISOString().split("T")[0]).trim();
+    const time = (opts.time ?? incidentTime ?? "").trim();
+    const amount = (opts.amount ?? claimAmount ?? "").trim();
+    const bank = (opts.bank ?? bankOrOrgName ?? "").trim();
+    const utr = (opts.utr ?? accountOrUtr ?? "").trim();
+    const extra = (opts.extra ?? extraDetails ?? "").trim();
+
+    const template = prob.draft_template;
     const todayFormatted = new Date().toLocaleDateString(lang === "mr" ? "mr-IN" : "en-IN");
 
-    const draft = `दिनांक: ${todayFormatted}
+    // Replace placeholders in recipient
+    let recipient = template.recipient_title
+      .replace(/\[बँकेचे नाव\]/g, bank || opp || "संबंधित बँक शाखा")
+      .replace(/\[कार्यालयाचे नाव\]/g, opp || "संबंधित कार्यालय")
+      .replace(/\[पोलीस ठाण्याचे नाव\]/g, oppAddress || place || "स्थानिक पोलीस ठाणे")
+      .replace(/\[जिल्ह्याचे नाव\]/g, place || "स्थानिक जिल्हा")
+      .replace(/\[जिल्हा\]/g, place || "स्थानिक जिल्हा")
+      .replace(/\[पत्ता\]/g, oppAddress || place || "स्थानिक शाखा");
+
+    // Replace placeholders in body facts
+    let facts = template.body_facts
+      .replace(/\[आपले नाव\]/g, applicant)
+      .replace(/\[मोबाईल\]/g, phone || "नोंदणीकृत मोबाईल")
+      .replace(/\[पत्ता\]/g, address)
+      .replace(/\[तारीख\]/g, date || todayFormatted)
+      .replace(/\[वेळ\]/g, time ? `अंदाजे वेळ ${time}` : "सदर वेळी")
+      .replace(/\[ठिकाण\]/g, place)
+      .replace(/\[बँकेचे नाव\]/g, bank || opp || "संबंधित बँक शाखा")
+      .replace(/\[खाते क्र\.\]/g, utr ? utr : "नोंदणीकृत बँक खाते")
+      .replace(/\[रक्कम\]/g, amount ? `रुपये ${amount}/-` : "कापलेली रक्कम")
+      .replace(/\[थकीत रक्कम\]/g, amount ? `रुपये ${amount}/-` : "थकीत रक्कम")
+      .replace(/\[आयडी\]/g, utr || "बँक स्टेटमेंटनुसार")
+      .replace(/\[बिल क्र\.\]/g, utr || "पावतीनुसार")
+      .replace(/\[मेसेज\/कॉल\/बनावट लिंक\]/g, extra || "बनावट कॉल / फिशिंग लिंक / OTP द्वारे")
+      .replace(/\[कंपनीचे नाव\]/g, opp)
+      .replace(/\[विरोधी पक्षाचे नाव\]/g, opp)
+      .replace(/\[आरोपीचे नाव\]/g, opp)
+      .replace(/\[कार्यालयाचे नाव\]/g, opp)
+      .replace(/\[पतीचे नाव\]/g, opp)
+      .replace(/\[गुन्ह्याचा तपशील - मारहाण\/धमकी\/चोरी\]/g, extra || "दखलपात्र गुन्हा व कायदेशीर उल्लंघन")
+      .replace(/\[घटनेचा तपशील\]/g, extra || "कायदेशीर हक्कांचे उल्लंघन")
+      .replace(/\[दोषाचे वर्णन\]/g, extra || "वस्तू / सेवेमधील सदोषपणा")
+      .replace(/\[पोलीस ठाण्याचे नाव\]/g, oppAddress || place || "स्थानिक पोलीस ठाणे")
+      .replace(/\[जिल्ह्याचे नाव\]/g, place || "स्थानिक जिल्हा")
+      .replace(/\[जिल्हा\]/g, place || "स्थानिक जिल्हा")
+      .replace(/\[तालुका \/ जिल्हा\]/g, place || "स्थानिक तालुका/जिल्हा")
+      .replace(/\[गावाचे नाव\]/g, place || "स्थानिक गाव")
+      .replace(/\[सर्व्हे क्र\.\]/g, utr || "मिळकत / सर्व्हे क्र.")
+      .replace(/\[विवाह तारीख\]/g, date)
+      .replace(/\[वस्तूचे नाव\]/g, extra || "खरेदी केलेली वस्तू / सेवा")
+      .replace(/\[हुद्दा\]/g, "कर्मचारी / कामगार")
+      .replace(/\[महिना\]/g, "संबंधित कालावधी")
+      .replace(/\[मुद्दा १\]/g, extra || "संबंधित कामाची अधिकृत नोंद व कागदपत्रांची प्रमाणित प्रत")
+      .replace(/\[मुद्दा २\]/g, "सदर प्रकरणातील सक्षम प्राधिकाऱ्यांचे आदेश व टिप्पणी")
+      .replace(/\[कार्यालयाचे नाव \/ काम\]/g, opp || "संबंधित कार्यालयीन कामकाज")
+      .replace(/\[कागदपत्राचे नाव व क्रमांक[^\]]*\]/g, extra || utr || "महत्त्वाचे अधिकृत मूळ कागदपत्र");
+
+    // Clean any lingering brackets
+    recipient = recipient.replace(/\[[^\]]+\]/g, "").replace(/\s+/g, " ").trim();
+    facts = facts.replace(/\[[^\]]+\]/g, "").replace(/\s+/g, " ").trim();
+
+    // Text draft with structured table layout
+    const textDraft = `================================================================================
+🏛️ फास्टकेस अधिकृत कोर्ट तक्रार / दाद अर्ज (LEGAL PETITION)
+पावती क्र.: FC-DOC-${Date.now().toString().slice(-6)} | दिनांक: ${todayFormatted} | मुद्रांक शुल्क: ₹३० (भरणा पूर्ण)
+================================================================================
 
 प्रति,
-${template.recipient_title}
+${recipient}
 
 विषय: ${template.subject}
+कायदेशीर तरतुदी: ${template.act_reference}
 
-तक्रारदार / अर्जदार:
-नाव: ${applicant}
-मोबाईल क्रमांक: ${phone || applicantPhone || user?.phone || "उपलब्ध नाही"}
-पत्ता: ${place || incidentPlace || "स्थानिक रहिवासी"}
-
-ज्यांच्याविरुद्ध तक्रार आहे (विरोधी पक्ष):
-नाव: ${opp || oppositeParty || "संबंधित कार्यालय / संबंधित पक्ष"}
+--------------------------------------------------------------------------------
+                     पक्षकार व तक्रार तपशील तक्ता (PARTIES TABLE)
+--------------------------------------------------------------------------------
+[१] तक्रारदार / अर्जदार (Complainant):
+    • पूर्ण नाव: ${applicant}
+    • मोबाईल क्र.: ${phone || "उपलब्ध नाही"}
+    • पूर्ण पत्ता: ${address}
+    ${bank ? `• बँक / संस्था: ${bank}\n` : ""}${utr ? `    • खाते / UTR क्र.: ${utr}\n` : ""}
+[२] विरोधी पक्ष / प्रतिवादी (Opposite Party):
+    • नाव / कंपनी: ${opp}
+    • पत्ता / शाखा: ${oppAddress || place}
+    • घटनेची तारीख/वेळ: ${date} ${time ? `(${time})` : ""}
+    ${amount ? `• दावा / फसवणूक रक्कम: ₹ ${amount}/-\n` : ""}${utr ? `    • संदर्भ / UTR आयडी: ${utr}\n` : ""}--------------------------------------------------------------------------------
 
 महोदय,
 मी खालीलप्रमाणे वस्तुस्थिती व कायदेशीर तक्रार सादर करत आहे:
 
-१. ${template.body_facts.replace(/\[तारीख\]/g, date || incidentDate || todayFormatted).replace(/\[ठिकाण\]/g, place || incidentPlace || "स्थानिक परिसर")}
+१. प्राथमिक घटनाक्रम:
+   ${facts}
 
-२. तक्रारदाराने याबाबत संबंधित व्यक्तीकडे वारंवार विचारणा केली, परंतु त्यांनी कायदेशीर जबाबदारी पार पाडण्यास नकार दिला आहे.
+२. तक्रारदाराने याबाबत संबंधित व्यक्ती / संस्थेकडे वारंवार पाठपुरावा केला, परंतु त्यांनी कायदेशीर जबाबदारी पार पाडण्यास नकार दिला व टाळाटाळ केली.
 
 ३. सदर कृत्य हे ${template.act_reference} अन्वये कायद्याचे थेट उल्लंघन आहे.
-
-मागणी / दाद:
+${extra ? `\n४. विशेष हकीकत व जास्तीचा तपशील:\n   ${extra}\n` : ""}
+मागणी / दाद (Relief & Prayer):
 ${template.relief}
 
-सोबत: आवश्यक कागदपत्रांच्या सत्यप्रती.
+सोबत जोडलेली कागदपत्रे (Enclosures):
+१. तक्रारदाराच्या आधार कार्डची सत्यप्रत.
+२. संबंधित व्यवहाराचे बँक पासबुक / स्टेटमेंट / पावती / मेसेज स्क्रीनशॉट.
+३. पूर्वी केलेल्या पत्रव्यवहाराची / तक्रारीची प्रत.
 
-आपला नम्र,
+सत्यप्रतिज्ञा (Verification):
+मी, वरील तक्रारदार सत्यप्रतिज्ञेवर नमूद करतो की, वरील तक्रार अर्जातील सर्व मुद्दे माझ्या व्यक्तिगत माहितीनुसार व उपलब्ध कागदपत्रांनुसार सत्य व बिनचूक आहेत.
 
-स्वाक्षरी: ___________________
-(${applicant})`;
+दिनांक: ${todayFormatted}
+ठिकाण: ${place}
 
-    setGeneratedDoc(draft);
-    return draft;
+                                            तक्रारदाराची स्वाक्षरी: ________________
+                                            नाव: (${applicant})`;
+
+    setGeneratedDoc(textDraft);
+    return textDraft;
   };
 
   // ── Problem Solver (Step 2: Opens Solution Card) ──────────────────────────
@@ -1147,7 +1639,7 @@ ${template.relief}
                   <button
                     type="button"
                     onClick={() => setIsEditingDetails(!isEditingDetails)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#013B36] hover:text-black px-2.5 py-1 rounded-lg border border-[#A7F3D0] bg-[#ECFDF5] hover:bg-[#ECFDF5] transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#013B36] hover:text-black px-3 py-1.5 rounded-lg border border-[#A7F3D0] bg-[#ECFDF5] hover:bg-[#D1FAE5] transition cursor-pointer shadow-2xs"
                   >
                     {isEditingDetails ? (
                       <>
@@ -1157,90 +1649,364 @@ ${template.relief}
                     ) : (
                       <>
                         <ChevronDown className="w-3.5 h-3.5" />
-                        <span>✏️ अर्जाचे तपशील बदला (नाव / पत्ता)</span>
+                        <span>✏️ अर्जाचा तपशील तक्ता भरा / बदला (नाव, पत्ता, रक्कम, बँक)</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                {/* Optional Expandable Details Form */}
+                {/* Structured Particulars Form */}
                 {isEditingDetails && (
-                  <div className="bg-gray-50/90 border border-gray-200 rounded-xl p-3.5 space-y-3 text-xs animate-in fade-in duration-200">
-                    <span className="font-bold text-gray-700 block">
-                      आपली माहिती प्रविष्ट करा (अर्जात आपोआप अपडेट होईल):
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                          अर्जदाराचे पूर्ण नाव
-                        </label>
-                        <input
-                          type="text"
-                          value={applicantName}
-                          onChange={(e) => setApplicantName(e.target.value)}
-                          placeholder="उदा. रमेश शंकर पाटील"
-                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
-                        />
+                  <div className="bg-gray-50/95 border border-gray-200 rounded-xl p-4 space-y-3.5 text-xs animate-in fade-in duration-200 shadow-sm">
+                    <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                      <span className="font-extrabold text-[#013B36] flex items-center gap-1.5 text-[12.5px]">
+                        <span>📋</span>
+                        <span>कोर्ट तक्रार अर्जाचा तपशील तक्ता (Parties & Claim Particulars):</span>
+                      </span>
+                      <span className="text-[10.5px] font-semibold text-gray-500">
+                        खालील माहिती अर्जात आपोआप तक्त्यात भरेल
+                      </span>
+                    </div>
+
+                    {/* Section 1: तक्रारदार / अर्जदार */}
+                    <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
+                      <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                        <span>१. तक्रारदार / अर्जदाराची माहिती (Complainant):</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            पूर्ण नाव <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={applicantName}
+                            onChange={(e) => setApplicantName(e.target.value)}
+                            placeholder="उदा. रमेश शंकर पाटील"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            मोबाईल क्रमांक
+                          </label>
+                          <input
+                            type="tel"
+                            value={applicantPhone}
+                            onChange={(e) => setApplicantPhone(e.target.value)}
+                            placeholder="उदा. ९८२२००११२२"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            पूर्ण पत्ता
+                          </label>
+                          <input
+                            type="text"
+                            value={applicantAddress}
+                            onChange={(e) => setApplicantAddress(e.target.value)}
+                            placeholder="उदा. फ्लॅट ४०२, गोकुळधाम, पुणे"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            बँकेचे नाव / खाते क्र.
+                          </label>
+                          <input
+                            type="text"
+                            value={bankOrOrgName}
+                            onChange={(e) => setBankOrOrgName(e.target.value)}
+                            placeholder="उदा. SBI बँक / खाते क्र."
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 2: विरोधी पक्ष */}
+                    <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
+                      <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                        <span>२. विरोधी पक्ष / प्रतिवादीची माहिती (Opposite Party):</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            विरोधी पक्ष / कंपनीचे नाव <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={oppositeParty}
+                            onChange={(e) => setOppositeParty(e.target.value)}
+                            placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            पत्ता / शाखा / ठिकाण
+                          </label>
+                          <input
+                            type="text"
+                            value={opponentAddress}
+                            onChange={(e) => setOpponentAddress(e.target.value)}
+                            placeholder="उदा. मुख्य शाखा, शिवाजीनगर, पुणे"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            दावा / फसवणूक रक्कम ₹
+                          </label>
+                          <input
+                            type="text"
+                            value={claimAmount}
+                            onChange={(e) => setClaimAmount(e.target.value)}
+                            placeholder="उदा. ५०,०००"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            UTR / खाते / तक्रार क्र.
+                          </label>
+                          <input
+                            type="text"
+                            value={accountOrUtr}
+                            onChange={(e) => setAccountOrUtr(e.target.value)}
+                            placeholder="उदा. UTR9823487123"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 3: घटना तपशील & जादा माहिती */}
+                    <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
+                      <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                        <span>३. घटनेचा दिनांक, ठिकाण व जादा तपशील:</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            घटनेची तारीख
+                          </label>
+                          <input
+                            type="date"
+                            value={incidentDate}
+                            onChange={(e) => setIncidentDate(e.target.value)}
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            अंदाजे वेळ
+                          </label>
+                          <input
+                            type="text"
+                            value={incidentTime}
+                            onChange={(e) => setIncidentTime(e.target.value)}
+                            placeholder="उदा. दुपारी २:३० वाजता"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            घटना ठिकाण व शहर
+                          </label>
+                          <input
+                            type="text"
+                            value={incidentPlace}
+                            onChange={(e) => setIncidentPlace(e.target.value)}
+                            placeholder="उदा. शिवाजीनगर, पुणे"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                          मोबाईल क्रमांक
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          विशेष हकीकत / पुराव्यांचा तपशील (ऐच्छिक - सविस्तर माहितीसाठी)
                         </label>
-                        <input
-                          type="tel"
-                          value={applicantPhone}
-                          onChange={(e) => setApplicantPhone(e.target.value)}
-                          placeholder="उदा. ९८२२००११२२"
-                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                          ज्यांच्याविरुद्ध तक्रार (कंपनी / व्यक्तीचे नाव)
-                        </label>
-                        <input
-                          type="text"
-                          value={oppositeParty}
-                          onChange={(e) => setOppositeParty(e.target.value)}
-                          placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
-                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                          घटना ठिकाण व शहर
-                        </label>
-                        <input
-                          type="text"
-                          value={incidentPlace}
-                          onChange={(e) => setIncidentPlace(e.target.value)}
-                          placeholder="उदा. शिवाजीनगर, पुणे"
-                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
+                        <textarea
+                          rows={2}
+                          value={extraDetails}
+                          onChange={(e) => setExtraDetails(e.target.value)}
+                          placeholder="घटनेची जादा माहिती, पुरावे किंवा मागण्या येथे लिहा..."
+                          className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
                         />
                       </div>
                     </div>
-                    <div className="flex justify-end pt-1">
+
+                    {/* Format Preference & Action */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-700 text-[11px]">दस्तऐवज स्वरूप:</span>
+                        <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-white">
+                          <button
+                            type="button"
+                            onClick={() => setPageFormatPreference("auto")}
+                            className={cn(
+                              "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                              pageFormatPreference === "auto" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                            )}
+                          >
+                            ⚙️ आपोआप
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPageFormatPreference("1page")}
+                            className={cn(
+                              "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                              pageFormatPreference === "1page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                            )}
+                          >
+                            📄 १ पान
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPageFormatPreference("2page")}
+                            className={cn(
+                              "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                              pageFormatPreference === "2page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                            )}
+                          >
+                            📑 २ पाने
+                          </button>
+                        </div>
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => {
                           if (activeProblem) {
-                            generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
-                            toast.success("अर्जाचा मजकूर अपडेट झाला!");
+                            generateDraftForProblem(activeProblem);
+                            toast.success("अर्जाचा तपशील व तक्ता अपडेट झाला!");
                           }
                         }}
-                        className="px-4 py-1.5 bg-[#013B36] text-white font-bold text-xs rounded-lg hover:bg-[#182C4E] transition cursor-pointer"
+                        className="px-5 py-2 bg-[#013B36] text-white font-black text-xs rounded-lg hover:bg-[#024E47] transition cursor-pointer shadow-md shadow-[#013B36]/20 flex items-center gap-1.5"
                       >
-                        अर्ज अपडेट करा
+                        <span>✓</span>
+                        <span>अर्ज व तपशील तक्ता अपडेट करा</span>
                       </button>
                     </div>
                   </div>
                 )}
 
-                {/* Preformatted Generated Court Application Preview */}
-                <div className="relative">
-                  <div className="p-4 bg-gray-50/90 rounded-xl border border-gray-200/90 font-mono text-[11.5px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-80 overflow-y-auto select-all shadow-2xs">
-                    {generatedDoc || "अर्ज तयार होत आहे..."}
+                {/* Court Application Interactive Preview */}
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-2xs">
+                  {/* Top Preview Bar with Mode Toggle */}
+                  <div className="bg-gray-50 px-3.5 py-2 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-[#013B36] flex items-center gap-1">
+                        <span>🏛️</span>
+                        <span>अधिकृत तक्रार अर्ज पूर्वावलोकन</span>
+                      </span>
+                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#064e3b] border border-[#A7F3D0]">
+                        {pageFormatPreference === "2page" || (pageFormatPreference === "auto" && extraDetails.trim().length > 120)
+                          ? "📑 २ पाने कोर्ट मसुदा"
+                          : "📄 १ पान कोर्ट मसुदा"}
+                      </span>
+                    </div>
+
+                    <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => setDocPreviewTab("court")}
+                        className={cn(
+                          "px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer",
+                          docPreviewTab === "court" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                        )}
+                      >
+                        🏛️ कोर्ट लेआउट
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDocPreviewTab("text")}
+                        className={cn(
+                          "px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer",
+                          docPreviewTab === "text" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                        )}
+                      >
+                        📝 मजकूर प्रत
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Body Preview */}
+                  {docPreviewTab === "court" ? (
+                    <div className="p-4 sm:p-5 max-h-96 overflow-y-auto space-y-3 bg-[#fafcfb] text-gray-800 text-xs">
+                      {/* Court Letter Header */}
+                      <div className="border-b-2 border-[#064e3b] pb-2 flex justify-between items-end">
+                        <div>
+                          <div className="text-[10px] font-bold text-[#064e3b] tracking-wider uppercase">
+                            🏛️ भारतीय विधी व न्याय मसुदा कक्ष • FASTCASE
+                          </div>
+                          <div className="text-sm font-extrabold text-gray-900 mt-0.5">
+                            {activeProblem?.title_mr || "कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज"}
+                          </div>
+                        </div>
+                        <div className="text-right text-[10px] text-gray-500 font-mono">
+                          <span className="text-[#064e3b] font-bold">शुल्क: ₹३० (मुद्रांक भरणा)</span>
+                        </div>
+                      </div>
+
+                      {/* Recipient & Subject */}
+                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 space-y-1">
+                        <div><b>प्रति:</b> {activeProblem?.draft_template.recipient_title.replace(/\[.*?\]/g, bankOrOrgName || oppositeParty || "संबंधित कार्यालय")}</div>
+                        <div><b>विषय:</b> {activeProblem?.draft_template.subject}</div>
+                        {activeProblem?.draft_template.act_reference && (
+                          <div className="text-[11px] text-[#064e3b] font-semibold">
+                            <b>कायदेशीर संदर्भ:</b> {activeProblem.draft_template.act_reference}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Structured Parties Table */}
+                      <div className="rounded-lg border border-[#064e3b] overflow-hidden bg-white">
+                        <div className="bg-[#064e3b] text-white font-bold text-[11px] px-3 py-1 flex justify-between">
+                          <span>📋 पक्षकार व तक्रार तपशील तक्ता (Parties Particulars Table)</span>
+                          <span className="text-[10px] opacity-80">अधिकृत कोर्ट नोंद</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 p-2.5 text-[11.5px] leading-relaxed">
+                          <div className="space-y-1 pr-2">
+                            <div className="font-bold text-[#064e3b] border-b border-gray-100 pb-0.5">[१] तक्रारदार / अर्जदार (Complainant)</div>
+                            <div><b>नाव:</b> {applicantName || user?.full_name || "नागरिक अर्जदार"}</div>
+                            <div><b>मोबाईल:</b> {applicantPhone || user?.phone || "उपलब्ध नाही"}</div>
+                            <div><b>पत्ता:</b> {applicantAddress || incidentPlace || "स्थानिक रहिवासी"}</div>
+                            {bankOrOrgName && <div><b>बँक/संस्था:</b> {bankOrOrgName}</div>}
+                          </div>
+                          <div className="space-y-1 sm:pl-2 pt-2 sm:pt-0">
+                            <div className="font-bold text-[#064e3b] border-b border-gray-100 pb-0.5">[२] विरोधी पक्ष / प्रतिवादी (Opposite Party)</div>
+                            <div><b>नाव:</b> {oppositeParty || "संबंधित कार्यालय / व्यक्ती"}</div>
+                            <div><b>पत्ता/शाखा:</b> {opponentAddress || incidentPlace || "स्थानिक शाखा"}</div>
+                            <div><b>तारीख/वेळ:</b> {incidentDate} {incidentTime && `(${incidentTime})`}</div>
+                            {claimAmount && <div><b>दावा रक्कम:</b> <span className="text-red-600 font-bold">₹{claimAmount}/-</span></div>}
+                            {accountOrUtr && <div><b>UTR/खाते क्र.:</b> <span className="font-mono font-semibold">{accountOrUtr}</span></div>}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Facts & Relief preview */}
+                      <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2 text-[11.5px] leading-relaxed text-gray-800">
+                        <div className="font-bold text-[#064e3b]">तक्रार वस्तुस्थिती व मागण्या:</div>
+                        <p className="line-clamp-3 text-gray-700">
+                          {activeProblem?.draft_template.body_facts.replace(/\[.*?\]/g, "")}
+                        </p>
+                        <div className="bg-[#ECFDF5] border-l-4 border-emerald-600 p-2 text-[11px] text-[#064e3b] font-medium">
+                          <b>मागणी / दाद:</b> {activeProblem?.draft_template.relief}
+                        </div>
+                        <div className="pt-2 border-t border-dashed border-gray-200 flex justify-between items-center text-[10px] text-gray-500">
+                          <span>सत्यप्रतिज्ञा (Statutory Verification) जोडली आहे</span>
+                          <span>तक्रारदाराची अधिकृत स्वाक्षरी ब्लॉक</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-gray-50/90 font-mono text-[11.5px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-80 overflow-y-auto select-all">
+                      {generatedDoc || "अर्ज तयार होत आहे..."}
+                    </div>
+                  )}
                 </div>
 
                 {/* Action & Payment Bar (Step 4: Pay & Download) */}
@@ -1362,82 +2128,233 @@ ${template.relief}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                {/* Applicant Name */}
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">
-                    तक्रारदार / अर्जदाराचे पूर्ण नाव <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={applicantName}
-                    onChange={(e) => setApplicantName(e.target.value)}
-                    placeholder="उदा. रमेश शंकर पाटील"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20 focus:bg-white font-medium"
-                  />
+              <div className="space-y-3.5">
+                {/* Section 1: तक्रारदार / अर्जदार */}
+                <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+                  <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                    <span>१. तक्रारदार / अर्जदाराची माहिती (Complainant):</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        पूर्ण नाव <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={applicantName}
+                        onChange={(e) => setApplicantName(e.target.value)}
+                        placeholder="उदा. रमेश शंकर पाटील"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        मोबाईल क्रमांक
+                      </label>
+                      <input
+                        type="tel"
+                        value={applicantPhone}
+                        onChange={(e) => setApplicantPhone(e.target.value)}
+                        placeholder="उदा. ९८२२००११२२"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        पूर्ण पत्ता
+                      </label>
+                      <input
+                        type="text"
+                        value={applicantAddress}
+                        onChange={(e) => setApplicantAddress(e.target.value)}
+                        placeholder="उदा. फ्लॅट ४०२, गोकुळधाम, पुणे"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        बँकेचे नाव / खाते क्र.
+                      </label>
+                      <input
+                        type="text"
+                        value={bankOrOrgName}
+                        onChange={(e) => setBankOrOrgName(e.target.value)}
+                        placeholder="उदा. SBI बँक / खाते क्र."
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Phone */}
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">
-                    मोबाईल क्रमांक
-                  </label>
-                  <input
-                    type="tel"
-                    value={applicantPhone}
-                    onChange={(e) => setApplicantPhone(e.target.value)}
-                    placeholder="उदा. ९८२२००११२२"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20 focus:bg-white font-medium"
-                  />
+                {/* Section 2: विरोधी पक्ष */}
+                <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+                  <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                    <span>२. विरोधी पक्ष / प्रतिवादीची माहिती (Opposite Party):</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        विरोधी पक्ष / कंपनीचे नाव <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={oppositeParty}
+                        onChange={(e) => setOppositeParty(e.target.value)}
+                        placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        पत्ता / शाखा / ठिकाण
+                      </label>
+                      <input
+                        type="text"
+                        value={opponentAddress}
+                        onChange={(e) => setOpponentAddress(e.target.value)}
+                        placeholder="उदा. मुख्य शाखा, शिवाजीनगर, पुणे"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        दावा / फसवणूक रक्कम ₹
+                      </label>
+                      <input
+                        type="text"
+                        value={claimAmount}
+                        onChange={(e) => setClaimAmount(e.target.value)}
+                        placeholder="उदा. ५०,०००"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        UTR / खाते / तक्रार क्र.
+                      </label>
+                      <input
+                        type="text"
+                        value={accountOrUtr}
+                        onChange={(e) => setAccountOrUtr(e.target.value)}
+                        placeholder="उदा. UTR9823487123"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Opposite Party */}
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">
-                    ज्यांच्याविरुद्ध तक्रार आहे (कंपनी / व्यक्तीचे नाव)
-                  </label>
-                  <input
-                    type="text"
-                    value={oppositeParty}
-                    onChange={(e) => setOppositeParty(e.target.value)}
-                    placeholder="उदा. ABC प्रायव्हेट लि. / बँक शाखा मॅनेजर"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20 focus:bg-white font-medium"
-                  />
+                {/* Section 3: घटना तपशील & जादा माहिती */}
+                <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+                  <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                    <span>३. घटनेचा दिनांक, ठिकाण व जादा तपशील:</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        घटनेची तारीख
+                      </label>
+                      <input
+                        type="date"
+                        value={incidentDate}
+                        onChange={(e) => setIncidentDate(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        अंदाजे वेळ
+                      </label>
+                      <input
+                        type="text"
+                        value={incidentTime}
+                        onChange={(e) => setIncidentTime(e.target.value)}
+                        placeholder="उदा. दुपारी २:३० वाजता"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        घटना ठिकाण व शहर
+                      </label>
+                      <input
+                        type="text"
+                        value={incidentPlace}
+                        onChange={(e) => setIncidentPlace(e.target.value)}
+                        placeholder="उदा. शिवाजीनगर, पुणे"
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                      विशेष हकीकत / पुराव्यांचा तपशील (ऐच्छिक)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={extraDetails}
+                      onChange={(e) => setExtraDetails(e.target.value)}
+                      placeholder="घटनेची जादा माहिती किंवा महत्त्वाचे मुद्दे येथे प्रविष्ट करा..."
+                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                    />
+                  </div>
                 </div>
 
-                {/* Place / City */}
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">
-                    घटना ठिकाण व शहर
-                  </label>
-                  <input
-                    type="text"
-                    value={incidentPlace}
-                    onChange={(e) => setIncidentPlace(e.target.value)}
-                    placeholder="उदा. शिवाजीनगर, पुणे"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20 focus:bg-white font-medium"
-                  />
-                </div>
-              </div>
+                {/* Format Preference & Action */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-700 text-[11px]">दस्तऐवज स्वरूप:</span>
+                    <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setPageFormatPreference("auto")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                          pageFormatPreference === "auto" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                        )}
+                      >
+                        ⚙️ आपोआप
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPageFormatPreference("1page")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                          pageFormatPreference === "1page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                        )}
+                      >
+                        📄 १ पान
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPageFormatPreference("2page")}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                          pageFormatPreference === "2page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                        )}
+                      >
+                        📑 २ पाने
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="pt-2 flex justify-end">
-                <button
-                  onClick={handleGenerateDocument}
-                  disabled={isDrafting}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {isDrafting ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>अर्ज तयार होत आहे...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5 text-white" />
-                      <span>अधिकृत अर्ज तयार करा</span>
-                    </>
-                  )}
-                </button>
+                  <button
+                    onClick={handleGenerateDocument}
+                    disabled={isDrafting}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isDrafting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>अर्ज तयार होत आहे...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-white" />
+                        <span>अधिकृत अर्ज तयार करा</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1445,9 +2362,14 @@ ${template.relief}
             {generatedDoc && (
               <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span className="text-xs font-black text-gray-900">अधिकृत तक्रार अर्ज पूर्वावलोकन (Preview)</span>
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#064e3b] border border-[#A7F3D0]">
+                      {pageFormatPreference === "2page" || (pageFormatPreference === "auto" && extraDetails.trim().length > 120)
+                        ? "📑 २ पाने कोर्ट मसुदा"
+                        : "📄 १ पान कोर्ट मसुदा"}
+                    </span>
                   </div>
 
                   {/* Actions */}
