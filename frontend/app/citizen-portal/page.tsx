@@ -139,6 +139,13 @@ export default function SimpleCitizenPortalPage() {
     }
   }, [user]);
 
+  // Auto-generate draft when entering draft tab if not yet generated
+  useEffect(() => {
+    if (activeTab === "draft" && activeProblem && !generatedDoc) {
+      generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
+    }
+  }, [activeTab, activeProblem, generatedDoc]);
+
   // Load saved documents from localStorage
   useEffect(() => {
     try {
@@ -1387,7 +1394,7 @@ ${template.relief}
       </div>
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="max-w-4xl w-full mx-auto px-4 py-3 flex-1 space-y-4">
+      <main className={cn("w-full mx-auto px-4 py-3 flex-1 space-y-4 transition-all", activeTab === "draft" ? "max-w-7xl" : "max-w-4xl")}>
 
         {/* ═══════════════════════════════════════════════════════════════════
             TAB 1: समस्या व कायदेशीर उपाय (4-STEP GUIDED WORKFLOW)
@@ -1414,12 +1421,21 @@ ${template.relief}
                 <span>२. कायदेशीर उपाय</span>
               </div>
               <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-              <div className={cn("flex items-center gap-1.5 transition-colors", (showDocument && activeProblem) ? "text-[#013B36] font-black" : "text-gray-400")}>
-                <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", (showDocument && activeProblem) ? "bg-[#013B36] text-white" : "bg-gray-100 text-gray-500")}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeProblem) {
+                    generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
+                  }
+                  setActiveTab("draft");
+                }}
+                className={cn("flex items-center gap-1.5 transition-colors cursor-pointer", activeProblem ? "text-[#013B36] font-black" : "text-gray-400")}
+              >
+                <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", activeProblem ? "bg-[#013B36] text-white" : "bg-gray-100 text-gray-500")}>
                   ३
                 </span>
                 <span>३. कोर्ट अर्ज</span>
-              </div>
+              </button>
               <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
               <div className={cn("flex items-center gap-1.5 transition-colors", isPaid ? "text-[#013B36] font-black" : "text-gray-400")}>
                 <span className={cn("w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-black transition-colors", isPaid ? "bg-[#013B36] text-white" : "bg-gray-100 text-gray-500")}>
@@ -1643,10 +1659,13 @@ ${template.relief}
                   <button
                     type="button"
                     onClick={() => {
-                      setShowDocument(true);
-                      setTimeout(() => {
-                        documentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }, 120);
+                      if (activeProblem) {
+                        generateDraftForProblem(activeProblem, applicantName, applicantPhone, oppositeParty, incidentPlace, incidentDate);
+                      }
+                      setActiveTab("draft");
+                      if (typeof window !== "undefined") {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }
                     }}
                     className="w-full sm:w-auto px-5 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
                   >
@@ -1657,543 +1676,6 @@ ${template.relief}
               </div>
             )}
 
-            {/* ── Step 3 & 4: Official Court Petition Document & Payment Download Card ── */}
-            {showDocument && activeProblem && (
-              <div ref={documentRef} className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#013B36] text-white flex items-center justify-center shadow-2xs">
-                      <FileText className="w-4 h-4 text-[#059669]" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-black text-gray-900">
-                          अधिकृत कोर्ट / कार्यालयीन तक्रार अर्ज (Court Petition Draft)
-                        </h4>
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#013B36] border border-[#A7F3D0]">
-                          तयार आहे
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-gray-500 font-medium">
-                        कायदेशीररित्या वैध &bull; A4 कोर्ट फॉरमॅट &bull; वकील फी ₹१,५०० वाचवा
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingDetails(!isEditingDetails)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#013B36] hover:text-black px-3 py-1.5 rounded-lg border border-[#A7F3D0] bg-[#ECFDF5] hover:bg-[#D1FAE5] transition cursor-pointer shadow-2xs"
-                  >
-                    {isEditingDetails ? (
-                      <>
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        <span>तपशील लपवा</span>
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-3.5 h-3.5" />
-                        <span>✏️ अर्जाचा तपशील तक्ता भरा / बदला (नाव, पत्ता, रक्कम, बँक)</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Structured Particulars Form */}
-                {isEditingDetails && (
-                  <div className="bg-gray-50/95 border border-gray-200 rounded-xl p-4 space-y-3.5 text-xs animate-in fade-in duration-200 shadow-sm">
-                    <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-                      <span className="font-extrabold text-[#013B36] flex items-center gap-1.5 text-[12.5px]">
-                        <span>📋</span>
-                        <span>कोर्ट तक्रार अर्जाचा तपशील तक्ता (Parties & Claim Particulars):</span>
-                      </span>
-                      <span className="text-[10.5px] font-semibold text-gray-500">
-                        खालील माहिती अर्जात आपोआप तक्त्यात भरेल
-                      </span>
-                    </div>
-
-                    {/* Section 1: तक्रारदार / अर्जदार */}
-                    <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
-                      <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
-                        <span>१. तक्रारदार / अर्जदाराची माहिती (Complainant):</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            पूर्ण नाव <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={applicantName}
-                            onChange={(e) => setApplicantName(e.target.value)}
-                            placeholder="उदा. रमेश शंकर पाटील"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            मोबाईल क्रमांक
-                          </label>
-                          <input
-                            type="tel"
-                            value={applicantPhone}
-                            onChange={(e) => setApplicantPhone(e.target.value)}
-                            placeholder="उदा. ९८२२००११२२"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            पूर्ण पत्ता
-                          </label>
-                          <input
-                            type="text"
-                            value={applicantAddress}
-                            onChange={(e) => setApplicantAddress(e.target.value)}
-                            placeholder="उदा. फ्लॅट ४०२, गोकुळधाम, पुणे"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            बँकेचे नाव / खाते क्र.
-                          </label>
-                          <input
-                            type="text"
-                            value={bankOrOrgName}
-                            onChange={(e) => setBankOrOrgName(e.target.value)}
-                            placeholder="उदा. SBI बँक / खाते क्र."
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 2: विरोधी पक्ष */}
-                    <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
-                      <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
-                        <span>२. विरोधी पक्ष / प्रतिवादीची माहिती (Opposite Party):</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            विरोधी पक्ष / कंपनीचे नाव <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={oppositeParty}
-                            onChange={(e) => setOppositeParty(e.target.value)}
-                            placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            पत्ता / शाखा / ठिकाण
-                          </label>
-                          <input
-                            type="text"
-                            value={opponentAddress}
-                            onChange={(e) => setOpponentAddress(e.target.value)}
-                            placeholder="उदा. मुख्य शाखा, शिवाजीनगर, पुणे"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            दावा / फसवणूक रक्कम ₹
-                          </label>
-                          <input
-                            type="text"
-                            value={claimAmount}
-                            onChange={(e) => setClaimAmount(e.target.value)}
-                            placeholder="उदा. ५०,०००"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            UTR / खाते / तक्रार क्र.
-                          </label>
-                          <input
-                            type="text"
-                            value={accountOrUtr}
-                            onChange={(e) => setAccountOrUtr(e.target.value)}
-                            placeholder="उदा. UTR9823487123"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 3: घटना तपशील & जादा माहिती */}
-                    <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2">
-                      <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
-                        <span>३. घटनेचा दिनांक, ठिकाण व जादा तपशील:</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            घटनेची तारीख
-                          </label>
-                          <input
-                            type="date"
-                            value={incidentDate}
-                            onChange={(e) => setIncidentDate(e.target.value)}
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            अंदाजे वेळ
-                          </label>
-                          <input
-                            type="text"
-                            value={incidentTime}
-                            onChange={(e) => setIncidentTime(e.target.value)}
-                            placeholder="उदा. दुपारी २:३० वाजता"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                            घटना ठिकाण व शहर
-                          </label>
-                          <input
-                            type="text"
-                            value={incidentPlace}
-                            onChange={(e) => setIncidentPlace(e.target.value)}
-                            placeholder="उदा. शिवाजीनगर, पुणे"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                          विशेष हकीकत / पुराव्यांचा तपशील (ऐच्छिक - सविस्तर माहितीसाठी)
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={extraDetails}
-                          onChange={(e) => setExtraDetails(e.target.value)}
-                          placeholder="घटनेची जादा माहिती, पुरावे किंवा मागण्या येथे लिहा..."
-                          className="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36] focus:bg-white"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Format Preference & Action */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-700 text-[11px]">दस्तऐवज स्वरूप:</span>
-                        <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-white">
-                          <button
-                            type="button"
-                            onClick={() => setPageFormatPreference("auto")}
-                            className={cn(
-                              "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
-                              pageFormatPreference === "auto" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                            )}
-                          >
-                            ⚙️ आपोआप
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPageFormatPreference("1page")}
-                            className={cn(
-                              "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
-                              pageFormatPreference === "1page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                            )}
-                          >
-                            📄 १ पान
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPageFormatPreference("2page")}
-                            className={cn(
-                              "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
-                              pageFormatPreference === "2page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                            )}
-                          >
-                            📑 २ पाने
-                          </button>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (activeProblem) {
-                            generateDraftForProblem(activeProblem);
-                            toast.success("अर्जाचा तपशील व तक्ता अपडेट झाला!");
-                          }
-                        }}
-                        className="px-5 py-2 bg-[#013B36] text-white font-black text-xs rounded-lg hover:bg-[#024E47] transition cursor-pointer shadow-md shadow-[#013B36]/20 flex items-center gap-1.5"
-                      >
-                        <span>✓</span>
-                        <span>अर्ज व तपशील तक्ता अपडेट करा</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Court Application Interactive Preview */}
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-2xs">
-                  {/* Top Preview Bar with Mode Toggle */}
-                  <div className="bg-gray-50 px-3.5 py-2 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-[#013B36] flex items-center gap-1">
-                        <span>🏛️</span>
-                        <span>अधिकृत तक्रार अर्ज पूर्वावलोकन</span>
-                      </span>
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#064e3b] border border-[#A7F3D0]">
-                        {pageFormatPreference === "2page" || (pageFormatPreference === "auto" && extraDetails.trim().length > 120)
-                          ? "📑 २ पाने कोर्ट मसुदा"
-                          : "📄 १ पान कोर्ट मसुदा"}
-                      </span>
-                    </div>
-
-                    <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => setDocPreviewTab("court")}
-                        className={cn(
-                          "px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer",
-                          docPreviewTab === "court" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                        )}
-                      >
-                        🏛️ कोर्ट लेआउट
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDocPreviewTab("text")}
-                        className={cn(
-                          "px-2.5 py-0.5 rounded-md font-bold transition cursor-pointer",
-                          docPreviewTab === "text" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                        )}
-                      >
-                        📝 मजकूर प्रत
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Body Preview */}
-                  {docPreviewTab === "court" ? (
-                    <div className="p-4 sm:p-5 max-h-96 overflow-y-auto space-y-3 bg-[#fafcfb] text-gray-800 text-xs">
-                      {/* Running Top Header */}
-                      <div className="border-b border-gray-300 pb-1 flex justify-between items-center text-[10px] text-gray-500">
-                        <div>
-                          <span className="font-extrabold text-[#1e3a8a]">{activeProblem?.chapter_badge || "प्रकरण १ • विधी मसुदा"}</span>
-                          <span className="mx-1">•</span>
-                          <span className="font-bold text-gray-800">{activeProblem?.title_mr}</span>
-                        </div>
-                        <div className="font-medium text-gray-500 hidden sm:block">
-                          महाराष्ट्र नागरिक कायदेविषयक मार्गदर्शिका • फास्टकेस विधी कक्ष
-                        </div>
-                      </div>
-
-                      {/* Chapter Title Navy Card Banner */}
-                      <div className="bg-gradient-to-r from-[#1e3a8a] to-[#0f2e6b] p-3 rounded-lg flex justify-between items-center text-white shadow-xs">
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="bg-yellow-300/20 text-yellow-200 border border-yellow-300/40 text-[9px] font-extrabold px-1.5 py-0.5 rounded">
-                              {activeProblem?.chapter_badge || "प्रकरण १"}
-                            </span>
-                            <span className="text-[10px] font-bold text-blue-200">
-                              अधिकृत कोर्ट व पोलीस तक्रार मसुदा
-                            </span>
-                          </div>
-                          <div className="text-sm sm:text-base font-extrabold text-white mt-1">
-                            {activeProblem?.title_mr || "कोर्ट-मान्य अधिकृत तक्रार / दाद अर्ज"}
-                          </div>
-                          <div className="text-[9.5px] text-blue-200 mt-0.5">
-                            (भारतीय नागरिक सुरक्षा संहिता २०२३ • भारतीय न्याय संहिता २०२३ • भारतीय साक्ष अधिनियम २०२३)
-                          </div>
-                        </div>
-                        <div className="text-2xl shrink-0 pl-2">🏛️</div>
-                      </div>
-
-                      {/* e-Filing Verification Bar */}
-                      <div className="bg-emerald-50 border border-emerald-300 rounded-md p-2 flex flex-wrap justify-between items-center text-[10px] text-emerald-900 font-medium">
-                        <div className="font-mono font-bold text-emerald-950">
-                          🔖 ई-फायलिंग नोंदणी: <b>{receiptId || "FC-DOC-380622"}</b>
-                        </div>
-                        <div className="font-bold text-emerald-800">
-                          ✓ मुद्रांक शुल्क: ₹३० (भरणा पूर्ण • अधिकृत प्रत)
-                        </div>
-                        <div className="text-gray-600">
-                          📅 दिनांक: {new Date().toLocaleDateString("mr-IN")}
-                        </div>
-                      </div>
-
-                      {/* Recipient & Subject Box */}
-                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 border-l-4 border-l-[#1e3a8a] space-y-1">
-                        <div><b>प्रति:</b> {activeProblem?.draft_template.recipient_title.replace(/\[.*?\]/g, bankOrOrgName || oppositeParty || "संबंधित कार्यालय")}</div>
-                        <div><b>विषय:</b> {activeProblem?.draft_template.subject}</div>
-                        {activeProblem?.draft_template.act_reference && (
-                          <div className="text-[11px] text-[#1e3a8a] font-semibold">
-                            <b>कायदेशीर संदर्भ:</b> {activeProblem.draft_template.act_reference}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Structured Parties Table */}
-                      <div className="rounded-lg border border-[#1e3a8a] overflow-hidden bg-white">
-                        <div className="bg-[#1e3a8a] text-white font-bold text-[11px] px-3 py-1 flex justify-between">
-                          <span>📋 पक्षकार व तक्रार तपशील तक्ता (Parties Particulars Table)</span>
-                          <span className="text-[10px] opacity-80">अधिकृत कोर्ट नोंद</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 p-2.5 text-[11.5px] leading-relaxed">
-                          <div className="space-y-1 pr-2">
-                            <div className="font-bold text-[#1e3a8a] border-b border-gray-100 pb-0.5">[१] तक्रारदार / अर्जदार (Complainant)</div>
-                            <div><b>नाव:</b> {applicantName || user?.full_name || "नागरिक अर्जदार"}</div>
-                            <div><b>मोबाईल:</b> {applicantPhone || user?.phone || "उपलब्ध नाही"}</div>
-                            <div><b>पत्ता:</b> {applicantAddress || incidentPlace || "स्थानिक रहिवासी"}</div>
-                            {bankOrOrgName && <div><b>बँक/संस्था:</b> {bankOrOrgName}</div>}
-                            {accountOrUtr && <div><b>खाते क्र.:</b> {accountOrUtr}</div>}
-                          </div>
-                          <div className="space-y-1 sm:pl-2 pt-2 sm:pt-0">
-                            <div className="font-bold text-[#1e3a8a] border-b border-gray-100 pb-0.5">[२] विरोधी पक्ष / प्रतिवादी (Opposite Party)</div>
-                            <div><b>नाव:</b> {oppositeParty || "संबंधित कार्यालय / व्यक्ती"}</div>
-                            <div><b>पत्ता/शाखा:</b> {opponentAddress || incidentPlace || "स्थानिक शाखा"}</div>
-                            <div><b>तारीख/वेळ:</b> {incidentDate} {incidentTime && `(${incidentTime})`}</div>
-                            {claimAmount && <div><b>दावा रक्कम:</b> <span className="text-red-600 font-bold">₹{claimAmount}/-</span></div>}
-                            {accountOrUtr && <div><b>UTR/खाते क्र.:</b> <span className="font-mono font-semibold">{accountOrUtr}</span></div>}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Orange Deadline Callout Box */}
-                      {activeProblem?.statutory_deadline_mr && (
-                        <div className="bg-orange-50 border-l-4 border-l-orange-500 border border-orange-200 rounded-r-md p-2 text-[10.5px] text-orange-900">
-                          <b>⏱ वेळ किती महत्त्वाची? (कायदेशीर मुदत मर्यादा):</b> {activeProblem.statutory_deadline_mr}
-                        </div>
-                      )}
-
-                      {/* Quick Summary Table if available */}
-                      {activeProblem?.quick_summary_table && (
-                        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white text-[10.5px]">
-                          <div className="bg-[#1e3a8a] text-white font-bold px-2.5 py-1 text-[10.5px]">
-                            📊 एका दृष्टिक्षेपात संपूर्ण प्रक्रिया (Quick Action Protocol)
-                          </div>
-                          <div className="divide-y divide-gray-100">
-                            <div className="flex px-2 py-1 bg-gray-50/70"><span className="w-28 font-bold text-[#1e3a8a] shrink-0">➜ समस्या:</span><span>{activeProblem.quick_summary_table.problem}</span></div>
-                            <div className="flex px-2 py-1"><span className="w-28 font-bold text-[#1e3a8a] shrink-0">➜ पहिली कृती:</span><span>{activeProblem.quick_summary_table.first_action}</span></div>
-                            <div className="flex px-2 py-1 bg-gray-50/70"><span className="w-28 font-bold text-[#1e3a8a] shrink-0">➜ सक्षम कार्यालय:</span><span>{activeProblem.quick_summary_table.competent_authority}</span></div>
-                            <div className="flex px-2 py-1"><span className="w-28 font-bold text-[#1e3a8a] shrink-0">➜ आवश्यक कागदपत्रे:</span><span>{activeProblem.quick_summary_table.docs}</span></div>
-                            <div className="flex px-2 py-1 bg-gray-50/70"><span className="w-28 font-bold text-[#1e3a8a] shrink-0">➜ कायदेशीर मुदत:</span><span>{activeProblem.quick_summary_table.statutory_time}</span></div>
-                            <div className="flex px-2 py-1"><span className="w-28 font-bold text-[#1e3a8a] shrink-0">➜ तक्रार न घेतल्यास:</span><span>{activeProblem.quick_summary_table.if_refused}</span></div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Facts & Relief preview */}
-                      <div className="bg-white p-3 rounded-lg border border-gray-200 space-y-2 text-[11.5px] leading-relaxed text-gray-800">
-                        <div className="font-bold text-[#1e3a8a]">तक्रार वस्तुस्थिती व मागण्या:</div>
-                        <p className="line-clamp-3 text-gray-700">
-                          {activeProblem?.draft_template.body_facts.replace(/\[.*?\]/g, "")}
-                        </p>
-                        <div className="bg-emerald-50 border-l-4 border-emerald-600 p-2 text-[11px] text-emerald-900 font-medium rounded-r">
-                          <b>मागणी / दाद:</b> {activeProblem?.draft_template.relief}
-                        </div>
-                        <div className="pt-2 border-t border-dashed border-gray-200 flex justify-between items-center text-[10px] text-gray-500">
-                          <span>सत्यप्रतिज्ञा (Statutory Verification under BNSS) जोडली आहे</span>
-                          <span>तक्रारदाराची अधिकृत स्वाक्षरी ब्लॉक</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-gray-50/90 font-mono text-[11.5px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-80 overflow-y-auto select-all">
-                      {generatedDoc || "अर्ज तयार होत आहे..."}
-                    </div>
-                  )}
-                </div>
-
-                {/* Action & Payment Bar (Step 4: Pay & Download) */}
-                <div>
-                  {isPaid ? (
-                    <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <div>
-                          <span className="text-xs font-black text-[#013B36] block">
-                            भरणा यशस्वी झाला आहे (पावती क्र: {receiptId})
-                          </span>
-                          <span className="text-[10px] text-gray-600 font-medium">
-                            आपला कोर्ट-मान्य अधिकृत अर्ज डाऊनलोड किंवा प्रिंटसाठी तयार आहे.
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(generatedDoc);
-                            toast.success("अर्जाचा मजकूर कॉपी केला!");
-                          }}
-                          className="flex-1 sm:flex-initial px-3 py-2 text-xs font-bold rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-[#013B36] flex items-center justify-center gap-1 cursor-pointer transition shadow-2xs"
-                        >
-                          <Copy className="w-3.5 h-3.5 text-gray-600" />
-                          <span>कॉपी करा</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => printOfficialA4Document(generatedDoc, activeProblem.title_mr, receiptId)}
-                          className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl border border-[#013B36] bg-[#013B36] hover:bg-[#024E47] text-[#6EE7B7] flex items-center justify-center gap-1.5 cursor-pointer transition shadow-xs"
-                        >
-                          <Printer className="w-3.5 h-3.5 text-[#6EE7B7]" />
-                          <span>🖨️ प्रिंट / Save as PDF</span>
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isDownloadingPdf}
-                          onClick={() => downloadPetitionPdf(generatedDoc, activeProblem.title_mr, receiptId)}
-                          className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-black rounded-xl bg-[#013B36] hover:bg-[#024E47] text-white flex items-center justify-center gap-1.5 cursor-pointer transition shadow-md shadow-[#013B36]/25 disabled:opacity-60"
-                        >
-                          {isDownloadingPdf ? (
-                            <>
-                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              <span>PDF डाऊनलोड होत आहे...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Download className="w-3.5 h-3.5 text-white" />
-                              <span>📥 अधिकृत PDF डाऊनलोड</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-gradient-to-r from-[#021F1B] via-[#03362E] to-[#02201D] border border-[#013B36] rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-                      <div className="space-y-0.5 text-center sm:text-left">
-                        <div className="flex items-center justify-center sm:justify-start gap-2">
-                          <span className="text-xs sm:text-sm font-black text-white">
-                            हा अधिकृत कोर्ट अर्ज डाऊनलोड करा
-                          </span>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#059669] text-white shadow-2xs">
-                            केवळ ₹३०/-
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-[#6EE7B7] font-medium">
-                          वकिलांचे ₹१,५०० वाचवा &bull; तात्काळ UPI द्वारे भरणा &bull; कोर्ट-मान्य A4 PDF
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowPayModal(true)}
-                        className="w-full sm:w-auto px-5 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer shrink-0"
-                      >
-                        <CreditCard className="w-4 h-4 text-white" />
-                        <span>₹३० भरणा करा व अधिकृत PDF डाऊनलोड करा →</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -2216,251 +1698,252 @@ ${template.relief}
               </button>
             </div>
 
-            {/* Compact Drafting Form */}
-            <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-[#059669]" />
-                  <span>तक्रार अर्जाची माहिती प्रविष्ट करा:</span>
-                </h3>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#013B36] border border-[#A7F3D0]">
-                  शुल्क: ₹३०/-
-                </span>
+            {/* 2 COLUMNS NEXT TO EACH OTHER (SIDE-BY-SIDE) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+              {/* ── LEFT COLUMN: तक्रार अर्जाची माहिती प्रविष्ट करा (Input Form) ── */}
+              <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-[#059669]" />
+                    <span>तक्रार अर्जाची माहिती प्रविष्ट करा:</span>
+                  </h3>
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#013B36] border border-[#A7F3D0]">
+                    शुल्क: ₹३०/-
+                  </span>
+                </div>
+
+                <div className="space-y-3.5">
+                  {/* Section 1: तक्रारदार / अर्जदार */}
+                  <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+                    <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                      <span>१. तक्रारदार / अर्जदाराची माहिती (Complainant):</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          पूर्ण नाव <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={applicantName}
+                          onChange={(e) => setApplicantName(e.target.value)}
+                          placeholder="उदा. रमेश शंकर पाटील"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          मोबाईल क्रमांक
+                        </label>
+                        <input
+                          type="tel"
+                          value={applicantPhone}
+                          onChange={(e) => setApplicantPhone(e.target.value)}
+                          placeholder="उदा. ९८२२००११२२"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          पूर्ण पत्ता
+                        </label>
+                        <input
+                          type="text"
+                          value={applicantAddress}
+                          onChange={(e) => setApplicantAddress(e.target.value)}
+                          placeholder="उदा. फ्लॅट ४०२, गोकुळधाम, पुणे"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          बँकेचे नाव / खाते क्र.
+                        </label>
+                        <input
+                          type="text"
+                          value={bankOrOrgName}
+                          onChange={(e) => setBankOrOrgName(e.target.value)}
+                          placeholder="उदा. SBI बँक / खाते क्र."
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: विरोधी पक्ष */}
+                  <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+                    <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                      <span>२. विरोधी पक्ष / प्रतिवादीची माहिती (Opposite Party):</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          विरोधी पक्ष / कंपनीचे नाव <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={oppositeParty}
+                          onChange={(e) => setOppositeParty(e.target.value)}
+                          placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          पत्ता / शाखा / ठिकाण
+                        </label>
+                        <input
+                          type="text"
+                          value={opponentAddress}
+                          onChange={(e) => setOpponentAddress(e.target.value)}
+                          placeholder="उदा. मुख्य शाखा, शिवाजीनगर, पुणे"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          दावा / फसवणूक रक्कम ₹
+                        </label>
+                        <input
+                          type="text"
+                          value={claimAmount}
+                          onChange={(e) => setClaimAmount(e.target.value)}
+                          placeholder="उदा. ५०,०००"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          UTR / खाते / तक्रार क्र.
+                        </label>
+                        <input
+                          type="text"
+                          value={accountOrUtr}
+                          onChange={(e) => setAccountOrUtr(e.target.value)}
+                          placeholder="उदा. UTR9823487123"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: घटना तपशील & जादा माहिती */}
+                  <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
+                    <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
+                      <span>३. घटनेचा दिनांक, ठिकाण व जादा तपशील:</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          घटनेची तारीख
+                        </label>
+                        <input
+                          type="date"
+                          value={incidentDate}
+                          onChange={(e) => setIncidentDate(e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          अंदाजे वेळ
+                        </label>
+                        <input
+                          type="text"
+                          value={incidentTime}
+                          onChange={(e) => setIncidentTime(e.target.value)}
+                          placeholder="उदा. दुपारी २:३० वाजता"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          घटना ठिकाण व शहर
+                        </label>
+                        <input
+                          type="text"
+                          value={incidentPlace}
+                          onChange={(e) => setIncidentPlace(e.target.value)}
+                          placeholder="उदा. शिवाजीनगर, पुणे"
+                          className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        विशेष हकीकत / पुराव्यांचा तपशील (ऐच्छिक)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={extraDetails}
+                        onChange={(e) => setExtraDetails(e.target.value)}
+                        placeholder="घटनेची जादा माहिती किंवा महत्त्वाचे मुद्दे येथे प्रविष्ट करा..."
+                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Format Preference & Action */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-700 text-[11px]">दस्तऐवज स्वरूप:</span>
+                      <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-white">
+                        <button
+                          type="button"
+                          onClick={() => setPageFormatPreference("auto")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                            pageFormatPreference === "auto" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                          )}
+                        >
+                          ⚙️ आपोआप
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPageFormatPreference("1page")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                            pageFormatPreference === "1page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                          )}
+                        >
+                          📄 १ पान
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPageFormatPreference("2page")}
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
+                            pageFormatPreference === "2page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
+                          )}
+                        >
+                          📑 २ पाने
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleGenerateDocument}
+                      disabled={isDrafting}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isDrafting ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>अर्ज तयार होत आहे...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-white" />
+                          <span>अधिकृत अर्ज तयार करा</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-3.5">
-                {/* Section 1: तक्रारदार / अर्जदार */}
-                <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
-                  <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
-                    <span>१. तक्रारदार / अर्जदाराची माहिती (Complainant):</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        पूर्ण नाव <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={applicantName}
-                        onChange={(e) => setApplicantName(e.target.value)}
-                        placeholder="उदा. रमेश शंकर पाटील"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        मोबाईल क्रमांक
-                      </label>
-                      <input
-                        type="tel"
-                        value={applicantPhone}
-                        onChange={(e) => setApplicantPhone(e.target.value)}
-                        placeholder="उदा. ९८२२००११२२"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        पूर्ण पत्ता
-                      </label>
-                      <input
-                        type="text"
-                        value={applicantAddress}
-                        onChange={(e) => setApplicantAddress(e.target.value)}
-                        placeholder="उदा. फ्लॅट ४०२, गोकुळधाम, पुणे"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        बँकेचे नाव / खाते क्र.
-                      </label>
-                      <input
-                        type="text"
-                        value={bankOrOrgName}
-                        onChange={(e) => setBankOrOrgName(e.target.value)}
-                        placeholder="उदा. SBI बँक / खाते क्र."
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 2: विरोधी पक्ष */}
-                <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
-                  <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
-                    <span>२. विरोधी पक्ष / प्रतिवादीची माहिती (Opposite Party):</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        विरोधी पक्ष / कंपनीचे नाव <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={oppositeParty}
-                        onChange={(e) => setOppositeParty(e.target.value)}
-                        placeholder="उदा. ABC प्रा. लि. / बँक मॅनेजर"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        पत्ता / शाखा / ठिकाण
-                      </label>
-                      <input
-                        type="text"
-                        value={opponentAddress}
-                        onChange={(e) => setOpponentAddress(e.target.value)}
-                        placeholder="उदा. मुख्य शाखा, शिवाजीनगर, पुणे"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        दावा / फसवणूक रक्कम ₹
-                      </label>
-                      <input
-                        type="text"
-                        value={claimAmount}
-                        onChange={(e) => setClaimAmount(e.target.value)}
-                        placeholder="उदा. ५०,०००"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        UTR / खाते / तक्रार क्र.
-                      </label>
-                      <input
-                        type="text"
-                        value={accountOrUtr}
-                        onChange={(e) => setAccountOrUtr(e.target.value)}
-                        placeholder="उदा. UTR9823487123"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 3: घटना तपशील & जादा माहिती */}
-                <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-200 space-y-2">
-                  <div className="text-[11px] font-black text-[#064e3b] uppercase tracking-wide flex items-center gap-1">
-                    <span>३. घटनेचा दिनांक, ठिकाण व जादा तपशील:</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        घटनेची तारीख
-                      </label>
-                      <input
-                        type="date"
-                        value={incidentDate}
-                        onChange={(e) => setIncidentDate(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        अंदाजे वेळ
-                      </label>
-                      <input
-                        type="text"
-                        value={incidentTime}
-                        onChange={(e) => setIncidentTime(e.target.value)}
-                        placeholder="उदा. दुपारी २:३० वाजता"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        घटना ठिकाण व शहर
-                      </label>
-                      <input
-                        type="text"
-                        value={incidentPlace}
-                        onChange={(e) => setIncidentPlace(e.target.value)}
-                        placeholder="उदा. शिवाजीनगर, पुणे"
-                        className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                      विशेष हकीकत / पुराव्यांचा तपशील (ऐच्छिक)
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={extraDetails}
-                      onChange={(e) => setExtraDetails(e.target.value)}
-                      placeholder="घटनेची जादा माहिती किंवा महत्त्वाचे मुद्दे येथे प्रविष्ट करा..."
-                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg font-medium text-xs focus:outline-none focus:border-[#013B36]"
-                    />
-                  </div>
-                </div>
-
-                {/* Format Preference & Action */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-700 text-[11px]">दस्तऐवज स्वरूप:</span>
-                    <div className="inline-flex rounded-lg border border-gray-300 p-0.5 bg-white">
-                      <button
-                        type="button"
-                        onClick={() => setPageFormatPreference("auto")}
-                        className={cn(
-                          "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
-                          pageFormatPreference === "auto" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                        )}
-                      >
-                        ⚙️ आपोआप
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPageFormatPreference("1page")}
-                        className={cn(
-                          "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
-                          pageFormatPreference === "1page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                        )}
-                      >
-                        📄 १ पान
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPageFormatPreference("2page")}
-                        className={cn(
-                          "px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer",
-                          pageFormatPreference === "2page" ? "bg-[#013B36] text-white" : "text-gray-600 hover:text-black"
-                        )}
-                      >
-                        📑 २ पाने
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleGenerateDocument}
-                    disabled={isDrafting}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-xs rounded-xl shadow-md shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isDrafting ? (
-                      <>
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>अर्ज तयार होत आहे...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-3.5 h-3.5 text-white" />
-                        <span>अधिकृत अर्ज तयार करा</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Generated Document Preview Card */}
-            {generatedDoc && (
-              <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
+              {/* ── RIGHT COLUMN: अधिकृत तक्रार अर्ज पूर्वावलोकन (Live A4 Preview & Actions) ── */}
+              <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3 lg:sticky lg:top-20">
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-gray-100">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -2479,8 +1962,10 @@ ${template.relief}
                         <button
                           type="button"
                           onClick={() => {
-                            navigator.clipboard.writeText(generatedDoc);
-                            toast.success("अर्जाचा मजकूर कॉपी केला!");
+                            if (generatedDoc) {
+                              navigator.clipboard.writeText(generatedDoc);
+                              toast.success("अर्जाचा मजकूर कॉपी केला!");
+                            }
                           }}
                           className="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 hover:bg-gray-50 flex items-center gap-1 cursor-pointer"
                         >
@@ -2519,11 +2004,16 @@ ${template.relief}
                 </div>
 
                 {/* Preformatted Paper View */}
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 font-mono text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-96 overflow-y-auto">
-                  {generatedDoc}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 font-mono text-[11px] leading-relaxed text-gray-800 whitespace-pre-wrap max-h-[580px] overflow-y-auto shadow-inner">
+                  {generatedDoc || (
+                    <div className="text-center py-16 text-gray-400 space-y-2">
+                      <FileText className="w-8 h-8 mx-auto opacity-30 text-[#013B36]" />
+                      <p className="text-xs font-semibold">डाव्या बाजूला माहिती भरा किंवा 'अधिकृत अर्ज तयार करा' वर क्लिक करा.</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         )}
 
