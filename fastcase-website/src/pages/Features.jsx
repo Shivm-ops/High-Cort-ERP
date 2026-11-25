@@ -1,308 +1,160 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowRight, Briefcase, Scale, Phone, Building } from 'lucide-react';
 import {
-  Users, Scale, FileText, Calendar, CreditCard, Search,
-  ArrowRight, CheckCircle, ShieldCheck
-} from 'lucide-react';
+  appLinks, erpModuleGroups, consumerTools, consumerCategories,
+} from '../data/site';
 
-const showcasePillars = [
-  {
-    id: 'client',
-    title: 'Client Management',
-    tag: 'CRM & Client KYC Vault',
-    desc: 'Centralized advocate CRM. Organize corporate and individual clients, store encrypted Aadhaar/PAN KYC documents, and track complete multi-matter history.',
-    image: '/screenshots/dashboard.webp',
-    bullets: [
-      'Comprehensive KYC vault with encrypted document storage',
-      'Client communication history & WhatsApp alert logs',
-      'Instant client intake forms with matter linking',
-    ],
-  },
-  {
-    id: 'case',
-    title: 'Case & Matter Tracking',
-    tag: 'Matter Lifecycle & CNR',
-    desc: 'Track litigations across Supreme Court, High Courts, District Benches, and Tribunals with automated CNR lookup and daily cause list synchronization.',
-    image: '/screenshots/case-management.webp',
-    bullets: [
-      'Automated CNR sync across eCourts & High Court portals',
-      'Comprehensive matter stages: filing, evidence, arguments, orders',
-      'Pre-filing readiness checklists & document bundles',
-    ],
-  },
-  {
-    id: 'hearing',
-    title: 'Hearing Management',
-    tag: 'Command Center & Cause Lists',
-    desc: 'Never miss a court appearance. Interactive hearing diary automatically cross-references daily cause lists and alerts your team of upcoming dates and limitation deadlines.',
-    image: '/screenshots/hearing-prep.webp',
-    bullets: [
-      'Daily court diary & automated cause list integration',
-      'Limitation period countdown alerts & filing deadlines',
-      'Multi-bench court room and presiding judge tracking',
-    ],
-  },
-  {
-    id: 'draft',
-    title: 'Draft Automation',
-    tag: '500+ Verified Templates',
-    desc: 'Accelerate drafting by 5x. Access 500+ Bar-compliant templates for plaints, written statements, writs, notices, and bail applications with 1-click client data auto-population.',
-    image: '/screenshots/draft-workspace.png',
-    bullets: [
-      '500+ verified Indian court templates & vernacular formats',
-      '1-click auto-population with client & matter metadata',
-      'Instant export to editable Word (.docx) and indexed PDF',
-    ],
-  },
-  {
-    id: 'billing',
-    title: 'Billing & Invoicing',
-    tag: 'GST Invoices & Fee Ledger',
-    desc: 'Complete financial transparency. Generate GST-compliant fee bills, record hearing appearance fees, track client advance retainers, and issue automated payment receipts.',
-    image: '/screenshots/billing-invoicing.png',
-    bullets: [
-      'GST tax invoices with SAC 9982 legal service codes',
-      'Matter-wise fee, expense, and advance retainer ledger',
-      'Automated payment acknowledgments via WhatsApp',
-    ],
-  },
-  {
-    id: 'research',
-    title: 'Legal Research',
-    tag: 'AI Judgments & Citations',
-    desc: 'Supercharge your legal strategy. Search Supreme Court and High Court citations, cross-reference statutory bare acts, and compile citation briefs directly inside case folders.',
-    image: '/screenshots/legal-research.png',
-    bullets: [
-      'Instant citation search across landmark judgments',
-      'Direct statutory bare acts & section cross-referencing',
-      'Matter-linked research notes and argument binders',
-    ],
-  },
+const tabs = [
+  { id: 'erp', label: 'Advocate ERP', icon: Briefcase, sub: 'For advocates & law firms' },
+  { id: 'consumer', label: 'Consumer Portal', icon: Scale, sub: 'For citizens & consumers' },
 ];
 
-// Clean, essential core blocks - without image clutter
-const importantBlocks = [
-  {
-    id: 1,
-    icon: Users,
-    title: 'Client Management & CRM',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    badge: 'CRM & KYC',
-    desc: 'Centralized client directory with automated KYC records, Aadhaar/PAN vaults, and comprehensive client case history.',
-    items: ['Client CRM & Profiles', 'KYC Document Vault', 'Client Intake Studio'],
-  },
-  {
-    id: 2,
-    icon: Scale,
-    title: 'Case & Matter Tracking',
-    color: 'text-violet-600',
-    bg: 'bg-violet-50',
-    badge: 'Litigation',
-    desc: 'End-to-end matter lifecycle tracking across all active litigation courts with automated CNR syncing and case diaries.',
-    items: ['Case Lifecycle Tracking', 'CNR eCourts Sync', 'Pre-Filing Checklists'],
-  },
-  {
-    id: 3,
-    icon: Calendar,
-    title: 'Hearing Diary & Calendar',
-    color: 'text-orange-500',
-    bg: 'bg-orange-50',
-    badge: 'Court Diary',
-    desc: 'Smart court calendar with daily cause lists, limitation dates countdown, and automatic WhatsApp/SMS court alerts.',
-    items: ['Daily Cause List Sync', 'Automated Hearing Alerts', 'Limitation Reminders'],
-  },
-  {
-    id: 4,
-    icon: FileText,
-    title: 'Draft Automation & Library',
-    color: 'text-teal-600',
-    bg: 'bg-teal-50',
-    badge: 'Automation',
-    desc: '500+ verified legal templates for notices, plaints, and petitions with 1-click client metadata auto-population.',
-    items: ['500+ Verified Templates', '1-Click Auto-Fill', 'Word & PDF Export'],
-  },
-  {
-    id: 5,
-    icon: CreditCard,
-    title: 'GST Billing & Invoicing',
-    color: 'text-green-600',
-    bg: 'bg-green-50',
-    badge: 'Finance',
-    desc: 'GST-compliant legal tax invoices (SAC 9982), fee ledgers, advance trust retainers, and automated payment receipts.',
-    items: ['GST Tax Invoices', 'Receivables Ledger', 'Advance Retainers'],
-  },
-  {
-    id: 6,
-    icon: Search,
-    title: 'Legal Research & Case Law',
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    badge: 'Research',
-    desc: 'Search landmark High Court & Supreme Court citations, bare acts cross-referencing, and structured research briefs.',
-    items: ['Searchable Judgments', 'Bare Acts Linking', 'Research Studio'],
-  },
-];
+function ErpFeatures() {
+  return (
+    <div className="space-y-14">
+      {erpModuleGroups.map((g) => (
+        <div key={g.id}>
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
+            <div>
+              <h2 className="font-heading font-[800] text-2xl text-slate-900">{g.title}</h2>
+              <p className="mt-1 text-[14.5px] text-slate-600">{g.summary}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {g.modules.map(({ icon: Icon, name, desc }) => (
+              <div key={name} className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-[#059669]/40 hover:shadow-card-hover transition-all">
+                <div className="w-10 h-10 rounded-xl bg-[#013B36] text-[#34D399] flex items-center justify-center mb-3.5">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="font-heading font-[700] text-[15.5px] text-slate-900">{name}</h3>
+                <p className="mt-1.5 text-[13.5px] text-slate-600 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="flex flex-wrap items-center gap-3 pt-2">
+        <Link to="/advocate-erp" className="btn-primary text-sm">Advocate ERP overview <ArrowRight className="w-4 h-4" /></Link>
+        <a href={appLinks.advocateLogin()} className="btn-secondary text-sm">Advocate Login</a>
+      </div>
+    </div>
+  );
+}
+
+function ConsumerFeatures() {
+  return (
+    <div className="space-y-14">
+      <div>
+        <h2 className="font-heading font-[800] text-2xl text-slate-900">Tools inside the portal</h2>
+        <p className="mt-1 text-[14.5px] text-slate-600">Four sections, available after you open the Consumer Portal.</p>
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {consumerTools.map(({ icon: Icon, name, tag, desc }) => (
+            <div key={name} className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#059669] text-white flex items-center justify-center">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-bold text-[#065F46] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded-full">{tag}</span>
+              </div>
+              <h3 className="font-heading font-[700] text-[16px] text-slate-900">{name}</h3>
+              <p className="mt-1.5 text-[13.5px] text-slate-600 leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="font-heading font-[800] text-2xl text-slate-900">Problems covered</h2>
+        <p className="mt-1 text-[14.5px] text-slate-600">For each problem the portal gives free guidance and can prepare a formal application addressed to the right authority.</p>
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {consumerCategories.map(({ id, icon: Icon, title, desc, authority, helpline }) => (
+            <div key={id} className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-[#ECFDF5] text-[#059669] flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-[18px] h-[18px]" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-[700] text-[14.5px] text-slate-900 leading-snug">{title}</h3>
+                  <p className="mt-1 text-[13px] text-slate-600 leading-relaxed">{desc}</p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-[12.5px] text-slate-600">
+                <p className="flex items-start gap-2"><Building className="w-3.5 h-3.5 mt-0.5 text-slate-400 flex-shrink-0" /> Addressed to: <span className="font-medium text-slate-800">{authority}</span></p>
+                {helpline && (
+                  <p className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-slate-400" /> Helpline: <span className="font-semibold text-slate-800">{helpline}</span></p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Link to="/consumer-portal" className="btn-primary text-sm">Consumer Portal overview <ArrowRight className="w-4 h-4" /></Link>
+        <a href={appLinks.consumerPortal()} className="btn-secondary text-sm">Open the portal</a>
+      </div>
+    </div>
+  );
+}
 
 export default function Features() {
-  const [activeTab, setActiveTab] = useState(showcasePillars[0].id);
-  const currentPillar = showcasePillars.find(p => p.id === activeTab) || showcasePillars[0];
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initial = location.hash === '#consumer' ? 'consumer' : 'erp';
+  const [active, setActive] = useState(initial);
+
+  useEffect(() => {
+    setActive(location.hash === '#consumer' ? 'consumer' : 'erp');
+  }, [location.hash]);
+
+  const select = (id) => {
+    setActive(id);
+    navigate({ hash: id }, { replace: true });
+  };
 
   return (
-    <div className="bg-surface">
+    <div className="bg-[#F8FAFC] min-h-[70vh]">
       {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #021F1B 0%, #03362E 55%, #05483D 100%)' }} className="pt-32 pb-16">
-        <div className="section-container text-center">
-          <span className="inline-block bg-[#C59B27]/20 border border-[#C59B27]/40 text-amber-300 text-[12px] font-[800] tracking-wider uppercase px-4 py-1.5 rounded-full mb-4 shadow-sm">
-            Platform Capabilities
-          </span>
-          <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
-            Everything Your Legal Practice Needs
+      <section className="bg-white border-b border-slate-200">
+        <div className="section-container pt-14 pb-10 sm:pt-16 text-center">
+          <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-[#059669]">Features</p>
+          <h1 className="mt-3 font-heading font-[900] text-[32px] sm:text-[44px] leading-tight tracking-tight text-slate-900">
+            Everything you can do on Fastcase
           </h1>
-          <p className="text-base sm:text-lg text-white/80 max-w-xl mx-auto font-normal">
-            Essential litigation management modules designed specifically for Indian advocates and law chambers.
+          <p className="mt-4 text-[16px] text-slate-600 max-w-2xl mx-auto">
+            Choose a product to see its features.
           </p>
-        </div>
-      </section>
 
-      {/* Interactive Platform Showcase */}
-      <section className="py-12 bg-slate-50 border-b border-line">
-        <div className="section-container">
-          <div className="text-center max-w-2xl mx-auto mb-8">
-            <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-              Interactive Platform Showcase
-            </span>
-            <h2 className="font-heading font-[800] text-2xl md:text-3xl text-ink mt-3">
-              Explore The Advocate Workspace
-            </h2>
-            <p className="text-sm text-ink/60 mt-1.5">
-              Select any core pillar below to preview its live operational workflow.
-            </p>
-          </div>
-
-          {/* Module Selector Pills */}
-          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
-            {showcasePillars.map((p) => {
-              const isActive = activeTab === p.id;
+          {/* Product switch */}
+          <div role="tablist" aria-label="Products" className="mt-8 inline-grid grid-cols-2 gap-1 p-1 rounded-2xl bg-slate-100 border border-slate-200 w-full max-w-lg">
+            {tabs.map(({ id, label, icon: Icon, sub }) => {
+              const isActive = active === id;
               return (
                 <button
-                  key={p.id}
-                  onClick={() => setActiveTab(p.id)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 border flex items-center gap-2 ${
-                    isActive
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-white text-ink/70 border-line hover:border-primary/40 hover:text-ink'
-                  }`}
+                  key={id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => select(id)}
+                  className={`flex items-center justify-center gap-2.5 px-3 py-3 rounded-xl text-left transition-all ${isActive ? 'bg-white shadow-sm border border-slate-200' : 'border border-transparent hover:bg-white/60'
+                    }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-amber-400' : 'bg-slate-300'}`} />
-                  {p.title}
+                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-[#059669]' : 'text-slate-400'}`} />
+                  <span>
+                    <span className={`block text-[14px] font-bold ${isActive ? 'text-slate-900' : 'text-slate-600'}`}>{label}</span>
+                    <span className="hidden sm:block text-[11.5px] text-slate-500">{sub}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-
-          {/* Active Module Showcase Card */}
-          <div className="bg-white rounded-2xl border border-line shadow-card overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
-              {/* Left Detail (5 cols) */}
-              <div className="lg:col-span-5 p-6 md:p-8 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-line bg-gradient-to-b from-white to-slate-50/50">
-                <div>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 mb-3">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    {currentPillar.tag}
-                  </span>
-                  <h3 className="font-heading font-[800] text-2xl text-ink tracking-tight mb-2">
-                    {currentPillar.title}
-                  </h3>
-                  <p className="text-sm text-ink/65 leading-relaxed mb-6">
-                    {currentPillar.desc}
-                  </p>
-
-                  <div className="space-y-3 pt-4 border-t border-line">
-                    <p className="text-[11px] font-bold text-ink/40 uppercase tracking-wider">Key Capabilities</p>
-                    {currentPillar.bullets.map((b, i) => (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-xs sm:text-[13px] font-medium text-ink/80 leading-snug">{b}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Screenshot Showcase (7 cols) */}
-              <div className="lg:col-span-7 bg-slate-900 p-4 sm:p-6 flex items-center justify-center">
-                <div className="relative w-full rounded-xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-950 group">
-                  <img
-                    src={currentPillar.image}
-                    alt={currentPillar.title}
-                    className="w-full h-auto object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
-                  />
-                  <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/10 text-white text-[10px] font-medium flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Fastcase Workspace · Real-Time View
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Core Important Blocks (Clean 6 Cards, No Card Images) */}
-      <section className="section-padding bg-white">
-        <div className="section-container">
-          <div className="text-center max-w-xl mx-auto mb-10">
-            <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-              Core Architecture
-            </span>
-            <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-ink mt-3">
-              Essential Practice Pillars
-            </h2>
-            <p className="text-sm text-ink/55 mt-1.5">
-              Everything required to manage litigations, client relationships, and court compliance smoothly.
-            </p>
-          </div>
-
-          {/* Clean 6-Card Grid without image clutter */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {importantBlocks.map((b) => {
-              const Icon = b.icon;
-              return (
-                <div
-                  key={b.id}
-                  className="card p-6 hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between border border-line bg-white"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`w-11 h-11 ${b.bg} rounded-xl flex items-center justify-center flex-shrink-0 shadow-2xs`}>
-                        <Icon className={`w-5 h-5 ${b.color}`} />
-                      </div>
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-ink/60 border border-slate-200 uppercase tracking-wider">
-                        {b.badge}
-                      </span>
-                    </div>
-
-                    <h3 className="font-heading font-[700] text-[16px] text-ink mb-2 leading-snug">
-                      {b.title}
-                    </h3>
-                    <p className="text-[13px] text-ink/60 leading-relaxed mb-4">
-                      {b.desc}
-                    </p>
-                  </div>
-
-                  <ul className="space-y-2 pt-4 border-t border-line">
-                    {b.items.map((item) => (
-                      <li key={item} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                        <span className="text-[12px] font-medium text-ink/75">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
+      <section className="py-12 sm:py-16">
+        <div className="section-container" role="tabpanel">
+          {active === 'erp' ? <ErpFeatures /> : <ConsumerFeatures />}
         </div>
       </section>
     </div>

@@ -69,7 +69,7 @@ def setup_db():
     from app.core.security import get_password_hash
     from app.models.user import UserRole
     admin = User(
-        email="admin@lagalos.in",
+        email="admin@fastcase.in",
         hashed_password=get_password_hash("LegalOS@2025"),
         full_name="System Admin",
         is_superadmin=True,
@@ -116,7 +116,7 @@ def test_full_production_flow():
     # ---------------------------------------------------------
     # Login as admin
     resp = client.post("/api/v1/auth/token", data={
-        "username": "admin@lagalos.in",
+        "username": "admin@fastcase.in",
         "password": "LegalOS@2025"
     })
     assert resp.status_code == 200

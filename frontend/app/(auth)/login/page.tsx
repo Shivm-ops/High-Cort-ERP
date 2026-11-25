@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { WEBSITE_URL } from "@/lib/websiteUrl";
 import Script from "next/script";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -217,7 +218,7 @@ export default function AdvocateLoginPage() {
           </div>
 
           <a
-            href="https://fastcase.in"
+            href={WEBSITE_URL}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 text-white/90 text-xs font-bold transition shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -280,7 +281,7 @@ export default function AdvocateLoginPage() {
             {/* Back Link */}
             <div className="mb-2">
               <a
-                href="https://fastcase.in"
+                href={WEBSITE_URL}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#013B36] transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />

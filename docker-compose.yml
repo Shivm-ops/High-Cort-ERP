@@ -52,7 +52,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql+psycopg2://lagalos:lagalos_password@postgres:5432/lagalos_db
+      - DATABASE_URL=postgresql+psycopg2://fastcase:fastcase_password@postgres:5432/fastcase_db
       - REDIS_URL=redis://redis:6379/0
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ENCRYPTION_KEY=k1cT7yG-QxV8_W9zL1mN3oP5qR7sT9uV1wX3yZ5aB7c=
@@ -68,15 +68,15 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: lagalos_db
-      POSTGRES_USER: lagalos
-      POSTGRES_PASSWORD: lagalos_password
+      POSTGRES_DB: fastcase_db
+      POSTGRES_USER: fastcase
+      POSTGRES_PASSWORD: fastcase_password
     ports:
       - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lagalos -d lagalos_db"]
+      test: ["CMD-SHELL", "pg_isready -U fastcase -d fastcase_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -137,8 +137,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: lagalos_minio
-      MINIO_ROOT_PASSWORD: lagalos_minio_secret
+      MINIO_ROOT_USER: fastcase_minio
+      MINIO_ROOT_PASSWORD: fastcase_minio_secret
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data

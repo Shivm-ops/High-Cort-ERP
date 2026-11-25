@@ -17,8 +17,13 @@ class Intake(Base):
     __tablename__ = "intakes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    firm_id = Column(UUID(as_uuid=True), ForeignKey("firms.id"), index=True, nullable=True)
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("clients.id"), nullable=True)
     case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id"), nullable=True)
+    prospect_name = Column(String(255), nullable=True)
+    prospect_phone = Column(String(30), nullable=True)
+    is_deleted = Column(Boolean, default=False, index=True, nullable=False)
     
     # Interview Fields
     narrative = Column(Text, nullable=True)

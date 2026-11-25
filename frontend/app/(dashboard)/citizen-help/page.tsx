@@ -166,7 +166,7 @@ const UI_STRINGS: Record<Language, Record<string, string>> = {
   },
 };
 
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
+const CATEGORY_ICONS: Record<string, React.ComponentType<any>> = {
   police_fir: ShieldAlert,
   women_child: HeartHandshake,
   labour: Briefcase,

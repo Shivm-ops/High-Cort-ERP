@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { api } from "../api";
 import { toast } from "sonner";
 
@@ -18,6 +18,27 @@ export interface ChecklistItem {
   name: string;
   required: boolean;
   type: string;
+  uploaded?: boolean;
+  matched_documents?: Array<{ id: string; name: string }>;
+}
+
+export interface FilingPackageItem {
+  s_no: number;
+  id: string;
+  exhibit: string;
+  name: string;
+  doc_type: string;
+  status: string;
+  date: string;
+}
+
+export interface FilingPackageResponse {
+  message: string;
+  case_no?: string;
+  case_title?: string;
+  items?: FilingPackageItem[];
+  index_html: string;
+  download_link: string;
 }
 
 export function useEvidenceTimeline(caseId: string) {
@@ -45,14 +66,14 @@ export function useEvidenceChecklist(caseId: string) {
 export function useGenerateFilingPackage(caseId: string) {
   return useMutation({
     mutationFn: async () => {
-      const { data } = await api.post<{ message: string; index_html: string; download_link: string }>(`/evidence/generate-package/${caseId}`);
+      const { data } = await api.post<FilingPackageResponse>(`/evidence/generate-package/${caseId}`);
       return data;
     },
     onSuccess: () => {
-      toast.success("Filing package generated");
+      toast.success("Evidence index generated");
     },
     onError: () => {
-      toast.error("Failed to generate filing package");
+      toast.error("Failed to generate evidence index");
     },
   });
 }

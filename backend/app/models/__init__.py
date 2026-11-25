@@ -21,6 +21,7 @@ from .audit_log import AuditLog
 from .advance_payment import AdvancePayment
 from .court import Court
 from .act import Act, Section
+from .notice import LegalNotice
 from .kyc import KycRecord
 from .subscription import SubscriptionPlan, TenantSubscription, PaymentTransaction, SubscriptionUpgradeRequest
 from .setting import SystemSetting
@@ -78,6 +79,7 @@ __all__ = [
     "Court",
     "Act",
     "Section",
+    "LegalNotice",
     "KycRecord",
     "SubscriptionPlan",
     "TenantSubscription",

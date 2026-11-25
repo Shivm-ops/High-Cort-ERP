@@ -1349,6 +1349,34 @@ async def login_otp_verify(
     )
 
 
+def _provision_individual_firm(db: Session, full_name: str, phone: Optional[str] = None):
+    """Create an individual practice Firm (and optional trial subscription) for a solo advocate."""
+    from app.models.firm import Firm
+    from app.models.subscription import SubscriptionPlan, TenantSubscription, SubscriptionStatus
+    from app.services.tenant_domain import allocate_unique_subdomain
+
+    firm_name = f"{full_name}'s Practice"
+    new_firm = Firm(
+        name=firm_name,
+        type="INDIVIDUAL",
+        phone=phone,
+        is_active=True,
+        subdomain=allocate_unique_subdomain(db, firm_name),
+    )
+    db.add(new_firm)
+    db.flush()
+
+    trial_plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.tier == "free_trial").first()
+    if trial_plan:
+        db.add(TenantSubscription(
+            firm_id=new_firm.id,
+            plan_id=trial_plan.id,
+            status=SubscriptionStatus.ACTIVE,
+            end_date=utc_now() + timedelta(days=14),
+        ))
+    return new_firm
+
+
 @router.post("/google", response_model=LoginResponse)
 async def google_auth_login(
     payload: GoogleLoginRequest,
@@ -1413,8 +1441,13 @@ async def google_auth_login(
         target_role = (
             UserRole.CITIZEN
             if (payload.role or "").lower() == "citizen"
-            else UserRole.ASSOCIATE_ADVOCATE
+            else UserRole.ADMIN
         )
+        firm_id = None
+        if target_role != UserRole.CITIZEN:
+            new_firm = _provision_individual_firm(db, full_name)
+            firm_id = new_firm.id
+
         user = User(
             id=uuid.uuid4(),
             email=clean_email,
@@ -1423,7 +1456,7 @@ async def google_auth_login(
             user_type=target_role,
             is_active=True,
             is_verified=True,
-            firm_id=None,
+            firm_id=firm_id,
         )
         db.add(user)
         db.commit()
@@ -1450,5 +1483,13 @@ async def google_auth_login(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Your account is deactivated. Please contact support.",
             )
+        # Ensure existing non-citizen advocate accounts created via Google have a firm
+        if user.user_type != UserRole.CITIZEN and not user.is_superadmin and not user.firm_id:
+            new_firm = _provision_individual_firm(db, user.full_name or full_name, user.phone)
+            user.firm_id = new_firm.id
+            if user.user_type == UserRole.ASSOCIATE_ADVOCATE:
+                user.user_type = UserRole.ADMIN
+            db.commit()
+            db.refresh(user)
 
     return await _build_login_response(user, db, ip, user_agent, background_tasks=background_tasks)

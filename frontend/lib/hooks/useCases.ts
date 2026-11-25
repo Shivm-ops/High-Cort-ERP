@@ -32,7 +32,10 @@ export interface Case {
   priority: string;
   filing_date?: string;
   disposal_date?: string;
+  incident_date?: string;
   limitation_date?: string;
+  limitation_act?: string;
+  limitation_section?: string;
   next_hearing_date?: string;
   fees_agreed: number;
   fees_received: number;

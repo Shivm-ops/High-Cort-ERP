@@ -1,20 +1,22 @@
 import { Link } from 'react-router-dom';
 import {
-  Scale, MapPin, Mail, Phone, Linkedin, Youtube, Facebook, Instagram,
+  Scale, MapPin, Mail, Phone,
 } from 'lucide-react';
 
 const footerLinks = {
-  Product: [
+  Products: [
+    { label: 'Advocate ERP', to: '/advocate-erp' },
+    { label: 'Consumer Portal', to: '/consumer-portal' },
     { label: 'Features', to: '/features' },
     { label: 'Practice Areas', to: '/practice-areas' },
     { label: 'Pricing', to: '/pricing' },
-    { label: 'Why Fastcase', to: '/why-Fastcase' },
-    { label: 'Integrations', to: '/#integrations' },
   ],
   Company: [
     { label: 'About Us', to: '/about' },
+    { label: 'Why Fastcase', to: '/why-Fastcase' },
     { label: 'Contact', to: '/contact' },
     { label: 'FAQ', to: '/faq' },
+    { label: 'Data Security', to: '/data-security' },
     { label: 'Grievance Officer', to: '/grievance-officer' },
   ],
   Legal: [
@@ -26,12 +28,6 @@ const footerLinks = {
   ],
 };
 
-const socialLinks = [
-  { icon: Linkedin, label: 'LinkedIn', href: '#' },
-  { icon: Youtube, label: 'YouTube', href: '#' },
-  { icon: Facebook, label: 'Facebook', href: '#' },
-  { icon: Instagram, label: 'Instagram', href: '#' },
-];
 
 export default function Footer() {
   return (
@@ -56,7 +52,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-[14px] text-white/50 leading-relaxed mb-5 max-w-xs">
-              Built for advocates, law firms and legal professionals across India.
+              Advocate ERP for advocates and law firms, and a Consumer Portal for citizens who need legal help.
             </p>
 
             {/* Address */}
@@ -96,16 +92,6 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Social links */}
-            <div className="flex items-center gap-2.5">
-              {socialLinks.map(({ icon: Icon, label, href }) => (
-                <a key={label} href={href} aria-label={label}
-                  className="w-8 h-8 rounded-lg bg-white/6 border border-white/8 flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition-all duration-150"
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Link columns */}

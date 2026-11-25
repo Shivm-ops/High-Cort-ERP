@@ -1,36 +1,21 @@
 import { Link } from 'react-router-dom';
 import {
-  CheckCircle, X, ArrowRight, Globe, Shield, Zap,
+  CheckCircle, ArrowRight, Globe, Shield, Zap,
   CreditCard, Users, Scale, HeadphonesIcon, Smartphone
 } from 'lucide-react';
-
-const comparisons = [
-  { feature: 'Built for Indian Legal System', Fastcase: true, others: false },
-  { feature: 'Multi-Language Support (Marathi, Hindi, Gujarati)', Fastcase: true, others: false },
-  { feature: 'GST-Compliant Billing', Fastcase: true, others: false },
-  { feature: 'WhatsApp Notification Integration', Fastcase: true, others: false },
-  { feature: 'Auto-Populate Drafts from Client Data', Fastcase: true, others: false },
-  { feature: 'OCR-Powered Notice Processing', Fastcase: true, others: false },
-  { feature: 'Client Self-Service Portal', Fastcase: true, others: 'partial' },
-  { feature: 'Mobile Responsive Design', Fastcase: true, others: 'partial' },
-  { feature: 'Role-Based Team Access', Fastcase: true, others: 'partial' },
-  { feature: 'Legal Research Workspace', Fastcase: true, others: 'partial' },
-  { feature: 'Evidence Management with Version History', Fastcase: true, others: false },
-  { feature: 'Case Law & Citation Management', Fastcase: true, others: 'partial' },
-];
 
 const reasons = [
   {
     icon: Globe,
     title: 'Designed for India',
-    desc: 'Fastcase is built from scratch for the Indian legal system — Indian courts, Indian languages, Indian GST, and Indian advocacy workflows. Not a foreign product adapted for India.',
+    desc: 'Fastcase is built from scratch for the Indian legal system — Indian courts, Indian languages and Indian advocacy workflows. Not a foreign product adapted for India.',
     color: 'text-blue-600',
     bg: 'bg-blue-50 dark:bg-blue-900/20',
   },
   {
     icon: Zap,
     title: 'All-in-One Platform',
-    desc: 'From client onboarding to invoice generation, everything lives in one platform. No need to juggle multiple tools, subscriptions, or data exports.',
+    desc: 'From client intake to drafting and hearings, everything lives in one platform. No need to juggle multiple tools or spreadsheets.',
     color: 'text-yellow-600',
     bg: 'bg-yellow-50 dark:bg-yellow-900/20',
   },
@@ -43,8 +28,8 @@ const reasons = [
   },
   {
     icon: CreditCard,
-    title: 'Transparent Pricing',
-    desc: 'Simple, predictable pricing with no hidden charges. Subscription plans designed for solo advocates, small firms, and large legal teams alike.',
+    title: 'Legal Help for Citizens',
+    desc: 'The Consumer Portal helps citizens understand their rights and prepare complaints and applications — free guidance, ₹30 per document.',
     color: 'text-indigo-600',
     bg: 'bg-indigo-50 dark:bg-indigo-900/20',
   },
@@ -58,7 +43,7 @@ const reasons = [
   {
     icon: Scale,
     title: 'Scales with Your Practice',
-    desc: 'Whether you are a solo advocate or managing a 50-person firm, Fastcase grows with you. Add users, features, and capacity as your practice expands.',
+    desc: 'Whether you practise alone or run a firm, add team members and modules as your practice grows.',
     color: 'text-primary',
     bg: 'bg-primary/5 dark:bg-primary/20',
   },
@@ -88,8 +73,7 @@ export default function WhyChoose() {
             Why Choose Fastcase?
           </h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            See why advocates and law firms across India choose Fastcase over
-            generic software, spreadsheets, and foreign legal platforms.
+            See why advocates and law firms across India choose Fastcase for running their practice — and why citizens use the Consumer Portal for legal help.
           </p>
         </div>
       </section>
@@ -121,50 +105,6 @@ export default function WhyChoose() {
               );
             })}
           </div>
-        </div>
-      </section>
-
-      {/* Comparison Table */}
-      <section className="section-padding border-t border-line" style={{ backgroundColor: '#EEF2F7' }}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="section-heading text-3xl mb-4">Fastcase vs. Other Solutions</h2>
-            <p className="text-[16px] text-ink/50 max-w-2xl mx-auto">See how Fastcase compares to generic software and foreign legal platforms.</p>
-          </div>
-          <div className="card overflow-hidden">
-            <div className="grid grid-cols-3 bg-primary text-white">
-              <div className="p-4 text-sm font-semibold">Feature</div>
-              <div className="p-4 text-sm font-semibold text-center bg-accent">Fastcase</div>
-              <div className="p-4 text-sm font-semibold text-center text-blue-200">Others</div>
-            </div>
-            {comparisons.map((c, i) => (
-              <div
-                key={c.feature}
-                className={`grid grid-cols-3 border-b border-gray-100 dark:border-slate-700 last:border-0 ${
-                  i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-gray-50 dark:bg-slate-800/50'
-                }`}
-              >
-                <div className="p-4 text-sm text-gray-700 dark:text-slate-300 flex items-center">
-                  {c.feature}
-                </div>
-                <div className="p-4 flex items-center justify-center bg-blue-50/30">
-                  <CheckCircle className="w-5 h-5 text-[#16A34A]" />
-                </div>
-                <div className="p-4 flex items-center justify-center">
-                  {c.others === true ? (
-                    <CheckCircle className="w-5 h-5 text-[#16A34A]" />
-                  ) : c.others === 'partial' ? (
-                    <span className="text-xs text-orange-500 font-medium">Partial</span>
-                  ) : (
-                    <X className="w-5 h-5 text-red-400" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-gray-500 dark:text-slate-500 text-center mt-4">
-            Comparison based on publicly available information from competing products. Features may vary.
-          </p>
         </div>
       </section>
 
@@ -218,13 +158,13 @@ export default function WhyChoose() {
             Make the Switch to Fastcase
           </h2>
           <p className="text-white/60 mb-8 max-w-xl mx-auto">
-            Join advocates who have already modernized their practice. Start your free trial today.
+            Explore the Advocate ERP for your practice, or the Consumer Portal if you need legal help.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/contact"
               className="inline-flex items-center gap-2 bg-white text-primary font-[600] text-[15px] px-7 py-3.5 rounded-xl hover:bg-white/90 transition-all duration-150 shadow-lg"
             >
-              Start Free Trial <ArrowRight className="w-4 h-4" />
+              Contact Us <ArrowRight className="w-4 h-4" />
             </Link>
             <Link to="/features"
               className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white font-[600] text-[15px] px-7 py-3.5 rounded-xl hover:bg-white/15 transition-all duration-150"

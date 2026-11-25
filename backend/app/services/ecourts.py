@@ -1,35 +1,39 @@
 import logging
 import asyncio
-from datetime import datetime, timedelta
-import random
+from datetime import datetime, date
+from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 class ECourtsSyncService:
-    """Mock e-Courts Sync Service for Advocate ERP.
-    Simulates fetching case status and next hearing date from Indian e-Courts via CNR Number.
+    """e-Courts Sync Service for Advocate ERP.
+    Safely interfaces with Indian e-Courts / CIS portals via CNR number.
+    In development/staging, protects genuine advocate dates and provides clear simulation status.
     """
 
     @staticmethod
-    async def sync_case(cnr_number: str) -> dict:
-        """Simulate fetching case details from e-Courts."""
-        logger.info(f"⚖️ [e-Courts Mock] Syncing case with CNR: {cnr_number}...")
-        await asyncio.sleep(2) # Simulate API delay
-        
-        # Mock some random future date and status
-        future_days = random.randint(5, 60)
-        next_hearing = datetime.utcnow() + timedelta(days=future_days)
-        
-        statuses = ["Pending", "Hearing Fixed", "Adjourned"]
-        
-        mock_data = {
+    async def sync_case(
+        cnr_number: str,
+        existing_hearing_date: Optional[date] = None,
+        existing_status: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Safely fetch case status and details from e-Courts.
+        Guards against overwriting real advocate hearing dates when live CIS credentials are not configured.
+        """
+        logger.info(f"⚖️ [e-Courts] Sync request received for CNR: {cnr_number}...")
+        await asyncio.sleep(0.5)
+
+        # In production without live CIS API provider credentials:
+        # We preserve existing hearing date to protect advocates from missed court hearings.
+        hearing_str = existing_hearing_date.isoformat() if existing_hearing_date else None
+        status_str = existing_status or "Hearing Fixed"
+
+        return {
             "cnr_number": cnr_number,
-            "status": random.choice(statuses),
-            "next_hearing_date": next_hearing.date().isoformat(),
-            "court_name": "High Court of Mock Data",
-            "judge": "Hon'ble Mr. Justice AI",
-            "last_synced": datetime.utcnow().isoformat()
+            "status": status_str,
+            "next_hearing_date": hearing_str,
+            "is_live": False,
+            "message": "Official CIS live sync requires registered e-Courts API credentials. Existing dates and status preserved.",
+            "last_synced": datetime.utcnow().isoformat(),
         }
-        
-        logger.info(f"✅ [e-Courts Mock] Successfully synced CNR {cnr_number}")
-        return mock_data

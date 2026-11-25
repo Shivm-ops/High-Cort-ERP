@@ -63,3 +63,6 @@ router.include_router(citizen_help.router, prefix="/citizen-help", tags=["Citize
 
 from . import property_check
 router.include_router(property_check.router, prefix="/property-check", tags=["Property Legal Check & Title Search"])
+
+from . import notices
+router.include_router(notices.router, prefix="/notices", tags=["Notices & Replies"])

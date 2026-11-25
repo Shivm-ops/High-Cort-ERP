@@ -16,12 +16,12 @@ export function useCourts(search?: string, courtType?: string) {
   const params = new URLSearchParams();
   if (search) params.append("search", search);
   if (courtType && courtType !== "All") params.append("court_type", courtType);
-  
+
   const queryStr = params.toString() ? `?${params.toString()}` : "";
-  
-  const { data, error, isLoading, mutate } = useSWR<{total: number, items: Court[]}>(
+
+  const { data, error, isLoading, mutate } = useSWR<{ total: number; items: Court[] }>(
     `/courts${queryStr}`,
-    (url: string) => api.get(url).then(res => res.data)
+    (url: string) => api.get(url).then((res) => res.data)
   );
 
   return {
@@ -29,6 +29,20 @@ export function useCourts(search?: string, courtType?: string) {
     total: data?.total || 0,
     isLoading,
     isError: error,
-    mutate
+    mutate,
+  };
+}
+
+export function useCourt(id: string) {
+  const { data, error, isLoading, mutate } = useSWR<Court>(
+    id ? `/courts/${id}` : null,
+    (url: string) => api.get(url).then((res) => res.data)
+  );
+
+  return {
+    court: data || null,
+    isLoading,
+    isError: error,
+    mutate,
   };
 }

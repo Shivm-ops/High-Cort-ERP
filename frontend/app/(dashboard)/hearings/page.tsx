@@ -1,25 +1,26 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Gavel, CalendarDays, Clock, MapPin, User, Plus, ChevronLeft, ChevronRight,
+  Gavel, CalendarDays, Clock, User, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, ExternalLink, AlertCircle, FileText, CheckCircle, Scale,
   Building2, Upload, FileBox, Search, ChevronDown, X, ListChecks,
-  PrinterIcon, Download, Filter, LayoutList, Calendar, RefreshCw,
-  ArrowRight, BookOpen, BadgeAlert, ClipboardCheck, Layers, Mail
+  PrinterIcon, Filter, LayoutList, Calendar, RefreshCw,
+  BookOpen, BadgeAlert, ClipboardCheck, Layers, Mail
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import HearingForm from "@/components/forms/HearingForm";
 import {
-  useHearings, useHearingStats, useUpdateHearing, useDeleteHearing,
+  useHearings, useUpdateHearing, useDeleteHearing,
   useNotifyHearingClient, useSendUpcomingReminders, Hearing,
 } from "@/lib/hooks/useHearings";
 import { useUpcomingTasks } from "@/lib/hooks/useTasks";
+import { useAuthStore } from "@/lib/store/authStore";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -71,13 +72,37 @@ function fmtTime(t?: string) {
   if (!t) return "–";
   const [h, m] = t.split(":");
   const hr = parseInt(h);
-  return `${hr > 12 ? hr - 12 : hr}:${m} ${hr >= 12 ? "PM" : "AM"}`;
+  const hr12 = hr === 0 ? 12 : hr > 12 ? hr - 12 : hr;
+  return `${hr12}:${m} ${hr >= 12 ? "PM" : "AM"}`;
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
-function StatCard({ label, value, icon: Icon, color, subtitle }: { label: string; value: number; icon: any; color: string; subtitle?: string }) {
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  subtitle,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  icon: any;
+  color: string;
+  subtitle?: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <div className={cn("bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group cursor-default")}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "text-left bg-white rounded-2xl border p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all group",
+        active ? "border-sidebar ring-2 ring-sidebar/15" : "border-gray-100"
+      )}
+    >
       <div>
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{label}</p>
         <h2 className="text-3xl font-black text-gray-900">{value}</h2>
@@ -86,7 +111,7 @@ function StatCard({ label, value, icon: Icon, color, subtitle }: { label: string
       <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", color)}>
         <Icon className="w-6 h-6" />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -112,18 +137,43 @@ function ReadinessBadge({ status }: { status?: string }) {
 }
 
 // ── Main Component ─────────────────────────────────────────────────────────────
-export default function HearingsPage() {
+function HearingsPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const user = useAuthStore((s) => s.user);
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
+  const initialTabParam = searchParams.get("tab");
+  const initialTab: QuickTab = QUICK_TABS.includes(initialTabParam as QuickTab)
+    ? (initialTabParam as QuickTab)
+    : "All";
+  const initialViewParam = searchParams.get("view");
+  const initialView: "table" | "calendar" = initialViewParam === "calendar" ? "calendar" : "table";
+
   // View state
-  const [viewMode, setViewMode] = useState<"table" | "calendar">("table");
-  const [activeTab, setActiveTab] = useState<QuickTab>("All");
-  const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "calendar">(initialView);
+  const [activeTab, setActiveTab] = useState<QuickTab>(initialTab);
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [filterCourt, setFilterCourt] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && QUICK_TABS.includes(tabParam as QuickTab)) {
+      setActiveTab(tabParam as QuickTab);
+    }
+    const viewParam = searchParams.get("view");
+    if (viewParam === "calendar" || viewParam === "table") {
+      setViewMode(viewParam);
+    }
+    const searchParam = searchParams.get("search");
+    if (searchParam !== null) {
+      setSearch(searchParam);
+    }
+  }, [searchParams]);
 
   // Calendar state
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -134,30 +184,48 @@ export default function HearingsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [editHearing, setEditHearing] = useState<Hearing | null>(null);
   const [deleteHearing, setDeleteHearing] = useState<Hearing | null>(null);
-  const [prepHearing, setPrepHearing] = useState<Hearing | null>(null);
+  const [prepHearingId, setPrepHearingId] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Data
   const monthStart = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-01`;
   const monthEnd   = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${getDaysInMonth(calYear, calMonth).toString().padStart(2, "0")}`;
 
-  const { data: allData, isLoading } = useHearings({ date_from: monthStart, date_to: monthEnd, limit: 500 });
-  const { data: calData } = useHearings({ date_from: monthStart, date_to: monthEnd });
-  const { data: selectedData } = useHearings({ date_from: selectedDate, date_to: selectedDate });
+  const { data: allData, isLoading } = useHearings({ limit: 500 });
+  const { data: calData } = useHearings({ date_from: monthStart, date_to: monthEnd, limit: 500 });
+  const { data: selectedData } = useHearings({ date_from: selectedDate, date_to: selectedDate, limit: 200 });
   const { data: upcomingTasksData } = useUpcomingTasks();
-  const stats = useHearingStats();
   const updateHearing = useUpdateHearing();
   const deleteMutation = useDeleteHearing();
   const notifyClientMutation = useNotifyHearingClient();
   const sendRemindersMutation = useSendUpcomingReminders();
 
   const allHearings = allData?.hearings || [];
+  const selectedHearings = selectedData?.hearings || [];
   const hearingDates = new Set((calData?.hearings || []).map(h => h.hearing_date));
+
+  const stats = useMemo(() => ({
+    today: allHearings.filter(h => h.hearing_date === todayStr).length,
+    upcoming: allHearings.filter(h => h.hearing_date > todayStr && h.status === "scheduled").length,
+    completed: allHearings.filter(h => h.status === "completed").length,
+    adjourned: allHearings.filter(h => h.status === "adjourned").length,
+  }), [allHearings, todayStr]);
+
+  const prepHearing = useMemo(
+    () =>
+      prepHearingId
+        ? allHearings.find((h) => h.id === prepHearingId) ||
+          selectedHearings.find((h) => h.id === prepHearingId) ||
+          null
+        : null,
+    [prepHearingId, allHearings, selectedHearings]
+  );
 
   // Filtered hearings for table view
   const filteredHearings = useMemo(() => {
     let list = allHearings;
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+    const myName = (user?.full_name || "").trim().toLowerCase();
 
     if (activeTab === "Today")     list = list.filter(h => h.hearing_date === todayStr);
     if (activeTab === "Upcoming")  list = list.filter(h => h.hearing_date > todayStr && h.status === "scheduled");
@@ -173,12 +241,10 @@ export default function HearingsPage() {
     );
     if (filterCourt)  list = list.filter(h => h.court?.toLowerCase().includes(filterCourt.toLowerCase()));
     if (filterStatus) list = list.filter(h => h.status === filterStatus);
+    if (showOnlyMine) list = list.filter(h => myName !== "" && (h.attended_by || "").toLowerCase().includes(myName));
 
     return list;
-  }, [allHearings, activeTab, search, filterCourt, filterStatus]);
-
-  // Calendar date hearings
-  const selectedHearings = selectedData?.hearings || [];
+  }, [allHearings, activeTab, search, filterCourt, filterStatus, showOnlyMine, todayStr, user?.full_name]);
 
   const handleReadinessChange = async (h: Hearing, value: string) => {
     await updateHearing.mutateAsync({ id: h.id, readiness_status: value });
@@ -192,12 +258,20 @@ export default function HearingsPage() {
   const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); } else setCalMonth(m => m - 1); };
   const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); } else setCalMonth(m => m + 1); };
 
+  const clearAllFilters = () => {
+    setSearch("");
+    setFilterCourt("");
+    setFilterStatus("");
+    setShowOnlyMine(false);
+    setActiveTab("All");
+  };
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-[#F7F8F6]">
       <Header
-        title="Hearings"
-        subtitle="Manage your court hearings, schedules, preparation, and daily appearances."
+        title="Hearings & Calendar"
+        subtitle="Manage your court hearings, calendar, preparation checklists, and daily appearances."
         rightContent={
           <div className="flex items-center gap-2">
             <button
@@ -222,21 +296,21 @@ export default function HearingsPage() {
 
         {/* ── SUMMARY CARDS ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Today's Hearings" value={stats.today} icon={Gavel}        color="bg-blue-50 text-blue-600"   subtitle="Scheduled for today" />
-          <StatCard label="Upcoming"          value={stats.upcoming} icon={CalendarDays} color="bg-amber-50 text-amber-600"  subtitle="Next 30 days" />
-          <StatCard label="Completed"         value={stats.completed} icon={CheckCircle} color="bg-green-50 text-green-600"  subtitle="This period" />
-          <StatCard label="Adjourned"         value={stats.adjourned} icon={BadgeAlert}  color="bg-red-50 text-red-600"     subtitle="Awaiting new date" />
+          <StatCard label="Today's Hearings" value={stats.today}     icon={Gavel}        color="bg-blue-50 text-blue-600"   subtitle="Listed for today"      active={activeTab === "Today" && viewMode === "table"}     onClick={() => { setViewMode("table"); setActiveTab(activeTab === "Today" ? "All" : "Today"); }} />
+          <StatCard label="Upcoming"         value={stats.upcoming}  icon={CalendarDays} color="bg-amber-50 text-amber-600"  subtitle="Scheduled ahead"       active={activeTab === "Upcoming" && viewMode === "table"}  onClick={() => { setViewMode("table"); setActiveTab(activeTab === "Upcoming" ? "All" : "Upcoming"); }} />
+          <StatCard label="Completed"        value={stats.completed} icon={CheckCircle}  color="bg-green-50 text-green-600"  subtitle="Hearings completed"    active={activeTab === "Completed" && viewMode === "table"} onClick={() => { setViewMode("table"); setActiveTab(activeTab === "Completed" ? "All" : "Completed"); }} />
+          <StatCard label="Adjourned"        value={stats.adjourned} icon={BadgeAlert}   color="bg-red-50 text-red-600"      subtitle="Awaiting next date"    active={activeTab === "Adjourned" && viewMode === "table"} onClick={() => { setViewMode("table"); setActiveTab(activeTab === "Adjourned" ? "All" : "Adjourned"); }} />
         </div>
 
         {/* ── TOOLBAR ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
           {/* Quick Tabs */}
           <div className="flex items-center justify-between px-4 pt-3 pb-0 border-b border-gray-100">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 overflow-x-auto">
               {QUICK_TABS.map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={cn("px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors border-b-2 -mb-px",
-                    activeTab === tab
+                <button key={tab} onClick={() => { setViewMode("table"); setActiveTab(tab); }}
+                  className={cn("px-4 py-2.5 text-sm font-bold rounded-t-lg transition-colors border-b-2 -mb-px whitespace-nowrap",
+                    activeTab === tab && viewMode === "table"
                       ? "border-sidebar text-sidebar bg-sidebar/5"
                       : "border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50"
                   )}>
@@ -245,25 +319,25 @@ export default function HearingsPage() {
               ))}
             </div>
             <div className="flex items-center gap-2 pb-2">
-              <button onClick={() => setViewMode("table")} className={cn("p-2 rounded-lg transition-colors", viewMode === "table" ? "bg-sidebar/10 text-sidebar" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100")}>
+              <button onClick={() => setViewMode("table")} title="List & Prep View" className={cn("p-2 rounded-lg transition-colors", viewMode === "table" ? "bg-sidebar/10 text-sidebar" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100")}>
                 <LayoutList className="w-4 h-4" />
               </button>
-              <button onClick={() => setViewMode("calendar")} className={cn("p-2 rounded-lg transition-colors", viewMode === "calendar" ? "bg-sidebar/10 text-sidebar" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100")}>
+              <button onClick={() => setViewMode("calendar")} title="Monthly Calendar View" className={cn("p-2 rounded-lg transition-colors", viewMode === "calendar" ? "bg-sidebar/10 text-sidebar" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100")}>
                 <Calendar className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {/* Search + Filters */}
-          <div className="flex items-center gap-3 p-3">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-wrap items-center gap-3 p-3">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by case, court, judge, client…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar"
+                className="w-full pl-9 pr-8 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-sidebar/20 focus:border-sidebar"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -271,11 +345,23 @@ export default function HearingsPage() {
                 </button>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowOnlyMine(v => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl border transition-colors",
+                showOnlyMine
+                  ? "bg-sidebar/10 border-sidebar/20 text-sidebar"
+                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              <User className="w-3.5 h-3.5" /> My Hearings
+            </button>
             <button onClick={() => setShowFilters(f => !f)} className={cn("flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl border transition-colors", showFilters ? "bg-sidebar/10 border-sidebar/20 text-sidebar" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50")}>
               <Filter className="w-3.5 h-3.5" /> Filters {(filterCourt || filterStatus) && <span className="w-1.5 h-1.5 rounded-full bg-sidebar" />}
             </button>
-            {(search || filterCourt || filterStatus || activeTab !== "All") && (
-              <button onClick={() => { setSearch(""); setFilterCourt(""); setFilterStatus(""); setActiveTab("All"); }}
+            {(search || filterCourt || filterStatus || showOnlyMine || activeTab !== "All") && (
+              <button onClick={clearAllFilters}
                 className="text-xs font-semibold text-gray-500 hover:text-sidebar px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1">
                 <RefreshCw className="w-3 h-3" /> Clear
               </button>
@@ -330,10 +416,12 @@ export default function HearingsPage() {
                   <button onClick={() => setShowCreate(true)} className="px-5 py-2.5 bg-sidebar text-white rounded-xl text-sm font-bold hover:bg-sidebar-dark transition-colors">
                     + Add Hearing
                   </button>
-                  <button onClick={() => { setSearch(""); setFilterCourt(""); setFilterStatus(""); setActiveTab("All"); }}
-                    className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors">
-                    Clear Filters
-                  </button>
+                  {(search || filterCourt || filterStatus || showOnlyMine || activeTab !== "All") && (
+                    <button onClick={clearAllFilters}
+                      className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors">
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -343,8 +431,8 @@ export default function HearingsPage() {
                   <div>Case / Matter</div>
                   <div>Court & Judge</div>
                   <div>Date & Time</div>
-                  <div>Status</div>
-                  <div>Actions</div>
+                  <div>Status & Readiness</div>
+                  <div>Prep & Actions</div>
                 </div>
 
                 {/* Table Rows */}
@@ -370,7 +458,13 @@ export default function HearingsPage() {
                               <span className="text-[10px] font-bold px-2 py-0.5 bg-sidebar/10 text-sidebar rounded shrink-0">{h.purpose}</span>
                             )}
                           </div>
-                          <div className="text-sm font-bold text-gray-900 truncate">{h.case_title || "Untitled Matter"}</div>
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/cases/${h.case_id}`)}
+                            className="text-sm font-bold text-gray-900 hover:text-sidebar truncate block text-left max-w-full transition-colors"
+                          >
+                            {h.case_title || "Untitled Matter"}
+                          </button>
                           {h.client_name && (
                             <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
                               <span className="flex items-center gap-1"><User className="w-3 h-3" /> {h.client_name}</span>
@@ -424,7 +518,6 @@ export default function HearingsPage() {
                         <div className="space-y-1.5">
                           <StatusBadge status={h.status} />
                           <div>
-                            {/* Readiness dropdown */}
                             <div className="relative">
                               <button onClick={() => setOpenDropdown(openDropdown === h.id ? null : h.id)}
                                 className={cn("flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border border-transparent transition-colors hover:border-gray-200", rdCfg.bg, rdCfg.text)}>
@@ -450,7 +543,14 @@ export default function HearingsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setPrepHearingId(h.id)}
+                            title="Daily Preparation & Carry Checklist"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-sidebar bg-sidebar/10 hover:bg-sidebar/15 rounded-lg transition-colors"
+                          >
+                            <ClipboardCheck className="w-3.5 h-3.5" /> Prep
+                          </button>
                           <button
                             onClick={() => {
                               if (!h.client_email) {
@@ -475,10 +575,6 @@ export default function HearingsPage() {
                             )}
                           >
                             <Mail className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => setPrepHearing(h)} title="Preparation Details"
-                            className="p-1.5 text-gray-400 hover:text-sidebar hover:bg-sidebar/10 rounded-lg transition-colors">
-                            <ClipboardCheck className="w-4 h-4" />
                           </button>
                           <button onClick={() => router.push(`/cases/${h.case_id}`)} title="Open Case"
                             className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
@@ -507,9 +603,9 @@ export default function HearingsPage() {
           </div>
         ) : (
           /* ── CALENDAR VIEW ── */
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Mini Calendar */}
-            <div className="w-80 flex-shrink-0 space-y-5">
+            <div className="w-full lg:w-80 flex-shrink-0 space-y-5">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-4">
                   <button onClick={prevMonth} className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
@@ -560,9 +656,9 @@ export default function HearingsPage() {
                   {!upcomingTasksData?.tasks?.length ? (
                     <div className="p-4 text-center text-sm text-gray-500">No upcoming deadlines</div>
                   ) : upcomingTasksData.tasks.map(task => (
-                    <div key={task.id} onClick={() => router.push(`/cases/${task.case_id}`)}
+                    <div key={task.id} onClick={() => router.push(task.case_id ? `/cases/${task.case_id}` : "/tasks")}
                       className="p-3 hover:bg-gray-50 rounded-xl cursor-pointer border border-transparent hover:border-gray-100 transition-colors">
-                      <div className="text-sm font-bold text-gray-900 truncate">{task.case_title || "Matter"}</div>
+                      <div className="text-sm font-bold text-gray-900 truncate">{task.case_title || "General / Office Task"}</div>
                       <div className="text-xs text-gray-500 mt-0.5 truncate">{task.title}</div>
                     </div>
                   ))}
@@ -614,8 +710,8 @@ export default function HearingsPage() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => setPrepHearing(h)} className="p-1.5 text-gray-400 hover:text-sidebar hover:bg-sidebar/10 rounded-lg transition-colors"><ClipboardCheck className="w-4 h-4" /></button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button onClick={() => setPrepHearingId(h.id)} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-sidebar bg-sidebar/10 hover:bg-sidebar/15 rounded-lg transition-colors"><ClipboardCheck className="w-3.5 h-3.5" /> Prep</button>
                             <button onClick={() => router.push(`/cases/${h.case_id}`)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"><ExternalLink className="w-4 h-4" /></button>
                             <button onClick={() => setEditHearing(h)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
                           </div>
@@ -660,7 +756,7 @@ export default function HearingsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-end">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-              onClick={() => setPrepHearing(null)} />
+              onClick={() => setPrepHearingId(null)} />
             <motion.div
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
@@ -676,7 +772,7 @@ export default function HearingsPage() {
                     <ReadinessBadge status={prepHearing.readiness_status} />
                   </div>
                 </div>
-                <button onClick={() => setPrepHearing(null)} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                <button onClick={() => setPrepHearingId(null)} className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -794,7 +890,7 @@ export default function HearingsPage() {
                 <button onClick={() => setEditHearing(prepHearing)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-sidebar text-white rounded-xl text-sm font-bold hover:bg-sidebar-dark transition-colors">
                   <Pencil className="w-4 h-4" /> Edit Hearing
                 </button>
-                <button onClick={() => setPrepHearing(null)} className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
+                <button onClick={() => setPrepHearingId(null)} className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                   Close
                 </button>
               </div>
@@ -803,5 +899,13 @@ export default function HearingsPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function HearingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <HearingsPageInner />
+    </Suspense>
   );
 }

@@ -6,8 +6,8 @@ echo "==============================================="
 echo " LagalOS DISASTER RECOVERY & BACKUP SIMULATION   "
 echo "==============================================="
 
-DB_PATH="backend/lagalos.db"
-BACKUP_PATH="backend/lagalos_backup_$(date +%s).sql"
+DB_PATH="backend/fastcase.db"
+BACKUP_PATH="backend/fastcase_backup_$(date +%s).sql"
 
 echo "[1/4] Checking current database state..."
 if [ ! -f "$DB_PATH" ]; then

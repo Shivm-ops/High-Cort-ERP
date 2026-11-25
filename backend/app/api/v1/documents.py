@@ -3,6 +3,7 @@ import hashlib
 import time
 import base64
 import os
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Request, Query, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
@@ -14,7 +15,7 @@ from app.core.security import get_current_user
 from app.core.permissions import (
     require_firm_member, check_object_firm, apply_firm_filter
 )
-from app.models.document import Document, DocumentType
+from app.models.document import Document, DocumentType, EvidenceStatus
 from app.models.case import Case
 from app.models.client import Client
 from app.models.user import User
@@ -135,6 +136,7 @@ def _safe_doc_dict(d: Document) -> dict:
         "is_evidence": d.is_evidence,
         "evidence_status": d.evidence_status,
         "exhibit_number": d.exhibit_number,
+        "evidence_date": d.evidence_date.isoformat() if d.evidence_date else None,
         "ocr_processed": d.ocr_processed,
         "case_id": str(d.case_id) if d.case_id else None,
         "case_no": d.case.case_no if d.case else None,
@@ -166,6 +168,7 @@ async def list_documents(
         joinedload(Document.case),
         joinedload(Document.client)
     ).filter(
+        Document.is_deleted == False,
         sql_or(
             Document.case_id.in_(firm_case_ids),
             Document.client_id.in_(firm_client_ids),
@@ -198,6 +201,9 @@ async def upload_document(
     doc_type: str = Form("other"),
     description: Optional[str] = Form(None),
     enable_ocr: bool = Form(True),
+    is_evidence: bool = Form(False),
+    exhibit_number: Optional[str] = Form(None),
+    evidence_status: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
@@ -224,6 +230,15 @@ async def upload_document(
         if case_obj and case_obj.client_id and str(case_obj.client_id) != str(resolved_client_id):
             raise HTTPException(status_code=400, detail="The selected case does not belong to the selected client.")
 
+    resolved_evidence_status = None
+    if evidence_status and evidence_status.strip():
+        try:
+            resolved_evidence_status = EvidenceStatus(evidence_status.strip())
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid evidence_status value")
+    elif is_evidence:
+        resolved_evidence_status = EvidenceStatus.UPLOADED
+
     doc = Document(
         name=file.filename,
         original_filename=file.filename,
@@ -235,6 +250,10 @@ async def upload_document(
         client_id=resolved_client_id,
         uploaded_by_id=current_user.id,
         description=description,
+        is_evidence=is_evidence,
+        exhibit_number=exhibit_number.strip() if exhibit_number and exhibit_number.strip() else None,
+        evidence_status=resolved_evidence_status,
+        evidence_date=datetime.utcnow() if is_evidence else None,
         ocr_text=ocr_text,
         ocr_processed=ocr_text is not None,
         extracted_metadata={} if ocr_text is None else {
@@ -271,7 +290,7 @@ async def get_download_url(
     Firm ownership is verified before URL generation.
     """
     ip = extract_ip(request)
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -358,10 +377,12 @@ async def stream_document(
     if not authed_user:
         raise HTTPException(status_code=401, detail="Authentication required or token expired")
 
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, authed_user, db)
+
+    disp_type = "inline" if disposition == "inline" else "attachment"
 
     from fastapi.responses import FileResponse
     local_path = doc.file_path.replace("local://", "") if doc.file_path else ""
@@ -397,7 +418,6 @@ async def stream_document(
             mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
     import urllib.parse
-    disp_type = "inline" if disposition == "inline" else "attachment"
     encoded_filename = urllib.parse.quote(filename)
     headers = {
         "Content-Disposition": f'{disp_type}; filename="{filename}"; filename*=UTF-8\'\'{encoded_filename}',
@@ -422,7 +442,7 @@ async def get_document_content(
     Extract and return text content from document (via OCR or file text extraction)
     for preview and AI drafting.
     """
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)
@@ -470,6 +490,7 @@ class DocumentUpdateRequest(BaseModel):
     description: Optional[str] = None
     is_evidence: Optional[bool] = None
     exhibit_number: Optional[str] = None
+    evidence_status: Optional[str] = None
     text: Optional[str] = None
 
 
@@ -482,7 +503,7 @@ async def update_document(
     current_user: User = Depends(require_firm_member),
 ):
     ip = extract_ip(request)
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)
@@ -523,8 +544,20 @@ async def update_document(
         doc.description = payload.description
     if payload.is_evidence is not None:
         doc.is_evidence = payload.is_evidence
+        if payload.is_evidence and not doc.evidence_date:
+            doc.evidence_date = datetime.utcnow()
+        if payload.is_evidence and not doc.evidence_status and payload.evidence_status is None:
+            doc.evidence_status = EvidenceStatus.UPLOADED
     if payload.exhibit_number is not None:
-        doc.exhibit_number = payload.exhibit_number
+        doc.exhibit_number = payload.exhibit_number.strip() or None
+    if payload.evidence_status is not None:
+        if not payload.evidence_status.strip():
+            doc.evidence_status = None
+        else:
+            try:
+                doc.evidence_status = EvidenceStatus(payload.evidence_status.strip())
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid evidence_status value")
     if payload.text is not None:
         clean_text = _sanitize_text(payload.text) or ""
         doc.ocr_text = clean_text
@@ -556,7 +589,7 @@ async def get_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)
@@ -571,7 +604,7 @@ async def delete_document(
     current_user: User = Depends(require_firm_member),
 ):
     ip = extract_ip(request)
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)

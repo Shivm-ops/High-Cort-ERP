@@ -2,6 +2,7 @@
 
 from typing import Optional, List, Dict, Any
 import json
+from datetime import datetime
 from app.core.config import settings
 import logging
 
@@ -246,16 +247,19 @@ class AIService:
             logger.warning("OpenAI package not installed")
 
     def _get_client(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
-        if api_key:
+        if api_key and str(api_key).strip():
             try:
                 from openai import AsyncOpenAI
-                kwargs = {"api_key": api_key}
+                kwargs = {"api_key": str(api_key).strip()}
                 if base_url and str(base_url).strip():
                     kwargs["base_url"] = str(base_url).strip()
                 return AsyncOpenAI(**kwargs)
             except Exception as e:
                 logger.error(f"Error initializing custom AsyncOpenAI client: {e}")
         return self.client
+
+    def is_configured(self, api_key: Optional[str] = None) -> bool:
+        return bool((api_key and str(api_key).strip()) or self.client)
 
     async def chat(self, messages: List[Dict], context: Dict = {}, language: str = "en", api_key: Optional[str] = None) -> str:
         client = self._get_client(api_key)
@@ -273,61 +277,248 @@ class AIService:
         )
         return response.choices[0].message.content
 
-    async def generate_draft(self, draft_type: str, language: str, context: Dict, prompt: str, api_key: Optional[str] = None) -> str:
-        client = self._get_client(api_key)
-        if not client:
-            # Map frontend types case-insensitively and support partial match overrides
-            dt_key = draft_type.lower().strip()
-            if "complaint" in dt_key:
-                dt_key = "complaint"
-            elif "reply" in dt_key:
-                dt_key = "reply"
-            elif "statement" in dt_key:
-                dt_key = "written_statement"
-            elif "affidavit" in dt_key:
-                dt_key = "affidavit"
-            elif "appeal" in dt_key:
-                dt_key = "appeal"
-            elif "agreement" in dt_key:
-                dt_key = "agreement"
-            elif "petition" in dt_key:
-                dt_key = "petition"
-            elif "notice" in dt_key:
-                dt_key = "notice"
-            elif "bail" in dt_key:
-                dt_key = "bail"
-            else:
-                dt_key = "other"
-
-            template = DRAFT_TEMPLATES.get(dt_key, DRAFT_TEMPLATES["other"])
-            return template.format(**{k: context.get(k, f"[{k.upper()}]") for k in ["court", "year", "petitioner_name", "state", "case_details", "recipient_name", "recipient_address", "subject", "client_name", "notice_body", "action_required", "days", "advocate_name", "bar_no"]}, **context)
-
+    def _build_draft_messages(self, draft_type: str, language: str, context: Dict, prompt: str) -> List[Dict[str, str]]:
         lang_instruction = f"Draft in {self._lang_name(language)}." if language != "en" else ""
         system = f"{SYSTEM_PROMPT.format(language=self._lang_name(language))}\n\nYou are drafting legal documents for Indian courts. {lang_instruction} Follow standard Indian legal format."
-
-        messages = [
+        return [
             {"role": "system", "content": system},
-            {"role": "user", "content": f"Draft a {draft_type} with the following details:\n\n{prompt}\n\nContext: {context}"},
+            {"role": "user", "content": f"Draft a {draft_type} with the following details:\n\n{prompt}\n\nContext: {json.dumps(context, default=str)}"},
         ]
 
+    def _format_fallback_draft(self, draft_type: str, context: Dict, prompt: str) -> str:
+        dt_key = (draft_type or "").lower().strip()
+        if "complaint" in dt_key:
+            dt_key = "complaint"
+        elif "reply" in dt_key:
+            dt_key = "reply"
+        elif "statement" in dt_key:
+            dt_key = "written_statement"
+        elif "affidavit" in dt_key:
+            dt_key = "affidavit"
+        elif "appeal" in dt_key:
+            dt_key = "appeal"
+        elif "agreement" in dt_key or "contract" in dt_key:
+            dt_key = "agreement"
+        elif "petition" in dt_key:
+            dt_key = "petition"
+        elif "notice" in dt_key:
+            dt_key = "notice"
+        elif "bail" in dt_key:
+            dt_key = "bail"
+        else:
+            dt_key = "other"
+
+        ctx = context or {}
+        facts_text = (prompt or "").strip() or ctx.get("case_details") or "[CASE FACTS & DETAILS]"
+        fmt_vars = {
+            "year": str(ctx.get("year") or datetime.now().year),
+            "court": ctx.get("court") or "[COURT NAME]",
+            "state": ctx.get("state") or "Maharashtra",
+            "client_name": ctx.get("client_name") or ctx.get("client") or "[CLIENT NAME]",
+            "petitioner_name": ctx.get("petitioner") or ctx.get("client_name") or ctx.get("client") or "[PETITIONER NAME]",
+            "recipient_name": ctx.get("opponent") or ctx.get("respondent") or ctx.get("recipient_name") or "[OPPONENT / RESPONDENT]",
+            "recipient_address": ctx.get("recipient_address") or ctx.get("client_address") or "[ADDRESS]",
+            "subject": ctx.get("subject") or draft_type or "Legal Matter",
+            "case_details": facts_text,
+            "notice_body": (prompt or "").strip() or ctx.get("notice_body") or "[DETAILS OF NOTICE]",
+            "action_required": ctx.get("action_required") or "comply with the legal demand",
+            "days": str(ctx.get("days") or 15),
+            "advocate_name": ctx.get("advocate_name") or "[ADVOCATE NAME]",
+            "bar_no": ctx.get("bar_no") or "[BAR COUNCIL NO]",
+        }
+        template = DRAFT_TEMPLATES.get(dt_key, DRAFT_TEMPLATES["other"])
+        return template.format(**fmt_vars)
+
+    async def generate_draft(
+        self,
+        draft_type: str,
+        language: str,
+        context: Dict,
+        prompt: str,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> str:
+        client = self._get_client(api_key, base_url)
+        if not client:
+            return self._format_fallback_draft(draft_type, context, prompt)
+
+        active_model = model or settings.OPENAI_MODEL
+        messages = self._build_draft_messages(draft_type, language, context, prompt)
+
         response = await client.chat.completions.create(
-            model=settings.OPENAI_MODEL,
+            model=active_model,
             messages=messages,
             max_tokens=3000,
             temperature=0.2,
         )
         return response.choices[0].message.content
 
-    async def legal_research(self, query: str, language: str = "en", include_acts: bool = True, include_case_laws: bool = True, api_key: Optional[str] = None) -> Dict:
+    async def generate_draft_stream(
+        self,
+        draft_type: str,
+        prompt: str,
+        context: Dict,
+        language: str = "en",
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ):
+        client = self._get_client(api_key, base_url)
+        if not client:
+            yield self._format_fallback_draft(draft_type, context, prompt)
+            return
+
+        active_model = model or settings.OPENAI_MODEL
+        messages = self._build_draft_messages(draft_type, language, context, prompt)
+
+        stream = await client.chat.completions.create(
+            model=active_model,
+            messages=messages,
+            max_tokens=3000,
+            temperature=0.2,
+            stream=True,
+        )
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield delta
+
+    async def enhance_draft(
+        self,
+        content: str,
+        action: str,
+        instructions: Optional[str] = None,
+        language: str = "en",
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> str:
+        client = self._get_client(api_key, base_url)
+        if not client:
+            raise ValueError("AI_NOT_CONFIGURED")
+
+        action_instructions = {
+            "improve_legal_language": "Improve the formal Indian legal drafting terminology, clarity, and structure while preserving all facts, dates, party names, and relief sought.",
+            "rewrite_professionally": "Rewrite this legal document into polished, court-ready Indian legal prose preserving all facts and party details.",
+            "expand_arguments": "Expand and strengthen the legal arguments and grounds clearly and persuasively while keeping existing facts intact.",
+            "add_grounds": "Add structured legal grounds relevant to the factual matrix in this draft while preserving the existing pleading.",
+            "add_prayer": "Draft or strengthen a formal, itemized PRAYER clause appropriate for an Indian court filing based on the facts in this document, and return the complete updated draft.",
+            "suggest_acts": "Incorporate relevant Indian statutory provisions and sections applicable to this draft accurately and return the complete updated draft.",
+            "court_formatting": "Format this draft cleanly in standard Indian court pleading layout (cause title, paragraphs numbered sequentially, prayer, verification/signature block) without losing any content.",
+            "custom": instructions or "Refine and improve this legal draft per the advocate's instructions.",
+        }
+        task_instruction = action_instructions.get(action, instructions or "Refine and improve this legal draft.")
+        if instructions and action != "custom":
+            task_instruction = f"{task_instruction}\nAdditional advocate instructions: {instructions}"
+
+        active_model = model or settings.OPENAI_MODEL
+        lang_name = self._lang_name(language)
+        messages = [
+            {
+                "role": "system",
+                "content": f"{SYSTEM_PROMPT.format(language=lang_name)}\n\nReturn ONLY the complete updated draft text without conversational preamble or markdown fences.",
+            },
+            {
+                "role": "user",
+                "content": f"Task: {task_instruction}\n\nDocument:\n{content}",
+            },
+        ]
+        response = await client.chat.completions.create(
+            model=active_model,
+            messages=messages,
+            max_tokens=3000,
+            temperature=0.2,
+        )
+        return response.choices[0].message.content
+
+    async def translate_legal(
+        self,
+        text: str,
+        source_lang: str,
+        target_lang: str,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> str:
+        client = self._get_client(api_key, base_url)
+        if not client:
+            raise ValueError("AI_NOT_CONFIGURED")
+
+        active_model = model or settings.OPENAI_MODEL
+        messages = [
+            {
+                "role": "system",
+                "content": f"You are a professional Indian legal translator. Translate accurately from {self._lang_name(source_lang)} to {self._lang_name(target_lang)}, preserving statutory terms, court format, party names, and formal legal register. Return only the translated document.",
+            },
+            {"role": "user", "content": text},
+        ]
+        response = await client.chat.completions.create(
+            model=active_model,
+            messages=messages,
+            max_tokens=3000,
+            temperature=0.1,
+        )
+        return response.choices[0].message.content
+
+    async def generate_reply_strategy(
+        self,
+        notice_text: str,
+        key_defences: List[str],
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        client = self._get_client(api_key, base_url)
+        if not client:
+            raise ValueError("AI_NOT_CONFIGURED")
+
+        active_model = model or settings.OPENAI_MODEL
+        defences_str = ", ".join(key_defences) if key_defences else "None specified"
+        messages = [
+            {
+                "role": "system",
+                "content": 'You are an expert Indian litigation strategist. Return valid JSON ONLY matching: {"summary": "string", "rebuttal_points": ["string"], "recommended_actions": ["string"]}.',
+            },
+            {
+                "role": "user",
+                "content": f"Key defences requested: {defences_str}\n\nNotice text:\n{notice_text[:8000]}",
+            },
+        ]
+        response = await client.chat.completions.create(
+            model=active_model,
+            messages=messages,
+            max_tokens=1500,
+            temperature=0.2,
+            response_format={"type": "json_object"},
+        )
+        return json.loads(response.choices[0].message.content)
+
+    async def legal_research(
+        self,
+        query: str,
+        language: str = "en",
+        include_acts: bool = True,
+        include_case_laws: bool = True,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> Dict:
         """RAG-based legal research."""
-        results = {
+        configured = self.is_configured(api_key)
+        ai_analysis = ""
+        if configured:
+            ai_analysis = await self._generate_research_analysis(
+                query, language, api_key=api_key, base_url=base_url, model=model
+            )
+        return {
             "query": query,
-            "ai_analysis": await self._generate_research_analysis(query, language, api_key=api_key),
+            "ai_powered": configured,
+            "ai_analysis": ai_analysis,
             "case_laws": [],
             "sections": [],
             "summary": "",
         }
-        return results
 
     async def summarize(self, text: str, doc_type: str = "general", language: str = "en", api_key: Optional[str] = None) -> str:
         client = self._get_client(api_key)
@@ -465,29 +656,45 @@ Return the output ONLY as a valid JSON object matching this schema exactly:
         }
         return suggestions.get(draft_type, ["Standard clause 1", "Standard clause 2", "Standard clause 3"])
 
-    async def _generate_research_analysis(self, query: str, language: str, api_key: Optional[str] = None) -> str:
-        client = self._get_client(api_key)
+    async def _generate_research_analysis(
+        self,
+        query: str,
+        language: str,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> str:
+        client = self._get_client(api_key, base_url)
         if not client:
-            return f"Based on your research query '{query}', here is the AI analysis of applicable Indian law..."
+            return ""
 
+        active_model = model or settings.OPENAI_MODEL
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT.format(language=self._lang_name(language))},
             {"role": "user", "content": f"Provide a comprehensive legal analysis for: {query}. Include applicable sections, key precedents, and practical guidance."},
         ]
-        response = await client.chat.completions.create(model=settings.OPENAI_MODEL, messages=messages, max_tokens=1500, temperature=0.2)
+        response = await client.chat.completions.create(model=active_model, messages=messages, max_tokens=1500, temperature=0.2)
         return response.choices[0].message.content
 
-    async def get_case_suggestions(self, case_info: str, api_key: Optional[str] = None) -> Dict[str, List[str]]:
+    async def get_case_suggestions(
+        self,
+        case_info: str,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Generate legal research suggestions based on case context."""
-        client = self._get_client(api_key)
+        client = self._get_client(api_key, base_url)
         if not client:
             return {
-                "sections": ["Section 439 CrPC", "Section 37 NDPS Act"],
-                "judgments": ["Sanjay Chandra v. CBI (2012)", "Arnesh Kumar v. State of Bihar (2014)"],
-                "arguments": ["Absence of prima facie case", "Applicant is not a flight risk"],
-                "drafts": ["Bail Application", "Application for exemption from personal appearance"]
+                "ai_powered": False,
+                "sections": [],
+                "judgments": [],
+                "arguments": [],
+                "drafts": [],
             }
 
+        active_model = model or settings.OPENAI_MODEL
         system_prompt = """You are an expert Indian Legal AI Researcher.
 Based on the following case context, generate highly relevant and specific legal research suggestions.
 Return the output ONLY as a valid JSON object matching this schema exactly:
@@ -501,23 +708,26 @@ Return the output ONLY as a valid JSON object matching this schema exactly:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"Case Context:\n\n{case_info}"}
         ]
-        
+
         try:
             response = await client.chat.completions.create(
-                model=settings.OPENAI_MODEL,
+                model=active_model,
                 messages=messages,
                 max_tokens=1000,
                 temperature=0.2,
-                response_format={ "type": "json_object" }
+                response_format={"type": "json_object"}
             )
-            return json.loads(response.choices[0].message.content)
+            parsed = json.loads(response.choices[0].message.content)
+            parsed["ai_powered"] = True
+            return parsed
         except Exception as e:
             logger.error(f"Error generating case suggestions: {e}")
             return {
-                "sections": ["Relevant Section from Acts"],
-                "judgments": ["Leading Apex Court Judgment"],
-                "arguments": ["Key legal ground for relief"],
-                "drafts": ["Standard Application/Petition"]
+                "ai_powered": False,
+                "sections": [],
+                "judgments": [],
+                "arguments": [],
+                "drafts": [],
             }
 
     def _lang_name(self, code: str) -> str:

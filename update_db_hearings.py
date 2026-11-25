@@ -1,7 +1,9 @@
 import sqlite3
+import os
 
 def add_columns():
-    conn = sqlite3.connect("backend/lagalos.db")
+    db_path = "backend/fastcase.db" if os.path.exists("backend/fastcase.db") else "backend/lagalos.db"
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     try:

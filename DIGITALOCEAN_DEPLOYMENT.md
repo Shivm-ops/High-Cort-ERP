@@ -126,7 +126,7 @@ docker compose -f docker-compose.vps.yml exec backend python seed.py
 
 ### Default Credentials (Seed Data):
 - **Email**: `admin@yourdomain.com` (or `admin@fastcase.in`)
-- **Password**: `lagalos@2025`
+- **Password**: `Fastcase@2026!`
 > ⚠️ **Important:** Change passwords immediately upon initial login.
 
 ---

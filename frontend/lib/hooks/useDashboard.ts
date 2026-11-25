@@ -56,12 +56,13 @@ export interface DashboardMetrics {
     title: string;
     date: string | null;
     id: string;
+    href?: string;
   }>;
 }
 
 export function useDashboardMetrics() {
   return useQuery({
-    queryKey: ["dashboard_metrics"],
+    queryKey: ["dashboard", "metrics"],
     queryFn: async () => {
       const { data } = await api.get<DashboardMetrics>("/dashboard/metrics");
       return data;

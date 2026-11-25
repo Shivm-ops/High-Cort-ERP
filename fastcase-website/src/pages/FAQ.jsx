@@ -8,11 +8,11 @@ const faqs = [
     questions: [
       {
         q: 'What is Fastcase?',
-        a: 'Fastcase is a comprehensive Advocate Practice Management Software developed by SOSM Services Private Limited. It is a cloud-based platform designed to automate and streamline every aspect of legal practice management for Indian advocates, law firms, legal consultants, and corporate legal departments.',
+        a: 'Fastcase is a legal technology platform developed by SOSM Services Private Limited. It has two products: the Advocate ERP, a practice management system for advocates and law firms, and the Consumer Portal, which helps citizens understand their legal rights and prepare complaints and applications.',
       },
       {
         q: 'Who can use Fastcase?',
-        a: 'Fastcase is designed for individual advocates, law firms of all sizes, legal consultants, litigation teams, and corporate legal departments. Whether you are a solo practitioner in a district court or a senior partner at a major law firm, Fastcase has the tools for you.',
+        a: 'The Advocate ERP is for individual advocates, chambers, law firms and legal teams. The Consumer Portal is for any individual facing an everyday legal problem — such as online fraud, a police complaint, unpaid salary or a defective product.',
       },
       {
         q: 'Is Fastcase a legal advice platform?',
@@ -41,15 +41,19 @@ const faqs = [
       },
       {
         q: 'How does the WhatsApp notification feature work?',
-        a: 'Fastcase sends automated WhatsApp notifications for hearing reminders, invoice alerts, compliance deadlines, and case updates. This feature requires WhatsApp Business API integration. Notifications can be sent to advocates, team members, and clients based on configurable rules.',
+        a: 'WhatsApp notifications require a WhatsApp Business API integration to be configured for your firm. Please contact us to check availability for your account.',
       },
       {
         q: 'Can my clients access their case information?',
-        a: 'Yes. Fastcase includes a Client Portal where clients can view their case status, upcoming hearings, documents, invoices, and upload supporting documents. This reduces the number of status calls you receive and improves client satisfaction.',
+        a: 'Yes. Fastcase includes a Client Portal where your clients can sign in to view their case status, upcoming hearings and shared documents.',
       },
       {
-        q: 'Does Fastcase support billing and invoicing?',
-        a: 'Yes. Fastcase includes a complete Billing & Invoice Management module that generates professional GST-compliant invoices, tracks payments, manages outstanding amounts, and generates revenue reports. Invoice alerts can be sent via WhatsApp.',
+        q: 'What does the Consumer Portal do?',
+        a: 'You describe your problem or choose one of 13 categories. The portal explains your rights, time limits, where to go and which documents to carry — free. After signing in you can generate a formal complaint or application addressed to the correct authority and download it as an A4 PDF for ₹30.',
+      },
+      {
+        q: 'In which language are Consumer Portal documents prepared?',
+        a: 'Consumer Portal guidance and documents are currently prepared in Marathi, following Maharashtra practice.',
       },
     ],
   },
@@ -78,12 +82,12 @@ const faqs = [
     category: 'Billing & Plans',
     questions: [
       {
-        q: 'Is there a free trial?',
-        a: 'Yes, Fastcase offers a free trial period for new users. No credit card is required to start the trial. Contact us to begin your free trial and explore all features of the platform.',
+        q: 'How much does the Consumer Portal cost?',
+        a: 'Reading the legal guidance is free. Each generated document costs ₹30, payable by UPI.',
       },
       {
         q: 'What subscription plans are available?',
-        a: 'Fastcase offers monthly and annual subscription plans for individual advocates, small firms, and large teams. Annual plans offer a significant discount over monthly billing. Contact our sales team for current pricing information tailored to your practice size.',
+        a: 'Advocate ERP plans depend on the number of users and modules your practice needs. Contact us for current pricing for your chamber.',
       },
       {
         q: 'Can I get a refund if I am not satisfied?',

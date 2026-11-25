@@ -1,11 +1,65 @@
-import React, { useState } from "react";
-import { Palette, Type, Layout, Image as ImageIcon, Monitor, CheckCircle2, SlidersHorizontal, ChevronRight, FileImage } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Palette, Type, Image as ImageIcon, Monitor, CheckCircle2, SlidersHorizontal, ChevronRight, FileImage, Save, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/api";
+import { useFirmSettings, useUpdateFirmSettings } from "@/lib/hooks/useSettings";
 
 import { PREDEFINED_THEMES, useThemeStore } from "@/lib/store/themeStore";
 
+const BRANDING_SLOTS = [
+  { key: "dashboard_logo", label: "Dashboard Logo" },
+  { key: "login_branding", label: "Login Branding" },
+  { key: "invoice_accent", label: "Invoice Accent" },
+  { key: "portal_banner", label: "Portal Banner" },
+] as const;
+
+type BrandingKey = (typeof BRANDING_SLOTS)[number]["key"];
+
 export default function ThemeSettings() {
   const { activeThemeId, customColors, typography, setActiveThemeId, setCustomColors, setTypography } = useThemeStore();
+  const { data: settings } = useFirmSettings();
+  const updateSettings = useUpdateFirmSettings();
+  const [brandingAssets, setBrandingAssets] = useState<Record<BrandingKey, string>>({
+    dashboard_logo: "",
+    login_branding: "",
+    invoice_accent: "",
+    portal_banner: "",
+  });
+
+  useEffect(() => {
+    if (!settings?.branding_assets) return;
+    setBrandingAssets({
+      dashboard_logo: settings.branding_assets.dashboard_logo || "",
+      login_branding: settings.branding_assets.login_branding || "",
+      invoice_accent: settings.branding_assets.invoice_accent || "",
+      portal_banner: settings.branding_assets.portal_banner || "",
+    });
+  }, [settings]);
+
+  const handleAssetUpload = (e: React.ChangeEvent<HTMLInputElement>, key: BrandingKey) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Branding image must be under 2 MB.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) =>
+      setBrandingAssets((prev) => ({ ...prev, [key]: (ev.target?.result as string) || "" }));
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleSaveBranding = async () => {
+    try {
+      await updateSettings.mutateAsync({ branding_assets: brandingAssets });
+      toast.success("Branding assets saved successfully!");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
 
   const currentThemeObj = activeThemeId === "custom" ? { primary: customColors.primary, accent: customColors.accent, isLight: false } : PREDEFINED_THEMES.find(t => t.id === activeThemeId) || PREDEFINED_THEMES[0];
   const isLightPrimary = currentThemeObj.primary === "#FFFFFF";
@@ -151,13 +205,49 @@ export default function ThemeSettings() {
 
           {/* Branding Assets */}
           <div>
-            <h3 className="text-[13px] font-semibold text-charcoal mb-4 flex items-center gap-1.5"><ImageIcon className="w-4 h-4" /> Branding Assets</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[13px] font-semibold text-charcoal flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4" /> Branding Assets
+              </h3>
+              <button
+                type="button"
+                onClick={handleSaveBranding}
+                disabled={updateSettings.isPending}
+                className="h-8 px-3.5 rounded-xl bg-[#013B36] text-white text-[11.5px] font-semibold flex items-center gap-1.5 hover:bg-[#014D46] transition-colors disabled:opacity-60"
+              >
+                {updateSettings.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                Save Branding Assets
+              </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['Dashboard Logo', 'Login Branding', 'Invoice Accent', 'Portal Banner'].map(label => (
-                <div key={label} className="border border-dashed border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer h-24 relative overflow-hidden">
-                  <FileImage className="w-5 h-5 text-gray-300 mb-1" />
-                  <span className="text-[10px] font-semibold text-gray-600">{label}</span>
-                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+              {BRANDING_SLOTS.map((slot) => (
+                <div key={slot.key} className="border border-dashed border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors cursor-pointer h-24 relative overflow-hidden">
+                  {brandingAssets[slot.key] ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <img src={brandingAssets[slot.key]} alt={slot.label} className="max-h-12 object-contain" />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBrandingAssets((prev) => ({ ...prev, [slot.key]: "" }));
+                        }}
+                        className="text-[10px] font-bold text-red-600 hover:underline inline-flex items-center gap-0.5"
+                      >
+                        <Trash2 className="w-2.5 h-2.5" /> Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <FileImage className="w-5 h-5 text-gray-300 mb-1" />
+                      <span className="text-[10px] font-semibold text-gray-600">{slot.label}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleAssetUpload(e, slot.key)}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                    </>
+                  )}
                 </div>
               ))}
             </div>

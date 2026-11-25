@@ -14,7 +14,13 @@ export interface AuthUser {
   full_name: string;
   role: string;
   phone?: string;
+  address?: string;
   bar_council_no?: string;
+  avatar_url?: string | null;
+  signature_url?: string | null;
+  seal_url?: string | null;
+  preferred_language?: string;
+  preferences?: Record<string, any>;
   subscription?: SubscriptionInfo;
   is_superadmin?: boolean;
   firm_id?: string | null;

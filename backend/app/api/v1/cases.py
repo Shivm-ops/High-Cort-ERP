@@ -291,6 +291,12 @@ async def list_cases(
                 Case.title.ilike(f"%{search}%"),
                 Case.case_no.ilike(f"%{search}%"),
                 Client.name.ilike(f"%{search}%"),
+                Case.ecourts_cnr.ilike(f"%{search}%"),
+                Case.court.ilike(f"%{search}%"),
+                Case.petitioner.ilike(f"%{search}%"),
+                Case.respondent.ilike(f"%{search}%"),
+                Case.judge.ilike(f"%{search}%"),
+                Case.opposing_counsel.ilike(f"%{search}%"),
             )
         )
     total = query.count()
@@ -452,18 +458,26 @@ async def sync_with_ecourts(
     if not case.ecourts_cnr:
         raise HTTPException(status_code=400, detail="Cannot sync: No CNR number provided for this case.")
 
-    # Call mock e-Courts service
-    sync_data = await ECourtsSyncService.sync_case(case.ecourts_cnr)
+    # Call guarded e-Courts service
+    sync_data = await ECourtsSyncService.sync_case(
+        cnr_number=case.ecourts_cnr,
+        existing_hearing_date=case.next_hearing_date,
+        existing_status=case.status,
+    )
     
-    # Update case with fetched data
-    case.status = sync_data["status"]
-    if sync_data["next_hearing_date"]:
-        case.next_hearing_date = datetime.fromisoformat(sync_data["next_hearing_date"]).date()
+    # Only update hearing date if live sync returned data
+    if sync_data.get("is_live"):
+        case.status = sync_data["status"]
+        if sync_data["next_hearing_date"]:
+            case.next_hearing_date = datetime.fromisoformat(sync_data["next_hearing_date"]).date()
+    
     case.last_sync_date = datetime.utcnow()
     case.updated_at = datetime.utcnow()
     
     db.commit()
-    return serialize_case(case)
+    result = serialize_case(case)
+    result["sync_meta"] = sync_data
+    return result
 
 
 @router.get("/{case_id}/timeline")

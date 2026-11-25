@@ -1643,7 +1643,7 @@ async def ai_draft_improve(
     model_name = settings.OPENAI_MODEL or "gpt-4o-mini"
 
     if current_user and current_user.firm:
-        if current_user.firm.ai_provider == "openai" and current_user.firm.ai_api_key:
+        if current_user.firm.ai_api_key:
             api_key = current_user.firm.ai_api_key
             if current_user.firm.ai_api_base:
                 api_base = current_user.firm.ai_api_base

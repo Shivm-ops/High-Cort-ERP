@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Enum, DateTime, Text
+from sqlalchemy import Column, String, Boolean, Enum, DateTime, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -30,6 +30,8 @@ class Firm(Base):
     website = Column(String(255))
     subdomain = Column(String(100), unique=True, index=True, nullable=True)
     custom_domain = Column(String(255), unique=True, index=True, nullable=True)
+    logo_url = Column(Text, nullable=True)
+    settings_json = Column(JSON, nullable=True, default=dict)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

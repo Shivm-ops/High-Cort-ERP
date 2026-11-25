@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,9 +17,12 @@ import {
   Sparkles,
   LogOut,
   User,
+  Users,
+  Briefcase,
   Settings,
   Menu
 } from "lucide-react";
+import { api } from "@/lib/api";
 import { cn, formatDate, getInitials } from "@/lib/utils";
 import Modal from "@/components/ui/Modal";
 import { useAuthStore } from "@/lib/store/authStore";
@@ -28,6 +31,7 @@ import { useThemeStore, PREDEFINED_THEMES } from "@/lib/store/themeStore";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { useSidebarStore } from "@/lib/store/sidebarStore";
+import { useTodayHearings } from "@/lib/hooks/useHearings";
 
 interface Notification {
   id: string;
@@ -48,11 +52,14 @@ const NOTIFICATION_ICONS = {
   document: { icon: FileText, color: "#6EE7B7", bg: "rgba(110, 231, 183, 0.1)" },
 };
 
-const TODAY_HEARINGS = [
-  { case: "Sharma vs State", court: "Bombay HC", time: "10:30 AM" },
-  { case: "Patel Industries vs CGST", court: "CESTAT", time: "2:00 PM" },
-  { case: "Mehta vs Mehta", court: "Family Court", time: "3:30 PM" },
-];
+function formatTime12h(t?: string) {
+  if (!t) return "Scheduled";
+  const [hStr, mStr] = t.split(":");
+  const hr = parseInt(hStr, 10);
+  if (Number.isNaN(hr)) return t;
+  const hr12 = hr === 0 ? 12 : hr > 12 ? hr - 12 : hr;
+  return `${hr12}:${mStr || "00"} ${hr >= 12 ? "PM" : "AM"}`;
+}
 
 interface HeaderProps {
   title?: string;
@@ -64,10 +71,56 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { data: todayHearingsData } = useTodayHearings();
+  const todayHearings = todayHearingsData?.hearings || [];
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHearings, setShowHearings] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ clients: any[]; cases: any[] }>({ clients: [], cases: [] });
+  const [isSearching, setIsSearching] = useState(false);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
   const [showNewClientModal, setShowNewClientModal] = useState(false);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchResults({ clients: [], cases: [] });
+      setIsSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const [clientsRes, casesRes] = await Promise.allSettled([
+          api.get("/clients/", { params: { search: q, limit: 5 } }),
+          api.get("/cases/", { params: { search: q, limit: 5 } }),
+        ]);
+        if (cancelled) return;
+        setSearchResults({
+          clients: clientsRes.status === "fulfilled" ? (clientsRes.value.data?.clients || []) : [],
+          cases: casesRes.status === "fulfilled" ? (casesRes.value.data?.cases || []) : [],
+        });
+      } finally {
+        if (!cancelled) setIsSearching(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // Mobile sidebar trigger
@@ -114,10 +167,10 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {rightContent}
 
-        {/* AI Search */}
-        <div className="relative hidden md:block">
+        {/* Global Search */}
+        <div ref={searchBoxRef} className="relative hidden md:block">
           <motion.div
-            animate={{ width: searchFocused ? 260 : 180 }}
+            animate={{ width: searchFocused ? 280 : 190 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="relative"
           >
@@ -127,22 +180,108 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
             />
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("common.searchPlaceholder")}
               onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearchFocused(false);
+                } else if (e.key === "Enter") {
+                  if (searchResults.cases[0]) {
+                    setSearchFocused(false);
+                    setSearchQuery("");
+                    router.push(`/cases/${searchResults.cases[0].id}`);
+                  } else if (searchResults.clients[0]) {
+                    setSearchFocused(false);
+                    setSearchQuery("");
+                    router.push(`/clients/${searchResults.clients[0].id}`);
+                  }
+                }
+              }}
               className={cn(
-                "w-full h-9 pl-9 pr-9 rounded-xl text-[13px] bg-gray-50 border transition-all duration-200",
+                "w-full h-9 pl-9 pr-8 rounded-xl text-[13px] bg-gray-50 border transition-all duration-200",
                 "placeholder:text-muted text-charcoal focus:outline-none",
                 searchFocused
                   ? "border-mint/50 bg-white shadow-[0_0_0_3px_rgba(110,231,183,0.12)]"
                   : "border-gray-100 hover:border-gray-200"
               )}
             />
-            <Sparkles
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 transition-colors"
-              style={{ color: searchFocused ? "var(--color-accent)" : "#9CA3AF" }}
-            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => { setSearchQuery(""); setSearchResults({ clients: [], cases: [] }); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <Sparkles
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 transition-colors pointer-events-none"
+                style={{ color: searchFocused ? "var(--color-accent)" : "#9CA3AF" }}
+              />
+            )}
           </motion.div>
+
+          {searchFocused && searchQuery.trim().length >= 2 && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-gray-200 shadow-xl z-50 overflow-hidden">
+              {isSearching ? (
+                <div className="px-4 py-4 text-xs text-gray-500">Searching clients & cases...</div>
+              ) : searchResults.clients.length === 0 && searchResults.cases.length === 0 ? (
+                <div className="px-4 py-4 text-xs text-gray-500">No matching clients or cases found.</div>
+              ) : (
+                <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                  {searchResults.clients.length > 0 && (
+                    <div className="p-2">
+                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Clients</div>
+                      {searchResults.clients.map((cl) => (
+                        <button
+                          key={cl.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchFocused(false);
+                            setSearchQuery("");
+                            router.push(`/clients/${cl.id}`);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-gray-50 text-left transition-colors"
+                        >
+                          <Users className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-900 truncate">{cl.name}</div>
+                            <div className="text-[11px] text-gray-400 truncate">{[cl.phone, cl.city].filter(Boolean).join(" · ") || cl.type}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.cases.length > 0 && (
+                    <div className="p-2">
+                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Cases</div>
+                      {searchResults.cases.map((ca) => (
+                        <button
+                          key={ca.id}
+                          type="button"
+                          onClick={() => {
+                            setSearchFocused(false);
+                            setSearchQuery("");
+                            router.push(`/cases/${ca.id}`);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-gray-50 text-left transition-colors"
+                        >
+                          <Briefcase className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-900 truncate">{ca.title}</div>
+                            <div className="text-[11px] text-gray-400 truncate">{ca.case_no}{ca.client_name ? ` · ${ca.client_name}` : ""}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Today's hearings */}
@@ -168,7 +307,7 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
                 color: "#2563EB",
               }}
             >
-              {TODAY_HEARINGS.length}
+              {todayHearings.length}
             </span>
           </button>
 
@@ -183,26 +322,48 @@ export default function Header({ title, subtitle, rightContent }: HeaderProps) {
               >
                 <div className="p-3 border-b border-gray-50">
                   <div className="flex items-center justify-between">
-                    <span className="text-[13px] font-semibold text-charcoal">Today's Hearings</span>
+                    <span className="text-[13px] font-semibold text-charcoal">Today&apos;s Hearings</span>
                     <span className="text-[11px] text-muted">{new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</span>
                   </div>
                 </div>
-                <div className="p-2">
-                  {TODAY_HEARINGS.map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                        <Clock className="w-3.5 h-3.5 text-blue-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-medium text-charcoal truncate">{h.case}</div>
-                        <div className="text-[11px] text-muted">{h.court}</div>
-                      </div>
-                      <span className="text-[11px] font-semibold text-blue-600 whitespace-nowrap">{h.time}</span>
+                <div className="p-2 max-h-64 overflow-y-auto">
+                  {todayHearings.length === 0 ? (
+                    <div className="px-3 py-5 text-center text-xs text-muted">
+                      No hearings scheduled for today.
                     </div>
-                  ))}
+                  ) : (
+                    todayHearings.map((h) => (
+                      <div
+                        key={h.id}
+                        onClick={() => {
+                          setShowHearings(false);
+                          router.push(`/cases/${h.case_id}`);
+                        }}
+                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                          <Clock className="w-3.5 h-3.5 text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-medium text-charcoal truncate">{h.case_title || h.case_no || "Matter"}</div>
+                          <div className="text-[11px] text-muted truncate">{h.court || "Court"}</div>
+                        </div>
+                        <span className="text-[11px] font-semibold text-blue-600 whitespace-nowrap">{formatTime12h(h.hearing_time)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="p-2 border-t border-gray-50 bg-gray-50/50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowHearings(false);
+                      router.push("/hearings?tab=Today");
+                    }}
+                    className="w-full py-1.5 text-center text-xs font-semibold text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50/60 transition-colors"
+                  >
+                    Open Hearings &amp; Calendar →
+                  </button>
                 </div>
               </motion.div>
             )}

@@ -26,7 +26,8 @@ router = APIRouter()
 def serialize_user_brief(u: User) -> dict:
     if not u:
         return {}
-    return {"id": str(u.id), "full_name": u.full_name, "email": u.email, "role": u.role, "phone": u.phone}
+    role_val = u.user_type.value if hasattr(u.user_type, "value") else (str(u.user_type) if u.user_type else "")
+    return {"id": str(u.id), "full_name": u.full_name, "email": u.email, "role": role_val, "phone": u.phone}
 
 
 def serialize_advocate(a: CaseAdvocate) -> dict:
@@ -47,19 +48,25 @@ def serialize_advocate(a: CaseAdvocate) -> dict:
 
 
 def serialize_task(t: CaseTask) -> dict:
+    task_type_val = t.task_type.value if hasattr(t.task_type, "value") else str(t.task_type)
+    status_val = t.status.value if hasattr(t.status, "value") else str(t.status)
     return {
         "id": str(t.id),
-        "case_id": str(t.case_id),
+        "firm_id": str(t.firm_id) if getattr(t, "firm_id", None) else None,
+        "case_id": str(t.case_id) if t.case_id else None,
         "title": t.title,
         "description": t.description,
-        "task_type": t.task_type,
-        "status": t.status,
+        "task_type": task_type_val,
+        "status": status_val,
         "priority": t.priority,
         "assignee_id": str(t.assignee_id) if t.assignee_id else None,
         "assignee": serialize_user_brief(t.assignee) if t.assignee else None,
+        "assigned_by_id": str(t.assigned_by_id) if t.assigned_by_id else None,
         "assigned_by": serialize_user_brief(t.assigned_by) if t.assigned_by else None,
         "deadline": t.deadline.isoformat() if t.deadline else None,
         "completed_at": t.completed_at.isoformat() if t.completed_at else None,
+        "estimated_minutes": getattr(t, "estimated_minutes", 0) or 0,
+        "actual_minutes": getattr(t, "actual_minutes", 0) or 0,
         "notes": t.notes,
         "created_at": t.created_at.isoformat() if t.created_at else None,
         "updated_at": t.updated_at.isoformat() if t.updated_at else None,
@@ -247,6 +254,16 @@ async def update_role(
 
 # ── Task Endpoints ────────────────────────────────────────────────────────────
 
+def _get_firm_case_or_404(db: Session, case_id: uuid.UUID, current_user: User) -> Case:
+    q = db.query(Case).filter(Case.id == case_id, Case.is_deleted == False)
+    if not current_user.is_superadmin:
+        q = q.filter(Case.firm_id == current_user.firm_id)
+    case = q.first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return case
+
+
 @router.get("/{case_id}/tasks")
 async def get_tasks(
     case_id: uuid.UUID,
@@ -255,6 +272,7 @@ async def get_tasks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    _get_firm_case_or_404(db, case_id, current_user)
     q = (
         db.query(CaseTask)
         .options(joinedload(CaseTask.assignee), joinedload(CaseTask.assigned_by))
@@ -278,6 +296,7 @@ async def create_task(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    case = _get_firm_case_or_404(db, case_id, current_user)
     try:
         task_type = TaskType(data.task_type)
     except ValueError:
@@ -289,6 +308,7 @@ async def create_task(
         assignee_uuid = current_user.id
 
     task = CaseTask(
+        firm_id=case.firm_id or current_user.firm_id,
         case_id=case_id,
         title=data.title,
         description=data.description,
@@ -316,6 +336,7 @@ async def update_task(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    _get_firm_case_or_404(db, case_id, current_user)
     task = db.query(CaseTask).filter(CaseTask.id == task_id, CaseTask.case_id == case_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -353,6 +374,7 @@ async def delete_task(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    _get_firm_case_or_404(db, case_id, current_user)
     task = db.query(CaseTask).filter(CaseTask.id == task_id, CaseTask.case_id == case_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")

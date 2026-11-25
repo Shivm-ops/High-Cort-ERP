@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ─── AWS Emergency Deployment (cost-optimised for t3.small) ──────────────────
 # Elasticsearch, ChromaDB, Kibana, MinIO are disabled — use S3 for file storage.
 # Run with: docker compose -f docker-compose.aws.yml up -d --build
@@ -9,7 +7,7 @@ services:
   # ─── Marketing Website ─────────────────────────────────────────────────────
   website:
     build:
-      context: ./legalos-website
+      context: ./fastcase-website
       dockerfile: Dockerfile
       args:
         - VITE_ERP_APP_URL=http://${SERVER_IP}:3000
@@ -26,7 +24,7 @@ services:
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:8000/api/v1
-      - NEXT_PUBLIC_APP_NAME=LegalOS
+      - NEXT_PUBLIC_APP_NAME=Fastcase
       - NODE_ENV=production
     depends_on:
       - backend
@@ -42,7 +40,7 @@ services:
     env_file:
       - ./backend/.env.aws
     environment:
-      - DATABASE_URL=postgresql://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
+      - DATABASE_URL=postgresql://fastcase:${POSTGRES_PASSWORD}@postgres:5432/fastcase_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:
@@ -62,7 +60,7 @@ services:
     env_file:
       - ./backend/.env.aws
     environment:
-      - DATABASE_URL=postgresql://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
+      - DATABASE_URL=postgresql://fastcase:${POSTGRES_PASSWORD}@postgres:5432/fastcase_db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis
@@ -74,14 +72,14 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: lagalos_db
-      POSTGRES_USER: lagalos
+      POSTGRES_DB: fastcase_db
+      POSTGRES_USER: fastcase
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lagalos -d lagalos_db"]
+      test: ["CMD-SHELL", "pg_isready -U fastcase -d fastcase_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -120,4 +118,4 @@ volumes:
 
 networks:
   default:
-    name: lagalos_network
+    name: fastcase_network

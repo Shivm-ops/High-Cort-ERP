@@ -4058,7 +4058,7 @@ function EmptyTab({
   action,
   onAction,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<any>;
   label: string;
   action?: string;
   onAction?: () => void;

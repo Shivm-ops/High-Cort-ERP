@@ -458,8 +458,9 @@ class DataBridgeService:
                     local_p = doc.file_path.replace("local://", "")
                     import tempfile
                     canonical_p = os.path.realpath(local_p)
-                    temp_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "lagalos_docs"))
-                    if (canonical_p.startswith(temp_storage_dir) or "lagalos_docs" in canonical_p) and os.path.exists(canonical_p) and not os.path.isdir(canonical_p):
+                    temp_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "fastcase_docs"))
+                    legacy_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "lagalos_docs"))
+                    if (canonical_p.startswith(temp_storage_dir) or canonical_p.startswith(legacy_storage_dir) or "fastcase_docs" in canonical_p or "lagalos_docs" in canonical_p) and os.path.exists(canonical_p) and not os.path.isdir(canonical_p):
                         with open(canonical_p, "rb") as f:
                             file_bytes = f.read()
                 elif self.doc_service.s3_client and doc.file_path and doc.file_path.startswith("https://"):
@@ -659,8 +660,9 @@ class DataBridgeService:
                         local_p = doc.file_path.replace("local://", "")
                         import tempfile
                         canonical_p = os.path.realpath(local_p)
-                        temp_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "lagalos_docs"))
-                        if (canonical_p.startswith(temp_storage_dir) or "lagalos_docs" in canonical_p) and os.path.exists(canonical_p) and not os.path.isdir(canonical_p):
+                        temp_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "fastcase_docs"))
+                        legacy_storage_dir = os.path.realpath(os.path.join(tempfile.gettempdir(), "lagalos_docs"))
+                        if (canonical_p.startswith(temp_storage_dir) or canonical_p.startswith(legacy_storage_dir) or "fastcase_docs" in canonical_p or "lagalos_docs" in canonical_p) and os.path.exists(canonical_p) and not os.path.isdir(canonical_p):
                             try:
                                 with open(canonical_p, "rb") as f:
                                     file_bytes = f.read()

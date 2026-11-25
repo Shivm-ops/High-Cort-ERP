@@ -66,11 +66,12 @@ class CaseAdvocate(Base):
 
 
 class CaseTask(Base):
-    """A task assigned to an advocate within a case."""
+    """A task assigned to an advocate (optionally linked to a case)."""
     __tablename__ = "case_tasks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id"), nullable=False)
+    firm_id = Column(UUID(as_uuid=True), ForeignKey("firms.id"), nullable=True, index=True)
+    case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id"), nullable=True)
     assignee_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     assigned_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 

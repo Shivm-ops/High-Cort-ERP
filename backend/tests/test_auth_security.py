@@ -42,7 +42,7 @@ def override_get_db(auth_test_db):
 @pytest.fixture(scope="module")
 def seed_user(auth_test_db):
     user = User(
-        email="test_auth@lagalos.in",
+        email="test_auth@fastcase.in",
         hashed_password=get_password_hash("LegalOS@2025"),
         full_name="Test Auth User",
         is_active=True,
@@ -56,7 +56,7 @@ def seed_user(auth_test_db):
 
 def test_password_strength_on_register(override_get_db):
     response = client.post("/api/v1/auth/register", json={
-        "email": "new_user@lagalos.in",
+        "email": "new_user@fastcase.in",
         "password": "weak", # Too short, no upper, no number, no special
         "full_name": "New User",
         "phone": "1234567890"
@@ -64,7 +64,7 @@ def test_password_strength_on_register(override_get_db):
     assert response.status_code == 422
     
     response = client.post("/api/v1/auth/register", json={
-        "email": "new_user@lagalos.in",
+        "email": "new_user@fastcase.in",
         "password": "StrongPassword123!", # Valid
         "full_name": "New User",
         "phone": "1234567890"

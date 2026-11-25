@@ -90,11 +90,11 @@ const practiceAreas = [
   {
     icon: Receipt,
     title: 'Direct & Indirect Tax Litigation',
-    desc: 'GST show cause notices, statutory appeals before CESTAT/ITAT, assessment orders, and High Court tax writs.',
+    desc: 'Indirect tax show cause notices, statutory appeals before CESTAT/ITAT, assessment orders, and High Court tax writs.',
     color: 'text-emerald-900',
     bg: 'bg-emerald-50/80',
     border: 'border-emerald-100',
-    tags: ['GST Show Cause', 'ITAT Appeals', 'Statutory Deadlines'],
+    tags: ['Show Cause Notices', 'ITAT Appeals', 'Statutory Deadlines'],
   },
   {
     icon: Award,
@@ -130,7 +130,7 @@ export default function PracticeAreas() {
         <div className="section-container text-center relative z-10 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-amber-400/10 border border-amber-400/25 text-amber-300 text-[12px] font-bold tracking-wider uppercase px-4 py-1.5 rounded-full mb-5 shadow-sm">
             <Gavel className="w-3.5 h-3.5 text-amber-400" />
-            Judicial Practice Domains
+            Advocate ERP · Practice Areas
           </div>
           <h1 className="font-heading font-[900] text-3xl sm:text-4xl md:text-5xl tracking-tight text-white mb-4">
             Tailored for Every Court & Jurisdiction
@@ -146,7 +146,7 @@ export default function PracticeAreas() {
         <div className="section-container">
           <div className="text-center max-w-xl mx-auto mb-12">
             <span className="text-[11px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3.5 py-1 rounded-full border border-primary/20">
-              12 Practice Portfolios
+              Practice Areas
             </span>
             <h2 className="font-heading font-[800] text-2xl sm:text-3xl text-slate-900 mt-3">
               Specialized Advocate Workspaces

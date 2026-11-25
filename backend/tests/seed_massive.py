@@ -62,7 +62,7 @@ def run_seed():
         {
             "id": uuid.uuid4(),
             "title": f"Document {i}.pdf",
-            "file_path": f"s3://lagalos/docs/doc_{i}.pdf",
+            "file_path": f"s3://fastcase-documents/docs/doc_{i}.pdf",
             "content_type": "application/pdf",
             "file_size": 1024,
             "firm_id": firm_id,

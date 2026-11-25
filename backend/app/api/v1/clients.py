@@ -155,8 +155,16 @@ async def list_clients(
     if is_active is not None:
         query = query.filter(Client.is_active == is_active)
     if search:
+        from sqlalchemy import or_
         query = query.filter(
-            Client.name.ilike(f"%{search}%") | Client.phone.ilike(f"%{search}%") | Client.email.ilike(f"%{search}%")
+            or_(
+                Client.name.ilike(f"%{search}%"),
+                Client.phone.ilike(f"%{search}%"),
+                Client.email.ilike(f"%{search}%"),
+                Client.company_name.ilike(f"%{search}%"),
+                Client.city.ilike(f"%{search}%"),
+                Client.gstin.ilike(f"%{search}%"),
+            )
         )
     if type:
         query = query.filter(Client.type == type)
@@ -199,6 +207,7 @@ async def client_stats(
     total = base_q.filter(Client.is_active == True).count()
     individual = base_q.filter(Client.type == "individual", Client.is_active == True).count()
     corporate = base_q.filter(Client.type == "corporate", Client.is_active == True).count()
+    government = base_q.filter(Client.type == "government", Client.is_active == True).count()
     fees_outstanding = sum(
         c.fees_outstanding or 0 for c in base_q.filter(Client.is_active == True).all()
     )
@@ -206,6 +215,7 @@ async def client_stats(
         "total": total,
         "individual": individual,
         "corporate": corporate,
+        "government": government,
         "fees_outstanding": fees_outstanding,
     }
 

@@ -4,9 +4,14 @@ import { toast } from "sonner";
 
 export interface Intake {
   id: string;
-  client_id?: string;
-  client_name?: string;
-  case_id?: string;
+  firm_id?: string | null;
+  client_id?: string | null;
+  client_name?: string | null;
+  prospect_name?: string | null;
+  prospect_phone?: string | null;
+  case_id?: string | null;
+  case_no?: string | null;
+  case_title?: string | null;
   narrative?: string;
   facts?: string;
   facts_list?: Array<{ fact: string; evidence_needed?: string }>;
@@ -39,12 +44,20 @@ export interface Intake {
   updated_at: string;
 }
 
-export function useIntakes() {
+export interface IntakeSummary {
+  total: number;
+  under_review: number;
+  awaiting_documents: number;
+  accepted: number;
+  rejected: number;
+}
+
+export function useIntakes(params?: { status?: string; search?: string }) {
   return useQuery({
-    queryKey: ["intakes"],
+    queryKey: ["intakes", params],
     queryFn: async () => {
-      const { data } = await api.get("/intakes/");
-      return data as { total: number; intakes: Intake[] };
+      const { data } = await api.get("/intakes/", { params });
+      return data as { total: number; summary?: IntakeSummary; intakes: Intake[] };
     },
   });
 }
@@ -86,6 +99,21 @@ export function useUpdateIntake() {
       qc.invalidateQueries({ queryKey: ["intakes"] });
       qc.invalidateQueries({ queryKey: ["intakes", data.id] });
       toast.success("Intake updated successfully");
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+}
+
+export function useDeleteIntake() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/intakes/${id}`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["intakes"] });
+      toast.success("Intake deleted");
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });

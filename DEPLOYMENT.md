@@ -65,7 +65,7 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:8000
 Create `.env.production` in both `frontend/` and `admin/`:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.lagalos.in/api/v1
+NEXT_PUBLIC_API_URL=https://api.fastcase.in/api/v1
 ```
 
 ## 6. Building Next.js Frontends
@@ -83,8 +83,8 @@ npm start -- -p 3001
 
 ## 7. Reverse Proxy (Nginx)
 Configure Nginx to route traffic:
-- `api.lagalos.in` -> `localhost:8000`
-- `app.lagalos.in` -> `localhost:3000`
-- `admin.lagalos.in` -> `localhost:3001`
+- `api.fastcase.in` -> `localhost:8000`
+- `app.fastcase.in` -> `localhost:3000`
+- `admin.fastcase.in` -> `localhost:3001`
 
 Ensure SSL (Let's Encrypt / Certbot) is enabled for all domains.

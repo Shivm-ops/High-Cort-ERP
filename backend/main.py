@@ -84,6 +84,17 @@ def run_db_migrations():
             ("payment_transactions", "paid_at", "TIMESTAMP"),
             ("payment_transactions", "period_start", "TIMESTAMP"),
             ("payment_transactions", "period_end", "TIMESTAMP"),
+            ("intakes", "firm_id", "UUID REFERENCES firms(id)"),
+            ("intakes", "created_by_id", "UUID REFERENCES users(id)"),
+            ("intakes", "prospect_name", "VARCHAR(255)"),
+            ("intakes", "prospect_phone", "VARCHAR(30)"),
+            ("intakes", "is_deleted", "BOOLEAN DEFAULT FALSE"),
+            ("case_tasks", "firm_id", "UUID REFERENCES firms(id)"),
+            ("users", "signature_url", "TEXT"),
+            ("users", "seal_url", "TEXT"),
+            ("users", "preferences_json", "JSONB DEFAULT '{}'::jsonb"),
+            ("firms", "logo_url", "TEXT"),
+            ("firms", "settings_json", "JSONB DEFAULT '{}'::jsonb"),
         ]
         for tbl, col, col_def in table_migrations:
             try:
@@ -92,6 +103,33 @@ def run_db_migrations():
             except Exception as e:
                 conn.rollback()
                 logger.warning(f"⚠️ Column notice on {tbl}.{col}: {e}")
+
+        try:
+            conn.execute(text("ALTER TABLE users ALTER COLUMN avatar_url TYPE TEXT"))
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.warning(f"⚠️ Notice altering users.avatar_url to TEXT: {e}")
+
+        # Allow general / pre-litigation tasks (case_id optional) and backfill firm_id
+        for task_sql in [
+            "ALTER TABLE case_tasks ALTER COLUMN case_id DROP NOT NULL",
+            "CREATE INDEX IF NOT EXISTS ix_case_tasks_firm_id ON case_tasks (firm_id)",
+            """UPDATE case_tasks ct
+               SET firm_id = c.firm_id
+               FROM cases c
+               WHERE ct.case_id = c.id AND ct.firm_id IS NULL AND c.firm_id IS NOT NULL""",
+            """UPDATE case_tasks ct
+               SET firm_id = u.firm_id
+               FROM users u
+               WHERE ct.assignee_id = u.id AND ct.firm_id IS NULL AND u.firm_id IS NOT NULL""",
+        ]:
+            try:
+                conn.execute(text(task_sql))
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                logger.warning(f"⚠️ Task migration notice: {e}")
 
         # Ensure CITIZEN value in userrole enum if running PostgreSQL
         try:

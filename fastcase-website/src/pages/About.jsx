@@ -44,13 +44,13 @@ const pillars = [
   },
   {
     icon: Server,
-    title: '100% Indian Data Sovereignty',
-    desc: 'All court data, briefs, and client vaults reside exclusively in certified tier-4 datacenters within Indian borders (Mumbai & Bengaluru).',
+    title: 'Secure Cloud Platform',
+    desc: 'Role-based access, a separate workspace for each firm and regular data backups protect client and case records.',
   },
   {
     icon: Globe2,
     title: 'Vernacular Judicial Access',
-    desc: 'Deep multi-language support (English, Marathi, Hindi, Gujarati) enabling advocates to draft fluently in their court language.',
+    desc: 'The ERP works in English, Marathi, Hindi and Gujarati, and the Consumer Portal prepares documents in Marathi.',
   },
   {
     icon: Scale,
@@ -72,13 +72,13 @@ const milestones = [
   },
   {
     year: '2025',
-    title: 'Vernacular Legal Drafting',
-    desc: 'Digitized 500+ regional legal drafts across English, Marathi, Hindi, and Gujarati with 1-click matter auto-fill.',
+    title: 'Drafting & Research Workspace',
+    desc: 'Added the draft workspace, template library and legal research tools to the Advocate ERP.',
   },
   {
     year: '2026',
-    title: 'Sovereign Cloud Deployment',
-    desc: 'Enterprise-grade cloud infrastructure launched with automated encryption, daily backups, and 99.9% uptime SLA.',
+    title: 'Consumer Portal',
+    desc: 'Launched the Consumer Portal so citizens can understand their legal rights and prepare complaints and applications.',
   },
 ];
 
@@ -101,7 +101,7 @@ export default function About() {
             Engineering the Digital Backbone for Indian Legal Practice
           </h1>
           <p className="text-base sm:text-lg text-slate-200/80 leading-relaxed max-w-2xl mx-auto">
-            Developed by SOSM Services Private Limited in Kolhapur, Maharashtra, Fastcase replaces cumbersome paper registers and manual diaries with a high-performance legal operating platform.
+            Developed by SOSM Services Private Limited in Kolhapur, Maharashtra, Fastcase offers two products: an Advocate ERP for advocates and law firms, and a Consumer Portal for citizens who need legal help.
           </p>
         </div>
       </section>
@@ -116,7 +116,7 @@ export default function About() {
               </div>
               <h2 className="font-heading font-[800] text-2xl text-slate-900 mb-3">Our Mission</h2>
               <p className="text-slate-600 text-[14px] leading-relaxed">
-                To equip every advocate in India — from solo practitioners at district courts to multi-partner litigation firms at High Courts — with enterprise-grade legal technology that automates case tracking, eliminates missed hearings, and streamlines professional fee collections.
+                To give advocates dependable software to run their practice — clients, cases, hearings, drafting and teams — and to give ordinary citizens a simple way to understand their legal rights and prepare the right complaint or application.
               </p>
             </div>
 
@@ -126,7 +126,7 @@ export default function About() {
               </div>
               <h2 className="font-heading font-[800] text-2xl text-slate-900 mb-3">Our Vision</h2>
               <p className="text-slate-600 text-[14px] leading-relaxed">
-                A digitally unified Indian judicial ecosystem where legal professionals save hours on administrative paperwork each day, enabling them to focus on courtroom advocacy, research, and delivering transparent, prompt justice to their clients.
+                A legal system where advocates spend less time on paperwork and more on advocacy, and where every citizen knows where to go and what to file when they face a legal problem.
               </p>
             </div>
           </div>

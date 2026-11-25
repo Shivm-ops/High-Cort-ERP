@@ -167,7 +167,10 @@ async def list_templates(
 ):
     """Return firm's own templates + global public templates."""
     from sqlalchemy import or_ as sql_or
-    q = db.query(Draft).filter(Draft.is_template == True).filter(
+    q = db.query(Draft).filter(
+        Draft.is_template == True,
+        Draft.is_deleted == False,
+    ).filter(
         sql_or(
             Draft.firm_id == current_user.firm_id,
             Draft.is_public_template == True,

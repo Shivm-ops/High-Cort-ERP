@@ -21,6 +21,8 @@ export interface Draft {
   parent_id?: string;
   tags: string[];
   is_template: boolean;
+  is_public_template?: boolean;
+  firm_id?: string | null;
   ai_generated: boolean;
   version: number;
   word_count?: number;

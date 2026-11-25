@@ -41,3 +41,5 @@ logs/
 
 .env.secrets
 backend/.env.secrets
+backend/.env.aws
+backend/uploads/

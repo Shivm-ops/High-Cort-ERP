@@ -20,10 +20,12 @@ export interface CaseLaw {
   personal_notes?: string;
   document_url?: string;
   is_favorite: boolean;
-  case_id?: string;
+  case_id?: string | null;
+  case_no?: string | null;
+  case_title?: string | null;
 }
 
-export interface CaseLawCreate extends Omit<CaseLaw, "id"> {}
+export interface CaseLawCreate extends Omit<CaseLaw, "id" | "case_no" | "case_title"> {}
 
 const KEYS = {
   all: ["case_laws"] as const,

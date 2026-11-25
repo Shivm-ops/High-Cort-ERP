@@ -9,9 +9,7 @@ import {
   Users,
   Briefcase,
   CalendarDays,
-  ListChecks,
   Wand2,
-  Library,
   ScrollText,
   Gavel,
   Search,
@@ -29,7 +27,6 @@ import {
   BookMarked,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Bell,
   LogOut,
   ChevronDown,
@@ -48,11 +45,14 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useThemeStore, PREDEFINED_THEMES } from "@/lib/store/themeStore";
 import { useTranslation } from "react-i18next";
 import { useSidebarStore } from "@/lib/store/sidebarStore";
+import { useCaseStats } from "@/lib/hooks/useCases";
+import { useTodayHearings } from "@/lib/hooks/useHearings";
+import { useAllTasks } from "@/lib/hooks/useTasks";
 
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<any>;
   badge?: string | number;
   badgeColor?: string;
   requiredFeature?: string;
@@ -68,7 +68,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Overview",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "My Tasks", href: "/tasks", icon: CheckCircle, badge: "Upcoming", badgeColor: "mint" },
+      { label: "My Tasks", href: "/tasks", icon: CheckCircle, badgeColor: "mint" },
     ],
   },
   {
@@ -76,27 +76,18 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Client Intake", href: "/intakes", icon: ClipboardList, badge: "New", badgeColor: "coral" },
       { label: "Clients CRM", href: "/clients", icon: Users },
-      { label: "Case Management", href: "/cases", icon: Briefcase, badge: "12", badgeColor: "mint" },
+      { label: "Case Management", href: "/cases", icon: Briefcase, badgeColor: "mint" },
       { label: "MACT Management", href: "/mact", icon: Car, badge: "New", badgeColor: "blue", requiredFeature: "mact_management" },
-      { label: "Hearings", href: "/hearings", icon: Gavel, badge: "3", badgeColor: "orange" },
-      { label: "Official Cause Lists", href: "/cause-list", icon: ListChecks },
+      { label: "Hearings & Calendar", href: "/hearings", icon: Gavel, badgeColor: "orange" },
     ],
   },
   {
     label: "Workspace",
     items: [
       { label: "Draft Workspace", href: "/draft-workspace", icon: Wand2 },
-      { label: "AI Draft Studio", href: "/ai-draft-studio", icon: Sparkles, badge: "✨", badgeColor: "purple" },
       { label: "Legal Research & Case Laws", href: "/legal-research", icon: Search },
       { label: "Court Order Analyzer", href: "/ai-tools/analyzer", icon: FileText, badge: "AI", badgeColor: "purple", requiredFeature: "ai_tools" },
       { label: "Case Assistant", href: "/ai-assistant", icon: Layers, requiredFeature: "ai_tools" },
-    ],
-  },
-  {
-    label: "Knowledge Base",
-    items: [
-      { label: "Templates & Drafts", href: "/draft-library", icon: Library },
-      { label: "Case Law Management", href: "/case-laws", icon: Scale },
     ],
   },
   {
@@ -137,12 +128,9 @@ const NAV_LABEL_KEYS: Record<string, string> = {
   "/clients": "nav.clientsCRM",
   "/cases": "nav.caseManagement",
   "/hearings": "nav.hearings",
-  "/cause-list": "nav.causeList",
   "/draft-workspace": "nav.draftWorkspace",
   "/legal-research": "nav.legalResearch",
   "/ai-assistant": "nav.caseAssistant",
-  "/draft-library": "nav.templates",
-  "/case-laws": "nav.caseLaws",
   "/practice-areas": "nav.practiceAreas",
   "/court-management": "nav.courtManagement",
   "/notices": "nav.notices",
@@ -159,7 +147,6 @@ const SECTION_KEY_MAP: Record<string, string> = {
   "Overview": "nav.sections.overview",
   "Client & Litigation": "nav.sections.clientLitigation",
   "Workspace": "nav.sections.workspace",
-  "Knowledge Base": "nav.sections.knowledgeBase",
   "Court & Practice": "nav.sections.courtPractice",
   "Operations": "nav.sections.operations",
   "System": "nav.sections.system",
@@ -185,6 +172,9 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { t } = useTranslation();
+  const { data: caseStats } = useCaseStats();
+  const { data: todayHearingsData } = useTodayHearings();
+  const { data: myTasks } = useAllTasks("mine");
 
   // Mobile drawer state
   const mobileOpen = useSidebarStore((state) => state.isOpen);
@@ -201,15 +191,34 @@ export default function Sidebar() {
   const isAccentLight = accentColor.toLowerCase() === "#ffffff" || accentColor.toLowerCase() === "#fffff0" || accentColor.toLowerCase() === "#c0c0c0";
   const accentTextColor = isAccentLight ? (primaryColor === "#FFFFFF" ? "#1F2937" : primaryColor) : "#FFFFFF";
 
-  // Filter navigation groups based on subscription
+  // Filter navigation groups based on subscription and attach live counts
   const subscriptionFeatures = user?.subscription?.features || [];
+  const activeCasesCount = caseStats?.active || 0;
+  const todayHearingsCount = todayHearingsData?.count || 0;
+  const openTasksCount = (myTasks || []).filter(
+    (task) => task.status === "pending" || task.status === "in_progress"
+  ).length;
+
   const filteredNavGroups = NAV_GROUPS.map(group => ({
     ...group,
-    items: group.items.filter(item => {
-      if (!item.requiredFeature) return true;
-      if (user?.is_superadmin) return true;
-      return subscriptionFeatures.includes(item.requiredFeature);
-    })
+    items: group.items
+      .filter(item => {
+        if (!item.requiredFeature) return true;
+        if (user?.is_superadmin) return true;
+        return subscriptionFeatures.includes(item.requiredFeature);
+      })
+      .map(item => {
+        if (item.href === "/tasks" && openTasksCount > 0) {
+          return { ...item, badge: openTasksCount };
+        }
+        if (item.href === "/cases" && activeCasesCount > 0) {
+          return { ...item, badge: activeCasesCount };
+        }
+        if (item.href === "/hearings" && todayHearingsCount > 0) {
+          return { ...item, badge: todayHearingsCount };
+        }
+        return item;
+      })
   })).filter(group => group.items.length > 0);
 
   const renderSidebarBody = (isMobile: boolean) => {

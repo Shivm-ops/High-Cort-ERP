@@ -9,6 +9,7 @@ import CaseForm from "@/components/forms/CaseForm";
 import HearingForm from "@/components/forms/HearingForm";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { useCases, useCaseStats, useCloseCase, Case } from "@/lib/hooks/useCases";
+import { getErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
@@ -35,6 +36,8 @@ export default function CasesPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [stageFilter, setStageFilter] = useState("");
+  const [practiceAreaFilter, setPracticeAreaFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editCase, setEditCase] = useState<Case | null>(null);
   const [closeCase, setCloseCase] = useState<Case | null>(null);
@@ -43,6 +46,8 @@ export default function CasesPage() {
   const { data, isLoading, error } = useCases({
     search: search || undefined,
     status: statusFilter || undefined,
+    stage: stageFilter || undefined,
+    practice_area: practiceAreaFilter || undefined,
   });
   const { data: stats } = useCaseStats();
   const closeMutation = useCloseCase();
@@ -69,13 +74,13 @@ export default function CasesPage() {
 
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative">
+          <div className="relative flex-1 min-w-[220px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search cases..."
-              className="pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint bg-white w-64"
+              placeholder="Search case no., title, CNR, client or court..."
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:ring-2 focus:ring-mint/30 focus:border-mint bg-white"
             />
           </div>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
@@ -88,6 +93,40 @@ export default function CasesPage() {
             <option value="disposed">Disposed</option>
             <option value="closed">Closed</option>
           </select>
+          <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white outline-none">
+            <option value="">All Stages</option>
+            <option value="filing">Filing</option>
+            <option value="notice">Notice</option>
+            <option value="reply">Reply</option>
+            <option value="evidence">Evidence</option>
+            <option value="arguments">Arguments</option>
+            <option value="judgment">Judgment</option>
+            <option value="execution">Execution</option>
+          </select>
+          <select value={practiceAreaFilter} onChange={(e) => setPracticeAreaFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white outline-none">
+            <option value="">All Practice Areas</option>
+            <option value="Civil">Civil</option>
+            <option value="Criminal">Criminal</option>
+            <option value="Family">Family</option>
+            <option value="Consumer">Consumer</option>
+            <option value="MACT">MACT</option>
+            <option value="Corporate">Corporate</option>
+            <option value="Labour">Labour</option>
+            <option value="Banking">Banking</option>
+            <option value="Property">Property</option>
+            <option value="Tax">Tax</option>
+            <option value="IPR">IPR</option>
+          </select>
+          {(search || statusFilter || stageFilter || practiceAreaFilter) && (
+            <button
+              onClick={() => { setSearch(""); setStatusFilter(""); setStageFilter(""); setPracticeAreaFilter(""); }}
+              className="px-3 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50"
+            >
+              Clear
+            </button>
+          )}
           <button onClick={() => setShowCreate(true)}
             className="ml-auto flex items-center gap-2 rounded-xl bg-sidebar px-4 py-2.5 text-sm font-semibold text-white hover:bg-sidebar-dark transition-colors">
             <Plus className="w-4 h-4" /> New Case
@@ -99,7 +138,7 @@ export default function CasesPage() {
           <TableSkeleton rows={8} cols={6} />
         ) : error ? (
           <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center space-y-2">
-            <p className="text-red-600 text-sm font-medium">Failed to load cases. Please check your network connection or try reloading.</p>
+            <p className="text-red-600 text-sm font-medium">{getErrorMessage(error) || "Failed to load cases."}</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-1.5 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
@@ -134,8 +173,11 @@ export default function CasesPage() {
                     {data.cases.map((c) => {
                       const feePct = c.fees_agreed > 0 ? Math.min(100, Math.round((c.fees_received / c.fees_agreed) * 100)) : 0;
                       return (
-                        <tr key={c.id} className="hover:bg-gray-50 transition-colors group">
-                          <td className="px-4 py-3 font-mono text-xs text-gray-600 whitespace-nowrap">{c.case_no}</td>
+                        <tr key={c.id} onClick={() => router.push(`/cases/${c.id}`)} className="hover:bg-gray-50 transition-colors group cursor-pointer">
+                          <td className="px-4 py-3 font-mono text-xs text-gray-600 whitespace-nowrap">
+                            <div>{c.case_no}</div>
+                            {c.ecourts_cnr && <div className="text-[10px] text-gray-400">CNR: {c.ecourts_cnr}</div>}
+                          </td>
                           <td className="px-4 py-3">
                             <div className="font-medium text-gray-900 max-w-[200px] truncate">{c.title}</div>
                             <div className="text-xs text-gray-400">{c.client_name}</div>
@@ -149,6 +191,7 @@ export default function CasesPage() {
                           </td>
                           <td className="px-4 py-3 text-xs whitespace-nowrap">
                             {c.next_hearing_date ? <span className="text-amber-600 font-medium">{c.next_hearing_date}</span> : "—"}
+                            {c.limitation_date && <div className="text-[10px] text-rose-600 font-medium">Lim: {c.limitation_date}</div>}
                           </td>
                           <td className="px-4 py-3">
                             <div className="text-xs text-gray-700 whitespace-nowrap">
@@ -163,7 +206,7 @@ export default function CasesPage() {
                               {c.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => router.push(`/cases/${c.id}`)}
                                 className="p-1.5 rounded-lg text-gray-400 hover:text-sidebar hover:bg-sidebar/5">

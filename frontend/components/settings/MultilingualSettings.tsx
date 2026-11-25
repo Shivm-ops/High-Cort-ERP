@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
-import { Globe, Check, Type, FileText, BookOpen } from "lucide-react";
+import React, { useEffect } from "react";
+import { Globe, Check, Type, FileText, BookOpen, Loader2 } from "lucide-react";
 import { useLanguageStore, SupportedLanguage } from "@/lib/store/languageStore";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useUserProfile, useUpdateUserProfile } from "@/lib/hooks/useSettings";
+import { getErrorMessage } from "@/lib/api";
 
 const SAMPLE_TEXT: Record<string, { heading: string; body: string }> = {
   en: {
@@ -92,9 +94,36 @@ export default function MultilingualSettings() {
     uiLanguage, draftLanguage, documentLanguage,
     setUILanguage, setDraftLanguage, setDocumentLanguage
   } = useLanguageStore();
+  const { data: profile } = useUserProfile();
+  const updateProfile = useUpdateUserProfile();
 
-  const handleSave = () => {
-    toast.success("Language preferences saved! / भाषा प्राधान्ये जतन केली!");
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.preferred_language) {
+      setUILanguage(profile.preferred_language as SupportedLanguage);
+    }
+    const userPreferences = profile.preferences || {};
+    if (userPreferences.draft_language) {
+      setDraftLanguage(userPreferences.draft_language as SupportedLanguage);
+    }
+    if (userPreferences.document_language) {
+      setDocumentLanguage(userPreferences.document_language as SupportedLanguage);
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    try {
+      await updateProfile.mutateAsync({
+        preferred_language: uiLanguage,
+        preferences: {
+          draft_language: draftLanguage,
+          document_language: documentLanguage,
+        },
+      });
+      toast.success("Language preferences saved! / भाषा प्राधान्ये जतन केली!");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   };
 
   return (
@@ -231,10 +260,13 @@ export default function MultilingualSettings() {
       {/* Save */}
       <div className="flex justify-end">
         <button
+          type="button"
           onClick={handleSave}
-          className="h-10 px-6 rounded-xl text-[13px] font-semibold text-white transition-all active:scale-95"
+          disabled={updateProfile.isPending}
+          className="h-10 px-6 rounded-xl text-[13px] font-semibold text-white transition-all active:scale-95 flex items-center gap-2 disabled:opacity-60"
           style={{ background: "linear-gradient(135deg, #013B36, #014D46)", boxShadow: "0 4px 14px rgba(1,59,54,0.25)" }}
         >
+          {updateProfile.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
           Save Language Preferences
         </button>
       </div>

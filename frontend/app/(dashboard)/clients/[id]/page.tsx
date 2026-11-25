@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Phone, Mail, MapPin, Briefcase, Plus, ExternalLink, CheckCircle, AlertCircle, FileText, ImageIcon, Video, Music, File, Calendar, Shield, IndianRupee, Download } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, Mail, MapPin, Briefcase, Plus, ExternalLink, CheckCircle, AlertCircle, FileText, ImageIcon, Video, Music, File, Calendar, Shield, IndianRupee, Download, Upload } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Modal from "@/components/ui/Modal";
 import CaseForm from "@/components/forms/CaseForm";
@@ -10,8 +10,12 @@ import InvoiceForm from "@/components/forms/InvoiceForm";
 import ClientForm from "@/components/forms/ClientForm";
 import { FormSkeleton } from "@/components/ui/Skeleton";
 import { useClient } from "@/lib/hooks/useClients";
+import { uploadDocument } from "@/lib/hooks/useDocuments";
+import { getErrorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { downloadDocumentFile } from "@/lib/utils/download";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-50 text-green-700",
@@ -41,11 +45,38 @@ function formatFileSize(bytes?: number) {
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: client, isLoading, error } = useClient(id);
   const [showAddCase, setShowAddCase] = useState(false);
   const [showAddInvoice, setShowAddInvoice] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showUploadDoc, setShowUploadDoc] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocType, setUploadDocType] = useState("aadhaar");
+  const [uploadDesc, setUploadDesc] = useState("");
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "cases" | "documents" | "evidence" | "invoices">("overview");
+
+  const handleUploadClientDoc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) {
+      toast.error("Please select a file to upload.");
+      return;
+    }
+    setIsUploadingDoc(true);
+    try {
+      await uploadDocument(uploadFile, undefined, id, uploadDocType, uploadDesc || undefined);
+      toast.success("Client document uploaded.");
+      queryClient.invalidateQueries({ queryKey: ["clients", id] });
+      setShowUploadDoc(false);
+      setUploadFile(null);
+      setUploadDesc("");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
 
   if (isLoading) return (
     <div className="flex flex-col h-full bg-[#F7F8F6]">
@@ -213,10 +244,17 @@ export default function ClientDetailPage() {
                   {tab === "invoices" && <span className={cn("ml-1.5 text-xs rounded-full px-1.5 py-0.5", activeTab === tab ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500")}>{client.invoices?.length || 0}</span>}
                 </button>
               ))}
-              {(activeTab === "cases" || activeTab === "invoices") && (
-                <button onClick={() => activeTab === "cases" ? setShowAddCase(true) : setShowAddInvoice(true)}
-                  className="ml-auto flex items-center gap-1.5 rounded-xl bg-mint/10 px-3 py-2 text-sm font-medium text-sidebar hover:bg-mint/20">
-                  <Plus className="w-4 h-4" /> {activeTab === "cases" ? "Add Case" : "Create Invoice"}
+              {(activeTab === "cases" || activeTab === "invoices" || activeTab === "documents") && (
+                <button
+                  onClick={() => {
+                    if (activeTab === "cases") setShowAddCase(true);
+                    else if (activeTab === "invoices") setShowAddInvoice(true);
+                    else setShowUploadDoc(true);
+                  }}
+                  className="ml-auto flex items-center gap-1.5 rounded-xl bg-mint/10 px-3 py-2 text-sm font-medium text-sidebar hover:bg-mint/20"
+                >
+                  {activeTab === "documents" ? <Upload className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {activeTab === "cases" ? "Add Case" : activeTab === "invoices" ? "Create Invoice" : "Upload KYC / Doc"}
                 </button>
               )}
             </div>
@@ -297,6 +335,12 @@ export default function ClientDetailPage() {
                     <FileText className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                     <p className="text-gray-500 text-sm">No documents uploaded</p>
                     <p className="text-xs text-gray-400 mt-1">Aadhaar, PAN, Photo, Identity Proofs, Other documents</p>
+                    <button
+                      onClick={() => setShowUploadDoc(true)}
+                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-sidebar text-white text-xs font-semibold hover:bg-sidebar-dark transition-colors"
+                    >
+                      <Upload className="w-3.5 h-3.5" /> Upload KYC / Document
+                    </button>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-50">
@@ -388,6 +432,51 @@ export default function ClientDetailPage() {
       </Modal>
       <Modal open={showEdit} onClose={() => setShowEdit(false)} title="Edit Client" size="lg">
         <ClientForm client={client} onSuccess={() => setShowEdit(false)} />
+      </Modal>
+      <Modal open={showUploadDoc} onClose={() => setShowUploadDoc(false)} title="Upload Client KYC / Document" size="md">
+        <form onSubmit={handleUploadClientDoc} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Document Type</label>
+            <select
+              value={uploadDocType}
+              onChange={(e) => setUploadDocType(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white outline-none focus:border-sidebar"
+            >
+              <option value="aadhaar">Aadhaar Card</option>
+              <option value="pan">PAN Card</option>
+              <option value="gstin">GSTIN Certificate</option>
+              <option value="vakalatnama">Signed Vakalatnama</option>
+              <option value="id_proof">Other Identity Proof</option>
+              <option value="other">Other Client Document</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Select File</label>
+            <input
+              type="file"
+              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sidebar/10 file:text-sidebar hover:file:bg-sidebar/20"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Notes / Description (optional)</label>
+            <input
+              type="text"
+              value={uploadDesc}
+              onChange={(e) => setUploadDesc(e.target.value)}
+              placeholder="e.g. Self-attested PAN copy"
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm outline-none focus:border-sidebar"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setShowUploadDoc(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" disabled={isUploadingDoc} className="px-4 py-2 rounded-xl bg-sidebar text-white text-sm font-semibold hover:bg-sidebar-dark disabled:opacity-50">
+              {isUploadingDoc ? "Uploading..." : "Upload Document"}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

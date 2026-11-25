@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import Link from "next/link";
+import { WEBSITE_URL } from "@/lib/websiteUrl";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -297,7 +298,7 @@ export default function CitizenLoginPage() {
           </div>
 
           <a
-            href="https://fastcase.in"
+            href={WEBSITE_URL}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition shadow-2xs"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-[#34D399]" />
@@ -400,7 +401,7 @@ export default function CitizenLoginPage() {
                   <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">नागरिक विधी कक्ष</span>
                 </div>
               </div>
-              <a href="https://fastcase.in" className="text-[11px] font-bold text-gray-600 hover:text-gray-900 border border-gray-200 bg-white px-2.5 py-1 rounded-lg shadow-2xs">
+              <a href={WEBSITE_URL} className="text-[11px] font-bold text-gray-600 hover:text-gray-900 border border-gray-200 bg-white px-2.5 py-1 rounded-lg shadow-2xs">
                 fastcase.in
               </a>
             </div>

@@ -48,6 +48,7 @@ export default function FirmProfile() {
             ai_model: res.data.ai_model || "",
             has_api_key: res.data.has_api_key || false
           });
+          setLogo(res.data.logo_url || null);
         }
       } catch (e) {
         console.error("Failed to load firm configuration", e);
@@ -67,6 +68,7 @@ export default function FirmProfile() {
         pan_no: firmData.pan_no,
         website: firmData.website,
         custom_domain: firmData.custom_domain,
+        logo_url: logo || "",
         email: firmData.email,
         phone: firmData.phone,
         address: firmData.address,
@@ -104,11 +106,16 @@ export default function FirmProfile() {
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setLogo(event.target?.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Firm logo must be under 2 MB.");
+      e.target.value = "";
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (event) => setLogo(event.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
   if (loading) {

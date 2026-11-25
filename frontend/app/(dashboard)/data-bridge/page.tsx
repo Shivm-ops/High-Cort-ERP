@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   HardDriveUpload,
@@ -133,6 +134,21 @@ export default function DataBridgePage() {
   const [activeTab, setActiveTab] = useState<
     "import" | "library" | "export" | "migrate" | "backup" | "history"
   >("import");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tabParam = new URLSearchParams(window.location.search).get("tab");
+    if (
+      tabParam === "import" ||
+      tabParam === "library" ||
+      tabParam === "export" ||
+      tabParam === "migrate" ||
+      tabParam === "backup" ||
+      tabParam === "history"
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, []);
 
   const router = useRouter();
 
@@ -1201,7 +1217,16 @@ export default function DataBridgePage() {
     <div className="min-h-screen bg-[#fcfdfd]">
       <Header
         title="Fastcase Data Bridge"
-        subtitle="Unified client document management, secure bulk import & export, and AI-assisted drafting."
+        subtitle="Bulk folder imports, spreadsheet client & case migration, ZIP exports, backups, and audit records"
+        rightContent={
+          <Link
+            href="/evidence"
+            className="h-9 px-3.5 rounded-xl text-[12px] font-semibold border border-gray-200 bg-white text-charcoal hover:bg-gray-50 flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <FolderOpen className="w-3.5 h-3.5 text-sidebar" />
+            Evidence Vault
+          </Link>
+        }
       />
 
       <div className="p-3 sm:p-5 lg:p-6 max-w-7xl mx-auto space-y-4 sm:space-y-6">

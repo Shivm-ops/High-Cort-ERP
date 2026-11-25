@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "supersecretkey"
 
     # Database
-    DATABASE_URL: str = "postgresql+psycopg2://postgres:password@localhost:5432/lagalos_db"
+    DATABASE_URL: str = "postgresql+psycopg2://postgres:password@localhost:5432/fastcase_db"
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # JWT
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: Optional[str] = None
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     AWS_REGION: str = "ap-south-1"
-    AWS_S3_BUCKET: str = "lagalos-documents"
+    AWS_S3_BUCKET: str = "fastcase-documents"
 
     # Azure Blob Storage
     AZURE_STORAGE_CONNECTION_STRING: Optional[str] = None

@@ -8,8 +8,8 @@ class AdvocateUser(HttpUser):
     def on_start(self):
         # Login to get JWT
         response = self.client.post("/api/v1/auth/token", data={
-            "username": "admin@lagalos.in",
-            "password": "lagalos@2025"
+            "username": "admin@fastcase.in",
+            "password": "Fastcase@2026!"
         })
         if response.status_code == 200:
             self.token = response.json().get("access_token")

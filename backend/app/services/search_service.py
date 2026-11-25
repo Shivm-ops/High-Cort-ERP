@@ -40,7 +40,7 @@ class SearchService:
                 }
                 if category:
                     body["query"] = {"bool": {"must": body["query"], "filter": [{"term": {"category": category}}]}}
-                resp = await self.es.search(index="lagalos_acts", body=body)
+                resp = await self.es.search(index="fastcase_acts", body=body)
                 return [hit["_source"] for hit in resp["hits"]["hits"]]
             except Exception as e:
                 logger.error(f"Elasticsearch search error: {e}")
@@ -54,7 +54,7 @@ class SearchService:
                     "query": {"multi_match": {"query": query, "fields": ["title^2", "ratio^3", "headnotes^2", "full_text"]}},
                     "size": limit,
                 }
-                resp = await self.es.search(index="lagalos_caselaws", body=body)
+                resp = await self.es.search(index="fastcase_caselaws", body=body)
                 return [hit["_source"] for hit in resp["hits"]["hits"]]
             except Exception as e:
                 logger.error(f"Case law search error: {e}")
@@ -84,7 +84,7 @@ class SearchService:
         """Index a document in Elasticsearch."""
         if self.es:
             try:
-                await self.es.index(index=f"lagalos_{doc_type}", id=doc_id, body=content)
+                await self.es.index(index=f"fastcase_{doc_type}", id=doc_id, body=content)
             except Exception as e:
                 logger.error(f"Indexing error: {e}")
 

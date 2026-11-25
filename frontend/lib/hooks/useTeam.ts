@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../api";
+import { api, getErrorMessage } from "../api";
+import { toast } from "sonner";
 
 export interface TeamMember {
   id: string;
   name: string;
   email: string;
   role: string;
-  phone: string;
+  phone: string | null;
   barNo: string | null;
   activeCases: number;
   pendingCases: number;
@@ -18,6 +19,13 @@ export interface TeamMember {
   specializations: string[];
 }
 
+export interface TeamListResponse {
+  team: TeamMember[];
+  total: number;
+  seat_limit: number | null;
+  can_manage_team: boolean;
+}
+
 export interface TeamStats {
   cases_assigned: number;
   cases_closed: number;
@@ -26,11 +34,36 @@ export interface TeamStats {
   revenue_generated: number;
 }
 
+export interface CreateTeamMemberPayload {
+  full_name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  bar_council_no?: string;
+  specializations?: string[];
+  password?: string;
+}
+
+export interface CreateTeamMemberResponse {
+  member: TeamMember;
+  temporary_password: string;
+  message: string;
+}
+
+export interface UpdateTeamMemberPayload {
+  id: string;
+  full_name?: string;
+  role?: string;
+  phone?: string;
+  bar_council_no?: string;
+  specializations?: string[];
+}
+
 export function useTeamMembers() {
   return useQuery({
     queryKey: ["team_members"],
     queryFn: async () => {
-      const { data } = await api.get<{ team: TeamMember[] }>("/team/");
+      const { data } = await api.get<TeamListResponse>("/team/");
       return data;
     },
   });
@@ -48,23 +81,49 @@ export function useTeamMemberStats(id: string | null) {
   });
 }
 
+export function useCreateTeamMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateTeamMemberPayload) => {
+      const { data } = await api.post<CreateTeamMemberResponse>(
+        "/team/members",
+        payload
+      );
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team_members"] });
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+}
+
+export function useUpdateTeamMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: UpdateTeamMemberPayload) => {
+      const { data } = await api.put<TeamMember>(`/team/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team_members"] });
+      toast.success("Team member updated");
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+}
+
 export function useRemoveTeamMember() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Mock API call to delete team member, in reality this would be api.delete(`/team/${id}`)
-      return new Promise((resolve) => setTimeout(resolve, 500));
+      const { data } = await api.delete(`/team/${id}`);
+      return data;
     },
-    onSuccess: (_, deletedId) => {
-      // Since there is no backend endpoint yet, we update the cache directly instead of invalidating
-      qc.setQueryData(["team_members"], (old: any) => {
-        if (!old || !old.team) return old;
-        return {
-          ...old,
-          team: old.team.filter((m: any) => m.id !== deletedId),
-          total: old.total - 1
-        };
-      });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["team_members"] });
+      toast.success("Team member removed");
     },
+    onError: (e) => toast.error(getErrorMessage(e)),
   });
 }

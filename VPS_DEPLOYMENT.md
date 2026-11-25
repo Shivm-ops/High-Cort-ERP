@@ -121,7 +121,7 @@ docker compose -f docker-compose.vps.yml exec backend python seed.py
 | Field | Value |
 |-------|-------|
 | **Email** | `admin@fastcase.in` |
-| **Password** | `lagalos@2025` |
+| **Password** | `Fastcase@2026!` |
 
 > ⚠️ Change these in production after first login!
 

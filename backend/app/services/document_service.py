@@ -50,7 +50,7 @@ class DocumentService:
         # Fallback: local storage for development
         import os
         import tempfile
-        local_path = os.path.join(tempfile.gettempdir(), "lagalos_docs", object_key)
+        local_path = os.path.join(tempfile.gettempdir(), "fastcase_docs", object_key)
         os.makedirs(os.path.dirname(local_path), mode=0o700, exist_ok=True)
         with open(local_path, "wb") as f:
             f.write(content)

@@ -2,16 +2,17 @@ import uuid
 from typing import List, Optional
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.models.case_law import CaseLaw
+from app.models.case import Case
 from app.models.user import User
 from app.core.security import get_current_user
 from app.core.permissions import (
-    require_firm_member, check_object_firm, apply_firm_filter, get_user_firm_id
+    require_firm_member, apply_firm_filter, get_user_firm_id
 )
 
 router = APIRouter()
@@ -43,9 +44,45 @@ class CaseLawUpdate(CaseLawBase):
 
 class CaseLawOut(CaseLawBase):
     id: uuid.UUID
+    case_no: Optional[str] = None
+    case_title: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+def serialize_case_law(cl: CaseLaw) -> dict:
+    return {
+        "id": cl.id,
+        "title": cl.title,
+        "citation": cl.citation,
+        "court_name": cl.court_name,
+        "judge_name": cl.judge_name,
+        "judgment_date": cl.judgment_date,
+        "practice_area": cl.practice_area,
+        "keywords": cl.keywords or [],
+        "mapped_sections": cl.mapped_sections or [],
+        "important_paragraphs": cl.important_paragraphs or [],
+        "arguments": cl.arguments or [],
+        "summary": cl.summary,
+        "ratio_decidendi": cl.ratio_decidendi,
+        "key_findings": cl.key_findings,
+        "personal_notes": cl.personal_notes,
+        "document_url": cl.document_url,
+        "is_favorite": bool(cl.is_favorite),
+        "case_id": cl.case_id,
+        "case_no": cl.case.case_no if cl.case else None,
+        "case_title": cl.case.title if cl.case else None,
+    }
+
+
+def _validate_firm_case(case_id: Optional[uuid.UUID], current_user: User, db: Session):
+    if not case_id:
+        return
+    case = apply_firm_filter(db.query(Case), Case, current_user).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Linked matter not found in your firm")
+
 
 @router.get("/", response_model=dict)
 def get_case_laws(
@@ -60,7 +97,7 @@ def get_case_laws(
     limit: int = Query(50, ge=1, le=100),
 ):
     # ── Tenant isolation: firm's own case laws + platform-global ones (no firm_id)
-    query = db.query(CaseLaw).filter(
+    query = db.query(CaseLaw).options(joinedload(CaseLaw.case)).filter(
         or_(
             CaseLaw.firm_id == current_user.firm_id,
             CaseLaw.firm_id.is_(None),  # Platform-wide public case laws
@@ -68,12 +105,17 @@ def get_case_laws(
     )
 
     if search:
-        search_filter = f"%{search}%"
+        search_filter = f"%{search.strip()}%"
         query = query.filter(
             or_(
                 CaseLaw.title.ilike(search_filter),
                 CaseLaw.citation.ilike(search_filter),
-                CaseLaw.summary.ilike(search_filter)
+                CaseLaw.summary.ilike(search_filter),
+                CaseLaw.court_name.ilike(search_filter),
+                CaseLaw.judge_name.ilike(search_filter),
+                CaseLaw.practice_area.ilike(search_filter),
+                CaseLaw.ratio_decidendi.ilike(search_filter),
+                CaseLaw.key_findings.ilike(search_filter),
             )
         )
     if practice_area:
@@ -89,7 +131,7 @@ def get_case_laws(
     results = query.order_by(CaseLaw.judgment_date.desc().nullslast()).offset(skip).limit(limit).all()
     return {
         "total": total,
-        "items": [CaseLawOut.model_validate(c) for c in results]
+        "items": [serialize_case_law(c) for c in results]
     }
 
 @router.get("/{case_law_id}", response_model=CaseLawOut)
@@ -98,13 +140,13 @@ def get_case_law(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    cl = db.query(CaseLaw).filter(CaseLaw.id == case_law_id).first()
+    cl = db.query(CaseLaw).options(joinedload(CaseLaw.case)).filter(CaseLaw.id == case_law_id).first()
     if not cl:
         raise HTTPException(status_code=404, detail="Case law not found")
     # ── Object-level security: own firm or public ─────────────────────────────
     if cl.firm_id and cl.firm_id != current_user.firm_id and not current_user.is_superadmin:
         raise HTTPException(status_code=403, detail="Access denied")
-    return cl
+    return serialize_case_law(cl)
 
 @router.post("/", response_model=CaseLawOut)
 def create_case_law(
@@ -112,6 +154,7 @@ def create_case_law(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
+    _validate_firm_case(data.case_id, current_user, db)
     cl = CaseLaw(
         **data.model_dump(),
         firm_id=get_user_firm_id(current_user),
@@ -119,8 +162,8 @@ def create_case_law(
     )
     db.add(cl)
     db.commit()
-    db.refresh(cl)
-    return cl
+    cl = db.query(CaseLaw).options(joinedload(CaseLaw.case)).filter(CaseLaw.id == cl.id).first()
+    return serialize_case_law(cl)
 
 @router.put("/{case_law_id}", response_model=CaseLawOut)
 def update_case_law(
@@ -136,11 +179,14 @@ def update_case_law(
         raise HTTPException(status_code=403, detail="Access denied")
 
     update_data = data.model_dump(exclude_unset=True)
+    if "case_id" in update_data:
+        _validate_firm_case(update_data["case_id"], current_user, db)
+
     for key, value in update_data.items():
         setattr(cl, key, value)
     db.commit()
-    db.refresh(cl)
-    return cl
+    cl = db.query(CaseLaw).options(joinedload(CaseLaw.case)).filter(CaseLaw.id == cl.id).first()
+    return serialize_case_law(cl)
 
 @router.delete("/{case_law_id}")
 def delete_case_law(

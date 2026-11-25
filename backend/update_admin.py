@@ -4,7 +4,7 @@ from app.core.database import SessionLocal
 from app.models.user import User
 
 db = SessionLocal()
-admin = db.query(User).filter(User.email == "admin@lagalos.in").first()
+admin = db.query(User).filter(User.email.in_(["admin@fastcase.in", "admin@lagalos.in"])).first()
 if admin:
     admin.full_name = "SOSM SERVICES PVT LTD"
     db.commit()

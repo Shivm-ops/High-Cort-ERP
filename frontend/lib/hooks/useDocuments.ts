@@ -20,6 +20,10 @@ export interface Document {
   uploaded_by_id?: string;
   signature_status?: string;
   signature_request_id?: string;
+  is_evidence?: boolean;
+  exhibit_number?: string | null;
+  evidence_status?: string | null;
+  evidence_date?: string | null;
   created_at: string;
   tags?: string[];
   description?: string;
@@ -33,10 +37,10 @@ export function useDocuments(caseId?: string, clientId?: string, docType?: strin
   if (docType) params.append("doc_type", docType);
 
   const queryStr = params.toString() ? `?${params.toString()}` : "";
-  
-  const { data, error, isLoading, mutate } = useSWR<{total: number, documents: Document[]}>(
+
+  const { data, error, isLoading, mutate } = useSWR<{ total: number; documents: Document[] }>(
     `/documents${queryStr}`,
-    (url: string) => api.get(url).then(res => res.data)
+    (url: string) => api.get(url).then((res) => res.data)
   );
 
   return {
@@ -44,7 +48,7 @@ export function useDocuments(caseId?: string, clientId?: string, docType?: strin
     total: data?.total || 0,
     isLoading,
     isError: error,
-    mutate
+    mutate,
   };
 }
 
@@ -63,7 +67,18 @@ export function useRequestESign() {
   });
 }
 
-export const uploadDocument = async (file: File, caseId?: string, clientId?: string, docType = "other", description?: string) => {
+export const uploadDocument = async (
+  file: File,
+  caseId?: string,
+  clientId?: string,
+  docType = "other",
+  description?: string,
+  evidenceOptions?: {
+    is_evidence?: boolean;
+    exhibit_number?: string;
+    evidence_status?: string;
+  }
+) => {
   const formData = new FormData();
   formData.append("file", file);
   if (caseId) formData.append("case_id", caseId);
@@ -71,19 +86,70 @@ export const uploadDocument = async (file: File, caseId?: string, clientId?: str
   formData.append("doc_type", docType);
   if (description) formData.append("description", description);
   formData.append("enable_ocr", "true");
+  if (evidenceOptions?.is_evidence !== undefined) {
+    formData.append("is_evidence", String(evidenceOptions.is_evidence));
+  }
+  if (evidenceOptions?.exhibit_number) {
+    formData.append("exhibit_number", evidenceOptions.exhibit_number);
+  }
+  if (evidenceOptions?.evidence_status) {
+    formData.append("evidence_status", evidenceOptions.evidence_status);
+  }
 
   const response = await api.post("/documents/upload", formData, {
     headers: {
-      "Content-Type": "multipart/form-data"
-    }
+      "Content-Type": "multipart/form-data",
+    },
   });
   return response.data;
 };
 
+export async function updateDocumentMeta(
+  id: string,
+  payload: {
+    name?: string;
+    doc_type?: string;
+    client_id?: string;
+    case_id?: string;
+    description?: string;
+    is_evidence?: boolean;
+    exhibit_number?: string;
+    evidence_status?: string;
+  }
+) {
+  const { data } = await api.patch(`/documents/${id}`, payload);
+  return data as Document;
+}
+
+export async function deleteDocumentById(id: string) {
+  const { data } = await api.delete(`/documents/${id}`);
+  return data;
+}
+
 export function useUploadDocument() {
   return useMutation({
-    mutationFn: async (payload: { file: File; case_id?: string; client_id?: string; doc_type?: string; description?: string }) => {
-      return uploadDocument(payload.file, payload.case_id, payload.client_id, payload.doc_type || "other", payload.description);
-    }
+    mutationFn: async (payload: {
+      file: File;
+      case_id?: string;
+      client_id?: string;
+      doc_type?: string;
+      description?: string;
+      is_evidence?: boolean;
+      exhibit_number?: string;
+      evidence_status?: string;
+    }) => {
+      return uploadDocument(
+        payload.file,
+        payload.case_id,
+        payload.client_id,
+        payload.doc_type || "other",
+        payload.description,
+        {
+          is_evidence: payload.is_evidence,
+          exhibit_number: payload.exhibit_number,
+          evidence_status: payload.evidence_status,
+        }
+      );
+    },
   });
 }

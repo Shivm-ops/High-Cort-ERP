@@ -37,7 +37,7 @@ Backups are only as good as the ability to restore them.
 
 ```bash
 # Example restoration command
-pg_restore -U postgres -h staging-db-host -d lagalos_staging_db -1 /backups/lagalos_db_latest.dump
+pg_restore -U postgres -h staging-db-host -d fastcase_staging_db -1 /backups/fastcase_db_latest.dump
 ```
 
 ## 4. Encryption
