@@ -250,9 +250,38 @@ async def _hearing_reminder_cron_worker():
             break
 
 
+def _validate_production_secrets():
+    """Refuse to boot in production with default dev/weak secrets; warn on placeholder rotation."""
+    if (settings.APP_ENV or "").strip().lower() != "production":
+        return
+    import os
+    weak_values = {"", "supersecretkey", "jwtsecretkey", "changeme", "secret", "default"}
+    strict = os.getenv("STRICT_SECRET_CHECK", "").strip().lower() == "true"
+    for name, val in [
+        ("SECRET_KEY", settings.SECRET_KEY),
+        ("JWT_SECRET_KEY", settings.JWT_SECRET_KEY),
+    ]:
+        cleaned = (val or "").strip()
+        if cleaned.lower() in weak_values or len(cleaned) < 16:
+            raise RuntimeError(f"Insecure {name} configured for production environment")
+        if cleaned.startswith("CHANGE_THIS_"):
+            if strict:
+                raise RuntimeError(f"Placeholder {name} configured for production environment")
+            logger.critical("⚠️ Production %s uses a placeholder value — rotate it in .env.secrets!", name)
+    from app.core.security_db import ENCRYPTION_KEY, DEFAULT_DEV_KEY
+    enc_key = (ENCRYPTION_KEY or "").strip()
+    if not enc_key or enc_key.lower() in weak_values or len(enc_key) < 16:
+        raise RuntimeError("Insecure ENCRYPTION_KEY configured for production environment")
+    if enc_key == DEFAULT_DEV_KEY:
+        if strict:
+            raise RuntimeError("Default ENCRYPTION_KEY configured for production environment")
+        logger.critical("⚠️ Production ENCRYPTION_KEY uses the dev default — set ENCRYPTION_KEY in VPS .env!")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("🚀 Fastcase API starting up...")
+    _validate_production_secrets()
     Base.metadata.create_all(bind=engine)
     try:
         run_db_migrations()
@@ -286,23 +315,40 @@ async def lifespan(app: FastAPI):
     logger.info("🛑 Fastcase API shutting down...")
 
 
+_is_prod = (settings.APP_ENV or "").strip().lower() == "production"
+
 app = FastAPI(
     title="Fastcase API",
     description="Fastcase REST API",
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json",
+    docs_url=None if _is_prod else "/api/docs",
+    redoc_url=None if _is_prod else "/api/redoc",
+    openapi_url=None if _is_prod else "/api/openapi.json",
     lifespan=lifespan,
 )
 
-# CORS — allow the root domain, its subdomains (incl. firm tenant subdomains), localhost, 127.0.0.1, and direct IPs
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    return response
+
+# CORS — strict HTTPS root/subdomain regex in production; allow local hosts in non-production
 import re as _re
 _domain_re = _re.escape((settings.DOMAIN or "fastcase.in").strip().lower())
+_cors_regex = (
+    rf"^https://([a-z0-9-]+\.)*{_domain_re}$"
+    if _is_prod
+    else rf"^https?://(([a-z0-9-]+\.)*{_domain_re}|localhost(:\d+)?|127\.0\.0\.1(:\d+)?|(\d{{1,3}}\.){{3}}\d{{1,3}}(:\d+)?)$"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.all_allowed_origins(),
-    allow_origin_regex=rf"^https?://(([a-z0-9-]+\.)*{_domain_re}|localhost(:\d+)?|127\.0\.0\.1(:\d+)?|(\d{{1,3}}\.){{3}}\d{{1,3}}(:\d+)?)$",
+    allow_origin_regex=_cors_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

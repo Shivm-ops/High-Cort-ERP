@@ -9,6 +9,7 @@ Usage
 
 """
 
+from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -74,10 +75,16 @@ def require_roles(*allowed_roles: UserRole):
     return _checker
 
 
+FEATURE_ALIASES = {
+    "ai_tools": {"ai_tools", "ai_draft_studio"},
+    "ai_draft_studio": {"ai_tools", "ai_draft_studio"},
+}
+
+
 def require_feature(required_feature: str):
     """
     Dependency factory — restrict endpoint to firms whose active subscription 
-    includes the required_feature.
+    includes the required_feature and has not expired.
     Super-admins bypass this check.
     """
     async def _checker(current_user: User = Depends(require_firm_member), db: Session = Depends(get_db)) -> User:
@@ -96,10 +103,17 @@ def require_feature(required_feature: str):
                 detail=f"Feature '{required_feature}' requires an active subscription.",
             )
 
+        if sub.end_date and sub.end_date < datetime.utcnow():
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Your subscription has expired. Please renew your plan.",
+            )
+
         feats = sub.plan.features or ""
         features_list = [f.strip() for f in feats.split(",") if f.strip()]
-        
-        if required_feature not in features_list:
+        allowed_keys = FEATURE_ALIASES.get(required_feature, {required_feature})
+
+        if not any(k in features_list for k in allowed_keys):
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail=f"Your current subscription plan does not include the '{required_feature}' feature. Please upgrade your plan.",
@@ -111,26 +125,31 @@ def require_feature(required_feature: str):
 def check_object_firm(obj, current_user: User, obj_firm_id_attr: str = "firm_id"):
     """
     Object-level security check.
-    Raises 403 if the object's firm_id doesn't match the caller's firm_id.
+    Raises 403/404 if the object is missing or its firm_id doesn't match the caller's firm_id.
     Super-admins bypass this check.
     """
     if current_user.is_superadmin:
         return
-        
+
+    if obj is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Record not found.",
+        )
+
     obj_firm_id = getattr(obj, obj_firm_id_attr, None)
-    
+
     if obj_firm_id is None:
-        # Object has no firm_id (e.g. legacy or isolated by owner)
-        # We MUST ensure the caller is actually the creator, otherwise anyone can access it!
+        # Legacy/unassigned record without firm_id: strictly require verified creator ownership.
         creator_id = getattr(obj, "created_by_id", None)
-        if creator_id and creator_id != current_user.id:
+        if not creator_id or str(creator_id) != str(current_user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied. This record is private and belongs to another user.",
+                detail="Access denied. This record is private or belongs to another organisation.",
             )
         return
-        
-    if obj_firm_id != current_user.firm_id:
+
+    if not current_user.firm_id or str(obj_firm_id) != str(current_user.firm_id):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. This record belongs to a different organisation.",

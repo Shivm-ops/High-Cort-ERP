@@ -10,8 +10,8 @@ import uuid
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.permissions import (
-    require_firm_member, require_roles, check_object_firm, apply_firm_filter,
-    get_user_firm_id, ROLES_ADMIN
+    require_firm_member, require_feature, require_roles, check_object_firm, apply_firm_filter,
+    get_user_firm_id, ROLES_ADMIN, ROLES_ADVOCATES
 )
 from app.models.draft import Draft, DraftCategory, DraftLanguage
 from app.models.user import User
@@ -163,7 +163,7 @@ async def list_templates(
     language: Optional[str] = None,
     search: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     """Return firm's own templates + global public templates."""
     from sqlalchemy import or_ as sql_or
@@ -196,7 +196,7 @@ async def list_templates(
 async def auto_fill_draft(
     req: AutoFillRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     client = None
     if req.client_id:
@@ -271,7 +271,7 @@ async def list_drafts(
     language: Optional[str] = None, search: Optional[str] = None,
     is_template: Optional[bool] = None, case_id: Optional[str] = None,
     client_id: Optional[str] = None,
-    db: Session = Depends(get_db), current_user: User = Depends(require_firm_member),
+    db: Session = Depends(get_db), current_user: User = Depends(require_feature("drafts")),
 ):
     from sqlalchemy import or_ as sql_or
     query = db.query(Draft)
@@ -320,11 +320,49 @@ async def list_drafts(
     return {"total": total, "drafts": [serialize_draft(d) for d in drafts]}
 
 
+def _parse_optional_uuid(raw_id: Optional[str], field_label: str) -> Optional[uuid.UUID]:
+    if not raw_id:
+        return None
+    try:
+        return uuid.UUID(str(raw_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid {field_label}")
+
+
+def _validate_firm_refs(
+    case_id: Optional[uuid.UUID],
+    client_id: Optional[uuid.UUID],
+    parent_id: Optional[uuid.UUID],
+    current_user: User,
+    db: Session,
+) -> None:
+    if case_id:
+        case_obj = apply_firm_filter(db.query(Case), Case, current_user).filter(
+            Case.id == case_id,
+            Case.is_deleted == False,
+        ).first()
+        if not case_obj:
+            raise HTTPException(status_code=403, detail="Case not found or access denied")
+    if client_id:
+        client_obj = apply_firm_filter(db.query(Client), Client, current_user).filter(
+            Client.id == client_id,
+            Client.is_deleted == False,
+        ).first()
+        if not client_obj:
+            raise HTTPException(status_code=403, detail="Client not found or access denied")
+    if parent_id:
+        parent_obj = db.query(Draft).filter(Draft.id == parent_id, Draft.is_deleted == False).first()
+        if not parent_obj:
+            raise HTTPException(status_code=404, detail="Parent draft not found")
+        if not parent_obj.is_public_template:
+            check_object_firm(parent_obj, current_user)
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_draft(
     data: DraftCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     word_count = len((data.content or "").split())
     cat_val = normalize_category(data.category) or DraftCategory.OTHER
@@ -334,29 +372,17 @@ async def create_draft(
     draft_dict["category"] = cat_val
     draft_dict["language"] = lang_val
 
-    if data.case_id:
-        try:
-            draft_dict["case_id"] = uuid.UUID(data.case_id)
-        except ValueError:
-            draft_dict["case_id"] = None
-    else:
-        draft_dict["case_id"] = None
+    draft_dict["case_id"] = _parse_optional_uuid(data.case_id, "case ID")
+    draft_dict["client_id"] = _parse_optional_uuid(data.client_id, "client ID")
+    draft_dict["parent_id"] = _parse_optional_uuid(data.parent_id, "parent draft ID")
 
-    if data.client_id:
-        try:
-            draft_dict["client_id"] = uuid.UUID(data.client_id)
-        except ValueError:
-            draft_dict["client_id"] = None
-    else:
-        draft_dict["client_id"] = None
-
-    if data.parent_id:
-        try:
-            draft_dict["parent_id"] = uuid.UUID(data.parent_id)
-        except ValueError:
-            draft_dict["parent_id"] = None
-    else:
-        draft_dict["parent_id"] = None
+    _validate_firm_refs(
+        draft_dict["case_id"],
+        draft_dict["client_id"],
+        draft_dict["parent_id"],
+        current_user,
+        db,
+    )
 
     draft = Draft(
         **draft_dict,
@@ -374,7 +400,7 @@ async def create_draft(
 async def get_draft(
     draft_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     try:
         draft_uuid = uuid.UUID(draft_id)
@@ -394,7 +420,7 @@ async def update_draft(
     draft_id: str,
     data: DraftUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     try:
         draft_uuid = uuid.UUID(draft_id)
@@ -413,9 +439,17 @@ async def update_draft(
         update_dict["language"] = normalize_language(update_dict["language"]) or draft.language
 
     if "case_id" in update_dict:
-        update_dict["case_id"] = uuid.UUID(update_dict["case_id"]) if update_dict["case_id"] else None
+        update_dict["case_id"] = _parse_optional_uuid(update_dict["case_id"], "case ID")
     if "client_id" in update_dict:
-        update_dict["client_id"] = uuid.UUID(update_dict["client_id"]) if update_dict["client_id"] else None
+        update_dict["client_id"] = _parse_optional_uuid(update_dict["client_id"], "client ID")
+
+    _validate_firm_refs(
+        update_dict.get("case_id"),
+        update_dict.get("client_id"),
+        None,
+        current_user,
+        db,
+    )
 
     for field, val in update_dict.items():
         setattr(draft, field, val)
@@ -435,7 +469,7 @@ async def duplicate_draft(
     draft_id: str,
     title: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     """Save As / Duplicate an existing draft into a new draft."""
     try:
@@ -478,7 +512,7 @@ async def duplicate_draft(
 async def get_draft_versions(
     draft_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     try:
         draft_uuid = uuid.UUID(draft_id)
@@ -493,10 +527,12 @@ async def get_draft_versions(
 
     from sqlalchemy import or_ as sql_or
     root_id = draft.parent_id if draft.parent_id else draft.id
-    versions = db.query(Draft).filter(
+    versions = apply_firm_filter(db.query(Draft), Draft, current_user).filter(
         sql_or(Draft.id == root_id, Draft.parent_id == root_id),
         Draft.is_deleted == False
     ).order_by(Draft.version.desc()).all()
+    if draft.is_public_template and all(v.id != draft.id for v in versions):
+        versions.append(draft)
 
     return {"versions": [serialize_draft(v) for v in versions]}
 
@@ -505,7 +541,8 @@ async def get_draft_versions(
 async def delete_draft(
     draft_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
+    _role_gate: User = Depends(require_roles(*ROLES_ADVOCATES)),
 ):
     try:
         draft_uuid = uuid.UUID(draft_id)
@@ -529,7 +566,7 @@ async def delete_draft(
 async def get_draft_translations(
     draft_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("drafts")),
 ):
     draft = db.query(Draft).filter(Draft.id == draft_id).first()
     if not draft:

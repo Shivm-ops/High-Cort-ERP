@@ -175,7 +175,7 @@ def update_case_law(
     cl = db.query(CaseLaw).filter(CaseLaw.id == case_law_id).first()
     if not cl:
         raise HTTPException(status_code=404, detail="Case law not found")
-    if cl.firm_id and cl.firm_id != current_user.firm_id and not current_user.is_superadmin:
+    if not current_user.is_superadmin and (cl.firm_id is None or cl.firm_id != current_user.firm_id):
         raise HTTPException(status_code=403, detail="Access denied")
 
     update_data = data.model_dump(exclude_unset=True)
@@ -197,7 +197,7 @@ def delete_case_law(
     cl = db.query(CaseLaw).filter(CaseLaw.id == case_law_id).first()
     if not cl:
         raise HTTPException(status_code=404, detail="Case law not found")
-    if cl.firm_id and cl.firm_id != current_user.firm_id and not current_user.is_superadmin:
+    if not current_user.is_superadmin and (cl.firm_id is None or cl.firm_id != current_user.firm_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db.delete(cl)
     db.commit()

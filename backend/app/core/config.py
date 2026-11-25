@@ -87,6 +87,9 @@ class Settings(BaseSettings):
     COMPANY_STATE: str = "Maharashtra"
     COMPANY_SUPPORT_EMAIL: str = "support@fastcase.in"
 
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = ""
+
     # Admin Notifications
     ADMIN_EMAIL: str = "admin@fastcase.in"
 

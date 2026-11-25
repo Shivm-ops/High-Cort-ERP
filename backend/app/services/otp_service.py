@@ -177,10 +177,6 @@ def store_registration_otp(
         "max_attempts": MAX_OTP_ATTEMPTS,
     }
 
-    # Prominent log for dev and server debugging
-    logger.info("[REGISTRATION OTP] Code for %s is: %s (valid for %ds)", clean_email, otp, expiry_seconds)
-    print(f"[REGISTRATION OTP] Code for {clean_email} is: {otp} (valid for {expiry_seconds}s)", flush=True)
-
     session_key = f"reg_session:{clean_email}"
     session_payload = {
         "data": reg_data,
@@ -200,7 +196,10 @@ def store_registration_otp(
     _memory_store[session_key] = session_payload
 
 
-def get_registration_otp_payload(email: str) -> Optional[dict]:
+def get_registration_otp_payload(
+    email: str,
+    include_session_fallback: bool = True,
+) -> Optional[dict]:
     """Retrieve active registration payload for an email if valid and not expired."""
     clean_email = email.lower().strip()
     key = f"reg_otp:{clean_email}"
@@ -220,6 +219,9 @@ def get_registration_otp_payload(email: str) -> Optional[dict]:
         if time.time() <= item.get("expires_at", 0):
             return item
         _memory_store.pop(key, None)
+
+    if not include_session_fallback:
+        return None
 
     # Fallback to persistent 15-minute registration session so Resend Code works without filling form again
     if client:
@@ -274,7 +276,7 @@ def verify_and_clear_registration_otp(
         )
 
     key = f"reg_otp:{clean_email}"
-    payload = get_registration_otp_payload(clean_email)
+    payload = get_registration_otp_payload(clean_email, include_session_fallback=False)
     if not payload:
         return OtpResult(
             False,
@@ -299,7 +301,12 @@ def verify_and_clear_registration_otp(
     expected_otp = str(payload.get("otp", "")).strip()
     submitted_otp = str(otp).strip()
 
-    if secrets.compare_digest(expected_otp, submitted_otp):
+    if (
+        len(expected_otp) == 6
+        and expected_otp.isdigit()
+        and len(submitted_otp) == 6
+        and secrets.compare_digest(expected_otp, submitted_otp)
+    ):
         # Cleared immediately upon single successful use (one-time protection)
         delete_registration_otp(clean_email)
         return OtpResult(True, payload.get("data"), None, max_attempts - current_attempts)
@@ -375,9 +382,6 @@ def store_login_otp(
         "attempts": 0,
         "max_attempts": MAX_OTP_ATTEMPTS,
     }
-
-    logger.info("[LOGIN OTP] Code for %s is: %s (valid for %ds)", clean_email, otp, expiry_seconds)
-    print(f"[LOGIN OTP] Code for {clean_email} is: {otp} (valid for {expiry_seconds}s)", flush=True)
 
     client = _get_redis()
     if client:

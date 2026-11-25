@@ -275,23 +275,37 @@ def get_clean_print_view(
     if not grievance:
         raise HTTPException(status_code=404, detail="Application record not found.")
 
-    # Multi-tenant security check: If grievance is tied to a specific firm, verify tenant access
-    if grievance.firm_id is not None:
+    # Enforce tenant and citizen ownership whenever user_id or firm_id is tied to the grievance
+    if grievance.firm_id is not None or grievance.user_id is not None:
         auth_header = request.headers.get("Authorization")
-        user_firm_id = None
+        authed_user = None
         if auth_header and auth_header.startswith("Bearer "):
             try:
                 from app.core.security import decode_token
-                token = auth_header.split(" ")[1]
+
+                token = auth_header.split(" ", 1)[1]
                 token_data = decode_token(token)
-                if token_data and "sub" in token_data:
-                    u = db.query(User).filter(User.id == uuid.UUID(token_data["sub"])).first()
-                    if u:
-                        user_firm_id = u.firm_id
+                if token_data and token_data.get("type", "access") == "access" and "sub" in token_data:
+                    authed_user = (
+                        db.query(User)
+                        .filter(User.id == uuid.UUID(token_data["sub"]), User.is_active == True)
+                        .first()
+                    )
             except Exception:
-                pass
-        if user_firm_id != grievance.firm_id:
-            raise HTTPException(status_code=403, detail="Unauthorized access to this firm's confidential grievance record.")
+                authed_user = None
+
+        if not authed_user:
+            raise HTTPException(status_code=403, detail="Authentication required to access this application.")
+
+        if not authed_user.is_superadmin:
+            same_owner = grievance.user_id is not None and authed_user.id == grievance.user_id
+            same_firm = (
+                grievance.firm_id is not None
+                and authed_user.firm_id is not None
+                and authed_user.firm_id == grievance.firm_id
+            )
+            if not (same_owner or same_firm):
+                raise HTTPException(status_code=403, detail="Unauthorized access to this confidential application record.")
 
     doc_text = html_lib.escape(grievance.generated_application or "No content available.")
     applicant_name = html_lib.escape(grievance.applicant_name or "Applicant")

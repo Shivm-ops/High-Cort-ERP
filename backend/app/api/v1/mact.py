@@ -7,7 +7,7 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.core.permissions import require_feature
+from app.core.permissions import apply_firm_filter, require_feature
 from app.models.user import User
 from app.models.mact import MactCase, MactClaimant, MactDocument, MactInsurance, MactWorkflowLog, MactCaseStage
 
@@ -200,9 +200,9 @@ async def add_mact_insurance(
     case_id: UUID,
     data: InsuranceCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("mact_management"))
 ):
-    case = db.query(MactCase).filter(MactCase.id == case_id, MactCase.firm_id == current_user.firm_id).first()
+    case = apply_firm_filter(db.query(MactCase), MactCase, current_user).filter(MactCase.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
         

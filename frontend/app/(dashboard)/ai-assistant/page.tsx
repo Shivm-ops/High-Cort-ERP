@@ -122,7 +122,13 @@ export default function CaseAssistantPage() {
   };
 
   function renderContent(content: string) {
-    return content
+    const escaped = content
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+    return escaped
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
       .replace(/\*([^*]+)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br/>')

@@ -57,11 +57,23 @@ def decode_token(token: str) -> dict:
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     from app.models.user import User
+    from app.models.security import UserSession
     import uuid
     payload = decode_token(token)
+    if payload.get("type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     user_id: str = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    jti: Optional[str] = payload.get("jti")
+    if not user_id or not jti:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
         user_uuid = uuid.UUID(user_id)
     except ValueError:
@@ -69,6 +81,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     user = db.query(User).filter(User.id == user_uuid).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
+    session = (
+        db.query(UserSession)
+        .filter(
+            UserSession.token_jti == jti,
+            UserSession.user_id == user.id,
+        )
+        .first()
+    )
+    if not session or not session.is_active or (session.expires_at and session.expires_at < datetime.utcnow()):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired or revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 

@@ -7,8 +7,7 @@ import json
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.permissions import apply_firm_filter
-from app.core.security import get_current_user
+from app.core.permissions import apply_firm_filter, require_feature
 from app.models.user import User
 from app.models.case import Case
 from app.models.client import Client
@@ -133,7 +132,7 @@ def _enrich_draft_context(
 
 
 @router.get("/status")
-async def get_ai_status(current_user: User = Depends(get_current_user)):
+async def get_ai_status(current_user: User = Depends(require_feature("ai_tools"))):
     """Check whether live AI is configured for the current firm or server."""
     api_key, _, model, provider = get_user_ai_config(current_user)
     return {
@@ -146,7 +145,7 @@ async def get_ai_status(current_user: User = Depends(get_current_user)):
 @router.post("/draft/generate")
 async def generate_draft(
     request: DraftRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_feature("ai_tools")),
     db: Session = Depends(get_db),
 ):
     """Generate a legal draft with optional firm Client/Case context."""
@@ -171,7 +170,7 @@ async def generate_draft(
 @router.post("/draft/stream")
 async def stream_draft(
     request: DraftRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_feature("ai_tools")),
     db: Session = Depends(get_db)
 ):
     """Stream AI draft generation SSE."""
@@ -208,7 +207,7 @@ async def stream_draft(
 @router.post("/draft/enhance")
 async def enhance_draft(
     request: EnhanceDraftRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_feature("ai_tools")),
 ):
     """Enhance, rewrite, expand, or format an existing legal draft."""
     api_key, base_url, model, _ = get_user_ai_config(current_user)
@@ -235,7 +234,7 @@ async def enhance_draft(
 @router.post("/research")
 async def legal_research(
     request: ResearchRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_feature("ai_tools")),
     db: Session = Depends(get_db)
 ):
     """Semantic legal research across Acts and Case Laws."""
@@ -255,7 +254,7 @@ async def legal_research(
 @router.post("/analyze-order")
 async def analyze_court_order(
     order_text: str,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("ai_tools"))
 ):
     """Analyze a court order: extract operative part, directions, next date, compliance items."""
     api_key = get_user_openai_key(current_user)
@@ -266,7 +265,7 @@ async def analyze_court_order(
 @router.post("/notice-reply-strategy")
 async def generate_reply_strategy(
     request: NoticeReplyStrategyRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("ai_tools"))
 ):
     """Generate reply strategy and rebuttal points for a legal notice."""
     api_key, base_url, model, _ = get_user_ai_config(current_user)
@@ -291,7 +290,7 @@ async def generate_reply_strategy(
 @router.post("/translate")
 async def translate_legal_text(
     request: TranslateRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("ai_tools"))
 ):
     """Translate legal text preserving statutory terms."""
     api_key, base_url, model, _ = get_user_ai_config(current_user)
@@ -323,7 +322,7 @@ async def translate_legal_text(
 async def get_clause_suggestions(
     draft_type: str,
     context: str = "",
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("ai_tools"))
 ):
     """Get AI-suggested clauses for a draft type."""
     suggestions = await ai_service.get_clause_suggestions(
@@ -337,15 +336,16 @@ async def get_clause_suggestions(
 async def get_matter_suggestions(
     case_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("ai_tools"))
 ):
     """Get AI generated legal research suggestions for a specific case."""
     try:
         case_uuid = uuid.UUID(case_id)
-        query = db.query(Case).filter(Case.id == case_uuid)
-        if not current_user.is_superadmin and current_user.firm_id:
-            query = query.filter(Case.firm_id == current_user.firm_id)
-        case = query.first()
+        case = (
+            apply_firm_filter(db.query(Case), Case, current_user)
+            .filter(Case.id == case_uuid, Case.is_deleted == False)
+            .first()
+        )
         if not case:
             raise HTTPException(status_code=404, detail="Case not found")
         
@@ -359,16 +359,18 @@ async def get_matter_suggestions(
             case_info, api_key=api_key, base_url=base_url, model=model
         )
         return suggestions
+    except HTTPException:
+        raise
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid case ID format")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate suggestions: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to generate suggestions")
 
 
 @router.post("/research/context-suggestions")
 async def get_custom_context_suggestions(
     payload: ResearchContextPayload,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_feature("ai_tools"))
 ):
     """Get AI generated legal research suggestions for a custom research context."""
     try:
@@ -384,5 +386,5 @@ async def get_custom_context_suggestions(
             context_info, api_key=api_key, base_url=base_url, model=model
         )
         return suggestions
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate context suggestions: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to generate context suggestions")

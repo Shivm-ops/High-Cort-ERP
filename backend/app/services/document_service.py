@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+import uuid
 from typing import Optional, Tuple
 from app.core.config import settings
 
@@ -32,7 +33,7 @@ class DocumentService:
         """Upload file to S3 or Azure and return URL and hash."""
         file_hash = hashlib.sha256(content).hexdigest()
         safe_filename = self._sanitize_filename(filename)
-        object_key = f"documents/{file_hash[:2]}/{file_hash}/{safe_filename}"
+        object_key = f"documents/{file_hash[:2]}/{file_hash}/{uuid.uuid4().hex[:12]}_{safe_filename}"
 
         if self.s3_client:
             try:

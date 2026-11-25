@@ -26,6 +26,27 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+_SENSITIVE_KEY_TOKENS = (
+    "password", "secret", "token", "api_key", "otp",
+    "pan", "aadhaar", "credit_card", "cvv",
+)
+
+
+def _scrub_sensitive(value: Any) -> Any:
+    """Recursively redact sensitive keys before persisting audit log details."""
+    if isinstance(value, dict):
+        cleaned = {}
+        for k, v in value.items():
+            key_lower = str(k).lower()
+            if any(tok in key_lower for tok in _SENSITIVE_KEY_TOKENS):
+                cleaned[k] = "[REDACTED]"
+            else:
+                cleaned[k] = _scrub_sensitive(v)
+        return cleaned
+    if isinstance(value, list):
+        return [_scrub_sensitive(item) for item in value]
+    return value
+
 
 # ── Action constant registry ──────────────────────────────────────────────────
 class AuditAction:
@@ -95,6 +116,8 @@ def log_action(
     try:
         from app.models.audit_log import AuditLog
 
+        safe_details = _scrub_sensitive(details) if details else None
+
         entry = AuditLog(
             user_id=user.id if user else None,
             firm_id=user.firm_id if user else None,
@@ -103,7 +126,7 @@ def log_action(
             resource_id=str(resource_id) if resource_id else None,
             ip_address=ip,
             user_agent=user_agent,
-            details=json.dumps(details, default=str) if details else None,
+            details=json.dumps(safe_details, default=str) if safe_details else None,
             status=status,
             created_at=datetime.utcnow(),
         )

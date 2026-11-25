@@ -6,6 +6,15 @@ import { toast, Toaster } from "sonner";
 import { FileText, BookOpen, Search, Eye, RefreshCw, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+function getSafeHref(rawUrl?: string | null): string | null {
+  if (!rawUrl || typeof rawUrl !== "string") return null;
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("https://") || trimmed.startsWith("http://") || (trimmed.startsWith("/") && !trimmed.startsWith("//"))) {
+    return trimmed;
+  }
+  return null;
+}
+
 export default function ContentPage() {
   const [activeTab, setActiveTab] = useState("drafts");
   const [drafts, setDrafts] = useState<any[]>([]);
@@ -251,9 +260,11 @@ export default function ContentPage() {
             </div>
             <div className="p-8 overflow-y-auto flex-1 bg-white">
               {previewContent.type === 'draft' ? (
-                <div 
-                  className="prose prose-sm max-w-none prose-indigo"
-                  dangerouslySetInnerHTML={{ __html: previewContent.data.content || '<p class="text-gray-400 italic">No content available.</p>' }}
+                <iframe
+                  title="Draft preview"
+                  sandbox=""
+                  srcDoc={previewContent.data.content || '<p style="color:#9ca3af;font-style:italic">No content available.</p>'}
+                  className="w-full min-h-[420px] rounded-xl border border-gray-200 bg-white"
                 />
               ) : (
                 <div className="space-y-6">
@@ -263,13 +274,16 @@ export default function ContentPage() {
                       {previewContent.data.summary}
                     </p>
                   </div>
-                  {previewContent.data.url && (
-                    <div>
-                      <a href={previewContent.data.url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 font-bold text-sm">
-                        View Full Judgment Source &rarr;
-                      </a>
-                    </div>
-                  )}
+                  {(() => {
+                    const safeUrl = getSafeHref(previewContent.data.url);
+                    return safeUrl ? (
+                      <div>
+                        <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 font-bold text-sm">
+                          View Full Judgment Source &rarr;
+                        </a>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               )}
             </div>

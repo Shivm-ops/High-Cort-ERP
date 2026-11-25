@@ -136,8 +136,7 @@ def verify_payment_signature(
     """
     _, key_secret = get_razorpay_credentials()
     if not key_secret:
-        # If in simulation mode
-        if razorpay_order_id.startswith("order_sim_"):
+        if settings.APP_ENV != "production" and razorpay_order_id.startswith("order_sim_"):
             return True
         return False
 
@@ -148,14 +147,14 @@ def verify_payment_signature(
 
 def verify_webhook_signature(
     payload_body: bytes,
-    signature_header: str,
+    signature_header: Optional[str],
     webhook_secret: Optional[str] = None,
 ) -> bool:
-    """Verify webhook payload HMAC signature."""
+    """Verify webhook payload HMAC signature (fail closed when secret or signature is absent)."""
     secret = webhook_secret or settings.RAZORPAY_WEBHOOK_SECRET or os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
-    if not secret:
-        logger.warning("No Razorpay webhook secret configured")
-        return True
+    if not secret or not signature_header:
+        logger.warning("Missing Razorpay webhook secret or signature header")
+        return False
 
     generated = hmac.new(secret.encode("utf-8"), payload_body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(generated, signature_header)

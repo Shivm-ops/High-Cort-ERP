@@ -110,7 +110,7 @@ class PropertyReportGenerator:
                 gap_alert = f"<br><span style='color:#ef4444; font-size:10px;'>⚠️ {html_lib.escape(ch.get('title_gap_note', ''))}</span>" if ch.get("has_title_gap") else ""
                 chain_html += f"""
                 <tr style="border-bottom: 1px solid #e2e8f0; font-size: 11px;">
-                    <td style="padding: 6px 8px;">{ch.get('sequence')}</td>
+                    <td style="padding: 6px 8px;">{html_lib.escape(str(ch.get('sequence', '')))}</td>
                     <td style="padding: 6px 8px;"><strong>{html_lib.escape(str(ch.get('year', '')))}</strong><br><span style="color:#64748b;">Doc: {html_lib.escape(str(ch.get('document_number', '')))}</span></td>
                     <td style="padding: 6px 8px;">{html_lib.escape(ch.get('document_type', ''))}</td>
                     <td style="padding: 6px 8px;"><strong>Seller:</strong> {html_lib.escape(ch.get('seller', ''))}<br><strong>Buyer:</strong> {html_lib.escape(ch.get('buyer', ''))}{gap_alert}</td>
@@ -255,7 +255,7 @@ class PropertyReportGenerator:
         <div style="background: {badge_bg}; border: 1.5px solid {badge_text}; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <span style="color: {badge_text}; font-size: 13px; font-weight: 900; letter-spacing: 0.5px;">{badge_label}</span>
-                <span style="font-size: 11px; font-weight: bold; color: {badge_text};">Risk Index: {res.get('risk_score')}/100</span>
+                <span style="font-size: 11px; font-weight: bold; color: {badge_text};">Risk Index: {html_lib.escape(str(res.get('risk_score', '')))}/100</span>
             </div>
             <p style="margin: 0; font-size: 11.5px; color: #1e293b; line-height: 1.4;">{html_lib.escape(res.get('summary_verdict', ''))}</p>
         </div>
@@ -265,7 +265,7 @@ class PropertyReportGenerator:
         <div class="grid-2 callout">
             <div>
                 <div style="font-size: 10px; color: #64748b;">Property Category:</div>
-                <div style="font-size: 12px; font-weight: bold;">{category_name}</div>
+                <div style="font-size: 12px; font-weight: bold;">{html_lib.escape(str(category_name or ''))}</div>
                 <div style="margin-top: 6px; font-size: 10px; color: #64748b;">Location:</div>
                 <div style="font-size: 11px;">{html_lib.escape(req.get('district', ''))}, Taluka: {html_lib.escape(req.get('taluka') or 'N/A')}, Village: {html_lib.escape(req.get('village_city') or 'N/A')}</div>
             </div>

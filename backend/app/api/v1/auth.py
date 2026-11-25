@@ -18,7 +18,7 @@ from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.core.database import get_db
@@ -145,6 +145,33 @@ def _create_session(user: User, access_token: str, db: Session, ip: Optional[str
     return jti
 
 
+def _create_refresh_session(
+    user: User,
+    refresh_token: str,
+    db: Session,
+    ip: Optional[str],
+    user_agent: Optional[str],
+) -> str:
+    """Persist an active session record for a refresh token so logout/rotation revokes it."""
+    try:
+        payload = decode_token(refresh_token)
+        jti = payload.get("jti", str(uuid.uuid4()))
+    except Exception:
+        jti = str(uuid.uuid4())
+
+    session = UserSession(
+        user_id=user.id,
+        token_jti=jti,
+        device_info="refresh",
+        ip_address=ip,
+        created_at=utc_now(),
+        expires_at=utc_now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        is_active=True,
+    )
+    db.add(session)
+    return jti
+
+
 def _get_user_subscription(user: User, db: Session) -> dict:
     """Helper to extract subscription info for the token payload."""
     if user.is_superadmin:
@@ -160,6 +187,8 @@ def _get_user_subscription(user: User, db: Session) -> dict:
 
     if not sub or not sub.plan:
         return {"tier": "none", "features": [], "max_users": 0}
+    if sub.end_date and sub.end_date < utc_now():
+        return {"tier": "expired", "features": [], "max_users": 0}
 
     feats = sub.plan.features or ""
     features_list = [f.strip() for f in feats.split(",") if f.strip()]
@@ -285,6 +314,7 @@ class ChangePasswordRequest(BaseModel):
 
 class LogoutRequest(BaseModel):
     access_token: Optional[str] = None   # optional: client may pass it explicitly
+    refresh_token: Optional[str] = None
 
 
 class VerifyOtpRequest(BaseModel):
@@ -328,7 +358,7 @@ async def login(
 
     # 1. Lookup user (case-insensitive and trimmed)
     clean_username = form_data.username.strip().lower() if form_data.username else ""
-    user = db.query(User).filter(User.email.ilike(clean_username)).first()
+    user = db.query(User).filter(func.lower(User.email) == clean_username).first()
 
     if not user:
         # Don't reveal whether email exists
@@ -375,6 +405,24 @@ async def login(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account deactivated")
 
+    if user.mfa_enabled and user.mfa_secret:
+        mfa_code = (request.headers.get("X-MFA-Code") or "").strip()
+        if not mfa_code:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="MFA_REQUIRED",
+                headers={"X-MFA-Required": "true"},
+            )
+        if not pyotp.TOTP(str(user.mfa_secret)).verify(mfa_code, valid_window=1):
+            _record_failed_attempt(user, db, ip, user_agent)
+            log_action(db, AuditAction.LOGIN_FAILURE, "AUTH", str(user.id), user=user, ip=ip,
+                       details={"reason": "invalid_mfa_code"}, status="failure")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authenticator code",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     return await _build_login_response(user, db, ip, user_agent, background_tasks=background_tasks)
 
 
@@ -387,13 +435,15 @@ async def _build_login_response(
 ) -> LoginResponse:
     # 4. Issue tokens with JTI
     jti = str(uuid.uuid4())
+    refresh_jti = str(uuid.uuid4())
     user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
     access_token = create_access_token({"sub": str(user.id), "role": user_role_str, "jti": jti})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id), "jti": refresh_jti})
 
     # 5. Record success + session
     _record_success(user, db, ip, user_agent)
     _create_session(user, access_token, db, ip, user_agent)
+    _create_refresh_session(user, refresh_token, db, ip, user_agent)
     db.commit()
 
     log_action(db, AuditAction.LOGIN_SUCCESS, "AUTH", str(user.id), user=user, ip=ip,
@@ -638,7 +688,8 @@ async def register(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    if db.query(User).filter(User.email == data.email).first():
+    clean_email = data.email.lower().strip()
+    if db.query(User).filter(func.lower(User.email) == clean_email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
     from app.models.firm import Firm
@@ -669,7 +720,7 @@ async def register(
         db.add(sub)
 
     user = User(
-        email=data.email,
+        email=clean_email,
         hashed_password=get_password_hash(data.password),
         full_name=data.full_name,
         phone=data.phone,
@@ -706,7 +757,7 @@ async def register_initiate(
     stores pending profile for 10 minutes, and dispatches verification email.
     """
     clean_email = data.email.lower().strip()
-    if db.query(User).filter(User.email.ilike(clean_email)).first():
+    if db.query(User).filter(func.lower(User.email) == clean_email).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An account with this email address already exists. Please log in instead.",
@@ -723,10 +774,10 @@ async def register_initiate(
     # 1. Generate secure 6-digit OTP
     otp_code = generate_otp()
 
-    # 2. Store pending payload in Redis/cache for 60 seconds
+    # 2. Store pending payload in Redis/cache for 60 seconds (password pre-hashed)
     reg_dict = {
         "email": clean_email,
-        "password": data.password,
+        "hashed_password": get_password_hash(data.password),
         "full_name": data.full_name,
         "phone": data.phone,
         "bar_council_no": data.bar_council_no,
@@ -779,7 +830,7 @@ async def register_verify_otp(
     reg_dict = res.data
 
     # Race condition check
-    if db.query(User).filter(User.email.ilike(clean_email)).first():
+    if db.query(User).filter(func.lower(User.email) == clean_email).first():
         raise HTTPException(status_code=400, detail="An account with this email already exists.")
 
     from app.models.firm import Firm
@@ -826,7 +877,7 @@ async def register_verify_otp(
 
     user = User(
         email=clean_email,
-        hashed_password=get_password_hash(reg_dict["password"]),
+        hashed_password=reg_dict.get("hashed_password") or get_password_hash(reg_dict["password"]),
         full_name=full_name,
         phone=reg_dict.get("phone"),
         bar_council_no=reg_dict.get("bar_council_no"),
@@ -850,8 +901,9 @@ async def register_verify_otp(
 
     # Automatically sign in and issue JWT tokens
     jti = str(uuid.uuid4())
+    refresh_jti = str(uuid.uuid4())
     access_token = create_access_token({"sub": str(user.id), "role": user.user_type, "jti": jti})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id), "jti": refresh_jti})
 
     setattr(user, "last_login", utc_now())
     user.login_count = (user.login_count or 0) + 1
@@ -868,7 +920,17 @@ async def register_verify_otp(
         expires_at=utc_now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
         is_active=True,
     )
+    refresh_session_rec = UserSession(
+        user_id=user.id,
+        token_jti=refresh_jti,
+        device_info="refresh",
+        ip_address=ip,
+        created_at=utc_now(),
+        expires_at=utc_now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        is_active=True,
+    )
     db.add(session_rec)
+    db.add(refresh_session_rec)
     db.commit()
 
     # Dispatch login notification email for newly provisioned session via BackgroundTasks
@@ -944,41 +1006,76 @@ async def resend_registration_otp(data: ResendOtpRequest):
 
 
 @router.post("/refresh")
-async def refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
+async def refresh_token(request: Request, data: RefreshRequest, db: Session = Depends(get_db)):
     payload = decode_token(data.refresh_token)
     if payload.get("type") != "refresh":
-        raise HTTPException(status_code=400, detail="Invalid refresh token")
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    refresh_jti = payload.get("jti")
+    if not refresh_jti:
+        raise HTTPException(status_code=401, detail="Refresh token missing session identifier")
 
     try:
         uid = uuid.UUID(payload["sub"])
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid token subject")
-        
+        raise HTTPException(status_code=401, detail="Invalid token subject")
+
     user = db.query(User).filter(User.id == uid).first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
 
     _check_account_locked(user)
 
+    refresh_session = (
+        db.query(UserSession)
+        .filter(
+            UserSession.token_jti == refresh_jti,
+            UserSession.user_id == user.id,
+        )
+        .first()
+    )
+    if not refresh_session or not refresh_session.is_active or (
+        refresh_session.expires_at and refresh_session.expires_at < utc_now()
+    ):
+        raise HTTPException(status_code=401, detail="Refresh token revoked or expired")
+
+    # Rotate refresh token (single use)
+    refresh_session.is_active = False
+
+    ip = extract_ip(request)
+    user_agent = request.headers.get("User-Agent", "")
+    user_role_str = user.user_type.value if hasattr(user.user_type, "value") else str(user.user_type)
+
     jti = str(uuid.uuid4())
-    access_token = create_access_token({"sub": str(user.id), "role": user.user_type, "jti": jti})
-    return {"access_token": access_token, "token_type": "bearer"}
+    new_refresh_jti = str(uuid.uuid4())
+    access_token = create_access_token({"sub": str(user.id), "role": user_role_str, "jti": jti})
+    new_refresh_token = create_refresh_token({"sub": str(user.id), "jti": new_refresh_jti})
+    _create_session(user, access_token, db, ip, user_agent)
+    _create_refresh_session(user, new_refresh_token, db, ip, user_agent)
+    db.commit()
+    return {
+        "access_token": access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+    }
 
 
 @router.post("/logout")
 async def logout(
     request: Request,
+    data: Optional[LogoutRequest] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Invalidate the current session by deactivating its JTI."""
+    """Invalidate the current access and optional refresh session by deactivating their JTIs."""
     ip = extract_ip(request)
     auth_header = request.headers.get("Authorization", "")
     token = auth_header.replace("Bearer ", "").strip() if auth_header.startswith("Bearer ") else None
 
-    if token:
+    tokens_to_revoke = [t for t in [token, data.access_token if data else None, data.refresh_token if data else None] if t]
+    for raw_tok in tokens_to_revoke:
         try:
-            payload = decode_token(token)
+            payload = decode_token(raw_tok)
             jti = payload.get("jti")
             if jti:
                 session = db.query(UserSession).filter(
@@ -1128,6 +1225,26 @@ async def verify_mfa(data: VerifyMFARequest, current_user: User = Depends(get_cu
     return {"message": "MFA enabled successfully."}
 
 
+@router.post("/mfa/disable")
+async def disable_mfa(
+    data: VerifyMFARequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Verify current TOTP code and disable MFA for the user."""
+    if not current_user.mfa_enabled or not current_user.mfa_secret:
+        raise HTTPException(status_code=400, detail="MFA is not currently enabled.")
+
+    totp = pyotp.TOTP(str(current_user.mfa_secret))
+    if not totp.verify(data.token.strip(), valid_window=1):
+        raise HTTPException(status_code=400, detail="Invalid MFA token.")
+
+    current_user.mfa_enabled = False
+    current_user.mfa_secret = None
+    db.commit()
+    return {"message": "MFA disabled successfully."}
+
+
 
 @router.post("/login-otp-initiate")
 @router.post("/login-otp/send")
@@ -1156,11 +1273,11 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
                 User.phone == f"+91{phone_10}",
                 User.phone == f"+91 {phone_10}",
                 User.phone.like(f"%{phone_10}"),
-                User.email.ilike(clean_input),
+                func.lower(User.email) == clean_input,
             )
         ).first()
     else:
-        user = db.query(User).filter(User.email.ilike(clean_input)).first()
+        user = db.query(User).filter(func.lower(User.email) == clean_input).first()
 
     if not user:
         if len(phone_digits) >= 10:
@@ -1217,12 +1334,9 @@ async def login_otp_initiate(data: LoginOtpInitiateRequest, db: Session = Depend
         )
 
     return {
-        "message": f"A 6-digit login verification code has been dispatched to {user.email or raw_input}.",
+        "message": "A 6-digit login verification code has been dispatched to your registered contact.",
         "target": raw_input,
-        "email": user.email,
         "expires_in_seconds": DEFAULT_OTP_EXPIRY_SECONDS,
-        "max_attempts": 5,
-        "otp_debug": None,
     }
 
 
@@ -1272,11 +1386,11 @@ async def login_otp_verify(
                 User.phone == f"+91{phone_10}",
                 User.phone == f"+91 {phone_10}",
                 User.phone.like(f"%{phone_10}"),
-                User.email.ilike(clean_input),
+                func.lower(User.email) == clean_input,
             )
         ).first()
     else:
-        user = db.query(User).filter(User.email.ilike(clean_input)).first()
+        user = db.query(User).filter(func.lower(User.email) == clean_input).first()
 
     # Third attempt: try user's stored email if found
     if not res.is_valid and user and user.email:
@@ -1299,12 +1413,14 @@ async def login_otp_verify(
 
     # Issue tokens with JTI
     jti = str(uuid.uuid4())
+    refresh_jti = str(uuid.uuid4())
     access_token = create_access_token({"sub": str(user.id), "role": user.user_type, "jti": jti})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id), "jti": refresh_jti})
 
     # Record login & create session
     _record_success(user, db, ip, user_agent)
     _create_session(user, access_token, db, ip, user_agent)
+    _create_refresh_session(user, refresh_token, db, ip, user_agent)
     db.commit()
 
     log_action(db, AuditAction.LOGIN_SUCCESS, "AUTH", str(user.id), user=user, ip=ip,
@@ -1404,6 +1520,13 @@ async def google_auth_login(
 
     # 1. Verify token with Google's official public API
     google_data = None
+    expected_google_aud = (getattr(settings, "GOOGLE_CLIENT_ID", "") or "").strip()
+    if (settings.APP_ENV or "").strip().lower() == "production" and not expected_google_aud:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google authentication is not configured.",
+        )
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             if payload.credential:
@@ -1413,17 +1536,34 @@ async def google_auth_login(
                 )
                 if res.status_code == 200:
                     google_data = res.json()
+                    if expected_google_aud and google_data.get("aud") != expected_google_aud:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Google token audience mismatch.",
+                        )
             if not google_data and payload.access_token:
+                if expected_google_aud:
+                    tinfo = await client.get(
+                        "https://oauth2.googleapis.com/tokeninfo",
+                        params={"access_token": payload.access_token},
+                    )
+                    if tinfo.status_code != 200 or tinfo.json().get("aud") != expected_google_aud:
+                        raise HTTPException(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Google access token audience mismatch.",
+                        )
                 res = await client.get(
                     "https://www.googleapis.com/oauth2/v3/userinfo",
                     headers={"Authorization": f"Bearer {payload.access_token}"},
                 )
                 if res.status_code == 200:
                     google_data = res.json()
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Unable to reach Google verification service: {exc}",
+            detail="Unable to reach Google verification service.",
         )
 
     if not google_data or not google_data.get("email"):
@@ -1431,12 +1571,17 @@ async def google_auth_login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid, expired, or unverified Google token.",
         )
+    if str(google_data.get("email_verified", "")).lower() != "true":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google account email is not verified.",
+        )
 
     clean_email = str(google_data["email"]).lower().strip()
     full_name = str(google_data.get("name") or clean_email.split("@")[0]).strip()
 
     # 2. Find or create user
-    user = db.query(User).filter(User.email.ilike(clean_email)).first()
+    user = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if not user:
         target_role = (
             UserRole.CITIZEN
@@ -1478,6 +1623,7 @@ async def google_auth_login(
                 dashboard_url="https://app.fastcase.in/dashboard",
             )
     else:
+        _check_account_locked(user)
         if not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

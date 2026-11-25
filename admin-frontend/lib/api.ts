@@ -82,6 +82,9 @@ api.interceptors.response.use(
         const { data } = await axios.post(`${API_URL}/auth/refresh`, { refresh_token: refreshToken });
         const newToken = data.access_token;
         localStorage.setItem("access_token", newToken);
+        if (data.refresh_token) {
+          localStorage.setItem("refresh_token", data.refresh_token);
+        }
         // Refresh the SSR cookie too
         document.cookie = `access_token=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}`;
         api.defaults.headers.common.Authorization = `Bearer ${newToken}`;

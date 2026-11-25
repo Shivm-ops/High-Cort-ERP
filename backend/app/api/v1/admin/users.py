@@ -1,3 +1,4 @@
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -79,7 +80,7 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), current_admi
         is_active=True,
         is_verified=True,  # Auto verify since admin created
         firm_id=new_firm.id,
-        is_superadmin=(payload.user_type == "admin")
+        is_superadmin=False
     )
     db.add(new_user)
     db.commit()
@@ -240,8 +241,15 @@ def reset_password(user_id: str, payload: PasswordResetPayload, request: Request
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
-    # Use custom password or temporary default
-    new_pass = payload.new_password if payload.new_password else "Fastcase@2025"
+    generated_temp_password = None
+    if payload.new_password:
+        if len(payload.new_password) < 8:
+            raise HTTPException(status_code=400, detail="New password must be at least 8 characters long")
+        new_pass = payload.new_password
+    else:
+        new_pass = secrets.token_urlsafe(12)
+        generated_temp_password = new_pass
+
     user.hashed_password = get_password_hash(new_pass)
     db.query(UserSession).filter(UserSession.user_id == uid).update({"is_active": False})
     db.commit()
@@ -252,11 +260,14 @@ def reset_password(user_id: str, payload: PasswordResetPayload, request: Request
         action="RESET_PASSWORD",
         resource_type="USER",
         resource_id=user_id,
-        details=f"Password changed to {'custom password' if payload.new_password else 'default'} and all sessions revoked",
+        details=f"Password changed to {'custom password' if payload.new_password else 'generated temporary password'} and all sessions revoked",
         request=request
     )
     
-    return {"message": "Password updated successfully and sessions revoked"}
+    resp = {"message": "Password updated successfully and sessions revoked"}
+    if generated_temp_password:
+        resp["temporary_password"] = generated_temp_password
+    return resp
 
 @router.put("/{user_id}/verify")
 def verify_user_manually(user_id: str, request: Request, db: Session = Depends(get_db), current_admin: User = Depends(get_current_superadmin)):

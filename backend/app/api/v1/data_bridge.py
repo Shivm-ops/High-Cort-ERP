@@ -28,7 +28,7 @@ from sqlalchemy import or_ as sql_or
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import get_current_user
-from app.core.permissions import require_firm_member, apply_firm_filter, check_object_firm
+from app.core.permissions import require_firm_member, apply_firm_filter, check_object_firm, get_user_firm_id
 from app.models.document import Document, DocumentType
 from app.models.case import Case, CaseStatus, CaseStage, CasePriority
 from app.models.client import Client, ClientType
@@ -38,7 +38,7 @@ from app.models.draft import Draft, DraftCategory, DraftLanguage
 from app.services.data_bridge_service import DataBridgeService, ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES
 from app.services.audit_service import log_action, extract_ip, AuditAction
 from app.services.ai_service import AIService
-from app.api.v1.documents import _make_download_token
+from app.api.v1.documents import _make_download_token, _doc_firm_check
 
 logger = logging.getLogger(__name__)
 
@@ -1288,8 +1288,12 @@ async def resolve_record_conflict(
                 source_client.is_deleted = True
 
         elif resolution == "overwrite":
+            client_overwrite_fields = {
+                "name", "email", "phone", "alternate_phone", "address",
+                "city", "state", "pincode", "pan", "gstin", "company_name", "notes", "tags",
+            }
             for k, v in update_data.items():
-                if hasattr(target_client, k) and k not in ("id", "firm_id", "created_by_id"):
+                if k in client_overwrite_fields and hasattr(target_client, k):
                     setattr(target_client, k, v)
             if source_client and source_client.id != target_client.id:
                 db.query(Case).filter(Case.client_id == source_client.id).update({Case.client_id: target_client.id})
@@ -1351,10 +1355,23 @@ async def resolve_record_conflict(
                 source_case.is_deleted = True
 
         elif resolution == "overwrite":
+            case_overwrite_fields = {
+                "title", "case_number", "ecourts_cnr", "court", "judge", "practice_area",
+                "petitioner", "respondent", "opposing_counsel", "description", "notes", "tags", "client_id",
+            }
             for k, v in update_data.items():
-                if hasattr(target_case, k) and k not in ("id", "firm_id", "created_by_id"):
+                if k in case_overwrite_fields and hasattr(target_case, k):
                     if k == "client_id" and v:
-                        v = uuid.UUID(v)
+                        try:
+                            cid = uuid.UUID(str(v))
+                        except ValueError:
+                            raise HTTPException(status_code=400, detail="Invalid client_id UUID format")
+                        owned_client = apply_firm_filter(db.query(Client), Client, current_user).filter(
+                            Client.id == cid, Client.is_deleted == False
+                        ).first()
+                        if not owned_client:
+                            raise HTTPException(status_code=403, detail="Client not found or access denied")
+                        v = cid
                     setattr(target_case, k, v)
             if source_case and source_case.id != target_case.id:
                 db.query(Document).filter(Document.case_id == source_case.id).update({Document.case_id: target_case.id})
@@ -1519,14 +1536,16 @@ async def export_client_documents(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid client ID")
 
-    client = apply_firm_filter(db.query(Client), Client, current_user).filter(Client.id == clid).first()
+    client = apply_firm_filter(db.query(Client), Client, current_user).filter(
+        Client.id == clid, Client.is_deleted == False
+    ).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found or access denied")
 
     query = db.query(Document).options(
         joinedload(Document.case),
         joinedload(Document.client)
-    ).filter(Document.client_id == clid)
+    ).filter(Document.client_id == clid, Document.is_deleted == False)
 
     if case_id:
         try:
@@ -1619,10 +1638,10 @@ async def ai_draft_improve(
     if payload.doc_id:
         try:
             did = uuid.UUID(payload.doc_id)
-            doc = db.query(Document).filter(Document.id == did).first()
+            doc = db.query(Document).filter(Document.id == did, Document.is_deleted == False).first()
             if not doc:
                 raise HTTPException(status_code=404, detail="Document not found")
-            check_object_firm(doc.case or doc.client, current_user) if (doc.case or doc.client) else None
+            _doc_firm_check(doc, current_user, db)
             if not source_text:
                 if doc.ocr_text and doc.ocr_text.strip():
                     source_text = doc.ocr_text.strip()
@@ -1698,7 +1717,7 @@ async def ai_draft_improve(
         proposed_draft = response.choices[0].message.content
     except Exception as e:
         logger.error(f"OpenAI API execution error: {e}")
-        raise HTTPException(status_code=502, detail=f"AI service provider error: {str(e)}")
+        raise HTTPException(status_code=502, detail="AI service provider error. Please try again later.")
 
     # Handle explicit save as draft
     saved_draft_id = None
@@ -1712,15 +1731,31 @@ async def ai_draft_improve(
 
         target_case_id = None
         if payload.case_id:
-            try: target_case_id = uuid.UUID(payload.case_id)
-            except Exception: pass
+            try:
+                cid = uuid.UUID(payload.case_id)
+            except Exception:
+                raise HTTPException(status_code=400, detail="Invalid case ID")
+            owned_case = apply_firm_filter(db.query(Case), Case, current_user).filter(
+                Case.id == cid, Case.is_deleted == False
+            ).first()
+            if not owned_case:
+                raise HTTPException(status_code=403, detail="Case not found or access denied")
+            target_case_id = cid
         elif doc and doc.case_id:
             target_case_id = doc.case_id
 
         target_client_id = None
         if payload.client_id:
-            try: target_client_id = uuid.UUID(payload.client_id)
-            except Exception: pass
+            try:
+                clid = uuid.UUID(payload.client_id)
+            except Exception:
+                raise HTTPException(status_code=400, detail="Invalid client ID")
+            owned_client = apply_firm_filter(db.query(Client), Client, current_user).filter(
+                Client.id == clid, Client.is_deleted == False
+            ).first()
+            if not owned_client:
+                raise HTTPException(status_code=403, detail="Client not found or access denied")
+            target_client_id = clid
         elif doc and doc.client_id:
             target_client_id = doc.client_id
 
@@ -1731,6 +1766,7 @@ async def ai_draft_improve(
             case_id=target_case_id,
             client_id=target_client_id,
             created_by_id=current_user.id,
+            firm_id=get_user_firm_id(current_user),
             ai_generated=True,
             ai_prompt=f"{payload.operation}: {payload.instructions or ''}",
             word_count=len(proposed_draft.split()),

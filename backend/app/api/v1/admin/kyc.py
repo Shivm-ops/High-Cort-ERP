@@ -1,14 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_superadmin
 from app.models.kyc import KycRecord, KycStatus
 from app.models.user import User
+from app.api.v1.admin.audit import log_admin_action
 from pydantic import BaseModel
 import datetime
 import uuid
 
 router = APIRouter()
+
+
+def _mask_doc_number(val: str) -> str:
+    if not val:
+        return ""
+    cleaned = val.strip()
+    if len(cleaned) <= 4:
+        return "****"
+    return "****" + cleaned[-4:]
 
 class KycActionRequest(BaseModel):
     action: str # 'approve' or 'reject'
@@ -34,7 +44,7 @@ def get_kyc_queue(status: str = "pending", db: Session = Depends(get_db), curren
             "entity_type": r.entity_type,
             "entity_name": entity_name,
             "document_type": r.document_type,
-            "document_number": r.document_number,
+            "document_number": _mask_doc_number(r.document_number),
             "document_url": r.document_url,
             "status": r.status,
             "submitted_at": r.submitted_at
@@ -42,7 +52,13 @@ def get_kyc_queue(status: str = "pending", db: Session = Depends(get_db), curren
     return result
 
 @router.put("/{kyc_id}")
-def review_kyc(kyc_id: str, payload: KycActionRequest, db: Session = Depends(get_db), current_admin: User = Depends(get_current_superadmin)):
+def review_kyc(
+    kyc_id: str,
+    payload: KycActionRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_superadmin),
+):
     try:
         kid = uuid.UUID(kyc_id)
     except ValueError:
@@ -72,6 +88,15 @@ def review_kyc(kyc_id: str, payload: KycActionRequest, db: Session = Depends(get
         
     kyc.reviewed_at = datetime.datetime.utcnow()
     kyc.reviewed_by_id = current_admin.id
-    
+
     db.commit()
+    log_admin_action(
+        db=db,
+        admin_id=current_admin.id,
+        action="KYC_APPROVE" if payload.action == "approve" else "KYC_REJECT",
+        resource_type="KYC",
+        resource_id=kyc_id,
+        details=f"KYC {payload.action}d ({kyc.entity_type})",
+        request=request,
+    )
     return {"message": f"KYC record {payload.action}d successfully"}

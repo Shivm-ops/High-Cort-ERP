@@ -2,6 +2,13 @@
 venv
 ENV
 env
+.env
+.env.*
+uploads/
+*.db
+*.sqlite*
+reset_*.py
+seed_*.py
 __pycache__
 *.pyc
 *.pyo

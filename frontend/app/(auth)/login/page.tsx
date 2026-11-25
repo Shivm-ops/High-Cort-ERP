@@ -35,6 +35,8 @@ export default function AdvocateLoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
 
   // Navigate after login: On Advocate login page, always navigate to /dashboard
   // unless user explicitly passed redirect or portal query parameters.
@@ -43,7 +45,7 @@ export default function AdvocateLoginPage() {
     const redirectParam = params?.get("redirect");
     const portalParam = params?.get("portal");
 
-    if (redirectParam) {
+    if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//") && !redirectParam.startsWith("/\\")) {
       window.location.href = redirectParam;
     } else if (portalParam === "citizen") {
       window.location.href = "/citizen-portal";
@@ -177,14 +179,25 @@ export default function AdvocateLoginPage() {
       toast.error("Password must be at least 6 characters.");
       return;
     }
+    if (mfaRequired && !mfaCode.trim()) {
+      toast.error("Enter the 6-digit authenticator code.");
+      return;
+    }
 
     setLoading(true);
     try {
-      await login(emailInput.trim(), passwordInput);
+      await login(emailInput.trim(), passwordInput, mfaRequired ? mfaCode.trim() : undefined);
       const currentUser = useAuthStore.getState().user;
       toast.success("Welcome back to Fastcase Practice!");
       navigateAfterLogin();
-    } catch (err) {
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 403 && detail === "MFA_REQUIRED") {
+        setMfaRequired(true);
+        toast.info("Two-factor authentication is enabled. Enter your 6-digit authenticator code.");
+        return;
+      }
       toast.error(getErrorMessage(err));
     } finally {
       setLoading(false);
@@ -397,6 +410,28 @@ export default function AdvocateLoginPage() {
                   </button>
                 </div>
               </div>
+
+              {mfaRequired && (
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-gray-700 mb-1.5">
+                    AUTHENTICATOR CODE (2FA)
+                  </label>
+                  <div className="relative">
+                    <ShieldCheck className="w-4 h-4 text-[#059669] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={8}
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      placeholder="6-digit code from authenticator app"
+                      required
+                      autoFocus
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-[#059669] rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#059669]/20 transition tracking-widest"
+                    />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"

@@ -1,9 +1,12 @@
 import copy
+import ipaddress
 import os
 import re
+import socket
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -497,6 +500,46 @@ async def get_my_firm(
     return _serialize_firm(firm)
 
 
+def _validate_ai_base_url(raw_url: str) -> str:
+    """Validate BYOK AI base URL to prevent SSRF against internal or private hosts."""
+    cleaned = raw_url.strip()
+    parsed = urlparse(cleaned)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+        raise HTTPException(status_code=400, detail="AI API base URL must be a valid HTTPS URL without credentials")
+
+    host = parsed.hostname.strip().lower()
+    if host in {"localhost", "metadata.google.internal"}:
+        raise HTTPException(status_code=400, detail="Private or internal AI API host is not allowed")
+
+    def _is_forbidden_ip(ip_str: str) -> bool:
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+            return (
+                ip_obj.is_private
+                or ip_obj.is_loopback
+                or ip_obj.is_link_local
+                or ip_obj.is_multicast
+                or ip_obj.is_reserved
+                or ip_obj.is_unspecified
+            )
+        except ValueError:
+            return False
+
+    if _is_forbidden_ip(host):
+        raise HTTPException(status_code=400, detail="Private or reserved IP addresses are not allowed for AI API base URL")
+
+    try:
+        addr_info = socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM)
+        for item in addr_info:
+            resolved_ip = item[4][0]
+            if _is_forbidden_ip(resolved_ip):
+                raise HTTPException(status_code=400, detail="Resolved AI API host points to a private or internal network")
+    except socket.gaierror:
+        raise HTTPException(status_code=400, detail="Unable to resolve AI API base hostname")
+
+    return cleaned
+
+
 @router.patch("/me/firm")
 async def update_my_firm(
     data: FirmUpdate,
@@ -543,7 +586,14 @@ async def update_my_firm(
         firm.custom_domain = custom
     ensure_firm_subdomain(db, firm)
 
-    # BYOK settings
+    # BYOK settings (admin-only)
+    if any(
+        val is not None
+        for val in (data.ai_provider, data.ai_api_key, data.ai_api_base, data.ai_model)
+    ):
+        if not current_user.is_superadmin and current_user.user_type not in ROLES_ADMIN:
+            raise HTTPException(status_code=403, detail="Only firm administrators can update AI provider settings")
+
     if data.ai_provider is not None:
         firm.ai_provider = data.ai_provider
     if data.ai_api_key is not None:
@@ -552,7 +602,7 @@ async def update_my_firm(
         elif not data.ai_api_key.startswith("********"):
             firm.ai_api_key = data.ai_api_key
     if data.ai_api_base is not None:
-        firm.ai_api_base = data.ai_api_base
+        firm.ai_api_base = _validate_ai_base_url(data.ai_api_base) if data.ai_api_base.strip() else None
     if data.ai_model is not None:
         firm.ai_model = data.ai_model
 

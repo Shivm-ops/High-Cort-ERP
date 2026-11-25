@@ -9,7 +9,7 @@ import uuid
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.permissions import (
-    require_firm_member, require_roles, check_object_firm, apply_firm_filter,
+    require_firm_member, require_feature, require_roles, check_object_firm, apply_firm_filter,
     get_user_firm_id, ROLES_ADMIN, ROLES_WITH_BILLING
 )
 from app.models.invoice import Invoice, InvoiceStatus
@@ -144,7 +144,7 @@ def _assert_case_firm(case_id: uuid.UUID, current_user: User, db: Session) -> Ca
 @router.get("/stats/summary")
 async def billing_stats(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     # Tenant-scoped invoices via client FK
     firm_client_ids = [
@@ -190,7 +190,7 @@ async def billing_stats(
 async def get_matter_ledger(
     case_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     # ── Object-level security: verify case belongs to firm ────────────────────
     _assert_case_firm(case_id, current_user, db)
@@ -227,10 +227,12 @@ async def get_matter_ledger(
 async def create_fee(
     data: FeeCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
-    # ── Verify client belongs to firm ─────────────────────────────────────────
+    # ── Verify client and optional case belong to firm ────────────────────────
     _assert_client_firm(data.client_id, current_user, db)
+    if data.case_id:
+        _assert_case_firm(data.case_id, current_user, db)
     fee = Fee(**data.model_dump())
     db.add(fee)
     db.commit()
@@ -241,7 +243,7 @@ async def create_fee(
 async def get_unbilled_fees(
     case_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     firm_client_ids = [
         c.id for c in apply_firm_filter(db.query(Client), Client, current_user).all()
@@ -256,9 +258,11 @@ async def get_unbilled_fees(
 async def create_expense(
     data: ExpenseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     _assert_client_firm(data.client_id, current_user, db)
+    if data.case_id:
+        _assert_case_firm(data.case_id, current_user, db)
     expense = Expense(**data.model_dump())
     db.add(expense)
     db.commit()
@@ -269,7 +273,7 @@ async def create_expense(
 async def get_unbilled_expenses(
     case_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     firm_client_ids = [
         c.id for c in apply_firm_filter(db.query(Client), Client, current_user).all()
@@ -284,9 +288,11 @@ async def get_unbilled_expenses(
 async def record_advance(
     data: AdvancePaymentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     _assert_client_firm(data.client_id, current_user, db)
+    if data.case_id:
+        _assert_case_firm(data.case_id, current_user, db)
     advance = AdvancePayment(
         **data.model_dump(),
         amount_utilized=0.0,
@@ -306,7 +312,7 @@ async def list_invoices(
     status: Optional[str] = None,
     case_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     # ── Tenant isolation: scope by firm clients ───────────────────────────────
     firm_client_ids = [
@@ -332,6 +338,7 @@ async def create_invoice(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(*ROLES_WITH_BILLING)),
+    _feature_gate: User = Depends(require_feature("billing")),
 ):
     # ── Verify client and optional case belong to firm ────────────────────────
     _assert_client_firm(data.client_id, current_user, db)
@@ -361,16 +368,20 @@ async def create_invoice(
     db.add(invoice)
     db.flush()
 
+    firm_client_ids = [
+        c.id for c in apply_firm_filter(db.query(Client), Client, current_user).all()
+    ]
+
     if data.fee_ids:
         for fee_id in data.fee_ids:
-            f = db.query(Fee).filter(Fee.id == fee_id).first()
+            f = db.query(Fee).filter(Fee.id == fee_id, Fee.client_id.in_(firm_client_ids)).first()
             if f:
                 f.is_billed = True
                 f.invoice_id = invoice.id
 
     if data.expense_ids:
         for exp_id in data.expense_ids:
-            e = db.query(Expense).filter(Expense.id == exp_id).first()
+            e = db.query(Expense).filter(Expense.id == exp_id, Expense.client_id.in_(firm_client_ids)).first()
             if e:
                 e.is_billed = True
                 e.invoice_id = invoice.id
@@ -388,7 +399,7 @@ async def create_invoice(
 async def get_invoice(
     invoice_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
 ):
     invoice = db.query(Invoice).options(
         joinedload(Invoice.client), joinedload(Invoice.case)
@@ -408,7 +419,8 @@ async def update_invoice(
     data: InvoiceUpdate,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
+    _role_gate: User = Depends(require_roles(*ROLES_WITH_BILLING)),
 ):
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
@@ -432,7 +444,8 @@ async def send_invoice(
     request: Request,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
+    _role_gate: User = Depends(require_roles(*ROLES_WITH_BILLING)),
 ):
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
@@ -466,6 +479,7 @@ async def record_payment(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(*ROLES_WITH_BILLING)),
+    _feature_gate: User = Depends(require_feature("billing")),
 ):
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
@@ -498,7 +512,8 @@ async def send_reminder(
     invoice_id: str,
     type: str = "whatsapp",
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_feature("billing")),
+    _role_gate: User = Depends(require_roles(*ROLES_WITH_BILLING)),
 ):
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:

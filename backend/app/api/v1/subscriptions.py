@@ -11,6 +11,8 @@ Complete Subscription & Billing Management API:
 - Transaction & invoice ledger history
 """
 
+import html as html_lib
+import json
 import os
 import uuid
 import random
@@ -166,7 +168,7 @@ def get_my_subscription(
             "storage_limit_gb": 1.0,
         }
 
-    key_id, _ = get_razorpay_credentials()
+    key_id, _ = get_razorpay_credentials(db)
 
     return {
         "current_subscription": current_plan,
@@ -236,7 +238,23 @@ async def create_checkout_order(
         logger.error(f"Failed to generate Razorpay order: {exc}")
         raise HTTPException(status_code=500, detail="Failed to initiate payment gateway order. Please try again.")
 
-    key_id, _ = get_razorpay_credentials()
+    key_id, _ = get_razorpay_credentials(db)
+
+    pending_txn = PaymentTransaction(
+        firm_id=current_user.firm_id,
+        amount=total_payable,
+        currency="INR",
+        status=PaymentStatus.PENDING,
+        gateway=GatewayProvider.RAZORPAY,
+        gateway_reference=json.dumps({
+            "plan_id": str(plan.id),
+            "billing_cycle": cycle,
+            "expected_amount": float(total_payable),
+        }),
+        razorpay_order_id=order["id"],
+    )
+    db.add(pending_txn)
+    db.commit()
 
     return {
         "order_id": order["id"],
@@ -275,6 +293,44 @@ async def verify_payment(
             detail="Payment verification failed: cryptographic signature mismatch.",
         )
 
+    existing_payment = db.query(PaymentTransaction).filter(
+        PaymentTransaction.razorpay_payment_id == payload.razorpay_payment_id,
+        PaymentTransaction.status == PaymentStatus.SUCCESS,
+    ).first()
+    if existing_payment:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This payment has already been processed.",
+        )
+
+    pending_txn = db.query(PaymentTransaction).filter(
+        PaymentTransaction.razorpay_order_id == payload.razorpay_order_id,
+        PaymentTransaction.firm_id == current_user.firm_id,
+    ).first()
+    if not pending_txn:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Checkout order not found for this firm.",
+        )
+    if pending_txn.status == PaymentStatus.SUCCESS:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This checkout order has already been completed.",
+        )
+
+    try:
+        order_meta = json.loads(pending_txn.gateway_reference or "{}")
+    except Exception:
+        order_meta = {}
+    if (
+        order_meta.get("plan_id") != str(payload.plan_id)
+        or order_meta.get("billing_cycle") != payload.billing_cycle.lower()
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Plan or billing cycle does not match checkout order.",
+        )
+
     plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == payload.plan_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Subscription plan not found")
@@ -293,6 +349,26 @@ async def verify_payment(
 
     breakdown = calculate_price_breakdown(base_amount)
     total_paid = breakdown["total_amount"]
+    expected_amount = float(order_meta.get("expected_amount", pending_txn.amount))
+    if round(float(total_paid), 2) != round(expected_amount, 2):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order amount mismatch.",
+        )
+
+    key_id, key_secret = get_razorpay_credentials(db)
+    if key_id and key_secret:
+        rp_payment = await fetch_razorpay_payment(payload.razorpay_payment_id)
+        if not rp_payment:
+            raise HTTPException(status_code=400, detail="Unable to verify payment with Razorpay.")
+        if rp_payment.get("status") not in ("captured", "authorized"):
+            raise HTTPException(status_code=400, detail="Payment has not been captured.")
+        if rp_payment.get("order_id") and rp_payment.get("order_id") != payload.razorpay_order_id:
+            raise HTTPException(status_code=400, detail="Payment order mismatch.")
+        expected_paise = int(round(expected_amount * 100))
+        if int(rp_payment.get("amount") or 0) != expected_paise:
+            raise HTTPException(status_code=400, detail="Paid amount does not match checkout order.")
+
     invoice_num = _generate_invoice_number()
 
     # Update or Create TenantSubscription
@@ -326,20 +402,14 @@ async def verify_payment(
         )
         db.add(sub)
 
-    # Record Payment Transaction & Tax Invoice
-    txn = PaymentTransaction(
-        firm_id=current_user.firm_id,
-        amount=total_paid,
-        currency="INR",
-        status=PaymentStatus.SUCCESS,
-        gateway=GatewayProvider.RAZORPAY,
-        gateway_reference=payload.razorpay_payment_id,
-        razorpay_order_id=payload.razorpay_order_id,
-        razorpay_payment_id=payload.razorpay_payment_id,
-        invoice_number=invoice_num,
-        invoice_url=f"/api/v1/subscriptions/invoices/{invoice_num}/download",
-    )
-    db.add(txn)
+    # Update Pending Payment Transaction -> Success
+    pending_txn.amount = total_paid
+    pending_txn.status = PaymentStatus.SUCCESS
+    pending_txn.gateway_reference = payload.razorpay_payment_id
+    pending_txn.razorpay_payment_id = payload.razorpay_payment_id
+    pending_txn.invoice_number = invoice_num
+    pending_txn.invoice_url = f"/api/v1/subscriptions/invoices/{invoice_num}/download"
+    txn = pending_txn
     db.commit()
 
     # Dispatch branded activation & tax receipt email
@@ -376,13 +446,11 @@ async def razorpay_webhook(
     """
     body_bytes = await request.body()
 
-    if x_razorpay_signature:
-        if not verify_webhook_signature(body_bytes, x_razorpay_signature):
-            logger.warning("Invalid Razorpay webhook signature received")
-            raise HTTPException(status_code=400, detail="Invalid signature")
+    if not verify_webhook_signature(body_bytes, x_razorpay_signature):
+        logger.warning("Invalid or unverified Razorpay webhook signature received")
+        raise HTTPException(status_code=400, detail="Invalid signature")
 
     try:
-        import json
         event = json.loads(body_bytes.decode("utf-8"))
         event_name = event.get("event")
         payload_data = event.get("payload", {})
@@ -469,20 +537,24 @@ def download_tax_invoice(
     cgst = round(gst_total / 2, 2)
     sgst = round(gst_total / 2, 2)
 
-    firm_name = current_user.firm.name if current_user.firm else "Independent Chambers"
-    advocate_name = current_user.full_name or "Advocate"
-    advocate_email = current_user.email
-    bar_council = current_user.bar_council_no or "N/A"
-    gst_no = current_user.firm.gst_no if current_user.firm and current_user.firm.gst_no else "Unregistered / Advocate Exemption"
-    pan_no = current_user.firm.pan_no if current_user.firm and current_user.firm.pan_no else "N/A"
-    invoice_date = txn.created_at.strftime("%d %B %Y")
+    firm_name = html_lib.escape(current_user.firm.name if current_user.firm else "Independent Chambers")
+    advocate_name = html_lib.escape(current_user.full_name or "Advocate")
+    advocate_email = html_lib.escape(current_user.email or "")
+    bar_council = html_lib.escape(current_user.bar_council_no or "N/A")
+    gst_no = html_lib.escape(current_user.firm.gst_no if current_user.firm and current_user.firm.gst_no else "Unregistered / Advocate Exemption")
+    pan_no = html_lib.escape(current_user.firm.pan_no if current_user.firm and current_user.firm.pan_no else "N/A")
+    invoice_date = html_lib.escape(txn.created_at.strftime("%d %B %Y"))
+    safe_invoice_num = html_lib.escape(str(txn.invoice_number or ""))
+    safe_order_id = html_lib.escape(str(txn.razorpay_order_id or "N/A"))
+    safe_payment_id = html_lib.escape(str(txn.razorpay_payment_id or "N/A"))
+    safe_gateway_ref = html_lib.escape(str(txn.razorpay_payment_id or txn.gateway_reference or "N/A"))
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tax Invoice - {txn.invoice_number} - Fastcase ERP</title>
+    <title>Tax Invoice - {safe_invoice_num} - Fastcase ERP</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -648,10 +720,10 @@ def download_tax_invoice(
             </div>
             <div class="invoice-badge">
                 <div class="tax-invoice-title">Tax Invoice</div>
-                <div class="meta-text"><strong>Invoice #:</strong> {txn.invoice_number}</div>
+                <div class="meta-text"><strong>Invoice #:</strong> {safe_invoice_num}</div>
                 <div class="meta-text"><strong>Date:</strong> {invoice_date}</div>
                 <div class="meta-text"><strong>Status:</strong> <span style="color: #059669; font-weight: 700;">PAID</span></div>
-                <div class="meta-text"><strong>Payment ID:</strong> {txn.razorpay_payment_id or txn.gateway_reference or "N/A"}</div>
+                <div class="meta-text"><strong>Payment ID:</strong> {safe_gateway_ref}</div>
             </div>
         </div>
 
@@ -671,8 +743,8 @@ def download_tax_invoice(
                 <div class="box-title">Payment & Gateway Details</div>
                 <div class="box-content">
                     Payment Gateway: <strong>Razorpay Secure Payments</strong><br>
-                    Order ID: {txn.razorpay_order_id or "N/A"}<br>
-                    Payment Reference: {txn.razorpay_payment_id or "N/A"}<br>
+                    Order ID: {safe_order_id}<br>
+                    Payment Reference: {safe_payment_id}<br>
                     Mode: UPI / Netbanking / Credit & Debit Card<br>
                     Currency: INR (₹)
                 </div>

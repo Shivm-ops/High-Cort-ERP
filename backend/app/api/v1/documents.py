@@ -3,6 +3,9 @@ import hashlib
 import time
 import base64
 import os
+import re
+import tempfile
+import urllib.parse
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Request, Query, Header
 from pydantic import BaseModel
@@ -13,7 +16,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import get_current_user
 from app.core.permissions import (
-    require_firm_member, check_object_firm, apply_firm_filter
+    require_firm_member, require_roles, ROLES_ADVOCATES, check_object_firm, apply_firm_filter
 )
 from app.models.document import Document, DocumentType, EvidenceStatus
 from app.models.case import Case
@@ -211,8 +214,20 @@ async def upload_document(
     _verify_case_firm(case_id, current_user, db)
     _verify_client_firm(client_id, current_user, db)
 
+    allowed_exts = {
+        ".pdf", ".docx", ".doc", ".txt", ".png", ".jpg", ".jpeg",
+        ".webp", ".tif", ".tiff", ".csv", ".xlsx", ".xls", ".rtf", ".odt",
+    }
+    raw_filename = (file.filename or "document").replace("\x00", "")
+    ext = os.path.splitext(raw_filename)[1].lower()
+    if ext not in allowed_exts:
+        raise HTTPException(status_code=400, detail=f"Unsupported file extension '{ext or 'none'}'")
+
+    max_upload_bytes = 50 * 1024 * 1024
     file_content = await file.read()
-    file_url, file_hash = await doc_service.upload_to_storage(file_content, file.filename, file.content_type)
+    if len(file_content) > max_upload_bytes:
+        raise HTTPException(status_code=413, detail="File exceeds 50 MB upload limit")
+    file_url, file_hash = await doc_service.upload_to_storage(file_content, raw_filename, file.content_type)
 
     ocr_text = None
     if enable_ocr and file.content_type in ["application/pdf", "image/jpeg", "image/png", "image/tiff"]:
@@ -384,12 +399,24 @@ async def stream_document(
 
     disp_type = "inline" if disposition == "inline" else "attachment"
 
+    def _safe_header_filename(raw_name: str) -> str:
+        cleaned = re.sub(r'["\;\r\n\x00]+', "_", raw_name or "document").strip()
+        return cleaned or "document"
+
     from fastapi.responses import FileResponse
     local_path = doc.file_path.replace("local://", "") if doc.file_path else ""
-    if not local_path or not os.path.exists(local_path):
+    allowed_dirs = [
+        os.path.realpath(os.path.join(tempfile.gettempdir(), "fastcase_docs")),
+        os.path.realpath(os.path.abspath("uploads")),
+    ]
+    resolved_local = os.path.realpath(local_path) if local_path else ""
+    if local_path and not any(resolved_local.startswith(base + os.sep) for base in allowed_dirs):
+        raise HTTPException(status_code=403, detail="Invalid document storage path")
+
+    if not resolved_local or not os.path.isfile(resolved_local):
         if doc.ocr_text and doc.ocr_text.strip():
             from fastapi.responses import Response
-            fallback_filename = doc.original_filename or doc.name or "document.txt"
+            fallback_filename = _safe_header_filename(doc.original_filename or doc.name or "document.txt")
             if not any(fallback_filename.lower().endswith(e) for e in (".txt", ".pdf", ".docx", ".doc")):
                 fallback_filename += ".txt"
             return Response(
@@ -398,13 +425,15 @@ async def stream_document(
                 headers={
                     "Content-Disposition": f'{disp_type}; filename="{fallback_filename}"',
                     "Access-Control-Expose-Headers": "Content-Disposition",
+                    "X-Content-Type-Options": "nosniff",
+                    "Content-Security-Policy": "sandbox",
                 }
             )
         raise HTTPException(status_code=404, detail="File content not found on server")
 
-    filename = doc.original_filename or doc.name or "document"
+    filename = _safe_header_filename(doc.original_filename or doc.name or "document")
     ext = (filename.rsplit(".", 1)[-1]).lower() if "." in filename else ""
-    mime = doc.mime_type or "application/octet-stream"
+    mime = (doc.mime_type or "application/octet-stream").split(";")[0].strip().lower()
     if mime == "application/octet-stream":
         if ext == "pdf":
             mime = "application/pdf"
@@ -412,21 +441,29 @@ async def stream_document(
             mime = "image/jpeg"
         elif ext == "png":
             mime = "image/png"
+        elif ext == "webp":
+            mime = "image/webp"
         elif ext == "txt":
-            mime = "text/plain; charset=utf-8"
+            mime = "text/plain"
         elif ext == "docx":
             mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
-    import urllib.parse
+    safe_inline_mimes = {"application/pdf", "image/png", "image/jpeg", "image/webp", "text/plain"}
+    if disp_type == "inline" and mime not in safe_inline_mimes:
+        disp_type = "attachment"
+    response_mime = "text/plain; charset=utf-8" if mime == "text/plain" else mime
+
     encoded_filename = urllib.parse.quote(filename)
     headers = {
         "Content-Disposition": f'{disp_type}; filename="{filename}"; filename*=UTF-8\'\'{encoded_filename}',
         "Access-Control-Expose-Headers": "Content-Disposition",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox",
     }
     return FileResponse(
-        path=local_path,
+        path=resolved_local,
         filename=filename,
-        media_type=mime,
+        media_type=response_mime,
         content_disposition_type=disp_type,
         headers=headers,
     )
@@ -601,7 +638,7 @@ async def delete_document(
     doc_id: str,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_firm_member),
+    current_user: User = Depends(require_roles(*ROLES_ADVOCATES)),
 ):
     ip = extract_ip(request)
     doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
@@ -623,7 +660,7 @@ async def process_ocr(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)
@@ -636,7 +673,7 @@ async def request_esign(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_firm_member),
 ):
-    doc = db.query(Document).filter(Document.id == doc_id).first()
+    doc = db.query(Document).filter(Document.id == doc_id, Document.is_deleted == False).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     _doc_firm_check(doc, current_user, db)

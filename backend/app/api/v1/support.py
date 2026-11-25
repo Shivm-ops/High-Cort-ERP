@@ -20,7 +20,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status, BackgroundTasks
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 
@@ -53,6 +53,17 @@ os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
 
 # ─── Pydantic Schemas ─────────────────────────────────────────────────────────
 
+def _validate_support_attachment_url(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    if cleaned.startswith("/api/v1/support/attachment/") or cleaned.startswith("https://"):
+        return cleaned
+    raise ValueError("Invalid attachment URL scheme")
+
+
 class TicketCreateRequest(BaseModel):
     subject: str = Field(..., min_length=3, max_length=255)
     category: TicketCategory = TicketCategory.GENERAL
@@ -60,10 +71,20 @@ class TicketCreateRequest(BaseModel):
     description: str = Field(..., min_length=10)
     attachment_url: Optional[str] = None
 
+    @field_validator("attachment_url")
+    @classmethod
+    def check_attachment_url(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_support_attachment_url(v)
+
 
 class TicketReplyRequest(BaseModel):
     message: str = Field(..., min_length=2)
     attachment_url: Optional[str] = None
+
+    @field_validator("attachment_url")
+    @classmethod
+    def check_attachment_url(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_support_attachment_url(v)
 
 
 class FAQItemResponse(BaseModel):
@@ -499,15 +520,59 @@ async def upload_support_attachment(
 
 
 @router.get("/attachment/{file_name}")
-def get_support_attachment(file_name: str):
-    """Stream stored support attachment (PNG/JPG/PDF)."""
-    # Sanitize file_name to prevent directory traversal
+def get_support_attachment(
+    file_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Stream stored support attachment (PNG/JPG/PDF) to ticket owner or superadmin."""
     clean_name = os.path.basename(file_name)
-    file_path = os.path.join(ATTACHMENTS_DIR, clean_name)
-    if not os.path.exists(file_path):
+    if not clean_name or clean_name != file_name:
+        raise HTTPException(status_code=400, detail="Invalid attachment filename")
+
+    expected_url = f"/api/v1/support/attachment/{clean_name}"
+    if not current_user.is_superadmin:
+        ticket_match = (
+            db.query(SupportTicket.id)
+            .filter(
+                SupportTicket.user_id == current_user.id,
+                SupportTicket.attachment_url == expected_url,
+            )
+            .first()
+        )
+        msg_match = (
+            db.query(TicketMessage.id)
+            .join(SupportTicket, SupportTicket.id == TicketMessage.ticket_id)
+            .filter(
+                SupportTicket.user_id == current_user.id,
+                TicketMessage.attachment_url == expected_url,
+            )
+            .first()
+        )
+        if not ticket_match and not msg_match:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+    base_dir = os.path.realpath(ATTACHMENTS_DIR)
+    file_path = os.path.realpath(os.path.join(base_dir, clean_name))
+    if not file_path.startswith(base_dir + os.sep) or not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="Attachment not found")
 
     ext = os.path.splitext(clean_name)[1].lower()
-    media_type = "application/pdf" if ext == ".pdf" else f"image/{ext.replace('.', '')}"
-    return FileResponse(file_path, media_type=media_type, filename=clean_name)
+    mime_map = {
+        ".pdf": "application/pdf",
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+    }
+    media_type = mime_map.get(ext, "application/octet-stream")
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=clean_name,
+        headers={
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "sandbox",
+        },
+    )
 

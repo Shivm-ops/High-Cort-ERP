@@ -72,10 +72,11 @@ services:
         required: false
     environment:
       - DATABASE_URL=postgresql+psycopg2://lagalos:${POSTGRES_PASSWORD}@postgres:5432/lagalos_db
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - DOMAIN=${DOMAIN:-fastcase.in}
       - ROOT_DOMAIN=${DOMAIN:-fastcase.in}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-k1cT7yG-QxV8_W9zL1mN3oP5qR7sT9uV1wX3yZ5aB7c=}
+      - GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-46206747574-jed6tspi92c8rt2alfq72cbfd1h0mb9p.apps.googleusercontent.com}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     depends_on:
       postgres:
@@ -106,11 +107,13 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command: ["sh", "-c", "if [ -n \"$$REDIS_PASSWORD\" ]; then exec redis-server --requirepass \"$$REDIS_PASSWORD\" --maxmemory 256mb --maxmemory-policy allkeys-lru; else exec redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru; fi"]
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping; else redis-cli ping; fi"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -168,7 +171,7 @@ services:
         limits:
           memory: 150M
     ports:
-      - "3002:3000"
+      - "127.0.0.1:3002:3000"
     depends_on:
       - prometheus
 

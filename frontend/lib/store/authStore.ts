@@ -36,7 +36,7 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, mfaCode?: string) => Promise<void>;
   clientLogin: (email: string, password: string) => Promise<void>;
   citizenLogin: (email: string, password: string) => Promise<AuthUser>;
   citizenRegister: (payload: {
@@ -60,23 +60,31 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      login: async (email: string, password: string) => {
+      login: async (email: string, password: string, mfaCode?: string) => {
         set({ isLoading: true });
-        const params = new URLSearchParams();
-        params.append("username", email);
-        params.append("password", password);
-        const { data } = await api.post("/auth/token", params, {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        });
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-        set({
-          user: data.user,
-          accessToken: data.access_token,
-          refreshToken: data.refresh_token,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+        try {
+          const params = new URLSearchParams();
+          params.append("username", email);
+          params.append("password", password);
+          const headers: Record<string, string> = {
+            "Content-Type": "application/x-www-form-urlencoded",
+          };
+          if (mfaCode) {
+            headers["X-MFA-Code"] = mfaCode;
+          }
+          const { data } = await api.post("/auth/token", params, { headers });
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+          set({
+            user: data.user,
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } finally {
+          set({ isLoading: false });
+        }
       },
 
       clientLogin: async (email: string, password: string) => {
@@ -146,7 +154,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        try { await api.post("/auth/logout"); } catch(e) {}
+        const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
+        try {
+          await api.post("/auth/logout", refreshToken ? { refresh_token: refreshToken } : undefined);
+        } catch(e) {}
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         // Clear the SSR cookie so middleware doesn't redirect-loop

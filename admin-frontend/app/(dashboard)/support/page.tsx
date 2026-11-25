@@ -23,6 +23,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+function getSafeHref(rawUrl?: string | null): string | null {
+  if (!rawUrl || typeof rawUrl !== "string") return null;
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("https://") || trimmed.startsWith("http://") || (trimmed.startsWith("/") && !trimmed.startsWith("//"))) {
+    return trimmed;
+  }
+  return null;
+}
+
 export default function SupportDeskPage() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,18 +268,21 @@ export default function SupportDeskPage() {
                 </div>
 
                 {/* Primary Attachment */}
-                {ticketDetails.attachment_url && (
-                  <div className="mt-3">
-                    <a
-                      href={ticketDetails.attachment_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200 transition"
-                    >
-                      <Paperclip className="w-3.5 h-3.5" /> View Ticket Attachment (Screenshot / PDF)
-                    </a>
-                  </div>
-                )}
+                {(() => {
+                  const safeAttachment = getSafeHref(ticketDetails.attachment_url);
+                  return safeAttachment ? (
+                    <div className="mt-3">
+                      <a
+                        href={safeAttachment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200 transition"
+                      >
+                        <Paperclip className="w-3.5 h-3.5" /> View Ticket Attachment (Screenshot / PDF)
+                      </a>
+                    </div>
+                  ) : null;
+                })()}
               </div>
               
               <div className="flex flex-col items-end gap-2.5">
@@ -311,18 +323,21 @@ export default function SupportDeskPage() {
                       </span>
                     </div>
                     <p className="whitespace-pre-wrap text-xs md:text-sm leading-relaxed">{msg.message}</p>
-                    {msg.attachment_url && (
-                      <div className="mt-2 pt-2 border-t border-gray-200/40">
-                        <a
-                          href={msg.attachment_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-semibold underline"
-                        >
-                          <Paperclip className="w-3 h-3" /> Attached File
-                        </a>
-                      </div>
-                    )}
+                    {(() => {
+                      const safeMsgAttachment = getSafeHref(msg.attachment_url);
+                      return safeMsgAttachment ? (
+                        <div className="mt-2 pt-2 border-t border-gray-200/40">
+                          <a
+                            href={safeMsgAttachment}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-semibold underline"
+                          >
+                            <Paperclip className="w-3 h-3" /> Attached File
+                          </a>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               ))}

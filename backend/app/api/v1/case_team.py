@@ -10,7 +10,7 @@ import uuid
 from datetime import date, datetime
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.permissions import require_firm_member
 from app.models.user import User
 from app.models.case import Case
 from app.models.case_advocate import CaseAdvocate, CaseTask, AdvocateRole, TaskType, TaskStatus
@@ -136,12 +136,39 @@ class AppealCreate(BaseModel):
 
 # ── Advocate Team Endpoints ───────────────────────────────────────────────────
 
+def _get_firm_case_or_404(db: Session, case_id: uuid.UUID, current_user: User) -> Case:
+    q = db.query(Case).filter(Case.id == case_id, Case.is_deleted == False)
+    if not current_user.is_superadmin:
+        if not current_user.firm_id:
+            raise HTTPException(status_code=403, detail="Firm membership required")
+        q = q.filter(Case.firm_id == current_user.firm_id)
+    case = q.first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return case
+
+
+def _validate_firm_user_id(db: Session, user_id_str: str, current_user: User) -> uuid.UUID:
+    try:
+        user_uuid = uuid.UUID(str(user_id_str))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    q = db.query(User).filter(User.id == user_uuid, User.is_active == True)
+    if not current_user.is_superadmin:
+        q = q.filter(User.firm_id == current_user.firm_id)
+    user = q.first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Advocate not found in your firm")
+    return user.id
+
+
 @router.get("/{case_id}/team")
 async def get_team(
     case_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
+    _get_firm_case_or_404(db, case_id, current_user)
     advocates = (
         db.query(CaseAdvocate)
         .options(joinedload(CaseAdvocate.advocate), joinedload(CaseAdvocate.assigned_by))
@@ -162,12 +189,15 @@ async def assign_advocate(
     case_id: uuid.UUID,
     data: AdvocateAssign,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
+    case = _get_firm_case_or_404(db, case_id, current_user)
+    advocate_uuid = _validate_firm_user_id(db, data.advocate_id, current_user)
+
     # Check if advocate is already active on this case
     existing = db.query(CaseAdvocate).filter(
         CaseAdvocate.case_id == case_id,
-        CaseAdvocate.advocate_id == data.advocate_id,
+        CaseAdvocate.advocate_id == advocate_uuid,
         CaseAdvocate.is_active == True,
     ).first()
     if existing:
@@ -180,8 +210,8 @@ async def assign_advocate(
 
     ca = CaseAdvocate(
         case_id=case_id,
-        advocate_id=data.advocate_id,
-        assigned_by_id=str(current_user.id),
+        advocate_id=advocate_uuid,
+        assigned_by_id=current_user.id,
         role=role,
         notes=data.notes,
         start_date=date.today(),
@@ -191,9 +221,7 @@ async def assign_advocate(
 
     # Also update Case.primary_advocate_id if this is a senior
     if role == AdvocateRole.SENIOR:
-        case = db.query(Case).filter(Case.id == case_id).first()
-        if case:
-            case.primary_advocate_id = data.advocate_id
+        case.primary_advocate_id = advocate_uuid
 
     db.commit()
     db.refresh(ca)
@@ -210,11 +238,16 @@ async def remove_advocate(
     advocate_id: str,
     data: AdvocateRemove,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
+    _get_firm_case_or_404(db, case_id, current_user)
+    try:
+        advocate_uuid = uuid.UUID(advocate_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid advocate ID")
     ca = db.query(CaseAdvocate).filter(
         CaseAdvocate.case_id == case_id,
-        CaseAdvocate.advocate_id == advocate_id,
+        CaseAdvocate.advocate_id == advocate_uuid,
         CaseAdvocate.is_active == True,
     ).first()
     if not ca:
@@ -235,11 +268,16 @@ async def update_role(
     advocate_id: str,
     role: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
+    _get_firm_case_or_404(db, case_id, current_user)
+    try:
+        advocate_uuid = uuid.UUID(advocate_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid advocate ID")
     ca = db.query(CaseAdvocate).filter(
         CaseAdvocate.case_id == case_id,
-        CaseAdvocate.advocate_id == advocate_id,
+        CaseAdvocate.advocate_id == advocate_uuid,
         CaseAdvocate.is_active == True,
     ).first()
     if not ca:
@@ -254,15 +292,6 @@ async def update_role(
 
 # ── Task Endpoints ────────────────────────────────────────────────────────────
 
-def _get_firm_case_or_404(db: Session, case_id: uuid.UUID, current_user: User) -> Case:
-    q = db.query(Case).filter(Case.id == case_id, Case.is_deleted == False)
-    if not current_user.is_superadmin:
-        q = q.filter(Case.firm_id == current_user.firm_id)
-    case = q.first()
-    if not case:
-        raise HTTPException(status_code=404, detail="Case not found")
-    return case
-
 
 @router.get("/{case_id}/tasks")
 async def get_tasks(
@@ -270,7 +299,7 @@ async def get_tasks(
     status: Optional[str] = None,
     assignee_id: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
     _get_firm_case_or_404(db, case_id, current_user)
     q = (
@@ -294,7 +323,7 @@ async def create_task(
     case_id: uuid.UUID,
     data: TaskCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
     case = _get_firm_case_or_404(db, case_id, current_user)
     try:
@@ -302,10 +331,11 @@ async def create_task(
     except ValueError:
         task_type = TaskType.OTHER
 
-    try:
-        assignee_uuid = uuid.UUID(data.assignee_id) if data.assignee_id else current_user.id
-    except (ValueError, AttributeError):
-        assignee_uuid = current_user.id
+    assignee_uuid = (
+        _validate_firm_user_id(db, data.assignee_id, current_user)
+        if data.assignee_id
+        else current_user.id
+    )
 
     task = CaseTask(
         firm_id=case.firm_id or current_user.firm_id,
@@ -334,7 +364,7 @@ async def update_task(
     task_id: uuid.UUID,
     data: TaskUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
     _get_firm_case_or_404(db, case_id, current_user)
     task = db.query(CaseTask).filter(CaseTask.id == task_id, CaseTask.case_id == case_id).first()
@@ -342,6 +372,8 @@ async def update_task(
         raise HTTPException(status_code=404, detail="Task not found")
 
     updates = data.model_dump(exclude_none=True)
+    if "assignee_id" in updates and updates["assignee_id"]:
+        updates["assignee_id"] = _validate_firm_user_id(db, updates["assignee_id"], current_user)
     if "status" in updates:
         try:
             updates["status"] = TaskStatus(updates["status"])
@@ -372,7 +404,7 @@ async def delete_task(
     case_id: uuid.UUID,
     task_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
     _get_firm_case_or_404(db, case_id, current_user)
     task = db.query(CaseTask).filter(CaseTask.id == task_id, CaseTask.case_id == case_id).first()
@@ -389,14 +421,16 @@ async def create_appeal(
     case_id: uuid.UUID,
     data: AppealCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
     """Create a new appeal/higher-forum case linked to the parent case."""
-    parent = db.query(Case).filter(Case.id == case_id).first()
-    if not parent:
-        raise HTTPException(status_code=404, detail="Parent case not found")
+    parent = _get_firm_case_or_404(db, case_id, current_user)
+    appeal_firm_id = parent.firm_id or current_user.firm_id
 
     appeal = Case(
+        firm_id=appeal_firm_id,
+        created_by_id=current_user.id,
+        updated_by_id=current_user.id,
         case_no=data.case_no,
         title=data.title,
         court=data.court,
@@ -426,8 +460,10 @@ async def create_appeal(
     db.refresh(appeal)
 
     # --- Deep Data Inheritance (Clone Parent Records) ---
-    # 1. Documents
+    # 1. Documents (non-deleted only)
     for doc in parent.documents:
+        if getattr(doc, "is_deleted", False):
+            continue
         new_doc = Document(
             client_id=doc.client_id,
             case_id=appeal.id,
@@ -443,17 +479,20 @@ async def create_appeal(
             extracted_metadata=doc.extracted_metadata
         )
         db.add(new_doc)
-        
-    # 2. Drafts
+
+    # 2. Drafts (non-deleted only, keep firm_id)
     for draft in parent.drafts:
+        if getattr(draft, "is_deleted", False):
+            continue
         new_draft = Draft(
+            firm_id=appeal_firm_id,
             title=draft.title,
             content=draft.content,
             category=draft.category,
             language=draft.language,
             case_id=appeal.id,
             client_id=draft.client_id,
-            created_by_id=draft.created_by_id,
+            created_by_id=draft.created_by_id or current_user.id,
             tags=draft.tags,
             is_template=False,
             ai_generated=draft.ai_generated,
@@ -497,34 +536,48 @@ async def create_appeal(
 async def get_family(
     case_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
 ):
-    """Return the full litigation family tree for a case."""
-    # Walk up to find the root
-    def get_root(cid: str, visited=None):
+    """Return the firm-scoped litigation family tree for a case."""
+    _get_firm_case_or_404(db, case_id, current_user)
+
+    def _query_case(cid):
+        q = db.query(Case).filter(Case.id == cid, Case.is_deleted == False)
+        if not current_user.is_superadmin:
+            q = q.filter(Case.firm_id == current_user.firm_id)
+        return q.first()
+
+    # Walk up to find the root within firm
+    def get_root(cid, visited=None):
         if visited is None:
             visited = set()
-        if cid in visited:
-            return cid
-        visited.add(cid)
-        c = db.query(Case).filter(Case.id == cid).first()
+        cid_str = str(cid)
+        if cid_str in visited:
+            return cid_str
+        visited.add(cid_str)
+        c = _query_case(cid)
         if c and c.parent_case_id:
-            return get_root(str(c.parent_case_id), visited)
-        return cid
+            parent_case = _query_case(c.parent_case_id)
+            if parent_case:
+                return get_root(parent_case.id, visited)
+        return cid_str
 
     root_id = get_root(case_id)
 
-    # Build tree recursively
-    def build_node(cid: str, depth=0) -> dict:
-        c = db.query(Case).filter(Case.id == cid).first()
+    # Build tree recursively within firm
+    def build_node(cid, depth=0) -> dict:
+        c = _query_case(cid)
         if not c:
             return {}
-        children = db.query(Case).filter(Case.parent_case_id == cid).all()
+        cq = db.query(Case).filter(Case.parent_case_id == c.id, Case.is_deleted == False)
+        if not current_user.is_superadmin:
+            cq = cq.filter(Case.firm_id == current_user.firm_id)
+        children = cq.all()
         return {
             **serialize_case_brief(c),
             "depth": depth,
-            "is_current": str(c.id) == case_id,
-            "children": [build_node(str(ch.id), depth + 1) for ch in children],
+            "is_current": str(c.id) == str(case_id),
+            "children": [build_node(ch.id, depth + 1) for ch in children],
         }
 
     tree = build_node(root_id)

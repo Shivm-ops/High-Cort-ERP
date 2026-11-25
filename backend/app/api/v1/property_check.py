@@ -4,6 +4,7 @@ app/api/v1/property_check.py
 FastCase Property Legal Check, Court Case Search & Title Due Diligence API.
 """
 
+import os
 import uuid
 import re
 import hashlib
@@ -72,6 +73,30 @@ def get_optional_user(request: Request, db: Session) -> tuple[Optional[uuid.UUID
         except Exception:
             pass
     return None, None
+
+
+ALLOWED_PROPERTY_DOC_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".tif", ".tiff"}
+
+
+def _assert_property_check_access(
+    req: PropertyCheckRequest,
+    request: Request,
+    db: Session,
+) -> None:
+    """Enforce ownership on property checks linked to a user or firm."""
+    if req.user_id is None and req.firm_id is None:
+        return
+    user_id, firm_id = get_optional_user(request, db)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required for this property check")
+    if req.user_id and str(req.user_id) == str(user_id):
+        return
+    if req.firm_id and firm_id and str(req.firm_id) == str(firm_id):
+        return
+    caller = db.query(User).filter(User.id == user_id).first()
+    if caller and caller.is_superadmin:
+        return
+    raise HTTPException(status_code=403, detail="Access denied")
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -180,6 +205,7 @@ async def initiate_property_search(
 @router.post("/{check_id}/upload-document")
 async def upload_property_document(
     check_id: uuid.UUID,
+    request: Request,
     file: UploadFile = File(...),
     document_type: str = Form("other"),
     db: Session = Depends(get_db),
@@ -191,6 +217,14 @@ async def upload_property_document(
     req = db.query(PropertyCheckRequest).filter(PropertyCheckRequest.id == check_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Property check record not found.")
+    _assert_property_check_access(req, request, db)
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_PROPERTY_DOC_EXTS:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported document type. Allowed: PDF, PNG, JPG, JPEG, TIF, TIFF.",
+        )
 
     raw_content = await file.read()
     if len(raw_content) > 20 * 1024 * 1024:
@@ -244,11 +278,12 @@ async def upload_property_document(
 
 
 @router.get("/{check_id}")
-def get_property_check_details(check_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_property_check_details(check_id: uuid.UUID, request: Request, db: Session = Depends(get_db)):
     """Retrieve full property check results, court cases, discrepancies, and document history."""
     req = db.query(PropertyCheckRequest).filter(PropertyCheckRequest.id == check_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Property check record not found.")
+    _assert_property_check_access(req, request, db)
 
     res = req.result
     docs = req.documents
@@ -294,11 +329,12 @@ def get_property_check_details(check_id: uuid.UUID, db: Session = Depends(get_db
 
 
 @router.get("/{check_id}/report", response_class=HTMLResponse)
-def get_printable_report(check_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_printable_report(check_id: uuid.UUID, request: Request, db: Session = Depends(get_db)):
     """Render publication-grade A4 HTML report for browser printing or saving as PDF."""
     req = db.query(PropertyCheckRequest).filter(PropertyCheckRequest.id == check_id).first()
     if not req or not req.result:
         raise HTTPException(status_code=404, detail="Property check report not found.")
+    _assert_property_check_access(req, request, db)
 
     res = req.result
     params = {
@@ -349,6 +385,7 @@ def request_advocate_verification(
     req = db.query(PropertyCheckRequest).filter(PropertyCheckRequest.id == check_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Property check record not found.")
+    _assert_property_check_access(req, request, db)
 
     user_id, firm_id = get_optional_user(request, db)
 

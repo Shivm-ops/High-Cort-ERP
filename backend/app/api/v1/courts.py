@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 import uuid
 from pydantic import BaseModel
 
 from app.core.database import get_db
+from app.core.permissions import require_firm_member
+from app.core.security import get_current_superadmin
 from app.models.court import Court
 from app.models.user import User
-from app.core.security import get_current_user
 
 router = APIRouter()
+
 
 class CourtCreate(BaseModel):
     name: str
@@ -47,7 +49,7 @@ def serialize_court(c: Court) -> dict:
 @router.get("/")
 def get_courts(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_firm_member),
     search: Optional[str] = None,
     court_type: Optional[str] = None,
     skip: int = Query(0, ge=0),
@@ -74,7 +76,7 @@ def get_courts(
 def get_court(
     court_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_firm_member),
 ):
     court = db.query(Court).filter(Court.id == court_id).first()
     if not court:
@@ -86,9 +88,9 @@ def get_court(
 def create_court(
     court_in: CourtCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_superadmin),
 ):
-    """Create a new court for the tenant."""
+    """Create a new court in the global directory (Superadmin only)."""
     new_court = Court(
         name=court_in.name,
         type=court_in.type,
@@ -109,9 +111,9 @@ def update_court(
     court_id: uuid.UUID,
     court_in: CourtUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_superadmin),
 ):
-    """Update an existing court's details."""
+    """Update a global court directory entry (Superadmin only)."""
     court = db.query(Court).filter(Court.id == court_id).first()
     if not court:
         raise HTTPException(status_code=404, detail="Court not found")
@@ -123,18 +125,18 @@ def update_court(
     db.refresh(court)
     return serialize_court(court)
 
+
 @router.delete("/{court_id}")
 def delete_court(
     court_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_superadmin),
 ):
-    """Delete a court (e.g. dummy data)."""
+    """Delete a global court directory entry (Superadmin only)."""
     court = db.query(Court).filter(Court.id == court_id).first()
     if not court:
         raise HTTPException(status_code=404, detail="Court not found")
-        
+
     db.delete(court)
     db.commit()
     return {"status": "success", "message": "Court deleted successfully"}
-

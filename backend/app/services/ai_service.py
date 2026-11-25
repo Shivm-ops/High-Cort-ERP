@@ -1,8 +1,11 @@
 """AI Service — LangChain + OpenAI + RAG architecture for Fastcase"""
 
 from typing import Optional, List, Dict, Any
+import ipaddress
 import json
+import socket
 from datetime import datetime
+from urllib.parse import urlparse
 from app.core.config import settings
 import logging
 
@@ -246,7 +249,46 @@ class AIService:
         except ImportError:
             logger.warning("OpenAI package not installed")
 
+    @staticmethod
+    def _is_safe_base_url(raw_url: str) -> bool:
+        try:
+            parsed = urlparse(raw_url.strip())
+        except Exception:
+            return False
+        if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+            return False
+        host = parsed.hostname.strip().lower()
+        if host in {"localhost", "metadata.google.internal"}:
+            return False
+
+        def _is_private(ip_str: str) -> bool:
+            try:
+                ip_obj = ipaddress.ip_address(ip_str)
+                return (
+                    ip_obj.is_private
+                    or ip_obj.is_loopback
+                    or ip_obj.is_link_local
+                    or ip_obj.is_multicast
+                    or ip_obj.is_reserved
+                    or ip_obj.is_unspecified
+                )
+            except ValueError:
+                return False
+
+        if _is_private(host):
+            return False
+        try:
+            for item in socket.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM):
+                if _is_private(item[4][0]):
+                    return False
+        except socket.gaierror:
+            return False
+        return True
+
     def _get_client(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
+        if base_url and str(base_url).strip() and not self._is_safe_base_url(str(base_url)):
+            logger.warning("Blocked unsafe custom AI base_url")
+            return None
         if api_key and str(api_key).strip():
             try:
                 from openai import AsyncOpenAI

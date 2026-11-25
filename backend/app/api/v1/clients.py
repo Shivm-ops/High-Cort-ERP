@@ -18,7 +18,27 @@ from app.services.audit_service import log_action, extract_ip, AuditAction
 router = APIRouter()
 
 
-def serialize_client(c: Client, include_cases: bool = False) -> dict:
+def _mask_pan(val: Optional[str]) -> Optional[str]:
+    if not val:
+        return val
+    cleaned = val.strip()
+    if len(cleaned) <= 4:
+        return "****"
+    return ("*" * (len(cleaned) - 4)) + cleaned[-4:]
+
+
+def _mask_aadhaar(val: Optional[str]) -> Optional[str]:
+    if not val:
+        return val
+    digits = "".join(ch for ch in val if ch.isdigit())
+    if len(digits) >= 4:
+        return f"XXXX-XXXX-{digits[-4:]}"
+    return "XXXX-XXXX-XXXX"
+
+
+def serialize_client(c: Client, include_cases: bool = False, mask_pii: bool = False) -> dict:
+    pan_val = _mask_pan(c.pan) if mask_pii else c.pan
+    aadhaar_val = _mask_aadhaar(c.aadhaar_number) if mask_pii else c.aadhaar_number
     data = {
         "id": str(c.id),
         "name": c.name,
@@ -30,9 +50,9 @@ def serialize_client(c: Client, include_cases: bool = False) -> dict:
         "city": c.city,
         "state": c.state,
         "pincode": c.pincode,
-        "pan": c.pan,
+        "pan": pan_val,
         "gstin": c.gstin,
-        "aadhaar_number": c.aadhaar_number,
+        "aadhaar_number": aadhaar_val,
         "occupation": c.occupation,
         "date_of_birth": c.date_of_birth.isoformat() if c.date_of_birth else None,
         "photograph_url": c.photograph_url,
@@ -170,7 +190,7 @@ async def list_clients(
         query = query.filter(Client.type == type)
     total = query.count()
     clients = query.order_by(Client.created_at.desc()).offset(skip).limit(limit).all()
-    return {"total": total, "clients": [serialize_client(c) for c in clients]}
+    return {"total": total, "clients": [serialize_client(c, mask_pii=True) for c in clients]}
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -237,7 +257,8 @@ async def get_client(
         raise HTTPException(status_code=404, detail="Client not found")
     # ── Object-level security ─────────────────────────────────────────────────
     check_object_firm(client, current_user)
-    return serialize_client(client, include_cases=True)
+    should_mask = not current_user.is_superadmin and current_user.user_type not in ROLES_ADVOCATES
+    return serialize_client(client, include_cases=True, mask_pii=should_mask)
 
 
 @router.put("/{client_id}")
@@ -253,6 +274,10 @@ async def update_client(
         raise HTTPException(status_code=404, detail="Client not found")
     check_object_firm(client, current_user)
     for field, value in data.model_dump(exclude_unset=True).items():
+        if field == "pan" and isinstance(value, str) and value.startswith("****"):
+            continue
+        if field == "aadhaar_number" and isinstance(value, str) and value.startswith("XXXX-XXXX-"):
+            continue
         setattr(client, field, value)
     client.updated_at = datetime.utcnow()
     client.updated_by_id = current_user.id
