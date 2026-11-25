@@ -76,13 +76,6 @@ jobs:
             docker compose -f docker-compose.vps.yml ps
 
             echo "🌐 Probing FastAPI backend health endpoint..."
-            docker compose -f docker-compose.vps.yml exec -T backend python -c "
-import urllib.request
-try:
-    with urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=10) as r:
-        print('Backend Health Status:', r.status)
-except Exception as e:
-    print('Notice: Backend health check warning:', e)
-" || echo "Notice: Backend still warming up"
+            docker compose -f docker-compose.vps.yml exec -T backend python -c "import urllib.request; print('Backend Health Status:', urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=10).status)" || echo "Notice: Backend still warming up"
             
             echo "✅ [Fastcase CD] Production deployment finished successfully!"
