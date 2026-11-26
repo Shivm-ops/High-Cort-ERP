@@ -89,10 +89,17 @@ export default function SimpleCitizenPortalPage() {
 
   // ── ₹30 Payment / Checkout State ──────────────────────────────────────────
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [successDetails, setSuccessDetails] = useState<{
+    receiptId: string;
+    paymentId: string;
+    title: string;
+    amount: string;
+    date: string;
+  } | null>(null);
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [receiptId, setReceiptId] = useState<string>("");
-  const [payMethod, setPayMethod] = useState<"upi" | "qr">("upi");
-  const [paymentTab, setPaymentTab] = useState<"upi_qr" | "upi_apps" | "card">("upi_qr");
+  const [paymentTab, setPaymentTab] = useState<"card" | "bank">("card");
   const [upiUtrInput, setUpiUtrInput] = useState<string>("");
   const [isProcessingPay, setIsProcessingPay] = useState<boolean>(false);
   const [isEditingDetails, setIsEditingDetails] = useState<boolean>(false);
@@ -1141,6 +1148,24 @@ ${template.relief}
               setReceiptId(rId);
               setIsProcessingPay(false);
               setShowPayModal(false);
+
+              const nowFormatted = new Date().toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              });
+
+              setSuccessDetails({
+                receiptId: rId,
+                paymentId: response.razorpay_payment_id,
+                title: activeProblem?.title_mr || "अधिकृत कोर्ट तक्रार अर्ज",
+                amount: "₹३०.००",
+                date: nowFormatted,
+              });
+              setShowSuccessModal(true);
               toast.success(`₹३० भरणा यशस्वी! पावती क्र. ${rId}`);
 
               const newDoc = {
@@ -1149,7 +1174,7 @@ ${template.relief}
                 date: new Date().toLocaleDateString(),
                 content: generatedDoc,
                 fee: "₹३०",
-                payment_mode: "Razorpay Online",
+                payment_mode: "Razorpay Online (UPI/Cards)",
                 utr: response.razorpay_payment_id,
               };
               const updated = [newDoc, ...savedDocs];
@@ -1158,6 +1183,7 @@ ${template.relief}
                 localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
               } catch (e) {}
 
+              // Automatically trigger document download
               downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, rId);
             } catch (err: any) {
               toast.dismiss();
@@ -1186,15 +1212,38 @@ ${template.relief}
       return;
     }
 
-    // 2. Direct UPI Flow (QR / UPI Apps manual UTR)
+    // 2. Direct Company Bank Account Flow (The Cosmos Co-operative Bank Ltd.)
+    const cleanUtr = upiUtrInput.trim();
+    if (!cleanUtr || cleanUtr.length < 6) {
+      toast.error("कृपया बँक ट्रान्सफरचा किमान ६ ते १२-अंकी UTR किंवा संदर्भ क्रमांक प्रविष्ट करा.");
+      return;
+    }
+
     setIsProcessingPay(true);
     setTimeout(() => {
-      const cleanUtr = upiUtrInput.trim();
-      const rId = cleanUtr ? `FC-UTR-${cleanUtr}` : `FC-DOC-${Date.now().toString().slice(-6)}`;
+      const rId = `FC-COSMOS-${cleanUtr.slice(-8).toUpperCase()}`;
       setIsPaid(true);
       setReceiptId(rId);
       setIsProcessingPay(false);
       setShowPayModal(false);
+
+      const nowFormatted = new Date().toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      setSuccessDetails({
+        receiptId: rId,
+        paymentId: `UTR: ${cleanUtr}`,
+        title: activeProblem?.title_mr || "अधिकृत कोर्ट तक्रार अर्ज",
+        amount: "₹३०.००",
+        date: nowFormatted,
+      });
+      setShowSuccessModal(true);
       toast.success(`₹३० भरणा यशस्वी! पावती क्र. ${rId}`);
 
       const newDoc = {
@@ -1203,8 +1252,8 @@ ${template.relief}
         date: new Date().toLocaleDateString(),
         content: generatedDoc,
         fee: "₹३०",
-        payment_mode: "UPI",
-        utr: cleanUtr || undefined,
+        payment_mode: "Cosmos Bank Direct Transfer",
+        utr: cleanUtr,
       };
       const updated = [newDoc, ...savedDocs];
       setSavedDocs(updated);
@@ -1212,7 +1261,7 @@ ${template.relief}
         localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
       } catch (e) {}
 
-      // Automatically trigger document download and print dialog!
+      // Automatically trigger document download
       downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, rId);
     }, 850);
   };
@@ -2236,164 +2285,126 @@ ${template.relief}
             </div>
 
             {/* Payment Method Tabs */}
-            <div className="grid grid-cols-3 p-1 bg-gray-100 rounded-xl gap-1 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setPaymentTab("upi_qr")}
-                className={cn(
-                  "py-1.5 px-2 rounded-lg transition text-center flex items-center justify-center gap-1 cursor-pointer",
-                  paymentTab === "upi_qr"
-                    ? "bg-white text-[#013B36] shadow-2xs font-black ring-1 ring-gray-200"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <QrCode className="w-3.5 h-3.5 text-[#059669]" />
-                <span>UPI QR</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentTab("upi_apps")}
-                className={cn(
-                  "py-1.5 px-2 rounded-lg transition text-center flex items-center justify-center gap-1 cursor-pointer",
-                  paymentTab === "upi_apps"
-                    ? "bg-white text-[#013B36] shadow-2xs font-black ring-1 ring-gray-200"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <Smartphone className="w-3.5 h-3.5 text-[#059669]" />
-                <span>UPI Apps</span>
-              </button>
+            <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl gap-1 text-xs font-bold">
               <button
                 type="button"
                 onClick={() => setPaymentTab("card")}
                 className={cn(
-                  "py-1.5 px-2 rounded-lg transition text-center flex items-center justify-center gap-1 cursor-pointer",
+                  "py-2 px-2 rounded-lg transition text-center flex items-center justify-center gap-1.5 cursor-pointer",
                   paymentTab === "card"
                     ? "bg-white text-[#013B36] shadow-2xs font-black ring-1 ring-gray-200"
                     : "text-gray-600 hover:text-gray-900"
                 )}
               >
-                <CreditCard className="w-3.5 h-3.5 text-[#059669]" />
-                <span>Card / NetBank</span>
+                <CreditCard className="w-4 h-4 text-[#059669]" />
+                <span>💳 ऑनलाइन भरणा (UPI/Cards)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentTab("bank")}
+                className={cn(
+                  "py-2 px-2 rounded-lg transition text-center flex items-center justify-center gap-1.5 cursor-pointer",
+                  paymentTab === "bank"
+                    ? "bg-white text-[#013B36] shadow-2xs font-black ring-1 ring-gray-200"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <Building2 className="w-4 h-4 text-[#059669]" />
+                <span>🏛️ बँक खाते ट्रान्सफर (Cosmos)</span>
               </button>
             </div>
 
-            {/* Tab 1: UPI QR */}
-            {paymentTab === "upi_qr" && (
-              <div className="space-y-3 text-center">
-                <div className="p-3 bg-white rounded-xl border border-gray-200 inline-block shadow-2xs mx-auto">
-                  <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D7218834640%40ybl%26pn%3DFastcase%2520ERP%26am%3D30%26cu%3DINR%26tn%3DCourt%2520Petition%2520Draft"
-                    alt="UPI QR Code"
-                    className="w-44 h-44 mx-auto rounded-lg"
-                  />
-                </div>
-                <p className="text-xs font-bold text-gray-700">
-                  कोणत्याही UPI अ‍ॅपद्वारे (PhonePe, GPay, Paytm) स्कॅन करून ₹३० पाठवा
-                </p>
-                <div className="flex items-center justify-center gap-2 text-xs font-mono bg-gray-50 border border-gray-200 py-1.5 px-3 rounded-lg max-w-xs mx-auto">
-                  <span className="text-gray-600">UPI ID:</span>
-                  <span className="font-bold text-[#013B36]">7218834640@ybl</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText("7218834640@ybl");
-                      toast.success("UPI ID कॉपी केला!");
-                    }}
-                    className="text-[#059669] hover:text-[#013B36] font-bold ml-1 cursor-pointer"
-                    title="Copy UPI ID"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="pt-1 text-left">
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    पेमेंट केल्यानंतर १२-अंकी UPI Ref / UTR क्र. (पावतीसाठी):
-                  </label>
-                  <input
-                    type="text"
-                    value={upiUtrInput}
-                    onChange={(e) => setUpiUtrInput(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
-                    placeholder="उदा. 432109876543 (पर्यायी)"
-                    maxLength={16}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Tab 2: UPI Apps */}
-            {paymentTab === "upi_apps" && (
-              <div className="space-y-2.5">
-                <p className="text-xs font-bold text-gray-600 text-center">
-                  आपल्या आवडत्या UPI अ‍ॅपवर १-क्लिक करा:
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <a
-                    href="phonepe://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
-                    className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
-                  >
-                    <span className="text-base">🟣</span>
-                    <span>PhonePe</span>
-                  </a>
-                  <a
-                    href="upi://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
-                    className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
-                  >
-                    <span className="text-base">🟢</span>
-                    <span>Google Pay</span>
-                  </a>
-                  <a
-                    href="paytmmp://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
-                    className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
-                  >
-                    <span className="text-base">🔵</span>
-                    <span>Paytm</span>
-                  </a>
-                  <a
-                    href="upi://pay?pa=7218834640@ybl&pn=Fastcase%20ERP&am=30&cu=INR&tn=Court%20Petition%20Draft"
-                    className="p-2.5 rounded-xl border border-gray-200 hover:border-[#059669] hover:bg-[#ECFDF5] flex items-center gap-2 font-bold transition"
-                  >
-                    <span className="text-base">🟠</span>
-                    <span>BHIM UPI</span>
-                  </a>
-                </div>
-                <div className="pt-1 text-left">
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    अ‍ॅपमध्ये भरणा केल्यावर प्राप्त UTR / Ref क्र.:
-                  </label>
-                  <input
-                    type="text"
-                    value={upiUtrInput}
-                    onChange={(e) => setUpiUtrInput(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
-                    placeholder="उदा. 432109876543 (पर्यायी)"
-                    maxLength={16}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Tab 3: Card / NetBanking via Secure Gateway */}
+            {/* Tab 1: Razorpay Online Payment (UPI, Cards, NetBanking) */}
             {paymentTab === "card" && (
               <div className="space-y-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
-                <div className="w-10 h-10 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center mx-auto">
-                  <ShieldCheck className="w-6 h-6" />
+                <div className="w-11 h-11 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center mx-auto ring-4 ring-[#ECFDF5]">
+                  <ShieldCheck className="w-6 h-6 text-[#059669]" />
                 </div>
                 <div>
                   <h5 className="font-extrabold text-gray-900 text-sm">सुरक्षित Razorpay ऑनलाइन पेमेंट</h5>
                   <p className="text-[11px] text-gray-600 mt-1">
-                    RBI सुरक्षा मानकांनुसार सर्व क्रेडिट/डेबिट कार्ड व नेटबँकिंग व्यवहार अधिकृत 256-Bit SSL सुरक्षित गेटवेवर पूर्ण केले जातात.
+                    Google Pay, PhonePe, Paytm, BHIM UPI, सर्व डेबिट/क्रेडिट कार्ड व नेटबँकिंगद्वारे तत्काळ ₹३० भरणा करा.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-1.5 text-[10px] font-bold text-gray-600 pt-1">
-                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs">Visa</span>
-                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs">Mastercard</span>
-                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs">RuPay</span>
-                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs">NetBanking</span>
+                <div className="flex flex-wrap items-center justify-center gap-1.5 text-[10px] font-bold text-gray-700 pt-1">
+                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs text-[#5f259f]">🟣 PhonePe</span>
+                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs text-[#0f9d58]">🟢 GPay</span>
+                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs text-[#00b9f5]">🔵 Paytm</span>
+                  <span className="px-2 py-0.5 bg-white border border-gray-200 rounded shadow-2xs text-gray-800">💳 Cards & NetBanking</span>
                 </div>
-                <div className="text-[10px] text-emerald-800 bg-emerald-50 py-1 px-2 rounded-lg border border-emerald-200 font-medium">
-                  ✓ PCI-DSS Certified &bull; 100% Secure Transaction
+                <div className="text-[10px] text-emerald-800 bg-emerald-50 py-1.5 px-3 rounded-lg border border-emerald-200 font-medium">
+                  ✓ भरणा थेट अधिकृत <b>SOSM SERVICES PRIVATE LIMITED</b> खात्यात जमा होतो.
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Company Cosmos Bank Direct Transfer */}
+            {paymentTab === "bank" && (
+              <div className="space-y-3 text-xs">
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-gray-600">कंपनीचे नाव (Beneficiary):</span>
+                    <span className="text-xs font-black text-gray-900 text-right">SOSM SERVICES PRIVATE LIMITED</span>
+                  </div>
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-gray-600">बँकेचे नाव (Bank Name):</span>
+                    <span className="text-xs font-bold text-gray-900 text-right">The Cosmos Co-operative Bank Ltd.</span>
+                  </div>
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-gray-600">खाते क्रमांक (A/C No):</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-mono font-black text-[#013B36]">087100108358</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("087100108358");
+                          toast.success("खाते क्रमांक कॉपी केला!");
+                        }}
+                        className="text-[#059669] hover:text-[#013B36] p-1 cursor-pointer"
+                        title="Copy Account Number"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-gray-600">IFSC कोड:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-mono font-black text-[#013B36]">COSB0000087</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("COSB0000087");
+                          toast.success("IFSC कोड कॉपी केला!");
+                        }}
+                        className="text-[#059669] hover:text-[#013B36] p-1 cursor-pointer"
+                        title="Copy IFSC Code"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-gray-600">
+                    <span>खात्याचा प्रकार:</span>
+                    <span className="font-bold text-gray-800">चालू खाते (Current Account)</span>
+                  </div>
+                </div>
+
+                <div className="pt-1 text-left">
+                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                    बँक अ‍ॅपमधील १२-अंकी UTR / ट्रान्झॅक्शन संदर्भ क्र.:
+                  </label>
+                  <input
+                    type="text"
+                    value={upiUtrInput}
+                    onChange={(e) => setUpiUtrInput(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
+                    placeholder="उदा. 432109876543 (बँक पावतीवरील UTR क्र.)"
+                    maxLength={18}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    * वरील कॉसमॉस बँकेच्या खात्यात ₹३० ट्रान्सफर केल्यानंतर प्राप्त UTR प्रविष्ट करा.
+                  </p>
                 </div>
               </div>
             )}
@@ -2409,12 +2420,16 @@ ${template.relief}
                 {isProcessingPay ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>भरणा पडताळत आहे व PDF डाऊनलोड होत आहे...</span>
+                    <span>भरणा पडताळत आहे...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4 text-white" />
-                    <span>{paymentTab === "card" ? "Razorpay द्वारे भरणा व PDF डाऊनलोड →" : "भरणा पूर्ण झाला (Verify & Download PDF) →"}</span>
+                    <span>
+                      {paymentTab === "card"
+                        ? "Razorpay द्वारे ₹३० भरणा करा →"
+                        : "बँक भरणा पडताळा व PDF मिळवा →"}
+                    </span>
                   </>
                 )}
               </button>
@@ -2424,6 +2439,88 @@ ${template.relief}
                 className="w-full py-1.5 text-xs font-bold text-gray-400 hover:text-gray-700 transition cursor-pointer"
               >
                 रद्द करा (Cancel)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Payment Successful Popup Modal ── */}
+      {showSuccessModal && successDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-2xs p-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-gray-100 space-y-4 my-8 text-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Animated Green Checkmark */}
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+            </div>
+
+            <div>
+              <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-black rounded-full uppercase tracking-wider mb-2">
+                ✓ भरणा यशस्वी व प्रमाणित
+              </span>
+              <h3 className="text-xl font-black text-gray-900">
+                ₹३० भरणा यशस्वी झाला! 🎉
+              </h3>
+              <p className="text-xs text-gray-600 mt-1">
+                आपला अधिकृत कोर्ट तक्रार अर्ज मसुदा तयार झाला आहे व कायदेशीररित्या प्रमाणित करण्यात आला आहे.
+              </p>
+            </div>
+
+            {/* Receipt Summary Card */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left space-y-2 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span className="text-gray-500 font-medium">ई-पावती क्र. (Receipt No):</span>
+                <span className="font-mono font-bold text-[#013B36]">{successDetails.receiptId}</span>
+              </div>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span className="text-gray-500 font-medium">व्यवहार आयडी / UTR:</span>
+                <span className="font-mono text-gray-800 text-[11px] truncate max-w-[200px]">{successDetails.paymentId}</span>
+              </div>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span className="text-gray-500 font-medium">जमा झालेले खाते:</span>
+                <span className="font-bold text-gray-900 text-[11px]">SOSM SERVICES PRIVATE LIMITED</span>
+              </div>
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                <span className="text-gray-500 font-medium">तपशील:</span>
+                <span className="font-medium text-gray-700 truncate max-w-[200px]">{successDetails.title}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-medium">भरलेली रक्कम:</span>
+                <span className="font-black text-emerald-700 text-sm">{successDetails.amount}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, successDetails.receiptId);
+                }}
+                disabled={isDownloadingPdf}
+                className="w-full py-3 bg-[#013B36] hover:bg-[#024E47] text-white font-black text-sm rounded-xl shadow-lg shadow-[#013B36]/25 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-white" />
+                <span>📄 अधिकृत कोर्ट अर्ज (PDF) डाऊनलोड करा</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  printOfficialA4Document(generatedDoc, activeProblem?.title_mr, successDetails.receiptId);
+                }}
+                className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Printer className="w-4 h-4 text-gray-600" />
+                <span>🖨️ पावतीसह प्रिंट करा (Print A4)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-2 text-xs font-bold text-gray-500 hover:text-gray-800 transition cursor-pointer"
+              >
+                पूर्ण झाले (Done / Close)
               </button>
             </div>
           </div>
