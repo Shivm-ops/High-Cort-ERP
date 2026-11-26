@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { QUICK_PROBLEMS, QuickProblem, findMatchingProblem } from "./guideData";
 import { useAuthStore } from "@/lib/store/authStore";
 import { api, getErrorMessage } from "@/lib/api";
+import { loadRazorpayScript } from "@/lib/razorpay";
 import PropertyLegalCheck from "./PropertyLegalCheck";
 
 type Language = "mr" | "hi" | "en";
@@ -1085,7 +1086,107 @@ ${template.relief}
   };
 
   // ── ₹30 Payment Completion & Automatic PDF Download ────────────────────────
-  const handleCompletePayment = () => {
+  const handleCompletePayment = async () => {
+    // 1. Razorpay Online Gateway (Cards / NetBanking / All UPI via Razorpay)
+    if (paymentTab === "card") {
+      setIsProcessingPay(true);
+      try {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          toast.error("Razorpay पेमेंट गेटवे लोड होऊ शकले नाही. कृपया इंटरनेट कनेक्शन तपासा.");
+          setIsProcessingPay(false);
+          return;
+        }
+
+        const orderRes = await api.post("/citizen-help/create-payment-order", {
+          category: activeProblem?.id || "court_petition",
+          applicant_name: applicantName.trim() || user?.full_name || "नागरिक अर्जदार",
+          applicant_phone: applicantPhone.trim() || user?.phone || "",
+          applicant_email: user?.email || "",
+          title: activeProblem?.title_mr || "अधिकृत कोर्ट तक्रार अर्ज",
+        });
+
+        const { order_id, amount, currency, key_id, receipt, prefill } = orderRes.data;
+
+        const options = {
+          key: key_id || "rzp_live_U2jZ388rztj8uF",
+          amount: amount,
+          currency: currency || "INR",
+          name: "Fastcase Legal Platform",
+          description: "अधिकृत कोर्ट तक्रार अर्ज मसुदा शुल्क (₹३०)",
+          image: "https://fastcase.in/favicon.ico",
+          order_id: order_id,
+          prefill: {
+            name: prefill?.name || applicantName,
+            contact: prefill?.contact || applicantPhone,
+            email: prefill?.email || user?.email || "",
+          },
+          theme: {
+            color: "#013B36",
+          },
+          handler: async function (response: any) {
+            try {
+              toast.loading("पेमेंट पडताळत आहे व अधिकृत कोर्ट PDF तयार होत आहे...");
+              const verifyRes = await api.post("/citizen-help/verify-payment", {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                receipt_id: receipt,
+                title: activeProblem?.title_mr,
+              });
+
+              toast.dismiss();
+              const rId = verifyRes.data.receipt_id || receipt || `FC-RZP-${response.razorpay_payment_id.slice(-6)}`;
+              setIsPaid(true);
+              setReceiptId(rId);
+              setIsProcessingPay(false);
+              setShowPayModal(false);
+              toast.success(`₹३० भरणा यशस्वी! पावती क्र. ${rId}`);
+
+              const newDoc = {
+                id: rId,
+                title: activeProblem?.title_mr || "अधिकृत तक्रार अर्ज",
+                date: new Date().toLocaleDateString(),
+                content: generatedDoc,
+                fee: "₹३०",
+                payment_mode: "Razorpay Online",
+                utr: response.razorpay_payment_id,
+              };
+              const updated = [newDoc, ...savedDocs];
+              setSavedDocs(updated);
+              try {
+                localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
+              } catch (e) {}
+
+              downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, rId);
+            } catch (err: any) {
+              toast.dismiss();
+              toast.error(err.response?.data?.detail || "पेमेंट पडताळणी अयशस्वी झाली.");
+              setIsProcessingPay(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessingPay(false);
+            },
+          },
+        };
+
+        const razorpayInstance = new (window as any).Razorpay(options);
+        razorpayInstance.on("payment.failed", function (resp: any) {
+          toast.error(`पेमेंट अयशस्वी: ${resp.error?.description || "कृपया पुन्हा प्रयत्न करा"}`);
+          setIsProcessingPay(false);
+        });
+        razorpayInstance.open();
+      } catch (err: any) {
+        console.error("Razorpay initiation error:", err);
+        toast.error(err.response?.data?.detail || "पेमेंट सुरू करण्यात समस्या आली. कृपया पुन्हा प्रयत्न करा.");
+        setIsProcessingPay(false);
+      }
+      return;
+    }
+
+    // 2. Direct UPI Flow (QR / UPI Apps manual UTR)
     setIsProcessingPay(true);
     setTimeout(() => {
       const cleanUtr = upiUtrInput.trim();
@@ -1102,7 +1203,7 @@ ${template.relief}
         date: new Date().toLocaleDateString(),
         content: generatedDoc,
         fee: "₹३०",
-        payment_mode: paymentTab === "card" ? "Razorpay Online" : "UPI",
+        payment_mode: "UPI",
         utr: cleanUtr || undefined,
       };
       const updated = [newDoc, ...savedDocs];

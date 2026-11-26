@@ -27,6 +27,11 @@ from app.services.citizen_legal_kb import (
     classify_citizen_problem,
     generate_citizen_application,
 )
+from app.services.razorpay_service import (
+    get_razorpay_credentials,
+    create_razorpay_order,
+    verify_payment_signature,
+)
 
 logger = logging.getLogger("citizen_help_api")
 router = APIRouter()
@@ -71,6 +76,22 @@ class SaveGrievanceRequest(BaseModel):
     applicable_laws: Optional[List[Dict[str, Any]]] = []
     required_documents: Optional[List[str]] = []
     generated_application: str
+
+
+class CitizenOrderCreateRequest(BaseModel):
+    category: Optional[str] = "court_petition"
+    applicant_name: Optional[str] = "Citizen"
+    applicant_phone: Optional[str] = ""
+    applicant_email: Optional[str] = ""
+    title: Optional[str] = "Court Petition Draft"
+
+
+class CitizenPaymentVerifyRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    receipt_id: Optional[str] = None
+    title: Optional[str] = None
 
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -409,3 +430,71 @@ def get_clean_print_view(
 </body>
 </html>"""
     return HTMLResponse(content=html)
+
+
+@router.post("/create-payment-order")
+async def create_citizen_payment_order(
+    payload: CitizenOrderCreateRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Create a verified ₹30 Razorpay order for official court petition drafting.
+    """
+    receipt = f"FC-DOC-{uuid.uuid4().hex[:8].upper()}"
+    notes = {
+        "service": "Citizen Legal Drafting Fee",
+        "applicant": payload.applicant_name or "Citizen",
+        "title": payload.title or "Court Draft",
+    }
+
+    order = await create_razorpay_order(
+        amount_inr=30.0,
+        receipt=receipt,
+        notes=notes,
+    )
+
+    key_id, _ = get_razorpay_credentials(db)
+    if not key_id:
+        key_id = "rzp_live_U2jZ388rztj8uF"
+
+    return {
+        "order_id": order["id"],
+        "amount": order["amount"],
+        "currency": order["currency"],
+        "receipt": receipt,
+        "key_id": key_id,
+        "prefill": {
+            "name": payload.applicant_name or "",
+            "contact": payload.applicant_phone or "",
+            "email": payload.applicant_email or "",
+        },
+    }
+
+
+@router.post("/verify-payment")
+async def verify_citizen_payment(
+    payload: CitizenPaymentVerifyRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Verify HMAC-SHA256 signature from Razorpay checkout.
+    """
+    is_valid = verify_payment_signature(
+        razorpay_order_id=payload.razorpay_order_id,
+        razorpay_payment_id=payload.razorpay_payment_id,
+        razorpay_signature=payload.razorpay_signature,
+    )
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=400,
+            detail="Payment verification failed: Invalid cryptographic signature.",
+        )
+
+    receipt_id = payload.receipt_id or f"FC-RZP-{payload.razorpay_payment_id[-8:]}"
+    return {
+        "status": "success",
+        "message": "Payment verified successfully",
+        "receipt_id": receipt_id,
+        "payment_id": payload.razorpay_payment_id,
+    }
