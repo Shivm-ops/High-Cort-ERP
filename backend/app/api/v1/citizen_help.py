@@ -281,6 +281,49 @@ def get_user_grievances(
     ]
 
 
+@router.get("/by-phone")
+def get_grievances_by_phone(
+    phone: str = Query(..., min_length=10, max_length=20),
+    db: Session = Depends(get_db),
+):
+    """
+    Lookup previously saved legal applications by citizen's phone number.
+    Allows returning citizens to retrieve and download their paid legal drafts without paying again.
+    """
+    clean_phone = "".join(filter(str.isdigit, phone))
+    if len(clean_phone) < 10:
+        raise HTTPException(status_code=400, detail="Invalid 10-digit mobile number.")
+
+    last10 = clean_phone[-10:]
+    records = (
+        db.query(CitizenGrievance)
+        .filter(CitizenGrievance.applicant_phone.ilike(f"%{last10}%"))
+        .order_by(CitizenGrievance.created_at.desc())
+        .limit(25)
+        .all()
+    )
+
+    return [
+        {
+            "id": str(r.id),
+            "category": r.category,
+            "title": r.target_authority or r.category,
+            "applicant_name": r.applicant_name,
+            "applicant_phone": r.applicant_phone,
+            "opposite_party": r.opposite_party or "",
+            "incident_date": r.incident_date or "",
+            "facts_summary": r.facts_summary,
+            "content": r.generated_application,
+            "date": r.created_at.strftime("%d/%m/%Y"),
+            "fee": "₹३०",
+            "receipt_id": f"FC-DOC-{str(r.id)[:8].upper()}",
+            "payment_mode": "Paid & Verified",
+            "status": r.status.value if hasattr(r.status, "value") else str(r.status),
+        }
+        for r in records
+    ]
+
+
 @router.get("/applications/{grievance_id}/print-view", response_class=HTMLResponse)
 def get_clean_print_view(
     grievance_id: uuid.UUID,

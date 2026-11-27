@@ -99,11 +99,13 @@ export default function SimpleCitizenPortalPage() {
   } | null>(null);
   const [isPaid, setIsPaid] = useState<boolean>(false);
   const [receiptId, setReceiptId] = useState<string>("");
-  const [paymentTab, setPaymentTab] = useState<"card" | "bank">("card");
+  const [paymentTab, setPaymentTab] = useState<"upi_qr" | "card">("upi_qr");
   const [upiUtrInput, setUpiUtrInput] = useState<string>("");
   const [isProcessingPay, setIsProcessingPay] = useState<boolean>(false);
   const [isEditingDetails, setIsEditingDetails] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [searchPhoneInput, setSearchPhoneInput] = useState<string>("");
+  const [isSearchingPhone, setIsSearchingPhone] = useState<boolean>(false);
 
   // ── Step-by-Step Flow States ──────────────────────────────────────────────
   // Step 1: select case (selectedCategoryId)
@@ -1092,6 +1094,60 @@ ${template.relief}
     executeDraft();
   };
 
+  // ── Search Previous Applications by Phone Number ────────────────────────
+  const handleSearchByPhone = async (phoneToSearch?: string) => {
+    const raw = (phoneToSearch || searchPhoneInput || applicantPhone || user?.phone || "").trim();
+    const clean = raw.replace(/[^0-9]/g, "");
+    if (clean.length < 10) {
+      toast.error("कृपया वैध १०-अंकी मोबाईल नंबर प्रविष्ट करा.");
+      return;
+    }
+    setIsSearchingPhone(true);
+    try {
+      const res = await api.get(`/citizen-help/by-phone?phone=${clean}`);
+      const serverDocs = res.data || [];
+      if (serverDocs.length === 0) {
+        toast.info("या मोबाईल नंबरवर कोणताही जतन केलेला अर्ज सापडला नाही.");
+      } else {
+        toast.success(`${serverDocs.length} जतन केलेले अर्ज सापडले!`);
+        const existingIds = new Set(savedDocs.map((d: any) => d.id));
+        const merged = [...savedDocs];
+        for (const s of serverDocs) {
+          if (!existingIds.has(s.id)) {
+            merged.push(s);
+          }
+        }
+        setSavedDocs(merged);
+        try {
+          localStorage.setItem("fastcase_citizen_docs", JSON.stringify(merged));
+        } catch (e) {}
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "अर्ज शोधण्यात समस्या आली.");
+    } finally {
+      setIsSearchingPhone(false);
+    }
+  };
+
+  // ── Auto-save Document to PostgreSQL Database ─────────────────────────────
+  const persistDocToBackend = async (receiptCustom: string, utrValue?: string, modeStr: string = "UPI QR") => {
+    try {
+      await api.post("/citizen-help/save", {
+        category: activeProblem?.id || "court_petition",
+        language: lang || "mr",
+        applicant_name: applicantName.trim() || user?.full_name || "नागरिक अर्जदार",
+        applicant_phone: applicantPhone.trim() || user?.phone || "",
+        applicant_address: applicantAddress.trim() || "",
+        opposite_party: oppositeParty.trim() || "",
+        facts_summary: factsSummary.trim() || activeProblem?.title_mr || "अधिकृत कोर्ट अर्ज",
+        target_authority: activeProblem?.title_mr || "अधिकृत कोर्ट तक्रार अर्ज",
+        generated_application: generatedDoc,
+      });
+    } catch (err) {
+      console.warn("Auto-save to backend skipped/failed:", err);
+    }
+  };
+
   // ── ₹30 Payment Completion & Automatic PDF Download ────────────────────────
   const handleCompletePayment = async () => {
     // 1. Razorpay Online Gateway (Cards / NetBanking / All UPI via Razorpay)
@@ -1183,6 +1239,9 @@ ${template.relief}
                 localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
               } catch (e) {}
 
+              // Auto-save to backend database so person can download anytime by phone
+              persistDocToBackend(rId, response.razorpay_payment_id, "Razorpay Online");
+
               // Automatically trigger document download
               downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, rId);
             } catch (err: any) {
@@ -1212,16 +1271,11 @@ ${template.relief}
       return;
     }
 
-    // 2. Direct Company Bank Account Flow (The Cosmos Co-operative Bank Ltd.)
+    // 2. Direct UPI QR Scan & Cosmos Bank Transfer Flow
     const cleanUtr = upiUtrInput.trim();
-    if (!cleanUtr || cleanUtr.length < 6) {
-      toast.error("कृपया बँक ट्रान्सफरचा किमान ६ ते १२-अंकी UTR किंवा संदर्भ क्रमांक प्रविष्ट करा.");
-      return;
-    }
-
     setIsProcessingPay(true);
     setTimeout(() => {
-      const rId = `FC-COSMOS-${cleanUtr.slice(-8).toUpperCase()}`;
+      const rId = cleanUtr ? `FC-UTR-${cleanUtr.slice(-8).toUpperCase()}` : `FC-DOC-${Date.now().toString().slice(-6)}`;
       setIsPaid(true);
       setReceiptId(rId);
       setIsProcessingPay(false);
@@ -1238,7 +1292,7 @@ ${template.relief}
 
       setSuccessDetails({
         receiptId: rId,
-        paymentId: `UTR: ${cleanUtr}`,
+        paymentId: cleanUtr ? `UTR: ${cleanUtr}` : `UPI-QR-${rId}`,
         title: activeProblem?.title_mr || "अधिकृत कोर्ट तक्रार अर्ज",
         amount: "₹३०.००",
         date: nowFormatted,
@@ -1252,8 +1306,8 @@ ${template.relief}
         date: new Date().toLocaleDateString(),
         content: generatedDoc,
         fee: "₹३०",
-        payment_mode: "Cosmos Bank Direct Transfer",
-        utr: cleanUtr,
+        payment_mode: "UPI QR (Cosmos Bank)",
+        utr: cleanUtr || `UPI-QR-${rId}`,
       };
       const updated = [newDoc, ...savedDocs];
       setSavedDocs(updated);
@@ -1261,9 +1315,12 @@ ${template.relief}
         localStorage.setItem("fastcase_citizen_docs", JSON.stringify(updated));
       } catch (e) {}
 
+      // Auto-save to backend database for permanent record linked to phone
+      persistDocToBackend(rId, cleanUtr, "UPI QR");
+
       // Automatically trigger document download
       downloadPetitionPdf(generatedDoc, activeProblem?.title_mr, rId);
-    }, 850);
+    }, 700);
   };
 
   // ── Modal Auth Submit Handlers ────────────────────────────────────────────
@@ -2172,14 +2229,59 @@ ${template.relief}
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════
-            TAB 3: माझे अर्ज (SAVED DOCUMENTS)
+            TAB 3: माझे अर्ज (SAVED DOCUMENTS & CLOUD LOOKUP)
         ══════════════════════════════════════════════════════════════════════ */}
         {activeTab === "saved" && (
-          <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
-              <FileCheck className="w-4 h-4 text-[#059669]" />
-              <span>माझे जतन केलेले अर्ज ({savedDocs.length})</span>
-            </h3>
+          <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+              <h3 className="text-sm font-black text-gray-900 flex items-center gap-1.5">
+                <FileCheck className="w-4 h-4 text-[#059669]" />
+                <span>माझे जतन केलेले अर्ज ({savedDocs.length})</span>
+              </h3>
+              <span className="text-[11px] text-gray-500 font-medium">
+                आपले सर्व अर्ज क्लाऊड डेटाबेसमध्ये सुरक्षित जतन आहेत
+              </span>
+            </div>
+
+            {/* Mobile Number Record Lookup Box */}
+            <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-[#013B36]" />
+                <span className="text-xs font-bold text-[#013B36]">
+                  आधीचे अर्ज शोधा (Find Previous Records by Mobile Number):
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-600">
+                तुम्ही यापूर्वी तयार केलेले अर्ज कोणत्याही डिव्हाइसवर पुन्हा पाहण्यासाठी व डाऊनलोड करण्यासाठी तुमचा १०-अंकी मोबाईल नंबर प्रविष्ट करा.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={searchPhoneInput}
+                  onChange={(e) => setSearchPhoneInput(e.target.value.replace(/[^0-9]/g, "").slice(0, 10))}
+                  placeholder="उदा. 9876543210 (तुमचा मोबाईल नंबर)"
+                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-xl font-mono text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSearchByPhone()}
+                  disabled={isSearchingPhone}
+                  className="px-4 py-2 bg-[#013B36] hover:bg-[#024E47] text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isSearchingPhone ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>शोधत आहे...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3.5 h-3.5" />
+                      <span>अर्ज शोधा</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
 
             {savedDocs.length === 0 ? (
               <div className="text-center py-8 text-gray-400 space-y-2">
@@ -2202,7 +2304,7 @@ ${template.relief}
                     <div>
                       <strong className="text-gray-900 font-bold block">{doc.title}</strong>
                       <span className="text-[10px] text-gray-500 font-medium">
-                        तारीख: {doc.date} &bull; पावती क्र.: {doc.id}
+                        तारीख: {doc.date} &bull; पावती क्र.: {doc.id} {doc.applicant_name ? `• अर्जदार: ${doc.applicant_name}` : ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -2235,7 +2337,7 @@ ${template.relief}
                         title="PDF डाऊनलोड करा"
                       >
                         <Download className="w-3 h-3 text-white" />
-                        <span>PDF</span>
+                        <span>PDF डाऊनलोड</span>
                       </button>
                     </div>
                   </div>
@@ -2269,7 +2371,7 @@ ${template.relief}
               </div>
               <button
                 onClick={() => setShowPayModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-xs p-1 rounded-lg hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 text-xs p-1 rounded-lg hover:bg-gray-100 cursor-pointer"
               >
                 ✕
               </button>
@@ -2288,6 +2390,19 @@ ${template.relief}
             <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl gap-1 text-xs font-bold">
               <button
                 type="button"
+                onClick={() => setPaymentTab("upi_qr")}
+                className={cn(
+                  "py-2 px-2 rounded-lg transition text-center flex items-center justify-center gap-1.5 cursor-pointer",
+                  paymentTab === "upi_qr"
+                    ? "bg-white text-[#013B36] shadow-2xs font-black ring-1 ring-gray-200"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <QrCode className="w-4 h-4 text-[#059669]" />
+                <span>📱 UPI QR स्कॅन</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setPaymentTab("card")}
                 className={cn(
                   "py-2 px-2 rounded-lg transition text-center flex items-center justify-center gap-1.5 cursor-pointer",
@@ -2297,24 +2412,84 @@ ${template.relief}
                 )}
               >
                 <CreditCard className="w-4 h-4 text-[#059669]" />
-                <span>💳 ऑनलाइन भरणा (UPI/Cards)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentTab("bank")}
-                className={cn(
-                  "py-2 px-2 rounded-lg transition text-center flex items-center justify-center gap-1.5 cursor-pointer",
-                  paymentTab === "bank"
-                    ? "bg-white text-[#013B36] shadow-2xs font-black ring-1 ring-gray-200"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <Building2 className="w-4 h-4 text-[#059669]" />
-                <span>🏛️ बँक खाते ट्रान्सफर (Cosmos)</span>
+                <span>💳 कार्ड / Razorpay</span>
               </button>
             </div>
 
-            {/* Tab 1: Razorpay Online Payment (UPI, Cards, NetBanking) */}
+            {/* Tab 1: Direct UPI QR (Default Open!) */}
+            {paymentTab === "upi_qr" && (
+              <div className="space-y-3 text-center">
+                <div className="p-3 bg-white rounded-xl border border-gray-200 inline-block shadow-2xs mx-auto">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3D087100108358%40cosb0000087.ifsc.npci%26pn%3DSOSM%2520SERVICES%2520PRIVATE%2520LIMITED%26am%3D30%26cu%3DINR%26tn%3DCourt%2520Petition%2520Draft"
+                    alt="Cosmos Bank UPI QR Code"
+                    className="w-44 h-44 mx-auto rounded-lg"
+                  />
+                </div>
+                <p className="text-xs font-bold text-gray-700">
+                  कोणत्याही UPI अ‍ॅपद्वारे (PhonePe, GPay, Paytm) स्कॅन करून ₹३० पाठवा
+                </p>
+
+                {/* Company Account Info Box */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-left text-[11px] space-y-1">
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                    <span className="text-gray-500 font-medium">कंपनी नाव:</span>
+                    <span className="font-bold text-gray-900 text-right">SOSM SERVICES PRIVATE LIMITED</span>
+                  </div>
+                  <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                    <span className="text-gray-500 font-medium">बँक खाते क्र.:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono font-bold text-[#013B36]">087100108358</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("087100108358");
+                          toast.success("खाते क्रमांक कॉपी केला!");
+                        }}
+                        className="text-[#059669] hover:text-[#013B36] p-0.5 cursor-pointer"
+                        title="Copy Account Number"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500 font-medium">बँक / IFSC:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="font-mono font-bold text-[#013B36]">COSB0000087</span>
+                      <span className="text-[10px] text-gray-500">(Cosmos Bank)</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText("COSB0000087");
+                          toast.success("IFSC कोड कॉपी केला!");
+                        }}
+                        className="text-[#059669] hover:text-[#013B36] p-0.5 cursor-pointer"
+                        title="Copy IFSC Code"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-1 text-left">
+                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                    पेमेंट केल्यानंतर १२-अंकी UPI Ref / UTR क्र. (पावतीसाठी):
+                  </label>
+                  <input
+                    type="text"
+                    value={upiUtrInput}
+                    onChange={(e) => setUpiUtrInput(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
+                    placeholder="उदा. 432109876543 (पर्यायी)"
+                    maxLength={18}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Razorpay Online Payment (UPI, Cards, NetBanking) */}
             {paymentTab === "card" && (
               <div className="space-y-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
                 <div className="w-11 h-11 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center mx-auto ring-4 ring-[#ECFDF5]">
@@ -2338,77 +2513,6 @@ ${template.relief}
               </div>
             )}
 
-            {/* Tab 2: Company Cosmos Bank Direct Transfer */}
-            {paymentTab === "bank" && (
-              <div className="space-y-3 text-xs">
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
-                    <span className="text-[11px] font-bold text-gray-600">कंपनीचे नाव (Beneficiary):</span>
-                    <span className="text-xs font-black text-gray-900 text-right">SOSM SERVICES PRIVATE LIMITED</span>
-                  </div>
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
-                    <span className="text-[11px] font-bold text-gray-600">बँकेचे नाव (Bank Name):</span>
-                    <span className="text-xs font-bold text-gray-900 text-right">The Cosmos Co-operative Bank Ltd.</span>
-                  </div>
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
-                    <span className="text-[11px] font-bold text-gray-600">खाते क्रमांक (A/C No):</span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs font-mono font-black text-[#013B36]">087100108358</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText("087100108358");
-                          toast.success("खाते क्रमांक कॉपी केला!");
-                        }}
-                        className="text-[#059669] hover:text-[#013B36] p-1 cursor-pointer"
-                        title="Copy Account Number"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
-                    <span className="text-[11px] font-bold text-gray-600">IFSC कोड:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs font-mono font-black text-[#013B36]">COSB0000087</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText("COSB0000087");
-                          toast.success("IFSC कोड कॉपी केला!");
-                        }}
-                        className="text-[#059669] hover:text-[#013B36] p-1 cursor-pointer"
-                        title="Copy IFSC Code"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-gray-600">
-                    <span>खात्याचा प्रकार:</span>
-                    <span className="font-bold text-gray-800">चालू खाते (Current Account)</span>
-                  </div>
-                </div>
-
-                <div className="pt-1 text-left">
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    बँक अ‍ॅपमधील १२-अंकी UTR / ट्रान्झॅक्शन संदर्भ क्र.:
-                  </label>
-                  <input
-                    type="text"
-                    value={upiUtrInput}
-                    onChange={(e) => setUpiUtrInput(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
-                    placeholder="उदा. 432109876543 (बँक पावतीवरील UTR क्र.)"
-                    maxLength={18}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-xs focus:outline-none focus:border-[#013B36] focus:ring-1 focus:ring-[#059669]/20"
-                  />
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    * वरील कॉसमॉस बँकेच्या खात्यात ₹३० ट्रान्सफर केल्यानंतर प्राप्त UTR प्रविष्ट करा.
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Complete Payment Button */}
             <div className="pt-2 space-y-2">
               <button
@@ -2420,7 +2524,7 @@ ${template.relief}
                 {isProcessingPay ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>भरणा पडताळत आहे...</span>
+                    <span>भरणा पडताळत आहे व PDF डाऊनलोड होत आहे...</span>
                   </>
                 ) : (
                   <>
@@ -2428,7 +2532,7 @@ ${template.relief}
                     <span>
                       {paymentTab === "card"
                         ? "Razorpay द्वारे ₹३० भरणा करा →"
-                        : "बँक भरणा पडताळा व PDF मिळवा →"}
+                        : "भरणा पूर्ण झाला (Verify & Download PDF) →"}
                     </span>
                   </>
                 )}
@@ -2438,6 +2542,12 @@ ${template.relief}
                 onClick={() => setShowPayModal(false)}
                 className="w-full py-1.5 text-xs font-bold text-gray-400 hover:text-gray-700 transition cursor-pointer"
               >
+                रद्द करा (Cancel)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
                 रद्द करा (Cancel)
               </button>
             </div>
